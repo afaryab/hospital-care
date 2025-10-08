@@ -1,0 +1,362 @@
+/* here you can put your own css to customize and override the theme */
+
+/***
+Rounded Portlets
+***/
+/*
+.portlet {
+	border-radius: 4px !important;
+}
+
+.portlet .portlet-title {
+	border-radius: 4px 4px 0px 0px !important;
+}
+
+.portlet .portlet-body,
+.portlet .portlet-body .form-actions  {
+	border-radius: 0px 0px 4px 4px !important;
+}
+*/
+
+/*
+Change Quick Sidebar Width
+*/
+
+/*
+.page-quick-sidebar-wrapper {
+  right: -370px;
+  width: 370px;
+}
+
+.page-quick-sidebar-open.page-quick-sidebar-push-content .page-sidebar-wrapper {
+  margin-left: -370px;
+}
+
+.page-quick-sidebar-open.page-quick-sidebar-push-content .page-footer {
+  margin-right: 370px;
+  margin-left: -370px;
+}
+
+.page-sidebar-reversed.page-quick-sidebar-open.page-quick-sidebar-push-content .page-sidebar-wrapper {
+  margin-right: 370px;
+}
+
+.page-quick-sidebar-open.page-quick-sidebar-push-content.page-quick-sidebar-full-height .page-header {
+  margin-left: -370px;
+}
+
+.page-quick-sidebar-wrapper .page-quick-sidebar .page-quick-sidebar-list {
+  width: 370px !important;
+}
+
+.page-quick-sidebar-wrapper .page-quick-sidebar .page-quick-sidebar-item {
+  width: 370px !important;
+  margin-left: 370px;
+}
+
+.page-quick-sidebar-wrapper .page-quick-sidebar .page-quick-sidebar-content-item-shown .page-quick-sidebar-list {
+  margin-left: -370px;
+}
+*/
+.md-radio-list .md-radio {
+  display: inline-block;
+  width: auto;
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.invoice-header .noble, .invoice-header .hospital {
+  margin: 0;
+}
+
+.invoice-header hr, .invoice-header p {
+  margin: 0px;
+}
+
+.invoice.in_sm {
+  width: 2.5in;
+}
+.invoice.in_sm hr, .invoice.in_sm p, .invoice.in_sm h1,.invoice.in_sm h2,.invoice.in_sm h3,.invoice.in_sm h4,.invoice.in_sm h5,.invoice.in_sm h6, .invoice.in_sm ul,.invoice.in_sm table{
+  margin: 0 !important;
+}
+.invoice.in_sm table td{
+  border-top: 1px solid #ccc !important;
+  border-bottom: 1px solid #ccc !important;
+}
+.invoice.in_sm td{
+  padding: 0px !important;
+}
+.invoice.in_sm .invoice-block-2{
+  text-align: center;
+  padding: 0px;
+  font-size: 22px;
+}
+@media print {
+  .invoice-header .noble, .invoice-header .hospital {
+    margin: 0;
+  }
+
+  .invoice-header hr, .invoice-header p {
+    margin: 0px;
+  }
+
+  .invoice.in_sm {
+    width: 3.0in;
+  }
+  hr, p, h1,h2,h3,h4,h5,h6, table{
+    margin: 0 !important;
+  }
+  table td{
+    border-top: 1px solid #ccc !important;
+    border-bottom: 1px solid #ccc !important;
+  }
+  td{
+    padding: 0px !important;
+  }
+  .invoice.in_sm .invoice-block-2{
+    text-align: center;
+    padding: 0px;
+    font-size: 22px;
+  }
+  a{
+    display: none;
+  }
+  .logo{
+    max-width: 100px !important;
+  }
+  .printfull{
+    width: 100% !important;
+  }
+  .statementdisplay {
+    display:list-item !important;
+    text-align: center;
+    min-width: 100%;
+    padding: 0px;
+    margin: 0px;
+  }
+  .dontprint{
+    display:none !important;
+  }
+}
+.dz-default.dz-message{
+  width: 75% !important;
+  margin-left: -125px !important;
+  height: 70px !important;
+  top: 60%;
+}
+@import "/assets/fonts/stylesheet.css";
+
+.fourOfour{
+	padding:15px !important;
+	position: relative !important;
+}
+.fourOfour .number h1{
+	font-size:8em !important;
+}
+.fourOfour .desc{
+	font-size: 20px;
+}
+.btn + .btn {
+  margin-left: 0px;
+}
+.modal-header{
+  background-color: #2b3643 !important;
+  color: #FFFFFF !important;
+}
+.modal .modal-header .close{
+  color: #FFFFFF !important;
+}
+.closeModel{
+  position: absolute;
+  right: 0px;
+  top: 0px;
+  padding: 10px;
+  background: #EFCC01;
+  font-size: 20px;
+  border-radius: 0 0 0px 50%;
+}
+.permissions .label{
+  color: #0c0c0c;
+}
+.img-circle.profileImg{
+  height: 30px;
+  width: 30px;
+}
+#header_inbox_bar .photo{
+  display: inline-block;
+  vertical-align: text-bottom;
+  margin-left: 5px;
+}
+#header_inbox_bar .notificationItem{
+  margin-top:8px;
+  margin-bottom:8px;
+}
+#header_inbox_bar hr{
+  margin: 8px 0;
+}
+#header_inbox_bar .message{
+  display: inline-block;
+  vertical-align: bottom;
+  margin-left: 10px !important;
+  max-width: 225px;
+  word-wrap: break-word;
+  display: inline-block;
+  position: inherit;
+  overflow: hidden;
+  height: auto;
+  display: inline-block;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: normal;
+  line-break: strict;
+  hyphens: none;
+  -webkit-hyphens: none;
+  -moz-hyphens: none;
+}
+.user-shrt-profile{
+  display: inline-block;
+  vertical-align: inherit;
+  width: 100%;
+  height: 100px;
+}
+.user-shrt-profile-img{
+  display: inline-block;
+  vertical-align: inherit;
+  width: 20%;
+  text-align: right;
+  height: 100px;
+}
+.user-shrt-profile-img > img {
+  height: 40px !important;
+  width: 40px !important;
+  margin-top: 5px;
+}
+.user-shrt-profile-text strong{
+  font-size: 16px;
+}
+.user-shrt-profile-text{
+    display: inline-block;
+    vertical-align: inherit;
+    width: 75%;
+    padding-left: 5px;
+    height: 100px;
+}
+.user-shrt-profile-pull-right{
+  
+}
+.color-danger{
+  color: rgba(187,33,36, 1) !important;
+}
+.color-warning{
+  color: rgba(240,173,78, 1) !important;
+}
+.color-success{
+  color: rgba(34,187,51, 1) !important;
+}
+.color-info{
+  color: rgba(91,192,222, 1) !important;
+}
+.bg-danger.full-bg{
+  background-color: rgba(187,33,36, 1) !important;
+}
+.bg-danger{
+  background-color: rgba(187,33,36, 0.7) !important;
+}
+.bg-danger.light{
+  background-color: rgba(187,33,36, 0.5) !important;
+}
+.bg-danger.lighter{
+  background-color: rgba(187,33,36, 0.2) !important;
+}
+.bg-success.full-bg{
+  background-color: rgba(34,187,51, 1) !important;
+}
+.bg-success{
+  background-color: rgba(34,187,51, 0.7) !important;
+}
+.bg-success.light{
+  background-color: rgba(34,187,51, 0.5) !important;
+}
+.bg-success.lighter{
+  background-color: rgba(34,187,51, 0.2) !important;
+}
+.bg-warning.full-bg{
+  background-color: rgba(240,173,78, 1) !important;
+}
+.bg-warning{
+  background-color: rgba(240,173,78, 0.7) !important;
+}
+.bg-warning.light{
+  background-color: rgba(240,173,78, 0.5) !important;
+}
+.bg-warning.lighter{
+  background-color: rgba(240,173,78, 0.2) !important;
+}
+.bg-info.full-bg{
+  background-color: rgba(91,192,222, 1) !important;
+}
+.bg-info{
+  background-color: rgba(91,192,222, 0.7) !important;
+}
+.bg-info.light{
+  background-color: rgba(91,192,222, 0.5) !important;
+}
+.bg-info.lighter{
+  background-color: rgba(91,192,222, 0.2) !important;
+}
+.text-white{
+  color: #FFFFFF !important;
+}
+.cursor-pointer{
+  cursor: pointer;
+}
+.m-t-5 {
+  margin-top: 25px;
+}
+.m-b-5 {
+  margin-bottom: 25px;
+}
+.m-t-4 {
+  margin-top: 20px;
+}
+.m-b-4 {
+  margin-bottom: 20px;
+}
+.m-t-3 {
+  margin-top: 15px;
+}
+.m-b-3 {
+  margin-bottom: 15px;
+}
+.m-t-2 {
+  margin-top: 10px;
+}
+.m-b-2 {
+  margin-bottom: 10px;
+}
+.m-t-1 {
+  margin-top: 5px;
+}
+.m-b-1 {
+  margin-bottom: 5px;
+}
+.m-b-0 {
+  margin-bottom: 0px !important;
+}
+@media print {
+  .pagebreak { page-break-before: always; } /* page-break-after works, as well */
+}
+
+.receptionchartContainer{
+  padding: 10px;
+}
+.d-inline-block{
+  display: inline-block;
+}
+input[name="gender"], input[name="relation"]{
+  margin-left: 0px !important;
+}
+div[id^=uniform], div[id^=uniform]+label{
+  margin-top: 5px;
+  vertical-align: middle;
+}

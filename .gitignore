@@ -1,0 +1,10 @@
+.idea/
+.idea/*
+uploads/*
+.project
+.project/*
+desktop.ini
+*.editorconfig
+application/logs/
+application/logs/*
+application_1/
