@@ -23,16 +23,16 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 | a PHP script and you can easily do that on your own.
 |
 */
-//echo '<pre>'.print_r($_SERVER, true).'</pre>'; die;
+// echo '<pre>'.print_r($_SERVER, true).'</pre>'; die;
 //$config['base_url'] = 'http://192.168.100.111/';
-if($_SERVER['HTTP_HOST'] == '192.168.10.2'){
-$config['base_url'] = 'http://192.168.10.2/';
-}elseif($_SERVER['HTTP_HOST'] == '39.61.50.242'){
-$config['base_url'] = 'http://39.61.50.242/';
-}else{
-$config['base_url'] = 'https://server.sish.hamzahospital.com.pk';
-}
-//$config['base_url'] = array_key_exists('APP_URL', $_SERVER) ? $_SERVER['APP_URL'] : $_SERVER['REMOTE_ADDR'];
+// if($_SERVER['HTTP_HOST'] == '192.168.10.2'){
+// $config['base_url'] = 'http://192.168.10.2/';
+// }elseif($_SERVER['HTTP_HOST'] == '39.61.50.242'){
+// $config['base_url'] = 'http://39.61.50.242/';
+// }else{
+// $config['base_url'] = 'https://server.sish.hamzahospital.com.pk';
+// }
+$config['base_url'] = 'https://' . (array_key_exists('HTTP_X_FORWARDED_HOST', $_SERVER) ? $_SERVER['HTTP_X_FORWARDED_HOST'] : $_SERVER['HTTP_HOST']);
 //$config['base_url'] = '';
 //$config['base_url'] = (array_key_exists('REQUEST_SCHEME',$_SERVER) ? $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'] : '');
 
