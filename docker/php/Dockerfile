@@ -22,6 +22,7 @@ RUN a2enmod rewrite
 # Copy custom php.ini and vhost (paths are relative to the compose build context)
 COPY docker/php/php.ini /usr/local/etc/php/php.ini
 COPY docker/php/vhost.conf /etc/apache2/sites-available/000-default.conf
+COPY docker/php/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 WORKDIR /var/www/html
 
@@ -29,4 +30,4 @@ COPY . /var/www/html/
 
 EXPOSE 80
 
-CMD ["apache2-foreground"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
