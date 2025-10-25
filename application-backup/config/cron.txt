@@ -1,2 +1,0 @@
-* * * * * php index.php Cron followup
-* * * * * php index.php Cron test
