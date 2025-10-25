@@ -32,7 +32,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 // }else{
 // $config['base_url'] = 'https://server.sish.hamzahospital.com.pk';
 // }
-$config['base_url'] = 'https://' . (array_key_exists('HTTP_X_FORWARDED_HOST', $_SERVER) ? $_SERVER['HTTP_X_FORWARDED_HOST'] : $_SERVER['HTTP_HOST']);
+// Safe for CLI: check if HTTP_HOST exists before accessing it
+$config['base_url'] = 'https://' . (array_key_exists('HTTP_X_FORWARDED_HOST', $_SERVER) ? $_SERVER['HTTP_X_FORWARDED_HOST'] : (array_key_exists('HTTP_HOST', $_SERVER) ? $_SERVER['HTTP_HOST'] : 'localhost'));
 //$config['base_url'] = '';
 //$config['base_url'] = (array_key_exists('REQUEST_SCHEME',$_SERVER) ? $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'] : '');
 
