@@ -319,6 +319,12 @@ class CI_Config {
 			}
 		}
 
+		// If base URL is IP Address use http instead of https
+		$host = parse_url($base_url, PHP_URL_HOST);
+		if (filter_var($host, FILTER_VALIDATE_IP)) {
+			$base_url = preg_replace("/^https:/i", "http:", $base_url);
+		}
+
 		return $base_url.$this->_uri_string($uri);
 	}
 

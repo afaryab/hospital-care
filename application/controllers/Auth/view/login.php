@@ -8,8 +8,8 @@
 <meta http-equiv="Content-type" content="text/html; charset=utf-8">
 <meta content="" name="description"/>
 <meta content="" name="author"/>
-    <link href="<?php echo base_url('public/fonts/fa/web-fonts-with-css/css/fontawesome-all.css') ?>" rel="stylesheet" type="text/css"/>
-    <link href="<?php echo base_url('public/fonts/Barlow/css.css') ?>" rel="stylesheet" type="text/css"/>
+<link href="<?php echo base_url('public/fonts/fa/web-fonts-with-css/css/fontawesome-all.css') ?>" rel="stylesheet" type="text/css"/>
+<link href="<?php echo base_url('public/fonts/Barlow/css.css') ?>" rel="stylesheet" type="text/css"/>
 <link href="<?php echo base_url('/public/plugins/simple-line-icons/simple-line-icons.min.css') ?>" rel="stylesheet" type="text/css"/>
 <link href="<?php echo base_url('/public/plugins/bootstrap/css/bootstrap.min.css') ?>" rel="stylesheet" type="text/css"/>
 <!-- END GLOBAL MANDATORY STYLES -->
