@@ -38,7 +38,7 @@ $is_https = (
 	(isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
 	(getenv('HTTPS') && strtolower(getenv('HTTPS')) !== 'off')
 );
-$config['base_url'] = ($is_https ? 'https://' : 'http://') . (getenv('APP_URL', false) ? getenv('APP_URL') : (array_key_exists('HTTP_X_FORWARDED_HOST', $_SERVER) ? $_SERVER['HTTP_X_FORWARDED_HOST'] : (array_key_exists('HTTP_HOST', $_SERVER) ? $_SERVER['HTTP_HOST'] : 'localhost')));
+$config['base_url'] =  'http://' . (getenv('APP_URL', false) ? getenv('APP_URL') : (array_key_exists('HTTP_X_FORWARDED_HOST', $_SERVER) ? $_SERVER['HTTP_X_FORWARDED_HOST'] : (array_key_exists('HTTP_HOST', $_SERVER) ? $_SERVER['HTTP_HOST'] : 'localhost')));
 //$config['base_url'] = '';
 //$config['base_url'] = (array_key_exists('REQUEST_SCHEME',$_SERVER) ? $_SERVER['REQUEST_SCHEME'].'://'.$_SERVER['HTTP_HOST'] : '');
 
