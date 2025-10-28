@@ -93,11 +93,11 @@ class EmergencyCounter extends MY_Controller
                         $ym_escaped = $this->db->escape(date("Y-m")); // returns quoted & escaped string
                         $createdEmergencyPatientsThisMonth = $this->emergency_patients->countBy("DATE_FORMAT(created_on, '%Y-%m') = " . $ym_escaped);
                         
-                        $emergencyPatientId = $this->commonModel->addNew([
+                        $emergencyPatientId = $this->emergency_patients->addNew([
                             'site_patient_id' => $patientId
                         ]);
                         
-                        $emergencyPatient =  $this->commonModel->findOneBy(['id' => $emergencyPatientId]);
+                        $emergencyPatient =  $this->emergency_patients->findOneBy(['id' => $emergencyPatientId]);
                         $emergencypatientPSNumber = date("Y/m").'/EMR/'.str_pad($createdEmergencyPatientsThisMonth++, 6, '0', STR_PAD_LEFT);
 
                         $this->load->model('commonModel', 'emergency_ps_numbers');
