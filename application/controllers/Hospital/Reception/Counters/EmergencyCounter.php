@@ -255,7 +255,7 @@ class EmergencyCounter extends MY_Controller
             }
             
             
-            $html = $this->load->makeViewWithOutTemplate('emergency_counter', $this->_pageData, true);
+            $html = $this->load->makeViewWithOutTemplate('counter/emergency_counter', $this->_pageData, true);
             
             $this->makeView($html);
         }else{

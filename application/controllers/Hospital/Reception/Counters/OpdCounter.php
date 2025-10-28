@@ -73,63 +73,64 @@ class OpdCounter extends MY_Controller
                     $this->commonModel->setTableName('opd_patients');
                     $opdPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
 
-                    $this->commonModel->setTableName('inpt_patients');
-                    $inptPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
 
-                    $this->commonModel->setTableName('emergency_patients');
-                    $emergencyPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                    if(!$opdPatient){
+                        
+                        $ym_escaped = $this->db->escape(date("Y-m")); // returns quoted & escaped string
+                        $createdOPDPatientsThisMonth = $this->commonModel->countBy("DATE_FORMAT(created_on, '%Y-%m') = " . $ym_escaped);
 
-                    $this->commonModel->setTableName('xray_patients');
-                    $xrayPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                        $opdPatientId = $this->commonModel->addNew([
+                            'site_patient_id' => $patientId
+                        ]);
 
-                    $this->commonModel->setTableName('laboratory_patients');
-                    $testPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                        $opdPatient =  $this->commonModel->findOneBy(['id' => $opdPatientId]);
+                        $opdPatientPSNumber = date("Y/m").'/OPD/'.str_pad($createdOPDPatientsThisMonth++, 6, '0', STR_PAD_LEFT);
+
+                        $this->load->model('commonModel', 'opd_ps_numbers');
+                        $this->opd_ps_numbers->setTableName('opd_ps_numbers');
+                        $this->opd_ps_numbers->addNew([
+                            'patient_id' => $patientId,
+                            'opd_patient_id' => $opdPatientId,
+                            'ps_number' => $opdPatientPSNumber
+                        ]);
+                    }
 
                 }else{
+
+                    // Count patients created in the current year-month using a raw WHERE clause
+                    $ym_escaped = $this->db->escape(date("Y-m")); // returns quoted & escaped string
+                    $createdPatientsThisMonth = $this->commonModel->countBy("DATE_FORMAT(created_on, '%Y-%m') = " . $ym_escaped);
                     
                     $patientId = $this->commonModel->addNew($patientArray);
                     $patient =  $this->commonModel->findOneBy(['id' => $patientId]);
 
+                    $patientPSNumber = date("Y/m").'/'.str_pad($createdPatientsThisMonth++, 6, '0', STR_PAD_LEFT);
+
+                    $this->load->model('commonModel', 'ps_numbers');
+                    $this->ps_numbers->setTableName('ps_numbers');
+                    $this->ps_numbers->addNew([
+                        'patient_id' => $patientId,
+                        'ps_number' => $patientPSNumber
+                    ]);
+
                     $this->load->model('commonModel', 'opd_patients');
                     $this->opd_patients->setTableName('opd_patients');
+                    $createdOPDPatientsThisMonth = $this->opd_patients->countBy("DATE_FORMAT(created_on, '%Y-%m') = " . $ym_escaped);
 
                     $opdPatientId = $this->opd_patients->addNew([
                         'site_patient_id' => $patientId
                     ]);
                     $opdPatient =  $this->opd_patients->findOneBy(['id' => $opdPatientId]);
+                    $opdpatientPSNumber = date("Y/m").'/OPD/'.str_pad($createdOPDPatientsThisMonth++, 6, '0', STR_PAD_LEFT);
 
-                    $this->load->model('commonModel', 'inpt_patients');
-                    $this->inpt_patients->setTableName('inpt_patients');
-
-                    $inptPatientId = $this->inpt_patients->addNew([
-                        'site_patient_id' => $patientId
+                    $this->load->model('commonModel', 'opd_ps_numbers');
+                    $this->opd_ps_numbers->setTableName('opd_ps_numbers');
+                    $this->opd_ps_numbers->addNew([
+                        'patient_id' => $patientId,
+                        'opd_patient_id' => $opdPatientId,
+                        'ps_number' => $opdpatientPSNumber
                     ]);
-                    $inptPatient =  $this->inpt_patients->findOneBy(['id' => $inptPatientId]);
 
-                    $this->load->model('commonModel', 'emergency_patients');
-                    $this->emergency_patients->setTableName('emergency_patients');
-
-                    $emerPatientId = $this->emergency_patients->addNew([
-                        'site_patient_id' => $patientId
-                    ]);
-                    $emergencyPatient =  $this->emergency_patients->findOneBy(['id' => $emerPatientId]);
-
-                    $this->load->model('commonModel', 'xray_patients');
-                    $this->xray_patients->setTableName('xray_patients');
-
-                    $xrayPatientId = $this->xray_patients->addNew([
-                        'site_patient_id' => $patientId
-                    ]);
-                    $xrayPatient =  $this->xray_patients->findOneBy(['id' => $xrayPatientId]);
-                    
-                    $this->load->model('commonModel', 'laboratory_patients');
-                    $this->laboratory_patients->setTableName('laboratory_patients');
-
-                    $testPatientId = $this->laboratory_patients->addNew([
-                        'site_patient_id' => $patientId
-                    ]);
-                    $testPatient =  $this->laboratory_patients->findOneBy(['id' => $testPatientId]);
-                    
                 }
 
                 $receptionTransaction = [
@@ -169,8 +170,7 @@ class OpdCounter extends MY_Controller
                 
 
                 foreach($_POST['cart_services'] as $cartService){
-                    
-                    
+
                     if($cartService['servicetype'] == 'OPD'){
 
                         $selected_service = array_filter(
@@ -214,136 +214,6 @@ class OpdCounter extends MY_Controller
                         $this->opd_transactions->setTableName('opd_transactions');
                         $transactionId = $this->opd_transactions->addNew($arrayToDB);
 
-                    }elseif($cartService['servicetype'] == 'INPT'){
-
-                        $selected_service = array_filter(
-                            $this->_pageData['inpatient_services'],
-                            function ($e) use (&$cartService) {
-                                return $e['id'] == $cartService['serviceid'];
-                            }
-                        );
-
-                        $fileArray = [
-                            'status' => 'OPEN',
-                            'patient_id' => $patient['id'],
-                            'inpatient_patient_id' => $opdPatient['id'],
-                            'patient_is_first_visit' => 1,
-                            'treatment_by' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'will_occure_on' => null,
-                            'service_id' => $cartService['serviceid'],
-                            'service_name' => $selected_service[array_key_first($selected_service)]['name'],
-                            'file_charges' => $cartService['pakage_amount'],
-                            'file_orignal_charges' => $selected_service[array_key_first($selected_service)]['charges'],
-                            'file_charges_paid' => (int)$cartService['billedamount']
-                        ];
-    
-                        $this->load->model('commonModel', 'inpatient_file');
-                        $this->inpatient_file->setTableName('inpatient_file');
-                        $fileId = $this->inpatient_file->addNew($fileArray);
-                        
-                        $arrayToDB = [  
-                            'patient_id' => $patient['id'],
-                            'doctor_id' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'amount_in_num' => (int)$cartService['billedamount'],
-                            'amount_in_figure' => '',
-                            'payment_type' => $_POST['payment_type'],
-                            'payment_refference' => $_POST['payment_reference'],
-                            'receaved_by' => $this->aauth->get_user_id(),
-                            'submitted_for_accounts' => 0,
-                            'cleared_by_accounts' => 0,
-                            'file_id' => $fileId,
-                            'units' => array_key_exists('quantity', $cartService) ? $cartService['quantity'] : 0,
-                            'reception_transaction_id' => $receptionTransactionId
-                        ];
-                        $this->load->model('commonModel', 'inpatient_transactions');
-                        $this->inpatient_transactions->setTableName('inpatient_transactions');
-                        $transactionId = $this->inpatient_transactions->addNew($arrayToDB);
-
-                    }elseif($cartService['servicetype'] == 'EMER'){
-
-                        $selected_service = array_filter(
-                            $this->_pageData['emergency_services'],
-                            function ($e) use (&$cartService) {
-                                return $e['id'] == $cartService['serviceid'];
-                            }
-                        );
-
-                        $treatmentArray = [
-                            'patient_id' => $patient['id'],
-                            'emergency_patient_id' => $opdPatient['id'],
-                            'treatment_by' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'will_occure_on' => date("Y-m-d h:i:s"),
-                            'service_id' => $cartService['serviceid'],
-                            'service_name' => $selected_service[array_key_first($selected_service)]['name'],
-                            'treatment_charges' => (int)$cartService['billedamount']
-                        ];
-    
-                        $this->load->model('commonModel', 'emergency_treatments');
-                        $this->emergency_treatments->setTableName('emergency_treatments');
-                        $treatmentId = $this->emergency_treatments->addNew($treatmentArray);
-                        
-                        $arrayToDB = [  
-                            'patient_id' => $patient['id'],
-                            'doctor_id' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'service_id' => $cartService['serviceid'],
-                            'amount_in_num' => (int)$cartService['billedamount'],
-                            'amount_in_figure' => '',
-                            'payment_type' => $_POST['payment_type'],
-                            'payment_refference' => $_POST['payment_reference'],
-                            'receaved_by' => $this->aauth->get_user_id(),
-                            'submitted_for_accounts' => 0,
-                            'cleared_by_accounts' => 0,
-                            'treatment_id' => $treatmentId,
-                            'units' => array_key_exists('quantity', $cartService) ? $cartService['quantity'] : 0,
-                            'reception_transaction_id' => $receptionTransactionId
-                        ];
-                        $this->load->model('commonModel', 'emergency_transactions');
-                        $this->emergency_transactions->setTableName('emergency_transactions');
-                        $transactionId = $this->emergency_transactions->addNew($arrayToDB);
-
-                    }elseif($cartService['servicetype'] == 'RADP'){
-
-                        $selected_service = array_filter(
-                            $this->_pageData['xray_services'],
-                            function ($e) use (&$cartService) {
-                                return $e['id'] == $cartService['serviceid'];
-                            }
-                        );
-
-                        $treatmentArray = [
-                            'status' => 'OPEN',
-                            'patient_id' => $patient['id'],
-                            'xray_patient_id' => $opdPatient['id'],
-                            'patient_is_first_visit' => 1,
-                            'treatment_by' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'will_occure_on' => date("Y-m-d h:i:s"),
-                            'service_id' => $cartService['serviceid'],
-                            'service_name' => $selected_service[array_key_first($selected_service)]['name'],
-                            'treatment_charges' => (int)$cartService['billedamount']
-                        ];
-    
-                        $this->load->model('commonModel', 'xray_treatments');
-                        $this->xray_treatments->setTableName('xray_treatments');
-                        $treatmentId = $this->xray_treatments->addNew($treatmentArray);
-                        
-                        $arrayToDB = [  
-                            'patient_id' => $patient['id'],
-                            'doctor_id' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'service_id' => $cartService['serviceid'],
-                            'amount_in_num' => (int)$cartService['billedamount'],
-                            'amount_in_figure' => '',
-                            'payment_type' => $_POST['payment_type'],
-                            'payment_refference' => $_POST['payment_reference'],
-                            'receaved_by' => $this->aauth->get_user_id(),
-                            'submitted_for_accounts' => 0,
-                            'cleared_by_accounts' => 0,
-                            'treatment_id' => $treatmentId,
-                            'units' => array_key_exists('quantity', $cartService) ? $cartService['quantity'] : 0,
-                            'reception_transaction_id' => $receptionTransactionId
-                        ];
-                        $this->load->model('commonModel', 'xray_transactions');
-                        $this->xray_transactions->setTableName('xray_transactions');
-                        $transactionId = $this->xray_transactions->addNew($arrayToDB);
                     }
                     
                     if($cartService['servicetype'] == 'OPD'){
@@ -424,28 +294,7 @@ class OpdCounter extends MY_Controller
                         $this->load->model('commonModel', 'reception_counters_closings_transaction_elements');
                         $this->reception_counters_closings_transaction_elements->setTableName('reception_counters_closings_transaction_elements');
                         $this->reception_counters_closings_transaction_elements->addNew($ReceptionTransactionElement);
-                    }else{
-                        $ReceptionTransactionElement = [
-                            'counter_id' => $this->_pageData['counter']['id'],
-                            'service_id' => $cartService['serviceid'],
-                            'closing_transaction_id' => $receptionTransactionId,
-                            'patient_id' => $patientId,
-                            'user_id' => $this->_pageData['counter']['user_id'],
-                            'amount' => (int)$cartService['billedamount'],
-                            'department_transaction_id' => $transactionId ,
-                            'type' => $cartService['servicetype'],
-                            'original_amount' => $selected_service[array_key_first($selected_service)]['charges'],
-                    
-                        ];
-                        $this->load->model('commonModel', 'reception_counters_closings_transaction_elements');
-                        $this->reception_counters_closings_transaction_elements->setTableName('reception_counters_closings_transaction_elements');
-                        $this->reception_counters_closings_transaction_elements->addNew($ReceptionTransactionElement);
-
-
                     }
-
-                    
-                    
                 } 
 
                 redirect($this->_pageData['PRINT_RECEIPT'].$receptionTransactionId);
@@ -459,70 +308,6 @@ class OpdCounter extends MY_Controller
         }
     }
 
-    public function PatientSearch(){
-        if($this->isLoggedIn()) {
-
-            $table = 'patients';
-           
-
-
-            // Table's primary key
-            $primaryKey = 'id';
-
-            // Array of database columns which should be read and sent back to DataTables.
-            // The `db` parameter represents the column name in the database, while the `dt`
-            // parameter represents the DataTables column identifier. In this case simple
-            // indexes
-            $columns = array(
-                array('db' => 'id', 'table' => $table, 'dt' => 0,'as' => 'id'),
-                array('db' => 'pateint_name', 'table' => $table, 'dt' => 1,'as' => 'pateint_name'),
-                array('db' => 'patient_contact_mobile', 'table' => $table, 'dt' => 2,'as' => 'patient_contact_mobile'),
-                array('db' => 'patient_cnic', 'table' => $table, 'dt' => 3,'as' => 'patient_cnic'),
-                array(
-                    'db' => 'created_on',
-                    'as' => 'created_on',
-                    'dt' => 4,
-                    'table' => $table,
-                    'formatter' => function ($id, $row) {
-                        $html='';
-                        
-                        
-                        $html .= '<a onclick="selectPatient(\''.$row['id'].'\',\''.$row['pateint_name'].'\',\''.$row['guardian'].'\',\''.$row['relation'].'\',\''.$row['patient_contact_mobile'].'\',\''.$row['patient_cnic'].'\',\''.$row['patient_address'].'\',\''.$row['age_days'].'\',\''.$row['gender'].'\')" class="btn btn-sm btn-default pull-right" title="Select '. $row['pateint_name'] .'" ><i class="fas fa-bolt" style="color:green;"></i></a>';
-                        
-
-                        return $html;
-                    }
-                ),
-                array('db' => 'age_days', 'table' => $table, 'dt' => 5,'as' => 'age_days'),
-                array('db' => 'gender', 'table' => $table, 'dt' => 6,'as' => 'gender'),
-                array('db' => 'guardian', 'table' => $table, 'dt' => 7,'as' => 'guardian'),
-                array('db' => 'patient_address', 'table' => $table, 'dt' => 8,'as' => 'patient_address'),
-                array('db' => 'relation', 'table' => $table, 'dt' => 9,'as' => 'relation')
-            );
-
-            // SQL server connection information
-            $sql_details = array(
-                'user' => $this->db->username,
-                'pass' => $this->db->password,
-                'db' => $this->db->database,
-                'host' => $this->db->hostname
-            );
-
-
-            /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-             * If you just want to use the basic configuration for DataTables with PHP
-             * server-side, there is no need to edit below this line.
-             */
-
-            require(__DIR__.'/../../../third_party/ssp.class.php');
-
-            echo json_encode(
-                SSP::simple($_GET, $sql_details, $table, $primaryKey, $columns)
-            );
-        }else{
-            echo json_encode([]);
-        }
-    }
     
 }
 
