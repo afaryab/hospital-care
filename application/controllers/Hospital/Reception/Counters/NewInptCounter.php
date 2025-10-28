@@ -17,23 +17,23 @@ class NewInptCounter extends MY_Controller
 
             $this->load->model('commonModel', 'commonModel');
 
-            $this->_pageData['opd_doctors'] = $this->aauth->getOpdDoctors('is_opd_doctor');
+            $this->_pageData['opd_doctors'] = []; //$this->aauth->getOpdDoctors('is_opd_doctor');
             $this->_pageData['inpatient_doctors'] = $this->aauth->getOpdDoctors('is_inpatient_doctor');
-            $this->_pageData['xray_tech'] = $this->aauth->getOpdDoctors('is_xray_tech');
+            $this->_pageData['xray_tech'] = []; //$this->aauth->getOpdDoctors('is_xray_tech');
 
             $this->_pageData['title'] = 'Hospital New Inpatient Counter';
             $this->_pageData['module'] = 'Hospital New Inpatient Counter';
 
             $this->commonModel->setTableName('opd_services');
-            $this->_pageData['opd_services'] =  $this->commonModel->getAll();
+            $this->_pageData['opd_services'] =  []; //$this->commonModel->getAll();
             $this->commonModel->setTableName('inpd_services');
             $this->_pageData['inpatient_services'] =  $this->commonModel->getAll();
             $this->commonModel->setTableName('emergency_services');
-            $this->_pageData['emergency_services'] =  $this->commonModel->getAll();
+            $this->_pageData['emergency_services'] =  []; //$this->commonModel->getAll();
             $this->commonModel->setTableName('xray_services');
-            $this->_pageData['xray_services'] =  $this->commonModel->getAll();
+            $this->_pageData['xray_services'] =  []; //$this->commonModel->getAll();
             $this->commonModel->setTableName('test_services');
-            $this->_pageData['test_services'] =  $this->commonModel->getAll();
+            $this->_pageData['test_services'] =  []; //$this->commonModel->getAll();
             $this->_pageData['patient_id'] = $id;
             $this->_pageData['closingArray'] = $this->receptionClosingArray;
             $this->commonModel->setTableName('inpd_rooms');
@@ -74,65 +74,66 @@ class NewInptCounter extends MY_Controller
                     $patientId = $_POST['patient_id'];
                     $patient =  $this->commonModel->findOneBy(['id' => $_POST['patient_id']]);
 
-                    $this->commonModel->setTableName('opd_patients');
-                    $opdPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
-
                     $this->commonModel->setTableName('inpt_patients');
                     $inptPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                    $inptPatientId = $inptPatient ? $inptPatient['id'] : null;
 
-                    $this->commonModel->setTableName('emergency_patients');
-                    $emergencyPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                    if(!$inptPatient){
+                        $ym_escaped = $this->db->escape(date("Y-m")); // returns quoted & escaped string
+                        $createdInptPatientsThisMonth = $this->commonModel->countBy("DATE_FORMAT(created_on, '%Y-%m') = " . $ym_escaped);
 
-                    $this->commonModel->setTableName('xray_patients');
-                    $xrayPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                        $inptPatientId = $this->commonModel->addNew([
+                            'site_patient_id' => $patientId
+                        ]);
 
-                    $this->commonModel->setTableName('laboratory_patients');
-                    $testPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                        $inptPatient =  $this->commonModel->findOneBy(['id' => $inptPatientId]);
+                        $inptPatientPSNumber = date("Y/m").'/ID/'.str_pad($createdInptPatientsThisMonth++, 6, '0', STR_PAD_LEFT);
+
+                        $this->load->model('commonModel', 'inpatient_ps_numbers');
+                        $this->inpatient_ps_numbers->setTableName('inpatient_ps_numbers');
+                        $this->inpatient_ps_numbers->addNew([
+                            'patient_id' => $patientId,
+                            'inpatient_patient_id' => $inptPatientId,
+                            'ps_number' => $inptPatientPSNumber
+                        ]);
+                    }
+
+
 
                 }else{
+
+                    $ym_escaped = $this->db->escape(date("Y-m")); // returns quoted & escaped string
+                    $createdPatientsThisMonth = $this->commonModel->countBy("DATE_FORMAT(created_on, '%Y-%m') = " . $ym_escaped);
                     
                     $patientId = $this->commonModel->addNew($patientArray);
                     $patient =  $this->commonModel->findOneBy(['id' => $patientId]);
 
-                    $this->load->model('commonModel', 'opd_patients');
-                    $this->opd_patients->setTableName('opd_patients');
+                    $patientPSNumber = date("Y/m").'/'.str_pad($createdPatientsThisMonth++, 6, '0', STR_PAD_LEFT);
 
-                    $opdPatientId = $this->opd_patients->addNew([
-                        'site_patient_id' => $patientId
+                    $this->load->model('commonModel', 'ps_numbers');
+                    $this->ps_numbers->setTableName('ps_numbers');
+                    $this->ps_numbers->addNew([
+                        'patient_id' => $patientId,
+                        'ps_number' => $patientPSNumber
                     ]);
-                    $opdPatient =  $this->opd_patients->findOneBy(['id' => $opdPatientId]);
 
                     $this->load->model('commonModel', 'inpt_patients');
                     $this->inpt_patients->setTableName('inpt_patients');
+                    $createdInptPatientsThisMonth = $this->inpt_patients->countBy("DATE_FORMAT(created_on, '%Y-%m') = " . $ym_escaped);
 
                     $inptPatientId = $this->inpt_patients->addNew([
                         'site_patient_id' => $patientId
                     ]);
                     $inptPatient =  $this->inpt_patients->findOneBy(['id' => $inptPatientId]);
+                    $inptpatientPSNumber = date("Y/m").'/ID/'.str_pad($createdInptPatientsThisMonth++, 6, '0', STR_PAD_LEFT);
 
-                    $this->load->model('commonModel', 'emergency_patients');
-                    $this->emergency_patients->setTableName('emergency_patients');
-
-                    $emerPatientId = $this->emergency_patients->addNew([
-                        'site_patient_id' => $patientId
+                    $this->load->model('commonModel', 'inpatient_ps_numbers');
+                    $this->inpatient_ps_numbers->setTableName('inpatient_ps_numbers');
+                    $this->inpatient_ps_numbers->addNew([
+                        'patient_id' => $patientId,
+                        'inpatient_patient_id' => $inptPatientId,
+                        'ps_number' => $inptpatientPSNumber
                     ]);
-                    $emergencyPatient =  $this->emergency_patients->findOneBy(['id' => $emerPatientId]);
-
-                    $this->load->model('commonModel', 'xray_patients');
-                    $this->xray_patients->setTableName('xray_patients');
-
-                    $xrayPatientId = $this->xray_patients->addNew([
-                        'site_patient_id' => $patientId
-                    ]);
-                    $xrayPatient =  $this->xray_patients->findOneBy(['id' => $xrayPatientId]);
-                    
-                    $this->load->model('commonModel', 'laboratory_patients');
-                    $this->laboratory_patients->setTableName('laboratory_patients');
-
-                    $testPatientId = $this->laboratory_patients->addNew([
-                        'site_patient_id' => $patientId
-                    ]);
-                    $testPatient =  $this->laboratory_patients->findOneBy(['id' => $testPatientId]);
                     
                 }
 
@@ -169,56 +170,12 @@ class NewInptCounter extends MY_Controller
                 $this->load->model('commonModel', 'reception_counters_closings');
                 $this->reception_counters_closings->setTableName('reception_counters_closings');
                 $this->reception_counters_closings->updateRecord($this->_pageData['counter']['id'],$updateToCounter);
-
                 
 
                 foreach($_POST['cart_services'] as $cartService){
                     
                     
-                    if($cartService['servicetype'] == 'OPD'){
-
-                        $selected_service = array_filter(
-                            $this->_pageData['opd_services'],
-                            function ($e) use (&$cartService) {
-                                return $e['id'] == $cartService['serviceid'];
-                            }
-                        );
-
-                        $treatmentArray = [
-                            'status' => 'OPEN',
-                            'patient_id' => $patient['id'],
-                            'opd_patient_id' => $opdPatient['id'],
-                            'patient_is_first_visit' => 1,
-                            'treatment_by' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'will_occure_on' => date("Y-m-d h:i:s"),
-                            'service_id' => $cartService['serviceid'],
-                            'service_name' => $selected_service[array_key_first($selected_service)]['name']
-                        ];
-    
-                        $this->load->model('commonModel', 'opd_treatments');
-                        $this->opd_treatments->setTableName('opd_treatments');
-                        $treatmentId = $this->opd_treatments->addNew($treatmentArray);
-                        
-                        $arrayToDB = [  
-                            'patient_id' => $patient['id'],
-                            'doctor_id' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'service_id' => $cartService['serviceid'],
-                            'treatment_id' => $treatmentId,
-                            'amount_in_num' => (int)$cartService['billedamount'],
-                            'amount_in_figure' => '',
-                            'payment_type' => $_POST['payment_type'],
-                            'payment_refference' => $_POST['payment_reference'],
-                            'receaved_by' => $this->aauth->get_user_id(),
-                            'submitted_for_accounts' => 0,
-                            'cleared_by_accounts' => 0,
-                            'units' => array_key_exists('quantity', $cartService) ? $cartService['quantity'] : 0,
-                            'reception_transaction_id' => $receptionTransactionId
-                        ];
-                        $this->load->model('commonModel', 'opd_transactions');
-                        $this->opd_transactions->setTableName('opd_transactions');
-                        $transactionId = $this->opd_transactions->addNew($arrayToDB);
-
-                    }elseif($cartService['servicetype'] == 'INPT'){
+                    if($cartService['servicetype'] == 'INPT'){
 
                         $selected_service = array_filter(
                             $this->_pageData['inpatient_services'],
@@ -249,7 +206,7 @@ class NewInptCounter extends MY_Controller
                         $fileArray = [
                             'status' => 'OPEN',
                             'patient_id' => $patient['id'],
-                            'inpatient_patient_id' => $opdPatient['id'],
+                            'inpatient_patient_id' => $inptPatientId,
                             'patient_is_first_visit' => 1,
                             'treatment_by' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
                             'room_id' => array_key_exists('selected_room', $cartService) && $cartService['selected_room'] ? $cartService['selected_room'] : null,
@@ -286,91 +243,6 @@ class NewInptCounter extends MY_Controller
                         $this->inpatient_transactions->setTableName('inpatient_transactions');
                         $transactionId = $this->inpatient_transactions->addNew($arrayToDB);
 
-                    }elseif($cartService['servicetype'] == 'EMER'){
-
-                        $selected_service = array_filter(
-                            $this->_pageData['emergency_services'],
-                            function ($e) use (&$cartService) {
-                                return $e['id'] == $cartService['serviceid'];
-                            }
-                        );
-
-                        $treatmentArray = [
-                            'patient_id' => $patient['id'],
-                            'emergency_patient_id' => $opdPatient['id'],
-                            'treatment_by' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'will_occure_on' => date("Y-m-d h:i:s"),
-                            'service_id' => $cartService['serviceid'],
-                            'service_name' => $selected_service[array_key_first($selected_service)]['name'],
-                            'treatment_charges' => (int)$cartService['billedamount']
-                        ];
-    
-                        $this->load->model('commonModel', 'emergency_treatments');
-                        $this->emergency_treatments->setTableName('emergency_treatments');
-                        $treatmentId = $this->emergency_treatments->addNew($treatmentArray);
-                        
-                        $arrayToDB = [  
-                            'patient_id' => $patient['id'],
-                            'doctor_id' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'service_id' => $cartService['serviceid'],
-                            'amount_in_num' => (int)$cartService['billedamount'],
-                            'amount_in_figure' => '',
-                            'payment_type' => $_POST['payment_type'],
-                            'payment_refference' => $_POST['payment_reference'],
-                            'receaved_by' => $this->aauth->get_user_id(),
-                            'submitted_for_accounts' => 0,
-                            'cleared_by_accounts' => 0,
-                            'treatment_id' => $treatmentId,
-                            'units' => array_key_exists('quantity', $cartService) ? $cartService['quantity'] : 0,
-                            'reception_transaction_id' => $receptionTransactionId
-                        ];
-                        $this->load->model('commonModel', 'emergency_transactions');
-                        $this->emergency_transactions->setTableName('emergency_transactions');
-                        $transactionId = $this->emergency_transactions->addNew($arrayToDB);
-
-                    }elseif($cartService['servicetype'] == 'RADP'){
-
-                        $selected_service = array_filter(
-                            $this->_pageData['xray_services'],
-                            function ($e) use (&$cartService) {
-                                return $e['id'] == $cartService['serviceid'];
-                            }
-                        );
-
-                        $treatmentArray = [
-                            'status' => 'OPEN',
-                            'patient_id' => $patient['id'],
-                            'xray_patient_id' => $opdPatient['id'],
-                            'patient_is_first_visit' => 1,
-                            'treatment_by' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'will_occure_on' => date("Y-m-d h:i:s"),
-                            'service_id' => $cartService['serviceid'],
-                            'service_name' => $selected_service[array_key_first($selected_service)]['name'],
-                            'treatment_charges' => (int)$cartService['billedamount']
-                        ];
-    
-                        $this->load->model('commonModel', 'xray_treatments');
-                        $this->xray_treatments->setTableName('xray_treatments');
-                        $treatmentId = $this->xray_treatments->addNew($treatmentArray);
-                        
-                        $arrayToDB = [  
-                            'patient_id' => $patient['id'],
-                            'doctor_id' => array_key_exists('service_provider', $cartService) && $cartService['service_provider'] ? $cartService['service_provider'] : null,
-                            'service_id' => $cartService['serviceid'],
-                            'amount_in_num' => (int)$cartService['billedamount'],
-                            'amount_in_figure' => '',
-                            'payment_type' => $_POST['payment_type'],
-                            'payment_refference' => $_POST['payment_reference'],
-                            'receaved_by' => $this->aauth->get_user_id(),
-                            'submitted_for_accounts' => 0,
-                            'cleared_by_accounts' => 0,
-                            'treatment_id' => $treatmentId,
-                            'units' => array_key_exists('quantity', $cartService) ? $cartService['quantity'] : 0,
-                            'reception_transaction_id' => $receptionTransactionId
-                        ];
-                        $this->load->model('commonModel', 'xray_transactions');
-                        $this->xray_transactions->setTableName('xray_transactions');
-                        $transactionId = $this->xray_transactions->addNew($arrayToDB);
                     }
                     
                     $ReceptionTransactionElement = [

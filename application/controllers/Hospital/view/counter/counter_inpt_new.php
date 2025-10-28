@@ -22,10 +22,11 @@
                                     <div class="col-md-12">
                                         <div class="input-group">
                                             <span class="input-group-addon"><i class="fas fa-fingerprint"></i></span>
-                                            <input id="patient_id" name="patient_id" class="form-control" placeholder="Patient Token/ID Number" type="text">
+                                            <input id="patient_number" name="patient_number" class="form-control" placeholder="Patient Number e.g: 2025/10/{SER}/{SR-NO}" type="text">
+                                            <input id="patient_id" name="patient_id" class="form-control" placeholder="" type="hidden">
                                             <span class="input-group-addon bg-danger cursor-pointer" onclick="clearPatient()"><i class="fas fa-broom text-white"></i></span>
                                         </div>
-                                        <p class="help-block">Please provide patient id number</p>
+                                        <p class="help-block">Please provide patient number e.g: 2025/10/{SER}/{SR-NO}</p>
                                     </div>
                                     <div class="col-md-12">
                                         <div class="input-group">
@@ -262,6 +263,7 @@
     var ChangeAmount = '#change_amount'
     
     var PatientIdElement = $('#patient_id');
+    var PatientNumberElement = $('#patient_number');
     var PatientNameElement = $('#patient_name');
     var PatientContactElement = $('#patient_contact');
     var PatientCnicElement = $('#patient_cnic');
@@ -486,6 +488,7 @@
     function clearPatient (){
         
         PatientIdElement.val("");
+        PatientNumberElement.val("");
         PatientNameElement.val("");
         PatientGuardianElement.val("");
         PatientRelationElement.val("");
@@ -658,15 +661,13 @@
             reRenderCart();
         });
 
-        PatientIdElement.on('keyup change', function () {
-            var i = 0;
-            if ( table.column(i).search() !== this.value ) {
-                table
-                    .column(i)
-                    .search( this.value )
-                    .draw();
-            }
-        })
+        PatientNumberElement.on('keyup change', function () {
+            var i = 1;
+            table
+                .column(i)
+                .search('')
+                .draw();
+        });
 
         PatientNameElement.on('keyup change', function () {
             var i = 1;
@@ -749,7 +750,13 @@
             "processing": true,
             "serverSide": true,
             "pageLength": 3,
-            "ajax": "<?= site_url($HOSPITAL_REC_PATIENTS_JSON_URL) ?>",
+            "ajax": {
+                "url": "<?= site_url($HOSPITAL_REC_PATIENTS_JSON_URL) ?>",
+                "data": function(d){
+                    // append patient number value to every ajax request
+                    d.patient_number = PatientNumberElement.val();
+                }
+            },
             "initComplete": function(){
                 $('a[title]').tooltip();
             },
