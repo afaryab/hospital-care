@@ -20,114 +20,84 @@
                         <form method="POST">
                             <div class="row">
                                 <div class="col-md-6 m-t-4 m-b-4">
-                                    <div class="col-md-12">
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="fas fa-fingerprint"></i></span>
-                                            <input id="patient_number" name="patient_number" class="form-control" placeholder="Patient Number e.g: 2025/10/{SER}/{SR-NO} or 2025/10/{SR-NO}" type="text">
-                                            <input id="patient_id" name="patient_id" class="form-control" placeholder="" type="hidden">
-                                            <span class="input-group-addon bg-danger cursor-pointer" onclick="clearPatient()"><i class="fas fa-broom text-white"></i></span>
-                                        </div>
-                                        <p class="help-block">Please provide MR Number e.g: 2025/10/{SER}/{SR-NO}</p>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="fas fa-signature"></i></span>
-                                            <input id="patient_name" name="patient_name" required class="form-control" placeholder="Patient Name" type="text">
-                                        </div>
-                                        <p class="help-block">Please provide patient Name</p>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="fas fa-user-shield"></i></span>
-                                            <input id="guardian" name="guardian" class="form-control" placeholder="Guardian Name" type="text">
-                                        </div>
-                                        <!-- <p class="help-block">S / O , D / O , W / O</p> -->
-                                    </div>
-                                    <div class="col-md-12">
-                                        <div class="input-group">
-                                            <span class="input-group-addon">Relation</i></span>
-                                            <!-- <input id="gender" name="gender" class="form-control" placeholder="Patient Sex" type="text"> -->
-                                            <input type="radio" class="form-control" id="son" name="relation" value="Son">
-                                            <label for="son">S / O</label>
-                                            <input type="radio" class="form-control" id="daughter" name="relation" value="Daughter">
-                                            <label for="daughter">D / O</label>
-                                            <input type="radio" class="form-control" id="wife" name="relation" value="Wife">
-                                            <label for="wife">W / O</label>
-                                            <input type="hidden" name="relation" value="" />
-                                        
-                                        </div>
-                                        <p class="help-block">&nbsp;</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="fas fa-phone"></i></span>
-                                            <input id="patient_contact" name="patient_contact" class="form-control" placeholder="Patient Contact" type="text">
-                                        </div>
-                                        <p class="help-block">Please provide patient contact</p>
-                                    </div>
                                     
-                                    <div class="col-md-6">
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="fas fa-id-card-alt"></i></span>
-                                            <input id="patient_cnic" name="patient_cnic" class="form-control" placeholder="Patient CNIC Number" type="text">
-                                        </div>
-                                        <p class="help-block">Please patient cnic number</p>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="fas fa-house-user"></i></span>
-                                            <input id="patient_address" name="patient_address" class="form-control" placeholder="Patient Address" type="text">
-                                        </div>
-                                        <p class="help-block">Please provide patient Address</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="fas fa-child"></i></span>
-                                            <input id="age_days" name="age_days" class="form-control" placeholder="Patient Age" type="text">
-                                        </div>
-                                        <p class="help-block">Please provide patient age</p>
-                                    </div>
-                                    
-                                    <div class="col-md-6">
-                                        <div class="input-group">
-                                            <span class="input-group-addon"><i class="fas fa-venus-double"></i></span>
-                                            <!-- <input id="gender" name="gender" class="form-control" placeholder="Patient Sex" type="text"> -->
-                                            <input type="radio" class="form-control" id="male" name="gender" checked value="Male">
-                                            <label for="male">Male</label>
-                                            <input type="radio" class="form-control" id="female" name="gender" value="Female">
-                                            <label for="female">Female</label>
-                                            <input type="radio" class="form-control" id="other" name="gender" value="BiSexual">
-                                            <label for="other">Other</label>
-                                        
-                                        </div>
-                                        <p class="help-block">Please select patient sex</p>
-                                    </div>
                                     
                                 </div>
-                                <div class="col-md-6 m-t-4 m-b-4">
-                                    <table id="example" class="table table-bordered display" cellspacing="1" width="100%">
-                                        <thead>
-                                        <tr>
-                                            <th><i class="fas fa-fingerprint"></i></th>
-                                            <th><i class="fas fa-signature"></i> Name</th>
-                                            <th><i class="fas fa-phone"></i> Contact</th>
-                                            <th><i class="fas fa-id-card-alt"></i> CNIC</th>
-                                            <th class="text-center"><i class="fas fa-bolt"></i></th>
-                                        </tr>
-                                        </thead>
-                                        <tfoot>
-                                        <tr>
-                                        <th>ID</th>
-                                            <th>Name</th>
-                                            <th>Contact</th>
-                                            <th>CNIC</th>
-                                            <th></th>
-                                        </tr>
-                                        </tfoot>
-                                        <tbody>
-                                        </tbody>
-                                    </table>
-                                </div>
+                                <div class="col-md-12" id="ServiceGrid>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <div class="card" style="max-width: 300px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden;">
+                                                        <div class="card-body text-center" style="padding: 20px;">
+                                                            <img src="<?php echo base_url('public/img/siren.png') ?>" alt="Emergency Services" style="width: 60px; height: 60px; margin-bottom: 15px; object-fit: contain;"/>
+                                                            <h5 class="card-title" style="margin: 0; color: #333; font-weight: bold;">Emergency Services</h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <div class="card" style="max-width: 300px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden;">
+                                                        <div class="card-body text-center" style="padding: 20px;">
+                                                            <img src="<?php echo base_url('public/img/opd.png') ?>" alt="OPD Services" style="width: 60px; height: 60px; margin-bottom: 15px; object-fit: contain;"/>
+                                                            <h5 class="card-title" style="margin: 0; color: #333; font-weight: bold;">OPD Services</h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <div class="card" style="max-width: 300px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden;">
+                                                        <div class="card-body text-center" style="padding: 20px;">
+                                                            <img src="<?php echo base_url('public/img/id.png') ?>" alt="Inpatient Services" style="width: 60px; height: 60px; margin-bottom: 15px; object-fit: contain;"/>
+                                                            <h5 class="card-title" style="margin: 0; color: #333; font-weight: bold;">Inpatient Services</h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <div class="card" style="max-width: 300px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden;">
+                                                        <div class="card-body text-center" style="padding: 20px;">
+                                                            <img src="<?php echo base_url('public/img/dental.png') ?>" alt="Dental Services" style="width: 60px; height: 60px; margin-bottom: 15px; object-fit: contain;"/>
+                                                            <h5 class="card-title" style="margin: 0; color: #333; font-weight: bold;">Dental Services</h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <div class="card" style="max-width: 300px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden;">
+                                                        <div class="card-body text-center" style="padding: 20px;">
+                                                            <img src="<?php echo base_url('public/img/x-ray.png') ?>" alt="X-Ray Services" style="width: 60px; height: 60px; margin-bottom: 15px; object-fit: contain;"/>
+                                                            <h5 class="card-title" style="margin: 0; color: #333; font-weight: bold;">X-Ray Services</h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <!-- Content for fifth column -->
+                                                    <div class="card" style="max-width: 300px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden;">
+                                                        <div class="card-body text-center" style="padding: 20px;">
+                                                            <img src="<?php echo base_url('public/img/lab.png') ?>" alt="Laboratory Services" style="width: 60px; height: 60px; margin-bottom: 15px; object-fit: contain;"/>
+                                                            <h5 class="card-title" style="margin: 0; color: #333; font-weight: bold;">Laboratory Services</h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <div class="card" style="max-width: 300px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); overflow: hidden;">
+                                                        <div class="card-body text-center" style="padding: 20px;">
+                                                            <img src="<?php echo base_url('public/img/ultrasound.png') ?>" alt="Ultrasound Services" style="width: 60px; height: 60px; margin-bottom: 15px; object-fit: contain;"/>
+                                                            <h5 class="card-title" style="margin: 0; color: #333; font-weight: bold;">Ultrasound Services</h5>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                             </div>
                     </form>
                 </div>

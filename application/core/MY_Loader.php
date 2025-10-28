@@ -17,6 +17,8 @@ class MY_Loader extends CI_Loader {
     }
     
     public function makeViewWithOutTemplate($view, $vars = [], $return = FALSE){
+
+        
         $this->_ci_view_paths = array_merge($this->_ci_view_paths, array(APPPATH .'controllers/'. MODULE . '/view/' => TRUE));
         
         return $this->_ci_load(array(

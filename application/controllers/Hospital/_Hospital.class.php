@@ -2,7 +2,7 @@
 
 class Hospital{
     
-    // protected $_hospital_counter_url = 'Hospital/Reception/Counter/Index';
+    protected $_hospital_counter_url = 'Hospital/Reception/Counter/Index';
     protected $_hospital_patient_search_url = 'Hospital/Reception/Counters/PatientSearch/Index';
 
     protected $_hospital_emergency_counter = 'Hospital/Reception/Counters/EmergencyCounter/Index';
@@ -73,6 +73,12 @@ class Hospital{
     protected $_hospital_dental_payments_counter = 'Hospital/Reception/Counters/DentalPaymentsCounter/Index';
     protected $_hospital_dental_payments_counter_file_serach = 'Hospital/Reception/Counters/DentalPaymentsCounter/FileSearch';
     protected $_create_dental_treatment = 'Treatments/CreateDentalTreatments/Index/';
+
+
+    protected $_hospital_expose_patient_record = 'Hospital/Reception/Expose/Index/';
+
+
+
     function getNavigation(){
         return [
             'navigations' => [
@@ -82,7 +88,7 @@ class Hospital{
                         'perm' => 'all',
                         'module' => 'Hospital Counter',
                         'icon' => 'fas fa-cart-plus',
-                        'path' => '#',
+                        'path' => $this->_hospital_counter_url,
                         'order' => 1,
                         'user_config' => 'is_receptionist',
                         'children' => [
@@ -92,90 +98,90 @@ class Hospital{
                                 'module' => 'Hospital Emergency Counter',
                                 'icon' => 'fas fa-file-invoice',
                                 'user_config' => 'is_receptionist',
-                                'path' => $this->_hospital_emergency_counter,
+                                'path' => $this->_hospital_expose_patient_record,
                                 'order' => 100
                             ],
-                            [
-                                'label' => 'OPD Counter',
-                                'perm' => 'all',
-                                'module' => 'Hospital OPD Counter',
-                                'icon' => 'fas fa-file-invoice',
-                                'user_config' => 'is_receptionist',
-                                'path' => $this->_hospital_opd_counter,
-                                'order' => 100
-                            ],
-                            [
-                                'label' => 'New Inpatient Counter',
-                                'perm' => 'all',
-                                'module' => 'Hospital New Inpatient Counter',
-                                'icon' => 'fas fa-file-invoice',
-                                'user_config' => 'is_receptionist',
-                                'path' => $this->_hospital_new_inpt_counter,
-                                'order' => 100
-                            ],
-                            [
-                                'label' => 'Inpatient Payments',
-                                'perm' => 'all',
-                                'module' => 'Hospital Inpatient Payments Counter',
-                                'icon' => 'fas fa-file-invoice',
-                                'user_config' => 'is_receptionist',
-                                'path' => $this->_hospital_inpt_payments_counter,
-                                'order' => 100
-                            ],
-                            [
-                                'label' => 'Recestation Counter',
-                                'perm' => 'all',
-                                'module' => 'Hospital Recestation Counter',
-                                'icon' => 'fas fa-file-invoice',
-                                'user_config' => 'is_receptionist',
-                                'path' => $this->_hospital_recestation_counter,
-                                'order' => 100
-                            ],
-                            [
-                                'label' => 'Dental Counter',
-                                'perm' => 'all',
-                                'module' => 'Hospital Dental Counter',
-                                'icon' => 'fas fa-file-invoice',
-                                'user_config' => 'is_receptionist',
-                                'path' => $this->_hospital_dental_counter,
-                                'order' => 100
-                            ],
-                            [
-                                'label' => 'Dental Payments',
-                                'perm' => 'all',
-                                'module' => 'Hospital Dental Payments Counter',
-                                'icon' => 'fas fa-file-invoice',
-                                'user_config' => 'is_receptionist',
-                                'path' => $this->_hospital_dental_payments_counter,
-                                'order' => 100
-                            ],
-                            [
-                                'label' => 'Lab Counter',
-                                'perm' => 'all',
-                                'module' => 'Hospital Lab Counter',
-                                'icon' => 'fas fa-file-invoice',
-                                'user_config' => 'is_receptionist',
-                                'path' => $this->_hospital_lab_counter,
-                                'order' => 100
-                            ],
-                            [
-                                'label' => 'Xray Counter',
-                                'perm' => 'all',
-                                'module' => 'Hospital Xray Counter',
-                                'icon' => 'fas fa-file-invoice',
-                                'user_config' => 'is_receptionist',
-                                'path' => $this->_hospital_xray_counter,
-                                'order' => 100
-                            ],
-                            [
-                                'label' => 'Ultrasound Counter',
-                                'perm' => 'all',
-                                'module' => 'Hospital Ultrasound Counter',
-                                'icon' => 'fas fa-file-invoice',
-                                'user_config' => 'is_receptionist',
-                                'path' => $this->_hospital_ultrasound_counter,
-                                'order' => 100
-                            ]
+                            // [
+                            //     'label' => 'OPD Counter',
+                            //     'perm' => 'all',
+                            //     'module' => 'Hospital OPD Counter',
+                            //     'icon' => 'fas fa-file-invoice',
+                            //     'user_config' => 'is_receptionist',
+                            //     'path' => $this->_hospital_opd_counter,
+                            //     'order' => 100
+                            // ],
+                            // [
+                            //     'label' => 'New Inpatient Counter',
+                            //     'perm' => 'all',
+                            //     'module' => 'Hospital New Inpatient Counter',
+                            //     'icon' => 'fas fa-file-invoice',
+                            //     'user_config' => 'is_receptionist',
+                            //     'path' => $this->_hospital_new_inpt_counter,
+                            //     'order' => 100
+                            // ],
+                            // [
+                            //     'label' => 'Inpatient Payments',
+                            //     'perm' => 'all',
+                            //     'module' => 'Hospital Inpatient Payments Counter',
+                            //     'icon' => 'fas fa-file-invoice',
+                            //     'user_config' => 'is_receptionist',
+                            //     'path' => $this->_hospital_inpt_payments_counter,
+                            //     'order' => 100
+                            // ],
+                            // [
+                            //     'label' => 'Recestation Counter',
+                            //     'perm' => 'all',
+                            //     'module' => 'Hospital Recestation Counter',
+                            //     'icon' => 'fas fa-file-invoice',
+                            //     'user_config' => 'is_receptionist',
+                            //     'path' => $this->_hospital_recestation_counter,
+                            //     'order' => 100
+                            // ],
+                            // [
+                            //     'label' => 'Dental Counter',
+                            //     'perm' => 'all',
+                            //     'module' => 'Hospital Dental Counter',
+                            //     'icon' => 'fas fa-file-invoice',
+                            //     'user_config' => 'is_receptionist',
+                            //     'path' => $this->_hospital_dental_counter,
+                            //     'order' => 100
+                            // ],
+                            // [
+                            //     'label' => 'Dental Payments',
+                            //     'perm' => 'all',
+                            //     'module' => 'Hospital Dental Payments Counter',
+                            //     'icon' => 'fas fa-file-invoice',
+                            //     'user_config' => 'is_receptionist',
+                            //     'path' => $this->_hospital_dental_payments_counter,
+                            //     'order' => 100
+                            // ],
+                            // [
+                            //     'label' => 'Lab Counter',
+                            //     'perm' => 'all',
+                            //     'module' => 'Hospital Lab Counter',
+                            //     'icon' => 'fas fa-file-invoice',
+                            //     'user_config' => 'is_receptionist',
+                            //     'path' => $this->_hospital_lab_counter,
+                            //     'order' => 100
+                            // ],
+                            // [
+                            //     'label' => 'Xray Counter',
+                            //     'perm' => 'all',
+                            //     'module' => 'Hospital Xray Counter',
+                            //     'icon' => 'fas fa-file-invoice',
+                            //     'user_config' => 'is_receptionist',
+                            //     'path' => $this->_hospital_xray_counter,
+                            //     'order' => 100
+                            // ],
+                            // [
+                            //     'label' => 'Ultrasound Counter',
+                            //     'perm' => 'all',
+                            //     'module' => 'Hospital Ultrasound Counter',
+                            //     'icon' => 'fas fa-file-invoice',
+                            //     'user_config' => 'is_receptionist',
+                            //     'path' => $this->_hospital_ultrasound_counter,
+                            //     'order' => 100
+                            // ]
                         ]
                     ],
                     [
@@ -324,6 +330,7 @@ class Hospital{
                 'HOSPITAL_REC_PATH_DENTAL_FILE_SEARCH' => $this->_hospital_dental_payments_counter_file_serach,
                 'NEW_DENTAL_TREATMENT' => $this->_create_dental_treatment,
                 //'HOSPITAL_DENTAL_APPOINTMENT_FILE_SEARCH' => $this->_hospital_dental_appointment_file_serach,
+                'HOSPITAL_EXPOSE_PATIENT' => 'Hospital/Reception/Expose/index/',
             ]
             ];
     }

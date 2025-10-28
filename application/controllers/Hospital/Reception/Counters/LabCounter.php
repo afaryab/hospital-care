@@ -1,6 +1,6 @@
 <?php
 
-class Counter extends MY_Controller
+class LabCounter extends MY_Controller
 {
 
     public function __construct()
@@ -17,25 +17,25 @@ class Counter extends MY_Controller
 
             $this->load->model('commonModel', 'commonModel');
 
-            $this->_pageData['opd_doctors'] =  []; // $this->aauth->getOpdDoctors('is_opd_doctor');
-            $this->_pageData['inpatient_doctors'] =  []; // $this->aauth->getOpdDoctors('is_inpatient_doctor');
-            $this->_pageData['xray_tech'] =  []; // $this->aauth->getOpdDoctors('is_xray_tech');
-            $this->_pageData['dentists'] =  []; // $this->aauth->getOpdDoctors('is_dentist');
-            $this->_pageData['ultradocs'] =  []; // $this->aauth->getOpdDoctors('is_ultrasound_doc');
+            $this->_pageData['opd_doctors'] = $this->aauth->getOpdDoctors('is_opd_doctor');
+            $this->_pageData['inpatient_doctors'] = $this->aauth->getOpdDoctors('is_inpatient_doctor');
+            $this->_pageData['xray_tech'] = $this->aauth->getOpdDoctors('is_xray_tech');
+            $this->_pageData['dentists'] = $this->aauth->getOpdDoctors('is_dentist');
+            $this->_pageData['ultradocs'] = $this->aauth->getOpdDoctors('is_ultrasound_doc');
 
             $this->_pageData['title'] = 'Hospital Counter';
             $this->_pageData['module'] = 'Hospital Counter';
 
             $this->commonModel->setTableName('opd_services');
-            $this->_pageData['opd_services'] =  []; // $this->commonModel->getAll();
+            $this->_pageData['opd_services'] =  []; $this->commonModel->getAll();
             $this->commonModel->setTableName('inpd_services');
-            $this->_pageData['inpatient_services'] =  []; // $this->commonModel->getAll();
+            $this->_pageData['inpatient_services'] =  []; $this->commonModel->getAll();
             $this->commonModel->setTableName('emergency_services');
             $this->_pageData['emergency_services'] =  $this->commonModel->getAll();
             $this->commonModel->setTableName('xray_services');
-            $this->_pageData['xray_services'] =  []; //$this->commonModel->getAll();
+            $this->_pageData['xray_services'] =  $this->commonModel->getAll();
             $this->commonModel->setTableName('test_services');
-            $this->_pageData['test_services'] =  []; //$this->commonModel->getAll();
+            $this->_pageData['test_services'] =  $this->commonModel->getAll();
             $this->_pageData['patient_id'] = $id;
             $this->_pageData['closingArray'] = $this->receptionClosingArray;
             $this->commonModel->setTableName('inpd_rooms');
@@ -84,26 +84,26 @@ class Counter extends MY_Controller
                     $patientId = $_POST['patient_id'];
                     $patient =  $this->commonModel->findOneBy(['id' => $_POST['patient_id']]);
 
-                    $this->commonModel->setTableName('opd_patients');
-                    $opdPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                    // $this->commonModel->setTableName('opd_patients');
+                    // $opdPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
 
-                    $this->commonModel->setTableName('inpt_patients');
-                    $inptPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                    // $this->commonModel->setTableName('inpt_patients');
+                    // $inptPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
 
-                    $this->commonModel->setTableName('emergency_patients');
-                    $emergencyPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                    // $this->commonModel->setTableName('emergency_patients');
+                    // $emergencyPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
 
-                    $this->commonModel->setTableName('xray_patients');
-                    $xrayPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                    // $this->commonModel->setTableName('xray_patients');
+                    // $xrayPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
 
                     $this->commonModel->setTableName('laboratory_patients');
                     $testPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
 
-                    $this->commonModel->setTableName('dental_patients');
-                    $dentalPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                    // $this->commonModel->setTableName('dental_patients');
+                    // $dentalPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
 
-                    $this->commonModel->setTableName('ultrasound_patients');
-                    $ultraPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
+                    // $this->commonModel->setTableName('ultrasound_patients');
+                    // $ultraPatient =  $this->commonModel->findOneBy(['site_patient_id' => $_POST['patient_id']]);
 
 
                 }else{
@@ -170,10 +170,6 @@ class Counter extends MY_Controller
                     
                     
                 }
-
-                redirect('/Hospital/Reception/Expose/index?patient_id='.$patientId);
-
-
 
                 $receptionTransaction = [
                     'counter_id' => $this->_pageData['counter']['id'],
@@ -802,6 +798,70 @@ class Counter extends MY_Controller
         }
     }
 
+    public function PatientSearch(){
+        if($this->isLoggedIn()) {
+
+            $table = 'patients';
+           
+
+
+            // Table's primary key
+            $primaryKey = 'id';
+
+            // Array of database columns which should be read and sent back to DataTables.
+            // The `db` parameter represents the column name in the database, while the `dt`
+            // parameter represents the DataTables column identifier. In this case simple
+            // indexes
+            $columns = array(
+                array('db' => 'id', 'table' => $table, 'dt' => 0,'as' => 'id'),
+                array('db' => 'pateint_name', 'table' => $table, 'dt' => 1,'as' => 'pateint_name'),
+                array('db' => 'patient_contact_mobile', 'table' => $table, 'dt' => 2,'as' => 'patient_contact_mobile'),
+                array('db' => 'patient_cnic', 'table' => $table, 'dt' => 3,'as' => 'patient_cnic'),
+                array(
+                    'db' => 'created_on',
+                    'as' => 'created_on',
+                    'dt' => 4,
+                    'table' => $table,
+                    'formatter' => function ($id, $row) {
+                        $html='';
+                        
+                        
+                        $html .= '<a onclick="selectPatient(\''.$row['id'].'\',\''.$row['pateint_name'].'\',\''.$row['guardian'].'\',\''.$row['relation'].'\',\''.$row['patient_contact_mobile'].'\',\''.$row['patient_cnic'].'\',\''.$row['patient_address'].'\',\''.$row['age_days'].'\',\''.$row['gender'].'\')" class="btn btn-sm btn-default pull-right" title="Select '. $row['pateint_name'] .'" ><i class="fas fa-bolt" style="color:green;"></i></a>';
+                        
+
+                        return $html;
+                    }
+                ),
+                array('db' => 'age_days', 'table' => $table, 'dt' => 5,'as' => 'age_days'),
+                array('db' => 'gender', 'table' => $table, 'dt' => 6,'as' => 'gender'),
+                array('db' => 'guardian', 'table' => $table, 'dt' => 7,'as' => 'guardian'),
+                array('db' => 'patient_address', 'table' => $table, 'dt' => 8,'as' => 'patient_address'),
+                array('db' => 'relation', 'table' => $table, 'dt' => 9,'as' => 'relation')
+            );
+
+            // SQL server connection information
+            $sql_details = array(
+                'user' => $this->db->username,
+                'pass' => $this->db->password,
+                'db' => $this->db->database,
+                'host' => $this->db->hostname
+            );
+
+
+            /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+             * If you just want to use the basic configuration for DataTables with PHP
+             * server-side, there is no need to edit below this line.
+             */
+
+            require(__DIR__.'/../../../third_party/ssp.class.php');
+
+            echo json_encode(
+                SSP::simple($_GET, $sql_details, $table, $primaryKey, $columns)
+            );
+        }else{
+            echo json_encode([]);
+        }
+    }
     
 }
 

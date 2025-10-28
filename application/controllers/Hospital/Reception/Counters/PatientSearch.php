@@ -45,6 +45,14 @@ class PatientSearch extends MY_Controller
                         if($inpRecord){
                             $parameters['columns'][0]['search']['value'] = $inpRecord['patient_id'];
                         }
+                    }else if ($exploded[2] == 'DTL'){
+                        $this->load->model('commonModel', 'dental_ps_numbers');
+                        $this->dental_ps_numbers->setTableName('dental_ps_numbers');
+                        $dtlRecord = $this->dental_ps_numbers->findOneBy(['ps_number' => $_GET['patient_number']]);
+
+                        if($dtlRecord){
+                            $parameters['columns'][0]['search']['value'] = $dtlRecord['patient_id'];
+                        }
                     }
 
 
@@ -88,7 +96,9 @@ class PatientSearch extends MY_Controller
                         $html='';
                         
                         
-                        $html .= '<a onclick="selectPatient(\''.$row['id'].'\',\''.$row['pateint_name'].'\',\''.$row['guardian'].'\',\''.$row['relation'].'\',\''.$row['patient_contact_mobile'].'\',\''.$row['patient_cnic'].'\',\''.$row['patient_address'].'\',\''.$row['age_days'].'\',\''.$row['gender'].'\')" class="btn btn-sm btn-default pull-right" title="Select '. $row['pateint_name'] .'" ><i class="fas fa-bolt" style="color:green;"></i></a>';
+                        // $html .= '<a onclick="selectPatient(\''.$row['id'].'\',\''.$row['pateint_name'].'\',\''.$row['guardian'].'\',\''.$row['relation'].'\',\''.$row['patient_contact_mobile'].'\',\''.$row['patient_cnic'].'\',\''.$row['patient_address'].'\',\''.$row['age_days'].'\',\''.$row['gender'].'\')" class="btn btn-sm btn-default pull-right" title="Select '. $row['pateint_name'] .'" ><i class="fas fa-bolt" style="color:green;"></i></a>';
+
+                        $html .= '<a href="/index.php/Hospital/Reception/Expose/index?patient_id='.$row['id'].'" class="btn btn-sm btn-default pull-right" title="Select '. $row['pateint_name'] .'" ><i class="fas fa-bolt" style="color:green;"></i></a>';
                         
 
                         return $html;
