@@ -2,12 +2,19 @@
 
 class Hospital{
     
-    protected $_hospital_counter_url = 'Hospital/Reception/Counter/Index';
-    protected $_hospital_patient_search_url = 'Hospital/Reception/Counter/PatientSearch';
+    // protected $_hospital_counter_url = 'Hospital/Reception/Counter/Index';
+    protected $_hospital_patient_search_url = 'Hospital/Reception/Counters/PatientSearch/Index';
 
+    protected $_hospital_emergency_counter = 'Hospital/Reception/Counters/EmergencyCounter/Index';
     protected $_hospital_opd_counter = 'Hospital/Reception/Counters/OpdCounter/Index';
     protected $_hospital_new_inpt_counter = 'Hospital/Reception/Counters/NewInptCounter/Index';
-    protected $_hospital_inpt_search_url = 'Hospital/Reception/Counters/NewInptCounter/PatientSearch';
+    protected $_hospital_dental_counter = 'Hospital/Reception/Counters/DentalCounter/Index';
+    protected $_hospital_lab_counter = 'Hospital/Reception/Counters/LabCounter/Index';
+    protected $_hospital_xray_counter = 'Hospital/Reception/Counters/XrayCounter/Index';
+    protected $_hospital_ultrasound_counter = 'Hospital/Reception/Counters/UltrasoundCounter/Index';
+    
+    
+    protected $_hospital_inpt_search_url = 'Hospital/Reception/Counters/PatientSearch/Index';
     protected $_hospital_inpt_payments_counter = 'Hospital/Reception/Counters/InptPaymentsCounter/Index';
     protected $_hospital_inpt_payments_counter_file_serach = 'Hospital/Reception/Counters/InptPaymentsCounter/FileSearch';
 
@@ -75,10 +82,19 @@ class Hospital{
                         'perm' => 'all',
                         'module' => 'Hospital Counter',
                         'icon' => 'fas fa-cart-plus',
-                        'path' => $this->_hospital_counter_url,
+                        'path' => '#',
                         'order' => 1,
                         'user_config' => 'is_receptionist',
                         'children' => [
+                            [
+                                'label' => 'Emergency Counter',
+                                'perm' => 'all',
+                                'module' => 'Hospital Emergency Counter',
+                                'icon' => 'fas fa-file-invoice',
+                                'user_config' => 'is_receptionist',
+                                'path' => $this->_hospital_emergency_counter,
+                                'order' => 100
+                            ],
                             [
                                 'label' => 'OPD Counter',
                                 'perm' => 'all',
@@ -116,12 +132,12 @@ class Hospital{
                                 'order' => 100
                             ],
                             [
-                                'label' => 'Health Card Counter',
+                                'label' => 'Dental Counter',
                                 'perm' => 'all',
-                                'module' => 'Hospital HealthCard Counter',
+                                'module' => 'Hospital Dental Counter',
                                 'icon' => 'fas fa-file-invoice',
                                 'user_config' => 'is_receptionist',
-                                'path' => $this->_hospital_health_card_counter,
+                                'path' => $this->_hospital_dental_counter,
                                 'order' => 100
                             ],
                             [
@@ -133,6 +149,33 @@ class Hospital{
                                 'path' => $this->_hospital_dental_payments_counter,
                                 'order' => 100
                             ],
+                            [
+                                'label' => 'Lab Counter',
+                                'perm' => 'all',
+                                'module' => 'Hospital Lab Counter',
+                                'icon' => 'fas fa-file-invoice',
+                                'user_config' => 'is_receptionist',
+                                'path' => $this->_hospital_lab_counter,
+                                'order' => 100
+                            ],
+                            [
+                                'label' => 'Xray Counter',
+                                'perm' => 'all',
+                                'module' => 'Hospital Xray Counter',
+                                'icon' => 'fas fa-file-invoice',
+                                'user_config' => 'is_receptionist',
+                                'path' => $this->_hospital_xray_counter,
+                                'order' => 100
+                            ],
+                            [
+                                'label' => 'Ultrasound Counter',
+                                'perm' => 'all',
+                                'module' => 'Hospital Ultrasound Counter',
+                                'icon' => 'fas fa-file-invoice',
+                                'user_config' => 'is_receptionist',
+                                'path' => $this->_hospital_ultrasound_counter,
+                                'order' => 100
+                            ]
                         ]
                     ],
                     [

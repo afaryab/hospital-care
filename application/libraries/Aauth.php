@@ -173,7 +173,6 @@ class Aauth {
         $query = $this->aauth_db->where($db_identifier, $identifier);
         $query = $this->aauth_db->get($this->config_vars['users']);
         $row = $query->row();
-        
         // only email found and login attempts exceeded
         if ($query->num_rows() > 0 && $this->config_vars['ddos_protection'] && ! $this->update_login_attempts($row->email)) {
             
@@ -181,6 +180,7 @@ class Aauth {
             return FALSE;
         }
         
+        //print_array($row,1);
         //recaptcha login_attempts check
         $query = null;
         $query = $this->aauth_db->where($db_identifier, $identifier);
@@ -282,7 +282,7 @@ class Aauth {
         
         $query = null;
         $query = $this->aauth_db->where($db_identifier, $identifier);
-        
+        // print_array($this->hash_password($pass, $user_id), 1);
         // Database stores pasword hashed password
         $query = $this->aauth_db->where('pass', $this->hash_password($pass, $user_id));
         $query = $this->aauth_db->where('banned', 0);
@@ -290,6 +290,7 @@ class Aauth {
         $query = $this->aauth_db->get($this->config_vars['users']);
         
         $row = $query->row();
+        
         
         // if email and pass matches and not banned
         if ( $query->num_rows() != 0 ) {

@@ -38,9 +38,9 @@ class Login extends CI_Controller
         if($user->change_password == 1){
             redirect('Auth/ChangePassword');
         }
-        if($user->is_receptionist == 1){
-            echo "check For Reception";
-        }
+        // if($user->is_receptionist == 1){
+        //     // echo "check For Reception";
+        // }
 
         $groups = $this->aauth->get_groups();
 

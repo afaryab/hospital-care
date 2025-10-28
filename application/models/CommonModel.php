@@ -368,4 +368,36 @@ class commonModel extends MY_Model
         }
     }
 
+    function countBy($incomingCondition){
+
+        $this->db->select('COUNT(id) AS count', FALSE)->from($this->_tableName);
+
+        if(is_array($incomingCondition)) {
+
+            $array = $incomingCondition;
+            foreach ($array as $key => $value) {
+                if (is_object($value)) {
+                    $value = (array)$value;
+                }
+                if (is_array($value)) {
+                    $this->db->where_in($key, $value);
+                } else {
+                    $this->db->where($key, $value);
+                }
+            }
+        }elseif(is_string($incomingCondition)){
+
+            $this->db->where($incomingCondition);
+        }
+
+        $query = $this->db->get();
+
+        if($query->num_rows() > 0){
+            $return = $query->result_array();
+            return $return[0]['count'];
+        }else{
+            return 0;
+        }
+    }
+
 }

@@ -635,9 +635,9 @@ class MY_Controller extends CI_Controller
 
         $user = $this->aauth->get_user();
         
-        if($user->is_receptionist == 1){
-            echo "check For Reception";
-        }
+        // if($user->is_receptionist == 1){
+        //     echo "check For Reception";
+        // }
         $groups = $this->aauth->get_groups();
 
         foreach ($groups as $group){

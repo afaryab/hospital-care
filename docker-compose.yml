@@ -18,6 +18,8 @@ services:
       - DB_DATABASE=hospital_care
       - DB_USERNAME=hc_user
       - DB_PASSWORD=hc_password
+      - HTTPS=true
+      - APP_URL=hallowed-spooky-mausoleum-7wwp7qpj6553x97v-8080.app.github.dev
     depends_on:
       - db
 
@@ -50,6 +52,8 @@ services:
       - "8081:80"
     depends_on:
       - db
+    volumes:
+      - ./uploads:/var/www/html/upload
 
 volumes:
   db_data:
