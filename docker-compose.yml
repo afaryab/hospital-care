@@ -1,31 +1,44 @@
-version: '3.8'
 services:
   app:
     build:
       context: .
-      dockerfile: docker/php/Dockerfile
-    image: hospital-care-php73
-    container_name: hospital-care-app
+      dockerfile: docker/ci-php/Dockerfile
     volumes:
-      - ./:/var/www/html:cached
-      - ./docker/php/vhost.conf:/etc/apache2/sites-available/000-default.conf:ro
-      - ./docker/php/php.ini:/usr/local/etc/php/php.ini:ro
+      - ./code-igniter:/var/www/html
+      - ./docker/ci-php/vhost.conf:/etc/apache2/sites-available/000-default.conf:ro
+      - ./docker/ci-php/php.ini:/usr/local/etc/php/php.ini:ro
     ports:
-      - "8080:80"
+      - "80:80"
     environment:
       - APP_ENV=development
       - DB_HOST=db
       - DB_DATABASE=hospital_care
       - DB_USERNAME=hc_user
       - DB_PASSWORD=hc_password
-      - HTTPS=true
-      - APP_URL=hallowed-spooky-mausoleum-7wwp7qpj6553x97v-8080.app.github.dev
+      - HTTPS=false
+      - APP_URL=localhost
     depends_on:
       - db
 
+  laravel:
+    build:
+      context: .
+      dockerfile: docker/laravel-php/Dockerfile
+    volumes:
+      - ./laravel:/var/www/html
+    ports:
+      - "88:80"
+    environment:
+      - APP_NAME=HospitalCare
+      - APP_ENV=development
+      - APP_DEBUG=true
+      - APP_URL=localhost:8080
+      - REGISTER_PATIENT_PUBLICLY=true
+      - TAKE_APPOINTMENTS_PUBLICLY=true
+
   db:
-    image: mysql:5.7
-    container_name: hospital-care-db
+    image: mysql:8.0
+    platform: linux/amd64
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root_password
@@ -39,6 +52,7 @@ services:
     ports:
       - "3306:3306"
 
+
   pma:
     image: phpmyadmin/phpmyadmin
     container_name: hospital-care-pma
@@ -48,12 +62,15 @@ services:
       PMA_PORT: 3306
       PMA_USER: hc_user
       PMA_PASSWORD: hc_password
+      UPLOAD_LIMIT: 300M
+      MAX_EXECUTION_TIME: 600
+      MEMORY_LIMIT: 512M
+      POST_MAX_SIZE: 300M
     ports:
-      - "8081:80"
+      - "8080:80"
     depends_on:
       - db
-    volumes:
-      - ./uploads:/var/www/html/upload
+  
 
 volumes:
   db_data:
