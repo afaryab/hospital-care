@@ -66,7 +66,7 @@ COPY ./laravel/. /var/www/html
 
 # Copy configurations
 COPY docker/laravel-php/nginx.conf /etc/nginx/nginx.conf
-COPY docker/laravel-php/default.conf 
+COPY docker/laravel-php/default.conf /etc/nginx/conf.d/default.conf
 COPY docker/laravel-php/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/laravel-php/start.sh /start.sh
 
