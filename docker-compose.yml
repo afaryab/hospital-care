@@ -26,6 +26,7 @@ services:
       dockerfile: docker/laravel-php/Dockerfile
     volumes:
       - ./laravel:/var/www/html
+      - ./docker/laravel-php/default.conf:/etc/nginx/conf.d/default.conf
     ports:
       - "88:80"
     environment:
@@ -42,7 +43,6 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: hospital_care
       MYSQL_USER: hc_user
       MYSQL_PASSWORD: hc_password
     volumes:
@@ -52,16 +52,14 @@ services:
     ports:
       - "3306:3306"
 
-
   pma:
     image: phpmyadmin/phpmyadmin
-    container_name: hospital-care-pma
     restart: unless-stopped
     environment:
       PMA_HOST: db
       PMA_PORT: 3306
-      PMA_USER: hc_user
-      PMA_PASSWORD: hc_password
+      PMA_USER: root
+      PMA_PASSWORD: root_password
       UPLOAD_LIMIT: 300M
       MAX_EXECUTION_TIME: 600
       MEMORY_LIMIT: 512M
@@ -70,7 +68,7 @@ services:
       - "8080:80"
     depends_on:
       - db
-  
 
 volumes:
   db_data:
+  mysql_data:

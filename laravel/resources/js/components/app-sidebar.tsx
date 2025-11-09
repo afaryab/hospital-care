@@ -10,51 +10,58 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { counter, dashboard } from '@/routes';
+import { appointments, counter, counterList, counterListAll, expenses, home, patientsRegister, register } from '@/routes';
 import { type NavItem } from '@/types';
-import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { BookOpen, Folder, LucideHome, BookAIcon, LucideShoppingBasket, Calendar1, CircleDollarSign, ListTree, ChartLine, Cog, ListPlus, LucideListPlus } from 'lucide-react';
 import AppLogo from './app-logo';
-import admin from '@/routes/admin';
 
 const receptionMenuItems: NavItem[] = [
     {
-        title: 'Register',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
         title: 'Counter',
         href: counter(),
-        icon: LayoutGrid,
+        icon: LucideShoppingBasket,
     },
     {
         title: 'Appointments',
-        href: dashboard(),
-        icon: LayoutGrid,
+        href: appointments(),
+        icon: Calendar1,
     },
     {
         title: 'Expenses',
-        href: dashboard(),
-        icon: LayoutGrid,
-    }
+        href: expenses(),
+        icon: CircleDollarSign,
+    },
+    {
+        title: 'My Counters',
+        href: counterList(),
+        icon: LucideListPlus,
+    },
+];
+
+const accountsMenuItems: NavItem[] = [
+    {
+        title: 'Counter statements',
+        href: counterListAll(),
+        icon: LucideListPlus,
+    },
 ];
 
 const adminMenuItems: NavItem[] = [
     {
         title: 'Summaries',
-        href: dashboard(),
-        icon: LayoutGrid,
+        href: '/summeries',
+        icon: ListTree,
     },
     {
         title: 'Reports',
-        href: dashboard(),
-        icon: LayoutGrid,
+        href: '/reports',
+        icon: ChartLine,
     },
     {
         title: 'Administration',
-        href: admin.hospitalSettings(),
-        icon: LayoutGrid,
+        href: '/admin',
+        icon: Cog,
     }
 ];
 
@@ -72,13 +79,14 @@ const footerNavItems: NavItem[] = [
 ];
 
 export function AppSidebar() {
+    const page = usePage();
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={home()} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
@@ -87,11 +95,40 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
+                <SidebarMenu className='px-2'>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={page.url == home().url}
+                            tooltip={{ children: 'Home page' }}
+                        >
+                            <Link href={home().url} prefetch>
+                                <LucideHome />
+                                <span>Home</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={page.url.startsWith(
+                                patientsRegister().url
+                            ) || page.url == patientsRegister().url}
+                            tooltip={{ children: 'Patients register' }}
+                        >
+                            <Link href={patientsRegister().url} prefetch>
+                                <BookAIcon />
+                                <span>Register</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                </SidebarMenu>
                 <NavMain title='Counter' items={receptionMenuItems} />
+                <NavMain title='Accounts' items={accountsMenuItems} />
             </SidebarContent>
 
             <SidebarFooter>
-                <NavMain items={adminMenuItems} className="mt-auto" />
+                <NavFooter items={adminMenuItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

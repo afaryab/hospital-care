@@ -14,7 +14,7 @@ export function NavMain({ items = [], title = '', className = '' }: { items: Nav
     return (
         <SidebarGroup className={`px-2 py-0 ${className}`}>
             {title && <SidebarGroupLabel>{title}</SidebarGroupLabel>}
-            <SidebarMenu>
+            <SidebarMenu className='mx-2 px-2 border-l border-dotted border-gray-200'>
                 {items.map((item) => (
                     <SidebarMenuItem key={item.title}>
                         <SidebarMenuButton

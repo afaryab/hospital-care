@@ -1,6 +1,11 @@
+-- Create two databases for the hospital care system
 CREATE DATABASE IF NOT EXISTS hospital_care DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS hospital_care_analytics DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Create user and grant privileges on both databases
 CREATE USER IF NOT EXISTS 'hc_user'@'%' IDENTIFIED BY 'hc_password';
 GRANT ALL PRIVILEGES ON hospital_care.* TO 'hc_user'@'%';
+GRANT ALL PRIVILEGES ON hospital_care_analytics.* TO 'hc_user'@'%';
 FLUSH PRIVILEGES;
 
 USE hospital_care;
