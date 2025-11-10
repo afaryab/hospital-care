@@ -578,7 +578,7 @@ class fetchOld extends Command
             foreach ($expenses as $expense) {
 
                 $new = [
-                    'old_id' => $expense->id,
+                    // 'old_id' => 'EXP-'.$expense->id,
                     'voucher_id' => $expense->voucher_id,
                     'exp_category_id' => $expense->category_id && $expense->category_id != 0 ? ExpenseCategory::where('name', $expense->category_id)->first()->id ?? null : null,
                     'type' => $expense->payment_type,
