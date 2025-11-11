@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Migration\ImportController;
+use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
 use App\Http\Controllers\WebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -46,7 +47,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('CT-PS', [WebController::class, 'counterPatient'])->name('counter-select-patient');
     Route::get('CT-PS/{pYear}/{pMonth}/{number}', [WebController::class, 'counterPatient'])->name('counter-select-department');
     Route::get('CT-PS/{pYear}/{pMonth}/{number}/{departmentKey}', [WebController::class, 'counterPatient'])->name('counter-select-department-service');
-    Route::get('CT-PS/{pYear}/{pMonth}/{number}/RECES-{departmentKey}', [WebController::class, 'counterPatient'])->name('counter-select-department-recistation');
 
     Route::get('TR/{pYear}/{pMonth}/{number}', [WebController::class, 'counter'])->name('transaction-view');
 
@@ -59,7 +59,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
      */
 
     Route::get('ACC-CT-ALL', [WebController::class, 'countersList'])->name('counter-list-all');
+
+
+
+    /**
+     * Print routes (auth required for printing)
+     */
+
+
+    Route::get('PRINT/CT/{year}/{month}/{number}', [ClosingStatementPdfPrintController::class, 'stream'])
+        ->name('print-closing-statement');
     
 });
+
+/**
+ * Print routes (no auth required for printing)
+ */
 
 require __DIR__.'/settings.php';

@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MultiSelect } from '@/components/ui/multi-select';
 import { AdvancedTagSelect } from '@/components/ui/tag-select';
 import AppLayout from '@/layouts/app-layout';
-import { apiPatientsSearch, counter, counterSelectDepartment, counterSelectDepartmentService, counterView, home, patientsRegisterPsNumberDepartment } from '@/routes';
+import { apiPatientsSearch, apiPatientsStore, counter, counterSelectDepartment, counterSelectDepartmentService, counterSelectPatient, counterView, home, patientsRegisterPsNumberDepartment } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { AlertTriangle } from 'lucide-react';
@@ -19,23 +19,29 @@ import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
 import { patient } from '@/actions/App/Http/Controllers/WebController';
 import BulletsWrapper from '@/elements/bullets-wrapper';
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Dashboard',
-        href: home().url,
-    },
-    {
-        title: 'Counter',
-        href: '',
-    }
-];
+import PatientMiniCard from '@/elements/patient/mini-card';
+import PatientTransactionsHistoryCard from '@/elements/patient/transactions-history-card';
 
 export default function Counter() {
 
-    const {selectedPatient, departments, departmentKey, openCounter} = usePage().props;
+    const {selectedPatient, departments, departmentKey, openCounter, services} = usePage().props;
 
     const step = !selectedPatient ? 1 : (!departmentKey ? 2 : 3);
+
+    let breadcrumbs: BreadcrumbItem[] = [
+        {
+            title: 'Dashboard',
+            href: home().url,
+        },
+        {
+            title: 'Counter',
+            href: openCounter ? counterView({
+                ctYear: openCounter.year,
+                ctMonth: openCounter.month,
+                ctNumber: openCounter.number
+            }).url : counter().url,
+        }
+    ];
     
 
     let bullets = [
@@ -45,17 +51,47 @@ export default function Counter() {
                 ctYear: openCounter.year,
                 ctMonth: openCounter.month,
                 ctNumber: openCounter.number
-            }).url
+            }).url,
+            active: step === 1
         }];
 
-    selectedPatient?.name && bullets.push({ 
-        title: selectedPatient && selectedPatient?.ps_number,
-        url: selectedPatient && counterSelectDepartment({
-            pYear: selectedPatient.year,
-            pMonth: selectedPatient.month,
-            number: selectedPatient.number
-        }).url
-    });
+    if(selectedPatient?.name){
+        bullets.push({ 
+            title: selectedPatient && selectedPatient?.ps_number,
+            url: selectedPatient && counterSelectDepartment({
+                pYear: selectedPatient.year,
+                pMonth: selectedPatient.month,
+                number: selectedPatient.number
+            }).url,
+            active: step === 2
+        });
+        breadcrumbs.push({
+            title: selectedPatient?.name,
+            href: selectedPatient && counterSelectDepartment({
+                pYear: selectedPatient.year,
+                pMonth: selectedPatient.month,
+                number: selectedPatient.number
+            }).url
+        });
+    }else{
+        bullets.push({
+            title: 'No patient selected',
+            url: counterSelectPatient({
+                ctYear: openCounter.year,
+                ctMonth: openCounter.month,
+                ctNumber: openCounter.number
+            }).url,
+            active: step === 2
+        });
+        breadcrumbs.push({
+            title: 'Select Patient',
+            href: counterSelectPatient({
+                ctYear: openCounter.year,
+                ctMonth: openCounter.month,
+                ctNumber: openCounter.number
+            }).url
+        });
+    }
 
     (selectedPatient?.name && departmentKey != '') && bullets.push({ 
         title: departmentKey != '' && `Departments (${departmentKey})`,
@@ -64,21 +100,22 @@ export default function Counter() {
             pMonth: selectedPatient.month,
             number: selectedPatient.number,
             departmentKey: departmentKey as string
-        }).url
+        }).url,
+        active: step === 3
     });
 
-    console.log(bullets, openCounter, selectedPatient, departmentKey);
+    console.log(step, bullets, openCounter, selectedPatient, departmentKey, services);
 
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Counter" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72]">
-                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-2 bg-white text-[#1c398e]">
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-2 bg-white text-gray-800">
                     <BulletsWrapper bullets={bullets}>
                         {step === 1 && <StepOne openCounter={openCounter} />}
                         {step === 2 && <StepTwo openCounter={openCounter} patient={selectedPatient} departments={departments} />}
-                        {step === 3 && <StepThree openCounter={openCounter} patient={selectedPatient} departments={departments} departmentKey={departmentKey} />}
+                        {step === 3 && <StepThree openCounter={openCounter} patient={selectedPatient} departments={departments} departmentKey={departmentKey} services={services} />}
                     </BulletsWrapper>
                 </div>
             </div>
@@ -88,18 +125,42 @@ export default function Counter() {
 
 
 
-function StepThree({openCounter, patient, departments, departmentKey}:any) {
+function StepThree({openCounter, patient, departments, departmentKey, services}:any) {
 
-    const [selectedFruits, setSelectedFruits] = useState<string[]>([]);
+    const [selectedServices, setSelectedServices] = useState<string[]>([]);
 
-    const fruitOptions = [
-        { value: 'apple', label: 'Apple' },
-        { value: 'banana', label: 'Banana' },
-        { value: 'orange', label: 'Orange' },
-        { value: 'grape', label: 'Grape' },
-        { value: 'strawberry', label: 'Strawberry' },
-        { value: 'kiwi', label: 'Kiwi', disabled: true },
-    ];
+    const [formData, setFormData] = useState<any>({
+        total: 0,
+        items: []
+    });
+
+    useEffect(() => {
+        console.log(selectedServices);
+
+        let totalCharges = 0;
+        
+        const customerSelectedServicesCartArray = selectedServices.map((serviceId:any) => {
+            
+            const sl = services.find((s:any) => s.id == serviceId);
+            totalCharges += sl?.charges || 0;
+            return {
+                serviceId: sl?.id || '',
+                name: sl?.name || '',
+                quantity: 1,
+                charges: sl?.charges || 0,
+            };
+        }, {});
+
+        const newFormData = {
+            total: totalCharges,
+            items: customerSelectedServicesCartArray
+        };
+
+        setFormData(newFormData);
+    }, [selectedServices]);
+
+
+
     return <div className='flex flex-col h-full w-full space-y-4'>
         <div className='flex flex-row h-full w-full space-x-6'>
             <div>
@@ -112,37 +173,51 @@ function StepThree({openCounter, patient, departments, departmentKey}:any) {
                                 pMonth: patient.month,
                                 number: patient.number,
                                 departmentKey: department.slug
-                            }).url} className='h-32 w-32 border rounded-xl flex flex-col items-center justify-center'>
+                            }).url} className='h-full w-32 border rounded-xl flex flex-col items-center justify-center'>
                                 <img src={department.image} alt={department.name} className='w-12 h-12 object-contain'/>
                                 <span className='text-center text-sm mt-2 max-w-28'>{department.name}</span>
                             </Link>
                         </div>
                     ))}
-                    <div key={patient.id} className='flex flex-row items-left justify-start col-span-3 border rounded-xl '>
-                        <Link href={patientsRegisterPsNumberDepartment({
-                            year: patient.year,
-                            month: patient.month,
-                            number: patient.number,
-                            departmentKey: departmentKey
-                        }).url} className='h-32 w-32 flex flex-col items-center justify-center'>
-                            <img src={
-                                patient?.gender == 'm' ? '/img/male-blue.png' : (patient?.gender == 'f' ? '/img/female-blue.png' : (patient?.gender == 't' ? '/img/transgender-blue.png' : '/img/avatar.png'))
-                            } alt={patient.name} className='w-12 h-12 object-contain'/>
-                            <span className='text-center text-sm mt-2 max-w-28'>{patient.name}</span>
-                        </Link>
-                    </div>
+                    <PatientMiniCard patient={patient} className='col-span-3 max-w-md'/>
                 </div>
                 <div className='py-4'>
                     <div className="grid gap-2">
                         <Label htmlFor="service">Service</Label>
                         <AdvancedTagSelect
-                            options={fruitOptions}
-                            value={selectedFruits}
-                            onValueChange={setSelectedFruits}
-                            placeholder="Select fruits..."
+                            options={services.map((service:any) => ({value: service.id, label: service.name}))}
+                            value={selectedServices}
+                            onValueChange={setSelectedServices}
+                            placeholder="Select services..."
                             maxItems={2}
                         />
                         {/* <InputError message={errors.email} /> */}
+                    </div>
+                </div>
+                <div className='py-4'>
+                    <div className="grid gap-2">
+                        <table className="w-full text-left border">
+                            <thead>
+                                <tr className="flex border-b">
+                                    <th className="w-full p-2">Product</th>
+                                    <th className="min-w-[44px] p-2">QTY</th>
+                                    <th className="min-w-[74px] p-2">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody className='divide-y '>
+                            {formData.items.map((item:any) => {
+                                return (<tr key={item.serviceId} className="flex py-1">
+                                    <td className="flex-1 p-2">{item.name}</td>
+                                    <td className="">
+                                        <Input type="number" name={`quantity_${item.serviceId}`} className='w-16' defaultValue={item.quantity} min={1} />
+                                    </td>
+                                    <td className="">
+                                        <Input type="number" name={`charges_${item.serviceId}`} className='w-24' defaultValue={item.charges} min={1} />
+                                    </td>
+                                </tr>);
+                            })}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -156,19 +231,21 @@ function StepThree({openCounter, patient, departments, departmentKey}:any) {
                     <div className="flex flex-col gap-3 border-b py-6 text-xs">
                     <p className="flex justify-between">
                         <span className="text-gray-400">Receipt No.:</span>
-                        <span>#5033</span>
+                        <span>####</span>
                     </p>
                     <p className="flex justify-between">
                         <span className="text-gray-400">Order Type:</span>
-                        <span>Dine-in</span>
+                        <span>{departmentKey}</span>
                     </p>
                     <p className="flex justify-between">
-                        <span className="text-gray-400">Host:</span>
-                        <span>Jane Doe</span>
+                        <span className="text-gray-400">Patient:</span>
+                        <span>{patient.name}</span>
                     </p>
                     <p className="flex justify-between">
-                        <span className="text-gray-400">Customer:</span>
-                        <span>John Doe</span>
+                        <span className="text-gray-400">{patient.ps_number}</span>
+                    </p>
+                    <p className="flex justify-between">
+                        <span className="text-gray-400">TR/{patient.ps_number}</span>
                     </p>
                     </div>
                     <div className="flex flex-col gap-3 pb-6 pt-2 text-xs">
@@ -181,16 +258,11 @@ function StepThree({openCounter, patient, departments, departmentKey}:any) {
                         </tr>
                         </thead>
                         <tbody>
-                        <tr className="flex">
-                            <td className="flex-1 py-1">Shawarma Big</td>
-                            <td className="min-w-[44px]">4</td>
-                            <td className="min-w-[44px]">$12</td>
-                        </tr>
-                        <tr className="flex py-1">
-                            <td className="flex-1">Viju Milk - 100ml</td>
-                            <td className="min-w-[44px]">1</td>
-                            <td className="min-w-[44px]">$1</td>
-                        </tr>
+                            {formData.items.map((item:any) => (<tr className="flex">
+                                <td className="flex-1 py-1">{item.name}</td>
+                                <td className="min-w-[44px]">{item.quantity}</td>
+                                <td className="min-w-[44px]">${item.total}</td>
+                            </tr>))}
                         </tbody>
                     </table>
                     <div className=" border-b border border-dashed"></div>
@@ -206,22 +278,42 @@ function StepThree({openCounter, patient, departments, departmentKey}:any) {
 }
 
 function StepTwo({openCounter, patient, departments}:any) {
-    return <div className='flex flex-col h-full w-full space-y-4'>
-        <h3 className='text-3xl mb-2 font-bold'>Departments</h3>
-        <div className='flex-1 grid grid-cols-6 gap-4 w-full'>
-            {departments.map((department:any) => (
-                <div key={department.id} className='flex flex-col items-center justify-center'>
-                    <Link href={counterSelectDepartmentService({
-                        pYear: patient.year,
-                        pMonth: patient.month,
-                        number: patient.number,
-                        departmentKey: department.slug
-                    }).url} className='h-32 w-32 border rounded-xl flex flex-col items-center justify-center'>
-                        <img src={department.image} alt={department.name} className='w-12 h-12 object-contain'/>
-                        <span className='text-center text-sm mt-2 max-w-28'>{department.name}</span>
-                    </Link>
-                </div>
-            ))}
+    return <div className='flex flex-row h-full w-full space-y-4'>
+        <PatientTransactionsHistoryCard patient={patient} className='w-1/4 pr-6' />
+        <div className='flex-1 flex flex-col h-full w-full space-y-4'>
+            <PatientMiniCard patient={patient} className='max-w-md'/>
+            <h3 className='text-3xl mb-2 font-bold'>Departments</h3>
+            <div className='flex-1 grid grid-cols-6 gap-4 w-full'>
+                {departments.map((department:any) => (
+                    <div key={department.id} className='flex flex-col items-center justify-center'>
+                        <Link href={counterSelectDepartmentService({
+                            pYear: patient.year,
+                            pMonth: patient.month,
+                            number: patient.number,
+                            departmentKey: department.slug
+                        }).url} className='h-32 w-32 border rounded-xl flex flex-col items-center justify-center'>
+                            <img src={department.image} alt={department.name} className='w-12 h-12 object-contain'/>
+                            <span className='text-center text-sm mt-2 max-w-28'>{department.name}</span>
+                        </Link>
+                    </div>
+                ))}
+            </div>
+            <h3 className='text-3xl mb-2 font-bold'>RECESITATION</h3>
+            <div className='flex-1 grid grid-cols-6 gap-4 w-full'>
+                {departments.filter((department:any) => department.have_composit_services).map((department:any) => (
+                    <div key={department.id} className='flex flex-col items-center justify-center'>
+                        <Link href={counterSelectDepartmentService({
+                            pYear: patient.year,
+                            pMonth: patient.month,
+                            number: patient.number,
+                            departmentKey: `RECES-${department.slug}`
+                        }).url} className='h-32 w-32 border rounded-xl flex flex-col items-center justify-center'>
+                            <img src={department.image} alt={department.name} className='w-12 h-12 object-contain'/>
+                            <span className='text-center text-sm mt-2 max-w-28'>{department.name}</span>
+                        </Link>
+                    </div>
+                ))}
+            </div>
         </div>
     </div>
 }
@@ -295,13 +387,45 @@ function StepOne({openCounter}:any) {
         }
     }
 
+    const createPatientInApi = async () => {
+        try {
+            const response = await fetch(apiPatientsStore().url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    cnic: patientCnic,
+                    name: patientName,
+                    contact: patientContact,
+                    age: patientAge,
+                    gender: patientGender,
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Handle the response data as needed
+                console.log('Patient created successfully:', data);
+                window.location.href = counterSelectDepartment({
+                    pYear: data.data.year,
+                    pMonth: data.data.month,
+                    number: data.data.number
+                }).url;
+                
+            }
+        } catch (error) {
+            console.error('Error creating patient:', error);
+        }
+    };
+
     useEffect(() => {
         console.log(patients);
     }, [patients])
 
 
-    return <>
-        <div className='flex flex-col items-center justify-center p-4 pr-8'>
+    return <div className='h-full w-full grid grid-cols-2 divide-x divide-[#06df72]'>
+        <div className='flex flex-col p-4 pr-8'>
             <div className='flex flex-col w-full space-y-4'>
                 <h3 className='text-3xl mb-2 font-bold'>Select / Create Patient</h3>
                 <div className="grid gap-2">
@@ -353,7 +477,7 @@ function StepOne({openCounter}:any) {
                 </div>
                 <div className="grid gap-2">
                     <Label htmlFor="patient_contact">Patient Contact</Label>
-                    <Input
+                    <MaskInput
                         id="patient_contact"
                         type="text"
                         name="patient_contact"
@@ -361,8 +485,10 @@ function StepOne({openCounter}:any) {
                         autoFocus
                         tabIndex={3}
                         autoComplete="false"
-                        placeholder='Patient name'
-                        value={patientContact} onChange={(e) => setPatientContact(e.target.value)}
+                        value={patientContact} 
+                        mask="+99-9999-9999999"
+                        placeholder="+92-0000-0000000"
+                        onValueChange={({ masked, unmasked }) => setPatientContact(masked)}
                     />
                     {/* <InputError message={errors.email} /> */}
                 </div>
@@ -431,7 +557,7 @@ function StepOne({openCounter}:any) {
                 </div>
             </div>
         </div>
-        <div className='flex flex-col items-center justify-center p-4 pr-8'>
+        <div className='flex flex-col p-4 pr-8 space-y-4'>
             <div className='flex flex-col w-full space-y-4'>
 
                 {exactMatch.length > 0 && <>
@@ -442,8 +568,8 @@ function StepOne({openCounter}:any) {
                         pYear: p.year,
                         pMonth: p.month,
                         number: p.number
-                    }).url} className='bg-[#1c398e] hover:bg-[#06df72] text-white hover:text-[#1c398e] rounded-xl p-2 flex flex-row'>
-                        <PatientCard {...p} rank='A' />
+                    }).url} className='bg-[#1c398e] hover:bg-[#06df72] text-white hover:text-[#1c398e] rounded-xl p-1 flex flex-row'>
+                        <PatientMiniCard patient={p} className='w-full' />
                     </Link>)}
                 
                 </>}
@@ -456,22 +582,20 @@ function StepOne({openCounter}:any) {
                         pYear: p.year,
                         pMonth: p.month,
                         number: p.number
-                    }).url} className='bg-[#1c398e] hover:bg-[#06df72] text-white hover:text-[#1c398e] rounded-xl p-2 flex flex-row'>
-                        <PatientCard {...p} rank={ i <= 3 ? 'B' : (i <= 5 ? 'C' : 'D')} />
+                    }).url} className='bg-[#1c398e] hover:bg-[#06df72] text-white hover:text-[#1c398e] rounded-xl p-1 flex flex-row'>
+                        <PatientMiniCard patient={p} className='w-full' />
                     </Link>)}
 
                 </>}
 
                 {(
                     patientName &&
-                    patientGender &&
-                    patientContact &&
-                    patientAge
+                    patientContact
                     
-                    ) && <div className='bg-[#1c398e] hover:bg-[#06df72] text-white hover:text-[#1c398e] rounded-xl p-2 flex flex-row'>
-                    <PatientCard rank='+' name={patientName} gender={patientGender} ps_number={psInput} contact={patientContact} cnic={patientCnic} age={patientAge}></PatientCard>
-                    <div>
-                        <Button >
+                    ) && <div className='bg-[#1c398e] hover:bg-[#06df72] text-white hover:text-[#1c398e] rounded-xl p-2 flex flex-col space-y-4 cursor-default'>
+                    <PatientMiniCard patient={{name: patientName, gender: patientGender, ps_number: psInput, contact: patientContact, cnic: patientCnic, age: patientAge}} className='w-full' />
+                    <div className='items-right justify-end'>
+                        <Button onClick={() => createPatientInApi()}>
                             <span>Create New Patient</span>
                         </Button>
                     </div>
@@ -481,31 +605,5 @@ function StepOne({openCounter}:any) {
 
             </div>
         </div>
-    </>
-}
-
-type patientType = {
-    rank: string,
-    name: string,
-    gender:string,
-    ps_number:string,
-    contact:string,
-    cnic:string,
-    age:string,
-}
-function PatientCard({rank, name, gender, ps_number, contact, cnic, age }: patientType){
-    return <>
-        <div className='text-4xl px-4'>
-            {rank}
-        </div>
-        <div className='flex-1 flex flex-col'>
-            <h5>Patient Name: {name}</h5>
-            <div className='flex flex-col'>
-                <span>Gender:{gender}</span>
-                <span>MR #:{ps_number}</span>
-                <span>Contact #:{contact}</span>
-                <span>CNIC #:{cnic}</span>
-            </div>
-        </div>
-    </>
+    </div>
 }

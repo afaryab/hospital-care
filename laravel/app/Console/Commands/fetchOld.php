@@ -372,7 +372,8 @@ class fetchOld extends Command
                     'closing_id' => $trObject->closing_id,
                     'transaction_id' => $trObject->id,
                     'created_by' => $trObject->created_by,
-
+                    'amount' => $element->amount,
+                    'orignal_amount' => $element->orignal_amount,
                     'created_at' => $element->created_on,
                     'updated_at' => $element->modified_on,
 
@@ -1171,10 +1172,10 @@ class fetchOld extends Command
             return null;
         }
 
-        $patientObj = Patient::where('id', $int)->first();
+        $patientObj = Patient::where('id', $int);
 
-        if($patientObj){
-            return $patientObj;
+        if($patientObj->count() > 0){
+            return $patientObj->first();
         }
 
         $patient = DB::connection('secondary')->table('patients')->find($int);

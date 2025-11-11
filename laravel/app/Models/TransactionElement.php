@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class TransactionElement extends Model
 {
     protected $fillable = [
+        'id',
         'old_id',
         'closing_id',
         'transaction_id',

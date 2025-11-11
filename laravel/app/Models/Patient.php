@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Patient extends Model
 {
     protected $fillable = [
+        'id',
         'ps_number',
         'name',
         'gender',
@@ -60,17 +62,45 @@ class Patient extends Model
 
     public static function generateCounterNumber(): string
     {
-        $now = Carbon::now();
-        $year = $now->format('Y');
-        $month = $now->format('m');
+        return DB::transaction(function () {
+            $now = Carbon::now();
+            $year = $now->format('Y');
+            $month = $now->format('m');
 
-        // Count how many counters have been created this month
-        $count = self::where('ps_number', 'like', "{$year}-{$month}-%")->count();
-        $count += 1; // Increment for the new counter
+            // Count how many patients have been created this month with PS numbers
+            // Use FOR UPDATE to lock the table and prevent race conditions
+            $count = self::where('ps_number', 'like', "PS/{$year}/{$month}/%")
+                        ->lockForUpdate()
+                        ->count();
+            $count += 1; // Increment for the new patient
 
-        // STRPAD the count to be 4 digits
-        $count = str_pad($count, 4, '0', STR_PAD_LEFT);
+            // Pad the count to be 4 digits
+            $count = str_pad($count, 4, '0', STR_PAD_LEFT);
 
-        return "PS/{$year}/{$month}/{$count}";
+            return "PS/{$year}/{$month}/{$count}";
+        });
+    }
+
+    public function getAgeAttribute()
+    {
+        // User age days and created at to calculate age in years with respect to today
+        if ($this->age_days !== null) {
+            $createdAt = $this->created_at ?? Carbon::now();
+            $birthDate = $createdAt->copy()->subDays($this->age_days);
+
+            $formToday = Carbon::now();
+            $ageInYears = $birthDate->diffInYears($formToday);
+            return $ageInYears;
+        }
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'patient_id', 'id');
+    }
+
+    public function treatments()
+    {
+        return $this->hasMany(ServiceOrder::class, 'patient_id', 'id');
     }
 }

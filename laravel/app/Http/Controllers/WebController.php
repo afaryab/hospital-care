@@ -6,6 +6,7 @@ use App\CounterStatus;
 use App\Models\Closing;
 use App\Models\Patient;
 use App\Models\Reception;
+use App\Models\Service;
 use App\Models\ServiceDepartment;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -142,7 +143,7 @@ class WebController extends Controller
     {
 
         $request->validate([
-            'opening_balance' => 'required|numeric',
+            'opening_balance' => 'nullable|numeric',
             'reception_id' => 'required|exists:receptions,id'
         ]);
 
@@ -189,8 +190,9 @@ class WebController extends Controller
         if(!$openCounter){
             return redirect(route('counter-open'));
         }else{
+            // dd($openCounter);
             return Inertia::render('counter/view',[
-                'openCounter' => $openCounter
+                'openCounter' => $openCounter,
             ]);
         }
     }
@@ -210,14 +212,27 @@ class WebController extends Controller
 
             $psNumber = 'PS/'.$pYear.'/'.$pMonth.'/'.$number;
 
-            $patientData = Patient::where('ps_number', $psNumber)->firstOrFail();
+            $patientData = Patient::with('treatments','transactions')->where('ps_number', $psNumber)->firstOrFail();
 
             $pageData['selectedPatient'] = $patientData;
         }
-
-        $pageData['departments'] = ServiceDepartment::all();
         $pageData['departmentKey'] = $departmentKey;
+
+        if(!$departmentKey || $departmentKey == ''){
+
+            $pageData['departments'] = ServiceDepartment::all();
+            
+        }else{
+            
+            $department = ServiceDepartment::where('slug', $departmentKey)->firstOrFail();
+
+            $pageData['departments'] = ServiceDepartment::all();
+
+            $pageData['services'] = Service::where('service_department_id', $department->id)->get();
+
+        }
         
+        // dd($pageData['services']);
 
         return Inertia::render('counter/patient',$pageData);
     }

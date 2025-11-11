@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Reception extends Model
 {
     protected $fillable = [
+        'id',
         'name',
         'allowed_departments',
         'is_allowed_to_pay_voucher',

@@ -41,3 +41,60 @@ export interface User {
     updated_at: string;
     [key: string]: unknown; // This allows for additional properties...
 }
+
+export interface Patient {
+    id: string;
+    name: string;
+    image?: string;
+    gender: 'm' | 'f' | 't' | 'o';
+    contact: string;
+    cnic: string;
+    age: number;
+}
+
+export interface ServiceDepartment {
+    id: number;
+    name: string;
+    slug: string;
+}
+
+export interface Service {
+    id: number;
+    name: string;
+    service_department_id: number;
+    charge: number;
+    charges_include_tax: boolean;
+    have_service_provider: boolean;
+}
+
+export interface Transaction {
+    id: number;
+    old_id: string;
+    closing_id: number;
+    created_by: number;
+    patient_id?: number;
+    type: string;
+    income_or_expense: 'INCOME' | 'EXPENSE';
+    amount: number;
+    amount_alphabetical: string;
+    orignal_amount: number;
+    customer_payed: number;
+    change: number;
+    edited_amount: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface ServiceOrder {
+    type: string
+    so_number: string
+    so_short: string
+    created_by: number
+    patient_id: number
+    service_id?: number
+    service_recestation_id?: number
+    doctor_id: number
+    is_composit: boolean
+    notes: string
+    notes_json: any
+}
