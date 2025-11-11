@@ -185,7 +185,7 @@ class StatsOverview extends StatsOverviewWidget
                 label: 'Closings Worth / Open / Total',
                 value: "{$this->moneyfy($totalCollectionThisDuration)} / {$this->moneyfy($totalOpeningsThisDuration)} / {$this->moneyfy($totalClosingsThisDuration)} ",
             )
-            ->description("Total: {$this->moneyfy($totalCollection)} / {$this->moneyfy($totalOpenings)} / {$this->moneyfy($receptions)} / {$receptions} receptions")
+            ->description("Total: {$this->moneyfy($totalCollection)} / {$this->moneyfy($totalOpenings)} / {$this->moneyfy($totalClosings)} / {$receptions}")
             ->chart($totalChartThisDuration->pluck('count')->toArray());
     }
 
