@@ -373,7 +373,7 @@ class fetchOld extends Command
                     'transaction_id' => $trObject->id,
                     'created_by' => $trObject->created_by,
                     'amount' => $element->amount,
-                    'orignal_amount' => $element->orignal_amount,
+                    'original_amount' => $element->original_amount,
                     'created_at' => $element->created_on,
                     'updated_at' => $element->modified_on,
 

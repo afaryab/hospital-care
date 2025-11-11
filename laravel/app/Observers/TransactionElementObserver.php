@@ -20,7 +20,9 @@ class TransactionElementObserver
             $service = Service::find($transactionElement->service_id);
             $patient = $transactionElement->patient;
 
-
+            if($patient == null || $service == null){
+                return;
+            }
             $soNumber = $patient->ps_number . '/' . $service->department->slug . '/' . $this->generateServiceOrderNumber();
 
             // Create ServiceOrder when TransactionElement is created
