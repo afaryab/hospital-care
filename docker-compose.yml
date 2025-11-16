@@ -23,7 +23,7 @@ services:
   laravel:
     build:
       context: .
-      dockerfile: docker/laravel-php/Dockerfile
+      dockerfile: docker/laravel-php/Dockerfile.core
     volumes:
       - ./laravel:/var/www/html
       - ./docker/laravel-php/default.conf:/etc/nginx/conf.d/default.conf
