@@ -3,8 +3,8 @@
 namespace App\Filament\Widgets;
 
 use App\Console\Commands\fetchOld;
-use App\CounterStatus;
-use App\ExpenseVoucherStatus;
+use App\Enum\CounterStatus;
+use App\Enum\ExpenseVoucherStatus;
 use App\Models\Closing;
 use App\Models\Expense;
 use App\Models\ExpenseVoucher;

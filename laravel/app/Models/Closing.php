@@ -69,7 +69,7 @@ class Closing extends Model
         $month = $now->format('m');
 
         // Count how many counters have been created this month
-        $count = self::where('ct_number', 'like', "{$year}-{$month}-%")->count();
+        $count = self::where('ct_number', 'like', "CT/{$year}/{$month}/%")->count();
         $count += 1; // Increment for the new counter
 
         // STRPAD the count to be 4 digits

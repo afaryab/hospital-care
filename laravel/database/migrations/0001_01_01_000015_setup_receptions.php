@@ -38,11 +38,13 @@ return new class extends Migration
             $table->decimal('closing_amount_card', 10, 2)->default(0);
             $table->decimal('expense_payed', 10, 2)->default(0);
             $table->dateTime('cash_recieving_time')->nullable();
+            $table->dateTime('closed_at')->nullable();
             $table->timestamps();
         });
 
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
+            $table->string('tr_number')->unique()->index();
             $table->integer('old_id')->nullable();
             $table->foreignId('closing_id')->constrained('closings')->onDelete('cascade');
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');

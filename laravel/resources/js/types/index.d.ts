@@ -44,12 +44,15 @@ export interface User {
 
 export interface Patient {
     id: string;
+    ps_number: string;
     name: string;
     image?: string;
     gender: 'm' | 'f' | 't' | 'o';
     contact: string;
     cnic: string;
     age: number;
+    treatments: ServiceOrder[];
+    transactions: Transaction[];
 }
 
 export interface ServiceDepartment {
@@ -69,6 +72,7 @@ export interface Service {
 
 export interface Transaction {
     id: number;
+    tr_number: string;
     old_id: string;
     closing_id: number;
     created_by: number;

@@ -20,6 +20,7 @@ return new class extends Migration
 
         Schema::create('expense_vouchers', function (Blueprint $table) {
             $table->id();
+            $table->string('vc_number')->unique()->index();
             $table->integer('old_id')->nullable();
             $table->foreignId('exp_category_id')->constrained('expense_categories')->onDelete('cascade');
 

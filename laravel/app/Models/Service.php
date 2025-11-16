@@ -29,6 +29,10 @@ class Service extends Model
         'is_composit_service' => 'boolean'
     ];
 
+    protected $attributes = [
+        'available_providers'
+    ];
+
     public function department()
     {
         return $this->belongsTo(ServiceDepartment::class, 'service_department_id');

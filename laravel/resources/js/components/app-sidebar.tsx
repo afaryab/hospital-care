@@ -10,34 +10,11 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { appointments, counter, counterList, counterListAll, expenses, home, patientsRegister, register } from '@/routes';
+import { appointments, counter, counterList, counterListAll, expenses, home, myCounterList, patientsRegister, register } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LucideHome, BookAIcon, LucideShoppingBasket, Calendar1, CircleDollarSign, ListTree, ChartLine, Cog, ListPlus, LucideListPlus } from 'lucide-react';
 import AppLogo from './app-logo';
-
-const receptionMenuItems: NavItem[] = [
-    {
-        title: 'Counter',
-        href: counter(),
-        icon: LucideShoppingBasket,
-    },
-    {
-        title: 'Appointments',
-        href: appointments(),
-        icon: Calendar1,
-    },
-    {
-        title: 'Expenses',
-        href: expenses(),
-        icon: CircleDollarSign,
-    },
-    {
-        title: 'My Counters',
-        href: counterList(),
-        icon: LucideListPlus,
-    },
-];
 
 const accountsMenuItems: NavItem[] = [
     {
@@ -122,8 +99,35 @@ export function AppSidebar() {
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={page.url.startsWith(
+                                counter().url
+                            ) || page.url == counter().url}
+                            tooltip={{ children: 'Counter' }}
+                        >
+                            <Link href={counter().url} prefetch>
+                                <LucideShoppingBasket />
+                                <span>Counter</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={page.url.startsWith(
+                                myCounterList().url
+                            ) || page.url == myCounterList().url}
+                            tooltip={{ children: 'My Closings' }}
+                        >
+                            <Link href={myCounterList().url} prefetch>
+                                <LucideShoppingBasket />
+                                <span>My Closings</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
                 </SidebarMenu>
-                <NavMain title='Counter' items={receptionMenuItems} />
                 <NavMain title='Accounts' items={accountsMenuItems} />
             </SidebarContent>
 

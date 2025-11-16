@@ -27,7 +27,8 @@ class TransactionElement extends Model
         'customer_payed',
         'change',
         'edited_amount',
-
+        
+        'service_order_id',
         'created_at',
         'updated_at',
     ];
@@ -35,9 +36,9 @@ class TransactionElement extends Model
     /**
      * Get the service order associated with this transaction element.
      */
-    public function serviceOrder(): HasOne
+    public function serviceOrder(): BelongsTo
     {
-        return $this->hasOne(ServiceOrder::class);
+        return $this->belongsTo(ServiceOrder::class);
     }
 
     /**
@@ -73,10 +74,24 @@ class TransactionElement extends Model
     }
 
     /**
+     * Get the service recestation associated with the transaction element.
+     */
+    public function serviceRecestation(): BelongsTo
+    {
+        return $this->belongsTo(ServiceRecestation::class, 'service_recestation_id');
+    }
+
+    /**
      * Get the doctor assigned to the transaction element.
      */
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'doctor_id');
     }
+
+    public function expense(): BelongsTo
+    {
+        return $this->belongsTo(Expense::class);
+    }
+    
 }

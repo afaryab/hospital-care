@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import { counter, home, patientsRegister, patientsRegisterPsNumber, patientsRegisterPsNumberDepartment, patientsRegisterYear, patientsRegisterYearMonth } from '@/routes';
+import { counter, counterView, home, myCounterList, myCounterListYear, myCounterListYearMonth, patientsRegister, patientsRegisterPsNumber, patientsRegisterPsNumberDepartment, patientsRegisterYear, patientsRegisterYearMonth } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
@@ -42,57 +42,57 @@ export default function CountersList() {
     
     const { yearSelected, monthSelected, closings, openCounter } = usePage<PageProps>().props;
 
-    // if(yearSelected){
-    //     breadcrumbs.push({
-    //         title: yearSelected,
-    //         href: patientsRegisterYear({
-    //             year: yearSelected
-    //         }).url
-    //     })
-    // }
+    if(yearSelected){
+        breadcrumbs.push({
+            title: yearSelected,
+            href: myCounterListYear({
+                year: yearSelected
+            }).url
+        })
+    }
 
-    // if(monthSelected){
-    //     breadcrumbs.push({
-    //         title: getMonthAgainstNumer(monthSelected),
-    //         href: patientsRegisterYearMonth({
-    //             year: yearSelected,
-    //             month: monthSelected
-    //         }).url
-    //     })
-    // }
+    if(monthSelected){
+        breadcrumbs.push({
+            title: getMonthAgainstNumer(monthSelected),
+            href: myCounterListYearMonth({
+                year: yearSelected,
+                month: monthSelected
+            }).url
+        })
+    }
 
 
     const [year, setYear] = useState<string>(yearSelected as string);
     const [month, setMonth] = useState<string>(monthSelected as string);
 
 
-    // useEffect(() => {
-    //     // Only navigate if the current values differ from the initial props
-    //     if (year !== yearSelected || month !== monthSelected) {
-    //         let url = '';
-    //         if(year != '0' && month != '0'){
-    //             url = patientsRegisterYearMonth({
-    //                 year: year,
-    //                 month: month
-    //             }).url
-    //         }else if(year != '0'){
-    //             url = patientsRegisterYear({
-    //                 year: year
-    //             }).url
-    //         }else{
-    //             url = patientsRegister().url
-    //         }
+    useEffect(() => {
+        // Only navigate if the current values differ from the initial props
+        if (year !== yearSelected || month !== monthSelected) {
+            let url = '';
+            if(year != '0' && month != '0'){
+                url = myCounterListYearMonth({
+                    year: year,
+                    month: month
+                }).url
+            }else if(year != '0'){
+                url = myCounterListYear({
+                    year: year
+                }).url
+            }else{
+                url = myCounterList().url
+            }
 
-    //         router.get(url, {}, { preserveState: true });
-    //     }
-    // }, [year, month, yearSelected, monthSelected]);
+            router.get(url, {}, { preserveState: true });
+        }
+    }, [year, month, yearSelected, monthSelected]);
 
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72]">
-                <div className="flex flex-0 flex-row gap-4 rounded-xl p-2 bg-[#1c398e]">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72] dark:bg-[#262626]">
+                <div className="flex flex-0 flex-row gap-4 rounded-xl p-2 bg-[#06df72] dark:bg-[#0a0a0a]">
                     <div className="grid gap-2">
                         <Label htmlFor="year">Year</Label>
                         <Select value={year.toString()} onValueChange={(value) => setYear(value)}>
@@ -138,14 +138,15 @@ export default function CountersList() {
                         {/* <InputError message={errors.email} /> */}
                     </div>
                 </div>
-                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-2 bg-white text-[#1c398e]">
-                    <table className='text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 text-left'>
+                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-0 bg-white dark:bg-neutral-950 text-[#1c398e]">
+                    <table className='text-xs text-gray-700 uppercase bg-gray-50 dark:bg-neutral-950 dark:text-gray-400 text-left'>
                         <thead>
                             <tr>
                                 <th scope="col" className="px-6 py-3">Info</th>
-                                <th scope="col" className="px-6 py-3">Contact</th>
-                                <th scope="col" className="px-6 py-3">Departmental Records</th>
-                                <th scope="col" className="px-6 py-3">Others</th>
+                                <th scope="col" className="px-6 py-3">Opening Amount</th>
+                                <th scope="col" className="px-6 py-3">Closing Amount</th>
+                                <th scope="col" className="px-6 py-3">Expense Payed</th>
+                                <th scope="col" className="px-6 py-3">Closed At</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -154,33 +155,26 @@ export default function CountersList() {
                                 let explodedPsid = p.ct_number.split('/');
 
                                 return (
-                                    <tr key={p.id} className='bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200'>
-                                        <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white flex flex-col">
-                                            <Link href={patientsRegisterPsNumber({
-                                                year: explodedPsid[1] || '',
-                                                month: explodedPsid[2] || '',
-                                                number: explodedPsid[3] || ''
-                                            }).url} ><span className='text-blue-500'>PS# {p.ps_number}</span></Link>
-                                            <span>Name: {p.name} {(
-                                                p.guardian && p.relation
-                                                ) && <span>({p.relation} of {p.guardian})</span>}</span>
-                                            <span>Gender: {p.gender}</span>
-                                        </th>
-                                        <td className="px-6 py-4">
-                                            <span>{p.contact}</span>
-                                            <span>{p.cnic}</span>
+                                    <tr key={p.id} className='bg-white border-b dark:bg-neutral-800 dark:border-neutral-950 border-gray-200'>
+                                        <td scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white flex flex-col">
+                                            <Link href={counterView({
+                                                ctYear: explodedPsid[1] || '',
+                                                ctMonth: explodedPsid[2] || '',
+                                                ctNumber: explodedPsid[3] || ''
+                                            }).url} ><span className='text-blue-500'>CT# {p.ct_number}</span></Link>
                                         </td>
-                                        <td className="px-6 py-4 flex flex-row">
-                                            {['OPD','IND','EMR','PTH','XRY','RAD'].map((itm) => {
-                                                return <Link href={patientsRegisterPsNumberDepartment({
-                                                        year: explodedPsid[1] || '',
-                                                        month: explodedPsid[2] || '',
-                                                        number: explodedPsid[3] || '',
-                                                        departmentKey: itm
-                                                    }).url} ><span className='text-blue-500'>{itm}</span></Link>
-                                            })}
+                                        <td className="px-6 py-3">
+                                            {p.opening_amount}
                                         </td>
-                                        <td className="px-6 py-4"></td>
+                                        <td className="px-6 py-3">
+                                            {p.closing_amount}
+                                        </td>
+                                        <td className="px-6 py-3">
+                                            {p.expense_payed}
+                                        </td>
+                                        <td className="px-6 py-3">
+                                            {p.closed_at}
+                                        </td>
                                     </tr>
                                 );
                             })}
@@ -189,7 +183,7 @@ export default function CountersList() {
                             <tr>
                                 <td colSpan={4} className='text-right'>
 
-                                    // Pagination UI (ellipses approach)
+                                    
                                     {
                                         (() => {
                                             const current = closings.current_page;
@@ -244,7 +238,7 @@ export default function CountersList() {
                                                             <span
                                                                 key={p}
                                                                 aria-current="page"
-                                                                className="px-3 py-1 rounded bg-[#1c398e] text-white font-medium"
+                                                                className="px-3 py-1 rounded bg-[#06df72] dark:bg-neutral-800 text-white font-medium"
                                                             >
                                                                 {p}
                                                             </span>

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Migration\ImportController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
+use App\Http\Controllers\Prints\TransactionPdfPrintController;
 use App\Http\Controllers\WebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -27,6 +28,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('PS/{year}/{month}', [WebController::class, 'register'])->name('patients-register-year-month');
     Route::get('PS/{year}/{month}/{number}', [WebController::class, 'patient'])->name('patients-register-ps-number');
     Route::get('PS/{year}/{month}/{number}/{departmentKey}', [WebController::class, 'patient'])->name('patients-register-ps-number-department');
+    Route::get('PS/{year}/{month}/{number}/{departmentKey}/{serviceNumber}', [WebController::class, 'patient'])->name('patients-register-ps-number-department-service');
 
     
     /**
@@ -36,19 +38,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('CT-NEW', [WebController::class, 'counterOpen'])->name('counter-open');
     Route::post('CT-NEW', [WebController::class, 'counterStore'])->name('counter-store');
     Route::get('CT-CLOSE', [WebController::class, 'counterClose'])->name('counter-close');
+    Route::post('CT-CLOSE', [WebController::class, 'counterClose'])->name('counter-close-post');
     Route::get('CT', [WebController::class, 'counter'])->name('counter');
     
     Route::get('CT/{ctYear}', [WebController::class, 'countersList'])->name('counters-year');
     Route::get('CT/{ctYear}/{ctMonth}', [WebController::class, 'countersList'])->name('counters-year-month');
     Route::get('CT/{ctYear}/{ctMonth}/{ctNumber}', [WebController::class, 'counterView'])->name('counter-view');
 
-    Route::get('MY-CT-LIST', [WebController::class, 'countersList'])->name('counter-list');
+    Route::get('MY-CT-LIST', [WebController::class, 'userCountersList'])->name('my-counter-list');
+    Route::get('MY-CT-LIST/{year}', [WebController::class, 'userCountersList'])->name('my-counter-list-year');
+    Route::get('MY-CT-LIST/{year}/{month}', [WebController::class, 'userCountersList'])->name('my-counter-list-year-month');
 
     Route::get('CT-PS', [WebController::class, 'counterPatient'])->name('counter-select-patient');
     Route::get('CT-PS/{pYear}/{pMonth}/{number}', [WebController::class, 'counterPatient'])->name('counter-select-department');
     Route::get('CT-PS/{pYear}/{pMonth}/{number}/{departmentKey}', [WebController::class, 'counterPatient'])->name('counter-select-department-service');
+    Route::get('CT-TR/{tYear}/{tMonth}/{tDay}/{tNumber}', [WebController::class, 'transactionView'])->name('transaction-view');
 
-    Route::get('TR/{pYear}/{pMonth}/{number}', [WebController::class, 'counter'])->name('transaction-view');
+    Route::get('CT-EXP', [WebController::class, 'counterExpense'])->name('counter-expense');
+
+    Route::post('TR-CREATE', [WebController::class, 'transactionStore'])->name('transaction-store');
+
+    
 
     Route::get('appointments', [WebController::class, 'counter'])->name('appointments');
     Route::get('expenses', [WebController::class, 'counter'])->name('expenses');
@@ -69,6 +79,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('PRINT/CT/{year}/{month}/{number}', [ClosingStatementPdfPrintController::class, 'stream'])
         ->name('print-closing-statement');
+
+    Route::get('PRINT/TR/{year}/{month}/{day}/{number}', [TransactionPdfPrintController::class, 'stream'])
+        ->name('print-transaction');
+    
+    Route::get('DOWNLOAD/TR/{year}/{month}/{day}/{number}', [TransactionPdfPrintController::class, 'download'])
+        ->name('download-transaction');
     
 });
 

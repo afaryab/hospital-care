@@ -16,19 +16,20 @@ class TransactionElementObserver
     {
         if($transactionElement->service_id){
             // Generate unique SO number
-
             $service = Service::find($transactionElement->service_id);
             $patient = $transactionElement->patient;
 
             if($patient == null || $service == null){
                 return;
             }
-            $soNumber = $patient->ps_number . '/' . $service->department->slug . '/' . $this->generateServiceOrderNumber();
+            $soShort = $service->department->slug.'/'.$this->generateServiceOrderNumber();
+            $soNumber = $patient->ps_number . '/' . $soShort;
 
             // Create ServiceOrder when TransactionElement is created
             $order = ServiceOrder::create([
-                'type' => $service->department->slug,
+                'type' => $transactionElement->type,
                 'so_number' => $soNumber,
+                'so_short' => $soShort,
                 'created_by' => $transactionElement->created_by,
                 'patient_id' => $transactionElement->patient_id,
                 'service_id' => $transactionElement->service_id,

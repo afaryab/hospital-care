@@ -28,6 +28,52 @@ class ServiceOrder extends Model
         'is_composit' => 'boolean'
     ];
 
+    protected $appends = [
+        'year',
+        'month',
+        'number',
+        'departmentKey',
+        'serviceNumber',
+    ];
+
+    public function getYearAttribute()
+    {
+        return $this->so_number_parts['year'] ?? null;
+    }
+    public function getMonthAttribute()
+    {
+        return $this->so_number_parts['month'] ?? null;
+    }
+    public function getNumberAttribute()
+    {
+        return $this->so_number_parts['number'] ?? null;
+    }
+    public function getDepartmentKeyAttribute()
+    {
+        return $this->so_number_parts['departmentKey'] ?? null;
+    }
+    public function getServiceNumberAttribute()
+    {
+        return $this->so_number_parts['serviceNumber'] ?? null;
+    }
+
+    public function getSoNumberPartsAttribute()
+    {
+        if (empty($this->so_number)) {
+            return null;
+        }
+
+        $parts = explode('/', $this->so_number);
+
+        return [
+            'year' => $parts[1] ?? null,
+            'month' => $parts[2] ?? null,
+            'number' => $parts[3] ?? null,
+            'departmentKey' => $parts[4] ?? null,
+            'serviceNumber' => $parts[5] ?? null,
+        ];
+    }
+
     /**
      * Get the user who created the service order.
      */

@@ -11,9 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MultiSelect } from '@/components/ui/multi-select';
 import { AdvancedTagSelect } from '@/components/ui/tag-select';
 import AppLayout from '@/layouts/app-layout';
-import { apiPatientsSearch, apiPatientsStore, counter, counterSelectDepartment, counterSelectDepartmentService, counterSelectPatient, counterView, home, patientsRegisterPsNumberDepartment } from '@/routes';
+import { apiPatientsSearch, apiPatientsStore, counter, counterSelectDepartment, counterSelectDepartmentService, counterSelectPatient, counterView, home, patientsRegisterPsNumberDepartment, printTransaction, downloadTransaction, transactionStore } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import { AlertTriangle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { clsx } from 'clsx';
@@ -21,10 +21,11 @@ import { patient } from '@/actions/App/Http/Controllers/WebController';
 import BulletsWrapper from '@/elements/bullets-wrapper';
 import PatientMiniCard from '@/elements/patient/mini-card';
 import PatientTransactionsHistoryCard from '@/elements/patient/transactions-history-card';
+import DepartmentMiniCard from '@/elements/department/mini-card';
 
 export default function Counter() {
 
-    const {selectedPatient, departments, departmentKey, openCounter, services} = usePage().props;
+    const {selectedPatient, departments, departmentKey, openCounter, services, recesitation, existingServiceOrders} = usePage().props;
 
     const step = !selectedPatient ? 1 : (!departmentKey ? 2 : 3);
 
@@ -104,18 +105,15 @@ export default function Counter() {
         active: step === 3
     });
 
-    console.log(step, bullets, openCounter, selectedPatient, departmentKey, services);
-
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Counter" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72]">
-                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-2 bg-white text-gray-800">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72] dark:bg-[#262626]">
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-2 bg-white dark:bg-neutral-950 text-gray-800 dark:text-white">
                     <BulletsWrapper bullets={bullets}>
                         {step === 1 && <StepOne openCounter={openCounter} />}
                         {step === 2 && <StepTwo openCounter={openCounter} patient={selectedPatient} departments={departments} />}
-                        {step === 3 && <StepThree openCounter={openCounter} patient={selectedPatient} departments={departments} departmentKey={departmentKey} services={services} />}
+                        {step === 3 && <StepThree recesitation={recesitation} existingServiceOrders={existingServiceOrders} openCounter={openCounter} patient={selectedPatient} departments={departments} departmentKey={departmentKey} services={services} />}
                     </BulletsWrapper>
                 </div>
             </div>
@@ -125,14 +123,148 @@ export default function Counter() {
 
 
 
-function StepThree({openCounter, patient, departments, departmentKey, services}:any) {
+function StepThree({recesitation, existingServiceOrders, openCounter, patient, departments, departmentKey, services}:any) {
 
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
+    const [mriNumber, setMriNumber] = useState<string>('');
+    const [paymentMethod, setPaymentMethod] = useState<string>('CASH');
+    const [amountPaid, setAmountPaid] = useState<number>(0);
+    const [validationErrors, setValidationErrors] = useState<any>({});
+    const [serviceProviders, setServiceProviders] = useState<any>({});
+    const [selectedServiceOrder, setSelectedServiceOrder] = useState<string>();
 
     const [formData, setFormData] = useState<any>({
         total: 0,
         items: []
     });
+
+    const calculateChange = () => {
+        return Math.max(0, amountPaid - formData.total);
+    };
+
+    const validatedInput = (billData:any) => {
+        // Patient ID must be set
+        if(!billData.patient_id){
+            validationErrors.patient_id = ['Patient ID is required.'];
+            setValidationErrors(validationErrors);
+            return false;
+        }
+
+        // Check each item if sevice have providers then provider must be selected
+        for(const item of billData.items){
+            const service = services.find((s:any) => s.id == item.service_id);
+            if(service && service.have_service_provider && !item.provider_id){
+                validationErrors[`provider_id_${item.service_id}`] = ['Provider is required for this service.'];
+                setValidationErrors(validationErrors);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    const generateBill = async () => {
+        // Clear previous validation errors
+        setValidationErrors({});
+
+        if(recesitation && selectedServiceOrder === ''){
+            alert('Please enter MRI number for recesitation services.');
+            return;
+        }
+        
+        try {
+            const billData = {
+                patient_id: patient.id,
+                patient_year: patient.year,
+                patient_month: patient.month,
+                patient_number: patient.number,
+                department_key: departmentKey,
+                service_order_id: selectedServiceOrder || null,
+                income_or_expense: 'INCOME',
+                items: formData.items.map((item: any) => ({
+                    service_id: item.serviceId,
+                    service_name: item.name,
+                    quantity: item.quantity,
+                    unit_price: item.charges,
+                    total: item.total || (item.quantity * item.charges),
+                    provider_id: serviceProviders[item.serviceId] || null
+                })),
+                total_amount: formData.total,
+                payment_method: paymentMethod,
+                amount_paid: amountPaid,
+                change_amount: calculateChange()
+            };
+
+            if(!validatedInput(billData)){  
+                alert('Please fix the validation errors before generating the bill.');
+                return;
+            }
+
+            router.post(transactionStore().url, billData, {
+                onSuccess: (response) => {
+                    console.log('Bill generated successfully:', response);
+                    
+                    // Create a simple success message with PDF options
+                    // const now = response.url;
+                    // const year = ;
+                    // const month = String(now.getMonth() + 1).padStart(2, '0');
+                    // const day = String(now.getDate()).padStart(2, '0');
+                    // // Use current timestamp as transaction number if not available
+                    // const number = now.getTime();
+                    
+                    // setTimeout(() => {
+                    //     window.open(printTransaction.url({year, month, day, number}), '_blank', 'width=800,height=600,scrollbars=yes');
+                    // }, 1000);
+                    
+                    setValidationErrors({});
+                },
+                onError: (errors) => {
+                    console.error('Validation errors:', errors);
+                    setValidationErrors(errors);
+                    
+                    // Show a general error message
+                    const errorMessages = Object.values(errors).flat();
+                    alert(`Please fix the following errors:\n${errorMessages.join('\n')}`);
+                },
+                onFinish: () => {
+                    console.log('Request completed');
+                }
+            });
+        } catch (error) {
+            console.error('Error generating bill:', error);
+            alert('Error generating bill. Please try again.');
+        }
+    };
+
+    const updateItemQuantityAndCharges = (serviceId: string, quantity: number, charges: number) => {
+        setFormData((prevData: any) => {
+            const updatedItems = prevData.items.map((item: any) => {
+                if (item.serviceId === serviceId) {
+                    return {
+                        ...item,
+                        quantity: quantity,
+                        charges: charges,
+                        total: quantity * charges
+                    };
+                }
+                return item;
+            });
+
+            const newTotal = updatedItems.reduce((sum: number, item: any) => sum + (item.total || 0), 0);
+
+            return {
+                ...prevData,
+                items: updatedItems,
+                total: newTotal
+            };
+        });
+    };
+
+    const updateServiceProvider = (serviceId: string, providerId: string) => {
+        setServiceProviders((prev: any) => ({
+            ...prev,
+            [serviceId]: providerId
+        }));
+    };
 
     useEffect(() => {
         console.log(selectedServices);
@@ -142,12 +274,17 @@ function StepThree({openCounter, patient, departments, departmentKey, services}:
         const customerSelectedServicesCartArray = selectedServices.map((serviceId:any) => {
             
             const sl = services.find((s:any) => s.id == serviceId);
-            totalCharges += sl?.charges || 0;
+            const itemCharges = sl?.charges || 0;
+            const itemQuantity = 1;
+            const itemTotal = itemQuantity * itemCharges;
+            totalCharges += itemTotal;
+            
             return {
                 serviceId: sl?.id || '',
                 name: sl?.name || '',
-                quantity: 1,
-                charges: sl?.charges || 0,
+                quantity: itemQuantity,
+                charges: itemCharges,
+                total: itemTotal
             };
         }, {});
 
@@ -159,29 +296,28 @@ function StepThree({openCounter, patient, departments, departmentKey, services}:
         setFormData(newFormData);
     }, [selectedServices]);
 
-
-
     return <div className='flex flex-col h-full w-full space-y-4'>
         <div className='flex flex-row h-full w-full space-x-6'>
-            <div>
+            <div className='flex-1'>
                 <h3 className='text-3xl mb-2 font-bold'>Add Bill</h3>
-                <div className='flex-1 grid grid-cols-4 gap-4 w-full'>
+                <div className='flex-1 grid grid-cols-4 gap-4 w-full mb-2 '>
                     {departments.filter((department:any) => department.slug === departmentKey).map((department:any) => (
-                        <div key={department.id} className='flex flex-col items-left justify-start'>
-                            <Link href={counterSelectDepartmentService({
-                                pYear: patient.year,
-                                pMonth: patient.month,
-                                number: patient.number,
-                                departmentKey: department.slug
-                            }).url} className='h-full w-32 border rounded-xl flex flex-col items-center justify-center'>
-                                <img src={department.image} alt={department.name} className='w-12 h-12 object-contain'/>
-                                <span className='text-center text-sm mt-2 max-w-28'>{department.name}</span>
-                            </Link>
-                        </div>
+                        <DepartmentMiniCard department={department} patient={patient} className='h-full w-full border rounded-xl flex flex-col items-center justify-center' />
                     ))}
-                    <PatientMiniCard patient={patient} className='col-span-3 max-w-md'/>
+                    <PatientMiniCard patient={patient} className='col-span-3 w-full'/>
                 </div>
-                <div className='py-4'>
+                <div className='p-4 border dark:border-neutral-950 rounded-xl mb-2'>
+                    {recesitation && <div className="grid gap-2 mb-2">
+                        <Label htmlFor="service">MRI #</Label>
+                        <Select name="mri_number" defaultValue={selectedServiceOrder} onValueChange={setSelectedServiceOrder}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select MRI number" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {existingServiceOrders.map((order:any) => (<SelectItem value={order.id}>{order.so_number + ` - `+ order.service.name}</SelectItem>))}
+                            </SelectContent>
+                        </Select>
+                    </div>}
                     <div className="grid gap-2">
                         <Label htmlFor="service">Service</Label>
                         <AdvancedTagSelect
@@ -189,101 +325,128 @@ function StepThree({openCounter, patient, departments, departmentKey, services}:
                             value={selectedServices}
                             onValueChange={setSelectedServices}
                             placeholder="Select services..."
-                            maxItems={2}
                         />
                         {/* <InputError message={errors.email} /> */}
                     </div>
                 </div>
-                <div className='py-4'>
+                <div className='p-4 border dark:border-neutral-950 rounded-xl mb-2'>
                     <div className="grid gap-2">
                         <table className="w-full text-left border">
-                            <thead>
-                                <tr className="flex border-b">
-                                    <th className="w-full p-2">Product</th>
-                                    <th className="min-w-[44px] p-2">QTY</th>
-                                    <th className="min-w-[74px] p-2">Total</th>
+                            <tbody>
+                                <tr className="border-b dark:bg-neutral-950 dark:text-white rounded-tl-xl rounded-tr-xl">
+                                    <td className="p-2 text-left">Product</td>
+                                    <td className="p-2 text-right">Provider</td>
+                                    {/* <td className="p-2 text-right">QTY</td> */}
+                                    <td className="p-2 text-right">Total</td>
                                 </tr>
-                            </thead>
-                            <tbody className='divide-y '>
-                            {formData.items.map((item:any) => {
-                                return (<tr key={item.serviceId} className="flex py-1">
-                                    <td className="flex-1 p-2">{item.name}</td>
-                                    <td className="">
-                                        <Input type="number" name={`quantity_${item.serviceId}`} className='w-16' defaultValue={item.quantity} min={1} />
-                                    </td>
-                                    <td className="">
-                                        <Input type="number" name={`charges_${item.serviceId}`} className='w-24' defaultValue={item.charges} min={1} />
-                                    </td>
-                                </tr>);
-                            })}
+                                {formData.items.length > 0 ? formData.items.map((item:any) => {
+                                    const service = services.find((s:any) => s.id == item.serviceId);
+                                    return (<BillItemsEditableTableRow 
+                                        key={item.serviceId}
+                                        service_name={item.name}
+                                        serviceid={item.serviceId}
+                                        quantity={item.quantity}
+                                        charges={item.charges}
+                                        service={service}
+                                        selectedProvider={serviceProviders[item.serviceId] || ''}
+                                        onUpdate={updateItemQuantityAndCharges}
+                                        onProviderUpdate={updateServiceProvider}
+                                        validationErrors={validationErrors}
+                                    />);
+                                }) : (
+                                    <tr>
+                                        <td colSpan={4} className="p-4 text-center text-gray-500 border dark:text-white dark:border-neutral-950 rounded-bl-xl rounded-br-xl">
+                                            No services selected.
+                                        </td>
+                                    </tr>
+                                )}
                             </tbody>
                         </table>
+                        <div className="mt-4 flex justify-end">
+                            <div className="w-full grid grid-cols-2 grid-col-1s gap-4">
+                                <div>
+                                    <Label htmlFor="payment_method">Payment Method</Label>
+                                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select payment method" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="CASH">Cash</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={validationErrors.payment_method?.[0]} />
+                                </div>
+
+                                <div>
+
+                                    <div>
+                                        <Label htmlFor="total_amount">Total Amount</Label>
+                                        <Input
+                                            id="total_amount"
+                                            type="text"
+                                            name="total_amount"
+                                            className="text-right font-semibold"
+                                            value={`${formData.total.toFixed(2)}/- only`}
+                                            readOnly
+                                        />
+                                        <InputError message={validationErrors.total_amount?.[0]} />
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="amount_paid">Amount Paid</Label>
+                                        <Input
+                                            id="amount_paid"
+                                            type="number"
+                                            name="amount_paid"
+                                            className="text-right"
+                                            value={amountPaid}
+                                            onChange={(e) => setAmountPaid(parseFloat(e.target.value))}
+                                            min={0}
+                                            step={0.01}
+                                            placeholder="0.00"
+                                        />
+                                        <InputError message={validationErrors.amount_paid?.[0]} />
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="change_amount">Change</Label>
+                                        <Input
+                                            id="change_amount"
+                                            type="text"
+                                            name="change_amount"
+                                            className="text-right font-semibold bg-green-50"
+                                            value={`${calculateChange().toFixed(2)}/- only`}
+                                            readOnly
+                                        />
+                                    </div>
+
+                                    <div className="pt-4">
+                                        <Button 
+                                            variant={'default'}
+                                            onClick={generateBill}
+                                            disabled={formData.items.length === 0 || amountPaid <= 0}
+                                        >
+                                            Generate Bill
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div className='flex-shrink flex max-w-96 bg-gray-300 min-w-80 w-full inset-shadow-lg'>
-                <div className="w-80 mx-auto my-auto rounded bg-gray-50 px-6 pt-8 shadow-lg">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg" alt="chippz" className="mx-auto w-16 py-4" />
-                    <div className="flex flex-col justify-center items-center gap-2">
-                        <h4 className="font-semibold">Business Name</h4>
-                        <p className="text-xs">Some address goes here</p>
-                    </div>
-                    <div className="flex flex-col gap-3 border-b py-6 text-xs">
-                    <p className="flex justify-between">
-                        <span className="text-gray-400">Receipt No.:</span>
-                        <span>####</span>
-                    </p>
-                    <p className="flex justify-between">
-                        <span className="text-gray-400">Order Type:</span>
-                        <span>{departmentKey}</span>
-                    </p>
-                    <p className="flex justify-between">
-                        <span className="text-gray-400">Patient:</span>
-                        <span>{patient.name}</span>
-                    </p>
-                    <p className="flex justify-between">
-                        <span className="text-gray-400">{patient.ps_number}</span>
-                    </p>
-                    <p className="flex justify-between">
-                        <span className="text-gray-400">TR/{patient.ps_number}</span>
-                    </p>
-                    </div>
-                    <div className="flex flex-col gap-3 pb-6 pt-2 text-xs">
-                    <table className="w-full text-left">
-                        <thead>
-                        <tr className="flex">
-                            <th className="w-full py-2">Product</th>
-                            <th className="min-w-[44px] py-2">QTY</th>
-                            <th className="min-w-[44px] py-2">Total</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                            {formData.items.map((item:any) => (<tr className="flex">
-                                <td className="flex-1 py-1">{item.name}</td>
-                                <td className="min-w-[44px]">{item.quantity}</td>
-                                <td className="min-w-[44px]">${item.total}</td>
-                            </tr>))}
-                        </tbody>
-                    </table>
-                    <div className=" border-b border border-dashed"></div>
-                    <div className="py-4 justify-center items-center flex flex-col gap-2">
-                        <p className="flex gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M21.3 12.23h-3.48c-.98 0-1.85.54-2.29 1.42l-.84 1.66c-.2.4-.6.65-1.04.65h-3.28c-.31 0-.75-.07-1.04-.65l-.84-1.65a2.567 2.567 0 0 0-2.29-1.42H2.7c-.39 0-.7.31-.7.7v3.26C2 19.83 4.18 22 7.82 22h8.38c3.43 0 5.54-1.88 5.8-5.22v-3.85c0-.38-.31-.7-.7-.7ZM12.75 2c0-.41-.34-.75-.75-.75s-.75.34-.75.75v2h1.5V2Z" fill="#000"></path><path d="M22 9.81v1.04a2.06 2.06 0 0 0-.7-.12h-3.48c-1.55 0-2.94.86-3.63 2.24l-.75 1.48h-2.86l-.75-1.47a4.026 4.026 0 0 0-3.63-2.25H2.7c-.24 0-.48.04-.7.12V9.81C2 6.17 4.17 4 7.81 4h3.44v3.19l-.72-.72a.754.754 0 0 0-1.06 0c-.29.29-.29.77 0 1.06l2 2c.01.01.02.01.02.02a.753.753 0 0 0 .51.2c.1 0 .19-.02.28-.06.09-.03.18-.09.25-.16l2-2c.29-.29.29-.77 0-1.06a.754.754 0 0 0-1.06 0l-.72.72V4h3.44C19.83 4 22 6.17 22 9.81Z" fill="#000"></path></svg> info@example.com</p>
-                        <p className="flex gap-2"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"><path fill="#000" d="M11.05 14.95L9.2 16.8c-.39.39-1.01.39-1.41.01-.11-.11-.22-.21-.33-.32a28.414 28.414 0 01-2.79-3.27c-.82-1.14-1.48-2.28-1.96-3.41C2.24 8.67 2 7.58 2 6.54c0-.68.12-1.33.36-1.93.24-.61.62-1.17 1.15-1.67C4.15 2.31 4.85 2 5.59 2c.28 0 .56.06.81.18.26.12.49.3.67.56l2.32 3.27c.18.25.31.48.4.7.09.21.14.42.14.61 0 .24-.07.48-.21.71-.13.23-.32.47-.56.71l-.76.79c-.11.11-.16.24-.16.4 0 .08.01.15.03.23.03.08.06.14.08.2.18.33.49.76.93 1.28.45.52.93 1.05 1.45 1.58.1.1.21.2.31.3.4.39.41 1.03.01 1.43zM21.97 18.33a2.54 2.54 0 01-.25 1.09c-.17.36-.39.7-.68 1.02-.49.54-1.03.93-1.64 1.18-.01 0-.02.01-.03.01-.59.24-1.23.37-1.92.37-1.02 0-2.11-.24-3.26-.73s-2.3-1.15-3.44-1.98c-.39-.29-.78-.58-1.15-.89l3.27-3.27c.28.21.53.37.74.48.05.02.11.05.18.08.08.03.16.04.25.04.17 0 .3-.06.41-.17l.76-.75c.25-.25.49-.44.72-.56.23-.14.46-.21.71-.21.19 0 .39.04.61.13.22.09.45.22.7.39l3.31 2.35c.26.18.44.39.55.64.1.25.16.5.16.78z"></path></svg> +234XXXXXXXX</p>
-                    </div>
-                    </div>
-                </div>
-            </div>
+            
         </div>
     </div>
 }
 
 function StepTwo({openCounter, patient, departments}:any) {
     return <div className='flex flex-row h-full w-full space-y-4'>
-        <PatientTransactionsHistoryCard patient={patient} className='w-1/4 pr-6' />
-        <div className='flex-1 flex flex-col h-full w-full space-y-4'>
-            <PatientMiniCard patient={patient} className='max-w-md'/>
+        <PatientTransactionsHistoryCard patient={patient} className='w-1/4' />
+        <div className='flex-1 flex flex-col h-full w-full space-y-4 px-4'>
+            <PatientMiniCard patient={patient} className='w-full'/>
             <h3 className='text-3xl mb-2 font-bold'>Departments</h3>
-            <div className='flex-1 grid grid-cols-6 gap-4 w-full'>
+            <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 w-full'>
                 {departments.map((department:any) => (
                     <div key={department.id} className='flex flex-col items-center justify-center'>
                         <Link href={counterSelectDepartmentService({
@@ -298,8 +461,8 @@ function StepTwo({openCounter, patient, departments}:any) {
                     </div>
                 ))}
             </div>
-            <h3 className='text-3xl mb-2 font-bold'>RECESITATION</h3>
-            <div className='flex-1 grid grid-cols-6 gap-4 w-full'>
+            <h3 className='text-3xl mb-2 font-bold'>Recesitation</h3>
+            <div className='grid grid-cols-1 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 w-full'>
                 {departments.filter((department:any) => department.have_composit_services).map((department:any) => (
                     <div key={department.id} className='flex flex-col items-center justify-center'>
                         <Link href={counterSelectDepartmentService({
@@ -461,7 +624,7 @@ function StepOne({openCounter}:any) {
                     {/* <InputError message={errors.email} /> */}
                 </div>
                 <div className="grid gap-2">
-                    <Label htmlFor="patient_name">Patient Name</Label>
+                    <Label htmlFor="patient_name" required={true}>Patient Name</Label>
                     <Input
                         id="patient_name"
                         type="text"
@@ -476,7 +639,7 @@ function StepOne({openCounter}:any) {
                     {/* <InputError message={errors.email} /> */}
                 </div>
                 <div className="grid gap-2">
-                    <Label htmlFor="patient_contact">Patient Contact</Label>
+                    <Label htmlFor="patient_contact" required={true}>Patient Contact</Label>
                     <MaskInput
                         id="patient_contact"
                         type="text"
@@ -493,7 +656,7 @@ function StepOne({openCounter}:any) {
                     {/* <InputError message={errors.email} /> */}
                 </div>
                 <div className="grid gap-2">
-                    <Label htmlFor="patient_age">Patient Age</Label>
+                    <Label htmlFor="patient_age" required={true}>Patient Age</Label>
                     <Input
                         id="patient_age"
                         type="number"
@@ -508,7 +671,7 @@ function StepOne({openCounter}:any) {
                     {/* <InputError message={errors.email} /> */}
                 </div>
                 <div className='grid gap-2'>
-                    <Label htmlFor="patient_gender">Patient Gender</Label>
+                    <Label htmlFor="patient_gender" required={true}>Patient Gender</Label>
                     <div className='flex flex-row space-x-4'>
                         <Label htmlFor="patient_gender_m">
                             <RadioInput
@@ -568,7 +731,7 @@ function StepOne({openCounter}:any) {
                         pYear: p.year,
                         pMonth: p.month,
                         number: p.number
-                    }).url} className='bg-[#1c398e] hover:bg-[#06df72] text-white hover:text-[#1c398e] rounded-xl p-1 flex flex-row'>
+                    }).url} className='flex flex-row'>
                         <PatientMiniCard patient={p} className='w-full' />
                     </Link>)}
                 
@@ -582,7 +745,7 @@ function StepOne({openCounter}:any) {
                         pYear: p.year,
                         pMonth: p.month,
                         number: p.number
-                    }).url} className='bg-[#1c398e] hover:bg-[#06df72] text-white hover:text-[#1c398e] rounded-xl p-1 flex flex-row'>
+                    }).url} className='flex flex-row'>
                         <PatientMiniCard patient={p} className='w-full' />
                     </Link>)}
 
@@ -590,9 +753,11 @@ function StepOne({openCounter}:any) {
 
                 {(
                     patientName &&
-                    patientContact
+                    patientContact &&
+                    patientAge &&
+                    patientGender
                     
-                    ) && <div className='bg-[#1c398e] hover:bg-[#06df72] text-white hover:text-[#1c398e] rounded-xl p-2 flex flex-col space-y-4 cursor-default'>
+                    ) && <div className='bg-[#06df72] dark:bg-[#0a0a0a] hover:bg-[#06df72] dark:bg-[#262626] text-white hover:text-[#1c398e] rounded-xl p-2 flex flex-col space-y-4 cursor-default'>
                     <PatientMiniCard patient={{name: patientName, gender: patientGender, ps_number: psInput, contact: patientContact, cnic: patientCnic, age: patientAge}} className='w-full' />
                     <div className='items-right justify-end'>
                         <Button onClick={() => createPatientInApi()}>
@@ -606,4 +771,106 @@ function StepOne({openCounter}:any) {
             </div>
         </div>
     </div>
+}
+
+
+function BillItemsEditableTableRow({
+    service_name,
+    serviceid,
+    quantity,
+    charges,
+    service,
+    selectedProvider,
+    onUpdate,
+    onProviderUpdate,
+    validationErrors
+}:any) {
+
+    const [q, setQ] = useState<number>(quantity);
+    const [c, setC] = useState<number>(charges);
+    const [sPErrors, setSPErrors] = useState<any>({});
+
+    const handleQuantityChange = (newQuantity: number) => {
+        setQ(newQuantity);
+        onUpdate(serviceid, newQuantity, c);
+    };
+
+    const handleChargesChange = (newCharges: number) => {
+        setC(newCharges);
+        onUpdate(serviceid, q, newCharges);
+    };
+
+    const handleProviderChange = (providerId: string) => {
+        onProviderUpdate(serviceid, providerId);
+    };
+
+    useEffect(() => {
+        setQ(quantity);
+        setC(charges);
+    }, [quantity, charges]);
+
+
+    return (
+        <>
+            <tr className="border-b border-neutral-950 dark:bg-neutral-700 dark:text-white">
+                <td className="p-2">{service_name}</td>
+                <td className="p-2 text-right">
+                    {service?.available_providers && service.available_providers.length > 0 ? (<>
+                        <Select value={selectedProvider} onValueChange={handleProviderChange}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select provider" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {service.available_providers.map((provider: any) => (
+                                    <SelectItem key={provider.id} value={provider.id.toString()}>
+                                        {provider.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        {!selectedProvider && (
+                            <InputError message="Please select a provider." />
+                        )}
+                    </>) : (
+                        <span className="text-gray-400 text-sm">N/A</span>
+                    )}
+                </td>
+                {/* <td className="p-2 felx justify-end">
+                    <Input 
+                        type="number" 
+                        name={`quantity_${serviceid}`} 
+                        className='w-16' 
+                        value={q} 
+                        onChange={(e) => handleQuantityChange(parseInt(e.target.value) || 0)} 
+                        min={1} 
+                    />
+                </td> */}
+                <td className="p-2 text-right">
+                    <Input 
+                        type="number" 
+                        name={`charges_${serviceid}`} 
+                        className='w-24 text-right inline-block' 
+                        value={c} 
+                        onChange={(e) => handleChargesChange(parseFloat(e.target.value) || 0)} 
+                        min={0} 
+                        step={0.01}
+                    />
+                </td>
+            </tr>
+            {(validationErrors[`items.${serviceid}`] || validationErrors[`items.${serviceid}.provider_id`]) && (
+                <tr className="flex">
+                    <td colSpan={4} className="w-full p-2">
+                        <div className="text-red-500 text-sm space-y-1">
+                            {validationErrors[`items.${serviceid}`]?.map((error: string, index: number) => (
+                                <div key={index}>{error}</div>
+                            ))}
+                            {validationErrors[`items.${serviceid}.provider_id`]?.map((error: string, index: number) => (
+                                <div key={index}>{error}</div>
+                            ))}
+                        </div>
+                    </td>
+                </tr>
+            )}
+        </>
+    );
 }

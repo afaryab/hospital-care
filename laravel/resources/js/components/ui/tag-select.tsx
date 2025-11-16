@@ -73,13 +73,13 @@ export function TagSelect({
     onValueChange?.(newValue)
     setInputValue("")
     setIsOpen(false)
-    inputRef.current?.focus()
+    // Don't auto-focus after selection to prevent dropdown from reopening
   }
 
   const handleRemove = (optionValue: string) => {
     const newValue = value.filter((v) => v !== optionValue)
     onValueChange?.(newValue)
-    inputRef.current?.focus()
+    // Don't auto-focus after removal to prevent dropdown from opening
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -124,11 +124,15 @@ export function TagSelect({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     setInputValue(newValue)
-    setIsOpen(newValue.length > 0 || filteredOptions.length > 0)
+    // Only show dropdown if user is typing
+    setIsOpen(newValue.length > 0)
   }
 
   const handleInputFocus = () => {
-    setIsOpen(true)
+    // Only show dropdown if there's input text or if user clicks when input is empty
+    if (inputValue.length > 0) {
+      setIsOpen(true)
+    }
   }
 
   const selectedOptions = options.filter(option => value.includes(option.value))
@@ -139,7 +143,7 @@ export function TagSelect({
       {/* Input container with tags */}
       <div
         className={cn(
-          "border-input focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] min-h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50",
+          "border-input focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] min-h-9 w-full rounded-md border bg-background px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50",
           "flex flex-wrap items-center gap-1"
         )}
       >
@@ -151,7 +155,7 @@ export function TagSelect({
           return (
             <span
               key={selectedValue}
-              className="bg-primary/10 text-primary inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
+              className="bg-primary/10 text-primary border border-primary/20 dark:bg-white dark:text-neutral-950 dark:border-primary/30 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
             >
               {displayLabel}
               <button
@@ -160,7 +164,7 @@ export function TagSelect({
                   e.stopPropagation()
                   handleRemove(selectedValue)
                 }}
-                className="hover:bg-primary/30 rounded-full p-0.5"
+                className="hover:bg-primary/30 dark:hover:bg-primary/40 rounded-full p-0.5 transition-colors"
                 disabled={disabled}
               >
                 <XIcon className="h-3 w-3" />
@@ -177,19 +181,23 @@ export function TagSelect({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={handleInputFocus}
+          onClick={() => {
+            // Show dropdown when user explicitly clicks on input, even if empty
+            setIsOpen(true)
+          }}
           placeholder={value.length === 0 ? placeholder : ""}
-          className="flex-1 min-w-[120px] bg-transparent outline-none placeholder:text-muted-foreground"
+          className="flex-1 min-w-[120px] bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
           disabled={disabled || (maxItems !== undefined && value.length >= maxItems)}
         />
       </div>
 
       {/* Dropdown */}
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border bg-popover p-1 shadow-md">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border border-border bg-popover text-popover-foreground p-1 shadow-md dark:border-border dark:bg-popover dark:text-popover-foreground">
           {filteredOptions.length === 0 && allowCustom && inputValue.trim() ? (
             // Show "Add custom" option
             <div
-              className="hover:bg-accent hover:text-accent-foreground relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none"
+              className="hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent dark:hover:text-accent-foreground relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors"
               onClick={() => handleSelect(inputValue.trim())}
             >
               <span className="text-muted-foreground">Add "</span>
@@ -202,7 +210,7 @@ export function TagSelect({
               <div
                 key={option.value}
                 className={cn(
-                  "hover:bg-accent hover:text-accent-foreground relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none",
+                  "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent dark:hover:text-accent-foreground relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
                   option.disabled && "pointer-events-none opacity-50"
                 )}
                 onClick={() => !option.disabled && handleSelect(option.value)}
@@ -277,13 +285,13 @@ export function AdvancedTagSelect({
     onValueChange?.(newValue)
     setInputValue("")
     setIsOpen(false)
-    inputRef.current?.focus()
+    // Don't auto-focus after selection to prevent dropdown from reopening
   }
 
   const handleRemove = (optionValue: string) => {
     const newValue = value.filter((v) => v !== optionValue)
     onValueChange?.(newValue)
-    inputRef.current?.focus()
+    // Don't auto-focus after removal to prevent dropdown from opening
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -323,7 +331,8 @@ export function AdvancedTagSelect({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     setInputValue(newValue)
-    setIsOpen(true)
+    // Only show dropdown if user is typing
+    setIsOpen(newValue.length > 0)
   }
 
   const showDropdown = isOpen && (filteredOptions.length > 0 || (allowCustom && inputValue.trim()))
@@ -332,7 +341,7 @@ export function AdvancedTagSelect({
     <div ref={containerRef} className={cn("relative", className)}>
       <div
         className={cn(
-          "border-input focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] min-h-9 w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50",
+          "border-input focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px] min-h-9 w-full rounded-md border bg-background px-3 py-2 text-sm shadow-xs transition-[color,box-shadow] has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-50",
           "flex flex-wrap items-center gap-1"
         )}
       >
@@ -343,7 +352,7 @@ export function AdvancedTagSelect({
           return (
             <span
               key={selectedValue}
-              className="bg-primary/10 text-primary inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
+              className="bg-primary/10 text-primary border border-primary/20 dark:bg-white dark:text-neutral-950 dark:border-primary/30 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium"
             >
               {displayLabel}
               <button
@@ -352,7 +361,7 @@ export function AdvancedTagSelect({
                   e.stopPropagation()
                   handleRemove(selectedValue)
                 }}
-                className="hover:bg-primary/30 rounded-full p-0.5"
+                className="hover:bg-primary/30 dark:hover:bg-primary/40 rounded-full p-0.5 transition-colors"
                 disabled={disabled}
               >
                 <XIcon className="h-3 w-3" />
@@ -367,22 +376,31 @@ export function AdvancedTagSelect({
           value={inputValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => {
+            // Only show dropdown if there's input text
+            if (inputValue.length > 0) {
+              setIsOpen(true)
+            }
+          }}
+          onClick={() => {
+            // Show dropdown when user explicitly clicks on input, even if empty
+            setIsOpen(true)
+          }}
           placeholder={value.length === 0 ? placeholder : ""}
-          className="flex-1 min-w-[120px] bg-transparent outline-none placeholder:text-muted-foreground"
+          className="flex-1 min-w-[120px] bg-transparent text-foreground outline-none placeholder:text-muted-foreground"
           disabled={disabled || (maxItems !== undefined && value.length >= maxItems)}
         />
       </div>
 
       {showDropdown && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border bg-popover p-1 shadow-md">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 max-h-60 overflow-auto rounded-md border border-border bg-popover text-popover-foreground p-1 shadow-md dark:border-border dark:bg-popover dark:text-popover-foreground">
           {filteredOptions.map((option, index) => (
             <div
               key={option.value}
               ref={(el) => { optionsRef.current[index] = el }}
               className={cn(
-                "relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none",
-                index === highlightedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground",
+                "relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
+                index === highlightedIndex ? "bg-accent text-accent-foreground dark:bg-accent dark:text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent dark:hover:text-accent-foreground",
                 option.disabled && "pointer-events-none opacity-50"
               )}
               onClick={() => !option.disabled && handleSelect(option.value)}
@@ -394,8 +412,8 @@ export function AdvancedTagSelect({
           {allowCustom && inputValue.trim() && !filteredOptions.some(opt => opt.label.toLowerCase() === inputValue.toLowerCase()) && (
             <div
               className={cn(
-                "relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none",
-                highlightedIndex === filteredOptions.length ? "bg-accent text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground"
+                "relative flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors",
+                highlightedIndex === filteredOptions.length ? "bg-accent text-accent-foreground dark:bg-accent dark:text-accent-foreground" : "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent dark:hover:text-accent-foreground"
               )}
               onClick={() => handleSelect(inputValue.trim())}
             >
