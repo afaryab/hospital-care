@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use App\Console\Commands\fetchOld;
 use App\Enum\CounterStatus;
 use App\Enum\ExpenseVoucherStatus;
+use App\Helpers\NumberHelper;
 use App\Models\Closing;
 use App\Models\Expense;
 use App\Models\ExpenseVoucher;
@@ -20,7 +21,7 @@ use Filament\Widgets\StatsOverviewWidget\Card;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Illuminate\Database\Eloquent\Builder;
 
-class StatsOverview extends StatsOverviewWidget
+class AdminStatsOverview extends StatsOverviewWidget
 {
     use InteractsWithPageFilters;
 
@@ -33,27 +34,7 @@ class StatsOverview extends StatsOverviewWidget
         $startDate = $this->pageFilters['startDate'] ?? null;
         $endDate = $this->pageFilters['endDate'] ?? null;
 
-        $MigratedSteps = UpgradeProcess::where('name', 'currentStep')->first()->value ?? 0;
-        $totalSteps = fetchOld::$TOTAL_STEPS;
-
-        $percentageMigrated = $totalSteps > 0 ? round(($MigratedSteps / $totalSteps) * 100, 2) . '%' : '0%';
-
-        $SyncPercentage = UpgradeProcess::where('name', 'percentage_synced')->first()->value ?? 0;
-
-        $transactions = Transaction::count();
-        $transactionVolume = Transaction::sum('amount');
-
         return [
-            StatsOverviewWidget\Stat::make(
-                label: 'Proceedural Migration',
-                value: $percentageMigrated,
-            )
-            ->description("{$MigratedSteps} of {$totalSteps} steps migrated"),
-            StatsOverviewWidget\Stat::make(
-                label: 'Sync Percentage',
-                value: "{$SyncPercentage} %",
-            )
-            ->description("{$transactions} Transactions worth {$this->moneyfy($transactionVolume)} are synced"),
             $this->getUserStats($startDate, $endDate),
             $this->getServiceStats($startDate, $endDate),
             $this->getPatientStats($startDate, $endDate),
@@ -84,9 +65,9 @@ class StatsOverview extends StatsOverviewWidget
 
         return StatsOverviewWidget\Stat::make(
                 label: 'New Users',
-                value: "{$this->moneyfy($userThisDuration)}",
+                value: NumberHelper::moneyfy($userThisDuration),
             )
-            ->description("Total: {$this->moneyfy($totalUsers)}")
+            ->description("Total: " . NumberHelper::moneyfy($totalUsers))
             ->chart($userChartThisDuration->pluck('count')->toArray());
     }
 
@@ -111,9 +92,9 @@ class StatsOverview extends StatsOverviewWidget
 
         return StatsOverviewWidget\Stat::make(
                 label: 'New Services',
-                value: "{$this->moneyfy($serviceThisDuration)}",
+                value: NumberHelper::moneyfy($serviceThisDuration),
             )
-            ->description("Total: {$this->moneyfy($totalServices)} in {$this->moneyfy($totalServiceDepartments)} Departments")
+            ->description("Total: " . NumberHelper::moneyfy($totalServices) . " in " . NumberHelper::moneyfy($totalServiceDepartments) . " Departments")
             ->chart($serviceChartThisDuration->pluck('count')->toArray());
     }
 
@@ -137,9 +118,9 @@ class StatsOverview extends StatsOverviewWidget
 
         return StatsOverviewWidget\Stat::make(
                 label: 'New Patients',
-                value: "{$this->moneyfy($patientThisDuration)}",
+                value: NumberHelper::moneyfy($patientThisDuration),
             )
-            ->description("Total: {$this->moneyfy($totalPatients)}")
+            ->description("Total: " . NumberHelper::moneyfy($totalPatients))
             ->chart($patientChartThisDuration->pluck('count')->toArray());
     }
 
@@ -183,9 +164,9 @@ class StatsOverview extends StatsOverviewWidget
 
         return StatsOverviewWidget\Stat::make(
                 label: 'Closings Worth / Open / Total',
-                value: "{$this->moneyfy($totalCollectionThisDuration)} / {$this->moneyfy($totalOpeningsThisDuration)} / {$this->moneyfy($totalClosingsThisDuration)} ",
+                value: NumberHelper::moneyfy($totalCollectionThisDuration) . " / " . NumberHelper::moneyfy($totalOpeningsThisDuration) . " / " . NumberHelper::moneyfy($totalClosingsThisDuration),
             )
-            ->description("Total: {$this->moneyfy($totalCollection)} / {$this->moneyfy($totalOpenings)} / {$this->moneyfy($totalClosings)} / {$receptions}")
+            ->description("Total: " . NumberHelper::moneyfy($totalCollection) . " / " . NumberHelper::moneyfy($totalOpenings) . " / " . NumberHelper::moneyfy($totalClosings) . " / " . $receptions)
             ->chart($totalChartThisDuration->pluck('count')->toArray());
     }
 
@@ -215,9 +196,9 @@ class StatsOverview extends StatsOverviewWidget
 
         return StatsOverviewWidget\Stat::make(
                 label: 'Exp-Vouchers Issued (Worth)',
-                value: "{$this->moneyfy($totalThisDuration)} ({$this->moneyfy($expenseThisDuration)}) ",
+                value: NumberHelper::moneyfy($totalThisDuration) . " (" . NumberHelper::moneyfy($expenseThisDuration) . ")",
             )
-            ->description("Total: {$this->moneyfy($totalExpenses)} ({$this->moneyfy($total)})")
+            ->description("Total: " . NumberHelper::moneyfy($totalExpenses) . " (" . NumberHelper::moneyfy($total) . ")")
             ->chart($expenseChartThisDuration->pluck('count')->toArray());
     }
 
@@ -241,9 +222,9 @@ class StatsOverview extends StatsOverviewWidget
 
         return StatsOverviewWidget\Stat::make(
                 label: 'Expenses',
-                value: "{$this->moneyfy($expenseThisDuration)}",
+                value: NumberHelper::moneyfy($expenseThisDuration),
             )
-            ->description("Total: {$this->moneyfy($totalExpenses)}")
+            ->description("Total: " . NumberHelper::moneyfy($totalExpenses))
             ->chart($expenseChartThisDuration->pluck('count')->toArray());
     }
 
@@ -273,30 +254,9 @@ class StatsOverview extends StatsOverviewWidget
 
         return StatsOverviewWidget\Stat::make(
                 label: 'Transactions Worth / Total',
-                value: "{$this->moneyfy($totalCollectionThisDuration)} / {$this->moneyfy($totalThisDuration)}",
+                value: NumberHelper::moneyfy($totalCollectionThisDuration) . " / " . NumberHelper::moneyfy($totalThisDuration),
             )
-            ->description("Total: {$this->moneyfy($totalCollection)} / {$this->moneyfy($total)}")
+            ->description("Total: " . NumberHelper::moneyfy($totalCollection) . " / " . NumberHelper::moneyfy($total))
             ->chart($totalChartThisDuration->pluck('count')->toArray());
-    }
-
-
-
-    /**
-     * Moneyfy number, take number and convert it to K, M, B and trillion format
-     */
-
-    private function moneyfy($number): string
-    {
-        if ($number >= 1_000_000_000_000) {
-            return round($number / 1_000_000_000_000, 2) . 'T';
-        } elseif ($number >= 1_000_000_000) {
-            return round($number / 1_000_000_000, 2) . 'B';
-        } elseif ($number >= 1_000_000) {
-            return round($number / 1_000_000, 2) . 'M';
-        } elseif ($number >= 1_000) {
-            return round($number / 1_000, 2) . 'K';
-        } else {
-            return (string)$number;
-        }
     }
 }
