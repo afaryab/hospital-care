@@ -22,27 +22,23 @@ class UserForm
                     ->label('Email address')
                     ->email()
                     ->required(),
-                DateTimePicker::make('email_verified_at'),
-                TextInput::make('password')
-                    ->password()
-                    ->required(),
-                Textarea::make('two_factor_secret')
-                    ->columnSpanFull(),
-                Textarea::make('two_factor_recovery_codes')
-                    ->columnSpanFull(),
-                DateTimePicker::make('two_factor_confirmed_at'),
+                // Textarea::make('two_factor_secret')
+                //     ->columnSpanFull(),
+                // Textarea::make('two_factor_recovery_codes')
+                //     ->columnSpanFull(),
+                // DateTimePicker::make('two_factor_confirmed_at'),
                 DateTimePicker::make('password_expired_at'),
-                DateTimePicker::make('last_login'),
-                DateTimePicker::make('last_activity'),
-                DateTimePicker::make('last_login_attempt'),
-                TextInput::make('ip_address'),
+                // DateTimePicker::make('last_login'),
+                // DateTimePicker::make('last_activity'),
+                // DateTimePicker::make('last_login_attempt'),
+                // TextInput::make('ip_address'),
                 TextInput::make('login_attempts')
                     ->required()
                     ->numeric()
                     ->default(0),
-                TextInput::make('profile_img_path'),
-                TextInput::make('profile_img_id')
-                    ->numeric(),
+                // TextInput::make('profile_img_path'),
+                // TextInput::make('profile_img_id')
+                    // ->numeric(),
                 Toggle::make('is_active')
                     ->required(),
                 TextInput::make('banned_message'),

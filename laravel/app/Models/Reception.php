@@ -25,4 +25,9 @@ class Reception extends Model
         'is_cheques_allowed' => 'boolean',
         'is_card_allowed' => 'boolean',
     ];
+
+    public function closings()
+    {
+        return $this->hasMany(Closing::class);
+    }
 }

@@ -15,6 +15,7 @@
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
         "livewire/livewire": "^3",
+        "owenvoke/blade-fontawesome": "^3.0",
         "troccoli/blade-health-icons": "^5.0"
     },
     "require-dev": {
