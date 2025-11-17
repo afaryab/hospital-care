@@ -21,6 +21,8 @@ class FilamentThemeService
                     color: #06df72 !important; /* Green color for sidebar items */
                 }
                 /* More specific selectors for hover and active states */
+                .fi-sidebar-item.fi-sidebar-item-has-url>.fi-sidebar-item-btn:hover,
+                .fi-sidebar-item.fi-sidebar-item-has-url>.fi-sidebar-item-btn:focus,
                 .fi-sidebar .fi-sidebar-item-button:hover,
                 .fi-sidebar .fi-sidebar-item-button:focus,
                 .fi-sidebar .fi-sidebar-item-button:hover .fi-sidebar-item-label,
@@ -53,6 +55,20 @@ class FilamentThemeService
                 .fi-topbar .fi-breadcrumbs-item,
                 .fi-topbar .fi-user-menu-trigger {
                     color: white !important;
+                }
+                .fi-sidebar-item.fi-active>.fi-sidebar-item-btn{
+                    background-color: #06df72 !important;
+                    color: #1c398e !important;
+                }
+                .fi-sidebar-item.fi-sidebar-item-has-url>.fi-sidebar-item-btn>.fi-icon,
+                .fi-sidebar-item.fi-sidebar-item-has-url>.fi-sidebar-item-btn>.fi-sidebar-item-label {
+                    color: #06df72 !important;
+                }
+                .fi-sidebar-item.fi-active>.fi-sidebar-item-btn>.fi-icon,
+                .fi-sidebar-item.fi-active>.fi-sidebar-item-btn>.fi-sidebar-item-label,
+                .fi-sidebar-item.fi-sidebar-item-has-url:hover>.fi-sidebar-item-btn>.fi-icon,
+                .fi-sidebar-item.fi-sidebar-item-has-url:hover>.fi-sidebar-item-btn>.fi-sidebar-item-label {
+                    color: #1c398e !important;
                 }
             </style>
         ';

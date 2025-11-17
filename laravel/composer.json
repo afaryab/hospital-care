@@ -14,7 +14,8 @@
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
-        "livewire/livewire": "^3"
+        "livewire/livewire": "^3",
+        "troccoli/blade-health-icons": "^5.0"
     },
     "require-dev": {
         "doctrine/dbal": "^4.3",

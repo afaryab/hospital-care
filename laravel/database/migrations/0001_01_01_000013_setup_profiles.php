@@ -35,30 +35,35 @@ return new class extends Migration
         Schema::create('opd_doctors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('authority')->default('assistant')->comment('assistant, manager');
             $table->timestamps();
         });
 
         Schema::create('ind_doctors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('authority')->default('assistant')->comment('assistant, manager');
             $table->timestamps();
         });
 
         Schema::create('emergency_doctors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('authority')->default('assistant')->comment('assistant, manager');
             $table->timestamps();
         });
 
         Schema::create('dentists', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('authority')->default('assistant')->comment('assistant, manager');
             $table->timestamps();
         });
 
         Schema::create('ultrasound_doctors', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('authority')->default('assistant')->comment('assistant, manager');
             $table->timestamps();
         });
 
@@ -71,6 +76,7 @@ return new class extends Migration
         Schema::create('nursing_staff', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('authority')->default('assistant')->comment('assistant, manager');
             $table->timestamps();
         });
 
