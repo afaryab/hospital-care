@@ -1071,8 +1071,19 @@ class FetchOldOptimized extends Command
             // Create transaction first
             $isExpense = $transaction->income_or_expence !== 'INCOME';
             
+            // Generate transaction number based on old transaction's creation date
+            $createdAt = Carbon::parse($transaction->created_on);
+            $year = $createdAt->format('Y');
+            $month = $createdAt->format('m');
+            $day = $createdAt->format('d');
+            
+            // Get count for that specific date to maintain unique numbering
+            $existingCount = Transaction::where('tr_number', 'like', "TR/{$year}/{$month}/{$day}%")->count();
+            $trNumber = "TR/{$year}/{$month}/{$day}/" . str_pad($existingCount + 1, 4, '0', STR_PAD_LEFT);
+            
             $transactionData = [
                 'old_id' => $transaction->id,
+                'tr_number' => $trNumber,
                 'closing_id' => $this->getCachedClosing($transaction->counter_id)?->id ?? null,
                 'created_by' => $this->getCachedUser($transaction->user_id)?->id ?? null,
                 'patient_id' => $this->getCachedPatient($transaction->patient_id)?->id ?? null,
