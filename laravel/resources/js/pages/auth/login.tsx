@@ -48,7 +48,6 @@ export default function Login({
                                     tabIndex={1}
                                     autoComplete="email"
                                     placeholder="email@example.com"
-                                    value={'ahmadkokab@processton.com'}
                                 />
                                 <InputError message={errors.email} />
                             </div>
@@ -74,7 +73,6 @@ export default function Login({
                                     tabIndex={2}
                                     autoComplete="current-password"
                                     placeholder="Password"
-                                    value={'password'}
                                 />
                                 <InputError message={errors.password} />
                             </div>
