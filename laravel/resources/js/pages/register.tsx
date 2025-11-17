@@ -97,7 +97,7 @@ export default function Register() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72] dark:bg-[#262626]">
-                <div className="flex flex-0 flex-row gap-4 rounded-xl p-2 bg-[#06df72] dark:bg-[#0a0a0a]">
+                <div className="flex flex-0 flex-row gap-4 rounded-xl p-2 bg-[#1c398e] dark:bg-[#0a0a0a]">
                     <div className="grid gap-2">
                         <Label htmlFor="year">Year</Label>
                         <Select value={year.toString()} onValueChange={(value) => setYear(value)}>

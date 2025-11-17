@@ -757,7 +757,7 @@ function StepOne({openCounter}:any) {
                     patientAge &&
                     patientGender
                     
-                    ) && <div className='bg-[#06df72] dark:bg-[#0a0a0a] hover:bg-[#06df72] dark:bg-[#262626] text-white hover:text-[#1c398e] rounded-xl p-2 flex flex-col space-y-4 cursor-default'>
+                    ) && <div className='bg-[#1c398e] dark:bg-[#0a0a0a] hover:bg-[#06df72] dark:bg-[#262626] text-white hover:text-[#1c398e] rounded-xl p-2 flex flex-col space-y-4 cursor-default'>
                     <PatientMiniCard patient={{name: patientName, gender: patientGender, ps_number: psInput, contact: patientContact, cnic: patientCnic, age: patientAge}} className='w-full' />
                     <div className='items-right justify-end'>
                         <Button onClick={() => createPatientInApi()}>

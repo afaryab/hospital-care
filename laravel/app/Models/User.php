@@ -62,6 +62,30 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+    
+    /**
+     * Append the profiles attribute to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = ['profiles'];
+
+    public function getProfilesAttribute(){
+
+        return [
+            'admin' => $this->adminProfiles,
+            'accountant' => $this->accountantProfiles,
+            'receptionist' => $this->receptionistProfiles,
+            'opd_doctor' => $this->opdDoctorProfiles,
+            'ind_doctor' => $this->indDoctorProfiles,
+            'emergency_doctor' => $this->emergencyDoctorProfiles,
+            'dentist' => $this->dentistProfiles,
+            'ultrasound_doctor' => $this->ultrasoundDoctorProfiles,
+            'xray_technician' => $this->xrayTechnicianProfiles,
+            'nursing_staff' => $this->nursingStaffProfiles,
+            'patient_manager' => $this->patientManagerProfiles,
+        ];
+    }
 
     public function adminProfiles(){
 

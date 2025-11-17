@@ -49,7 +49,7 @@ class WebController extends Controller
         $year && $query->whereYear('created_at', $year);
         $month && $query->whereMonth('created_at', $month);
 
-        $data = $query->paginate(8);
+        $data = $query->orderBy('created_at', 'DESC')->paginate(8);
 
         $serviceDepartments = ServiceDepartment::all();
 
