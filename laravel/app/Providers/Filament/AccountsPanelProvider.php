@@ -35,16 +35,16 @@ class AccountsPanelProvider extends PanelProvider
             ->authGuard('web')
             ->colors(FilamentThemeService::getBrandColors())
             ->font('Inter')
-            // ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
-            // ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
-            ->pages([
-                Dashboard::class
-            ])
-            // ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
-            ->widgets([
-                // AccountWidget::class,
-                // FilamentInfoWidget::class,
-            ])
+            ->discoverResources(in: app_path('Filament/Accounts/Resources'), for: 'App\\Filament\\Accounts\\Resources')
+            ->discoverPages(in: app_path('Filament/Accounts/Pages'), for: 'App\\Filament\\Accounts\\Pages')
+            // ->pages([
+            //     // Dashboard::class
+            // ])
+            ->discoverWidgets(in: app_path('Filament/Accounts/Widgets'), for: 'App\\Filament\\Accounts\\Widgets')
+            // ->widgets([
+            //     // AccountWidget::class,
+            //     // FilamentInfoWidget::class,
+            // ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

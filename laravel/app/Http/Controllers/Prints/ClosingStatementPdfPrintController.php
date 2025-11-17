@@ -176,8 +176,8 @@ class ClosingStatementPdfPrintController extends Controller
     {
         // Use different templates for mini and normal versions
         $viewName = $version === 'mini' 
-            ? 'pdfs.closing-statement-mini' 
-            : 'pdfs.closing-statement-normal';
+            ? 'pdfs.closing-statement.closing-statement-mini' 
+            : 'pdfs.closing-statement.closing-statement-normal';
 
         try {
             // Create PDF with proper paper size and orientation

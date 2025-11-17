@@ -10,4 +10,9 @@ class Administrator extends Model
         'user_id',
         'authority'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

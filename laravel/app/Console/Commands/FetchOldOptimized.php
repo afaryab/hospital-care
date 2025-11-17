@@ -358,7 +358,7 @@ class FetchOldOptimized extends Command
                             'last_login_attempt' => $user->last_login_attempt,
                             'ip_address' => $user->ip_address,
                             'login_attempts' => $user->login_attempts ?? 0,
-                            'profile_img_path' => $user->profile_img_path,
+                            'profile_img_path' => ltrim($user->profile_img_path, 'public/'),
                             'profile_img_id' => $user->profile_img_id,
                             'created_at' => $user->created_on,
                             'updated_at' => $user->modified_on,
@@ -1034,6 +1034,35 @@ class FetchOldOptimized extends Command
         }
 
         $lastProcessedId = $statusObj->value;
+
+        // Count records in both databases for progress tracking
+        $oldTransactionCount = DB::connection('secondary')
+            ->table('reception_counters_closings_transactions')
+            ->count();
+
+        $newTransactionCount = Transaction::count();
+
+        $percentage = $oldTransactionCount > 0 ? 
+            round(($newTransactionCount / $oldTransactionCount) * 100, 2) : 0;
+
+        // Save progress percentage to UpgradeProcess
+        $progressObj = UpgradeProcess::updateOrCreate(
+            ['name' => 'transaction_migration_percentage'],
+            ['value' => $percentage]
+        );
+
+        $this->info("Transaction migration progress: {$newTransactionCount}/{$oldTransactionCount} ({$percentage}%)");
+
+        // Also update total counts for reference
+        UpgradeProcess::updateOrCreate(
+            ['name' => 'total_old_transactions'],
+            ['value' => $oldTransactionCount]
+        );
+
+        UpgradeProcess::updateOrCreate(
+            ['name' => 'total_new_transactions'],
+            ['value' => $newTransactionCount]
+        );
 
         // Get transactions with their elements in one query using JOIN
         $transactions = DB::connection('secondary')
