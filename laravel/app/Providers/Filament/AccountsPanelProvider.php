@@ -29,8 +29,8 @@ class AccountsPanelProvider extends PanelProvider
         return $panel
             ->id('accounts')
             ->path('accounts')
+            ->brandLogo(fn () => view('filament.accounts.logo'))
             ->maxContentWidth('full')
-            ->brandName('Hospital Care Accounts')
             ->login()
             ->authGuard('web')
             ->colors(FilamentThemeService::getBrandColors())
