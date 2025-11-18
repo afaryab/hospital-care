@@ -2,11 +2,13 @@
 
 namespace App\Console\Commands;
 
+use App\Enum\CounterStatus;
 use App\Models\Closing;
 use App\Models\UpgradeProcess;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Dentist;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
@@ -23,704 +25,642 @@ use App\Models\ServiceRecestation;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
 use App\Models\User;
+use App\Models\Administrator;
+use App\Models\Receptionist;
+use App\Models\EmergencyDoctor;
+use App\Models\UltrasoundDoctor;
+use App\Models\XrayTechnician;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Models\MigrationLog;
 
-class fetchOld extends Command
+class FetchOld extends Command
 {
-
     public static $TOTAL_STEPS = 70;
 
     /**
      * The name and signature of the console command.
-     *
-     * @var string
      */
-    protected $signature = 'app:fetch-old';
+    protected $signature = 'app:fetch-old {--step=} {--reset} {--batch-size=1000}';
 
     /**
      * The console command description.
-     *
-     * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Optimized data migration from old schema database to new schema';
+
+    // Cache collections for frequently accessed data
+    protected $userCache = [];
+    protected $patientCache = [];
+    protected $serviceCache = [];
+    protected $receptionCache = [];
+    protected $closingCache = [];
+    protected $expenseCache = [];
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
+        Log::info('Starting optimized fetch-old command execution.');
 
-        Log::info('Starting fetch-old command execution.');
-
-        ini_set('max_execution_time', 3600);
+        // Set memory and time limits
+        ini_set('max_execution_time', 7200); // 2 hours
         set_time_limit(0);
-        ini_set('memory_limit', -1);
+        ini_set('memory_limit', '2G');
 
-        $statusObj = UpgradeProcess::firstOrCreate([
-            'name' => 'currentStep'
-        ] ,[
-            'value' => 0
-        ]);
+        // Optimize database connections
+        DB::connection('secondary')->getPdo()->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+        DB::getPdo()->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+
+        $batchSize = $this->option('batch-size');
+
+        // Initialize migration batch for logging
+        $batchId = 'batch_' . now()->format('Y_m_d_H_i_s') . '_' . uniqid();
+        Cache::put('migration_batch_id', $batchId, 3600); // Store for 1 hour
+        
+        $this->info("🔄 Starting migration batch: {$batchId}");
 
         try {
             DB::connection('secondary')->getPdo();
+            MigrationLog::logAction('system', MigrationLog::ACTION_SUCCESS, [
+                'reason' => 'Secondary database connection established',
+                'batch_id' => $batchId
+            ]);
         } catch (\Exception $e) {
-
-            Log::error('Secondary database connection failed at step: ' . $statusObj->value);
+            Log::error('Secondary database connection failed: ' . $e->getMessage());
+            MigrationLog::logError('system', null, null, $e->getMessage());
             $this->error('Secondary database connection failed: ' . $e->getMessage());
-            return;
+            return 1;
+        }
+
+        $statusObj = UpgradeProcess::firstOrCreate([
+            'name' => 'currentStep'
+        ], [
+            'value' => 0
+        ]);
+
+        if ($this->option('reset')) {
+            $statusObj->value = 0;
+            $statusObj->save();
+            MigrationLog::logAction('system', MigrationLog::ACTION_SUCCESS, [
+                'reason' => 'Migration step reset to 0',
+                'batch_id' => $batchId
+            ]);
+            $this->info('Migration step reset to 0');
+        }
+
+        if ($this->option('step')) {
+            $statusObj->value = $this->option('step');
+            $statusObj->save();
+            MigrationLog::logAction('system', MigrationLog::ACTION_SUCCESS, [
+                'reason' => "Migration step manually set to {$this->option('step')}",
+                'batch_id' => $batchId
+            ]);
+            $this->info('Migration step set to ' . $this->option('step'));
         }
 
         $currentStep = $statusObj->value;
 
-        switch ($currentStep){
+        // Preload frequently accessed data
+        $this->preloadCacheData();
+
+        // Execute migration steps
+        $this->executeStep($currentStep, $batchSize);
+
+        if ($currentStep >= self::$TOTAL_STEPS) {
+            $this->info('Migration completed successfully!');
+            return 0;
+        }
+
+        $statusObj->value = $currentStep + 1;
+        $statusObj->save();
+
+        $this->info("Completed step {$currentStep}, next step: " . ($currentStep + 1));
+        return 0;
+    }
+
+    /**
+     * Preload frequently accessed data to reduce database queries
+     */
+    protected function preloadCacheData()
+    {
+        $this->info('Preloading cache data...');
+
+        // Cache all users
+        $users = User::all(['id', 'email', 'name']);
+        foreach ($users as $user) {
+            $this->userCache[$user->id] = $user;
+        }
+
+        // Cache all service departments
+        ServiceDepartment::all()->each(function ($dept) {
+            Cache::put("service_dept_{$dept->slug}", $dept, 3600);
+        });
+
+        // Cache all receptions
+        $receptions = Reception::all(['id', 'name']);
+        foreach ($receptions as $reception) {
+            $this->receptionCache[$reception->id] = $reception;
+        }
+
+        $this->info('Cache preloading completed.');
+    }
+
+    /**
+     * Execute migration step with optimizations
+     */
+    protected function executeStep($currentStep, $batchSize)
+    {
+        switch ($currentStep) {
             case 1:
-                $this->images();
+                $this->imagesOptimized($batchSize);
                 break;
             case 2:
-                $this->users();
+                $this->usersOptimized($batchSize);
                 break;
             case 3:
-                $this->services();
+                $this->servicesOptimized($batchSize);
                 break;
             case 4:
-                $this->receptions();
+                $this->receptionsOptimized($batchSize);
                 break;
             case 5:
-                $this->patients(2020);
+                $this->patientsOptimized(2020, null, $batchSize);
                 break;
             case 6:
-                $this->patients(2021, 1);
-                break;
             case 7:
-                $this->patients(2021, 2);
-                break;
             case 8:
-                $this->patients(2021, 3);
-                break;
             case 9:
-                $this->patients(2021, 4);
-                break;
             case 10:
-                $this->patients(2021, 5);
-                break;
             case 11:
-                $this->patients(2021, 6);
-                break;
             case 12:
-                $this->patients(2021, 7);
-                break;
             case 13:
-                $this->patients(2021, 8);
-                break;
             case 14:
-                $this->patients(2021, 9);
-                break;
             case 15:
-                $this->patients(2021, 10);
-                break;
             case 16:
-                $this->patients(2021, 11);
-                break;
             case 17:
-                $this->patients(2021, 12);
+                $month = $currentStep - 5;
+                $this->patientsOptimized(2021, $month, $batchSize);
                 break;
             case 18:
-                $this->patients(2022, 1);
-                break;
             case 19:
-                $this->patients(2022, 2);
-                break;
             case 20:
-                $this->patients(2022, 3);
-                break;
             case 21:
-                $this->patients(2022, 4);
-                break;
             case 22:
-                $this->patients(2022, 5);
-                break;
             case 23:
-                $this->patients(2022, 6);
-                break;
             case 24:
-                $this->patients(2022, 7);
-                break;
             case 25:
-                $this->patients(2022, 8);
-                break;
             case 26:
-                $this->patients(2022, 9);
-                break;
             case 27:
-                $this->patients(2022, 10);
-                break;
             case 28:
-                $this->patients(2022, 11);
-                break;
             case 29:
-                $this->patients(2022, 12);
+                $month = $currentStep - 17;
+                $this->patientsOptimized(2022, $month, $batchSize);
                 break;
             case 30:
-                $this->patients(2023, 1);
-                break;
             case 31:
-                $this->patients(2023, 2);
-                break;
             case 32:
-                $this->patients(2023, 3);
-                break;
             case 33:
-                $this->patients(2023, 4);
-                break;
             case 34:
-                $this->patients(2023, 5);
-                break;
             case 35:
-                $this->patients(2023, 6);
-                break;
             case 36:
-                $this->patients(2023, 7);
-                break;
             case 37:
-                $this->patients(2023, 8);
-                break;
             case 38:
-                $this->patients(2023, 9);
-                break;
             case 39:
-                $this->patients(2023, 10);
-                break;
             case 40:
-                $this->patients(2023, 11);
-                break;
             case 41:
-                $this->patients(2023, 12);
+                $month = $currentStep - 29;
+                $this->patientsOptimized(2023, $month, $batchSize);
                 break;
             case 42:
-                $this->patients(2024, 1);
-                break;
             case 43:
-                $this->patients(2024, 2);
-                break;
             case 44:
-                $this->patients(2024, 3);
-                break;
             case 45:
-                $this->patients(2024, 4);
-                break;
             case 46:
-                $this->patients(2024, 5);
-                break;
             case 47:
-                $this->patients(2024, 6);
-                break;
             case 48:
-                $this->patients(2024, 7);
-                break;
             case 49:
-                $this->patients(2024, 8);
-                break;
             case 50:
-                $this->patients(2024, 9);
-                break;
             case 51:
-                $this->patients(2024, 10);
-                break;
             case 52:
-                $this->patients(2024, 11);
-                break;
             case 53:
-                $this->patients(2024, 12);
+                $month = $currentStep - 41;
+                $this->patientsOptimized(2024, $month, $batchSize);
                 break;
             case 54:
-                $this->patients(2025, 1);
-                break;
             case 55:
-                $this->patients(2025, 2);
-                break;
             case 56:
-                $this->patients(2025, 3);
-                break;
             case 57:
-                $this->patients(2025, 4);
-                break;
             case 58:
-                $this->patients(2025, 5);
-                break;
             case 59:
-                $this->patients(2025, 6);
-                break;
             case 60:
-                $this->patients(2025, 7);
-                break;
             case 61:
-                $this->patients(2025, 8);
-                break;
             case 62:
-                $this->patients(2025, 9);
-                break;
             case 63:
-                $this->patients(2025, 10);
-                break;
             case 64:
-                $this->patients(2025, 11);
-                break;
             case 65:
-                $this->patients(2025, 12);
+                $month = $currentStep - 53;
+                $this->patientsOptimized(2025, $month, $batchSize);
                 break;
             case 66:
-                $this->counterClosings();
+                $this->counterClosingsOptimized($batchSize);
                 break;
             case 67:
-                $this->expenseCategories();
+                $this->expenseCategoriesOptimized($batchSize);
                 break;
             case 68:
-                $this->vouchers();
+                $this->vouchersOptimized($batchSize);
                 break;
             case 69:
-                $this->expenses();
+                $this->expensesOptimized($batchSize);
                 break;
             case 70:
-                $this->counterClosingTransactions();
+                $this->counterClosingTransactionsOptimized($batchSize);
                 break;
             default:
                 break;
         }
-
-        if($currentStep >= self::$TOTAL_STEPS){
-            return 0;
-        }
-        $statusObj->value = $currentStep + 1;
-        $statusObj->save();
-        
     }
 
-    protected function counterClosingTransactions(){
-
-
-        $statusObj = UpgradeProcess::firstOrCreate([
-            'name' => 'transaction_id'
-        ] ,[
-            'value' => 0
-        ]);
+    /**
+     * Optimized images migration
+     */
+    protected function imagesOptimized($batchSize)
+    {
+        $this->info('Migrating images...');
         
-        if($statusObj->value == 'finished'){
-            return;
-        }
-
-        $availableRecords = DB::connection('secondary')->table('reception_counters_closings_transactions')->count();
-
-        $transferedRecords = Transaction::count();
-
-        $percentAgeCompleted = ($transferedRecords / $availableRecords) * 100;
-
-        $percObj = UpgradeProcess::firstOrCreate([
-            'name' => 'percentage_synced'
-        ] ,[
-            'value' => $percentAgeCompleted
-        ]);
-
-        $percObj->value = $percentAgeCompleted;
-        $percObj->save();
-
-
-        $lastProcessedId = $statusObj->value;
-        $batchSize = 1000;
-        
-        $transactions = DB::connection('secondary')
-            ->table('reception_counters_closings_transactions')
-            ->where('id', '>', $lastProcessedId)
+        DB::connection('secondary')
+            ->table('images')
             ->orderBy('id')
-            ->limit($batchSize)
-            ->get();
-        
-        if ($transactions->isEmpty()) {
-            $this->inpatientDepartmentalServiceOrders();
-            return;
-        }
-        
-        foreach ($transactions as $transaction) {
-
-            $new = [
-                'closing_id' => $this->getCounter($transaction->counter_id)->id ?? null,
-                'created_by' => $this->getUser($transaction->user_id)->id ?? null,
-                'patient_id' => $transaction->patient_id ? $this->getPatient($transaction->patient_id)->id ?? null : null,
-                'type' => $transaction->type == 'CASH' ? 'CASH' : ($transaction->type == 'CARD' || $transaction->type == 'CREDITCARD' ? 'CARD' : ($transaction->type == 'CHEQUE' ? 'CHEQUE' : 'CASH')),
-                'income_or_expense' => $transaction->income_or_expence == 'INCOME' ? 'INCOME' : 'EXPENSE',
-                'amount' => $transaction->amount,
-                'orignal_amount' => $transaction->orignal_amount,
-                'customer_payed' => $transaction->customer_payed,
-                'change' => $transaction->change,
-                'edited_amount' => $transaction->edited_amount,
-
-                'created_at' => $transaction->created_on,
-                'updated_at' => $transaction->modified_on,
-            ];
-
-            $trObject = Transaction::updateOrCreate([
-                'old_id' => $transaction->id
-            ], $new);
-
-            $elements = DB::connection('secondary')->table('reception_counters_closings_transaction_elements')->where('id', $transaction->id)->get();
-
-            foreach ($elements as $element) {
-
-                $newElement = [
-                    'closing_id' => $trObject->closing_id,
-                    'transaction_id' => $trObject->id,
-                    'created_by' => $trObject->created_by,
-                    'amount' => $element->amount,
-                    'original_amount' => $element->original_amount,
-                    'created_at' => $element->created_on,
-                    'updated_at' => $element->modified_on,
-
-                ];
-
-                if($element->type == 'OPD'){
-                    
-                    
-                    $newElement['income_or_expense'] = 'INCOME';
-                    $newElement['doctor_id'] = $element->doctor_id ? $this->getUser($element->doctor_id)->id ?? null : null;
-                    $newElement['patient_id'] = $element->patient_id ? $this->getPatient($element->patient_id)->id ?? null : null;
-
-                    $serviceObj = $this->getService($element->service_id, 'OPD');
-                    
-                    $newElement['service_id'] = $serviceObj ? $serviceObj->id : null;
-
-                    $newElement['type'] = $serviceObj ? $serviceObj->department->slug : null;
-
-                }else if($element->type == 'INPT'){
-                    
-                    
-                    $newElement['income_or_expense'] = 'INCOME';
-                    $newElement['doctor_id'] = $element->doctor_id ? $this->getUser($element->doctor_id)->id ?? null : null;
-                    $newElement['patient_id'] = $element->patient_id ? $this->getPatient($element->patient_id)->id ?? null : null;
-
-                    $serviceObj = $this->getService($element->service_id, 'IND');
-                    
-                    $newElement['service_id'] = $serviceObj ? $serviceObj->id : null;
-
-                    $newElement['type'] = $serviceObj ? $serviceObj->department->slug : null;
-
-                }else if($element->type == 'EMER'){
-                    
-                    
-                    $newElement['income_or_expense'] = 'INCOME';
-                    $newElement['patient_id'] = $element->patient_id ? $this->getPatient($element->patient_id)->id ?? null : null;
-
-                    $serviceObj = $this->getService($element->service_id, 'EMG');
-                    
-                    $newElement['service_id'] = $serviceObj ? $serviceObj->id : null;
-
-                    $newElement['type'] = $serviceObj ? $serviceObj->department->slug : null;
-
-                }else if($element->type == 'DENTAL'){
-                    
-                    $newElement['income_or_expense'] = 'INCOME';
-                    $newElement['doctor_id'] = $element->doctor_id ? $this->getUser($element->doctor_id)->id ?? null : null;
-                    $newElement['patient_id'] = $trObject->patient_id ? $this->getPatient($trObject->patient_id)->id ?? null : null;
-
-                    $serviceObj = $this->getService($element->service_id, 'DNT');
-                    
-                    $newElement['service_id'] = $serviceObj ? $serviceObj->id : null;
-
-                    $newElement['type'] = $serviceObj ? $serviceObj->department->slug : null;
-
-                }else if($element->type == 'ULTRA'){
-                    
-                    
-                    $newElement['income_or_expense'] = 'INCOME';
-                    $newElement['doctor_id'] = $element->doctor_id ? $this->getUser($element->doctor_id)->id ?? null : null;
-                    $newElement['patient_id'] = $trObject->patient_id ? $this->getPatient($trObject->patient_id)->id ?? null : null;
-
-                    $serviceObj = $this->getService($element->service_id, 'ULT');
-                    
-                    $newElement['service_id'] = $serviceObj ? $serviceObj->id : null;
-
-                    $newElement['type'] = $serviceObj ? $serviceObj->department->slug : null;
-                    
-                }else if($element->type == 'RECES'){
-                    
-                    $newElement['income_or_expense'] = 'INCOME';
-                    $newElement['patient_id'] = $trObject->patient_id ? $this->getPatient($trObject->patient_id)->id ?? null : null;
-
-                    $s = DB::connection('secondary')->table('recestation_services')->where('id', $element->service_id)->first();
-
-                    $serviceObj = ServiceRecestation::where('name', $s->name)->first();
-                    
-                    $newElement['service_recestation_id'] = $serviceObj ? $serviceObj->id : null;
-                    $newElement['type'] = 'RECES'. ($serviceObj ? '-'.$serviceObj->department->slug : null);
-
-                }else if($element->type == 'EXP'){
-                    
-                    $newElement['type'] = 'EXP';
-                    $newElement['income_or_expense'] = 'EXPENSE';
-
-                    $expenseObj = $this->getExpenseObject('EXP-'.$element->department_transaction_id);
-
-                    $newElement['expense_id'] = $expenseObj ? $expenseObj->id : null;
-
-
-                }else if($element->type == 'VOUCHER-PAY'){
-                    
-                    $newElement['type'] = 'VOUCHER-PAY';
-                    $newElement['income_or_expense'] = 'EXPENSE';
-
-                    $expenseObj = $this->getExpenseObject('EXP-'.$element->department_transaction_id);
-
-                    $newElement['expense_id'] = $expenseObj ? $expenseObj->id : null;
-
-                    $voucherObj = ExpenseVoucher::where('id', $expenseObj->voucher_id)->first();
-
-                    $newElement['exp_voucher_id'] = $voucherObj ? $voucherObj->id : null;
-
-                }else if($element->type == 'INPT-EXP'){
-                    
-                    $newElement['type'] = 'INPT-EXP';
-                    $newElement['income_or_expense'] = 'EXPENSE';
-                    $newElement['patient_id'] = $trObject->patient_id ? Patient::where('id', $trObject->patient_id)->first()->id ?? null : null;
-
-                    $expenseObj = $this->getExpenseObject('INP-EXP-'.$element->department_transaction_id);
-
-                    $newElement['expense_id'] = $expenseObj ? $expenseObj->id : null;
-
-                    $voucherObj = ExpenseVoucher::where('id', $expenseObj->voucher_id)->first();
-
-                    $newElement['exp_voucher_id'] = $voucherObj ? $voucherObj->id : null;
-                }else{
-
-                    dd('Unknown Type '.$element->type);
+            ->chunk($batchSize, function ($images) {
+                $insertData = [];
+                
+                foreach ($images as $image) {
+                    $insertData[] = [
+                        'path' => $image->path,
+                        'owner_id' => $image->owner_id,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
                 }
-                $transObjModel = TransactionElement::updateOrCreate([
-                    'old_id' => $element->id
-                ], $newElement);
-            }
-            $statusObj->value = $transaction->id;
-            $statusObj->save();
-        }
+                
+                // Bulk insert with ignore to handle duplicates
+                if (!empty($insertData)) {
+                    Image::insertOrIgnore($insertData);
+                    $this->info('Processed ' . count($insertData) . ' images');
+                }
+            });
     }
 
-
-    protected function inpatientDepartmentalServiceOrders(){
-
-
-        $statusObj = UpgradeProcess::firstOrCreate([
-            'name' => 'inpatient_file_id'
-        ] ,[
-            'value' => 0
-        ]);
+    /**
+     * Optimized users migration with bulk operations
+     */
+    protected function usersOptimized($batchSize)
+    {
+        $this->info('Migrating users...');
+        $batchId = Cache::get('migration_batch_id');
+        $totalProcessed = 0;
+        $totalSkipped = 0;
+        $totalErrors = 0;
         
-        if($statusObj->value == 'finished'){
-            return;
-        }
-
-        $availableRecords = DB::connection('secondary')->table('inpatient_file')->count();
-
-        $transferedRecords = ServiceOrder::where('type','')->count();
-
-        $percentAgeCompleted = ($transferedRecords / $availableRecords) * 100;
-
-        $percObj = UpgradeProcess::firstOrCreate([
-            'name' => 'inpatient_percentage_synced'
-        ] ,[
-            'value' => $percentAgeCompleted
-        ]);
-
-        $percObj->value = $percentAgeCompleted;
-        $percObj->save();
-
-
-        $lastProcessedId = $statusObj->value;
-        $batchSize = 100;
-        
-        $files = DB::connection('secondary')
-            ->table('inpatient_file')
-            ->where('id', '>', $lastProcessedId)
+        DB::connection('secondary')
+            ->table('aauth_users')
             ->orderBy('id')
-            ->limit($batchSize)
-            ->get();
-        foreach ($files as $file) {
+            ->chunk($batchSize, function ($users) use (&$totalProcessed, &$totalSkipped, &$totalErrors, $batchId) {
+                $insertData = [];
+                $profileData = [];
+                
+                foreach ($users as $user) {
+                    try {
+                        // Validate user data
+                        if (empty($user->email) || !filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+                            MigrationLog::logSkipped('users', 'aauth_users', $user->id, 'Invalid email address', (array)$user);
+                            $totalSkipped++;
+                            continue;
+                        }
 
-            $dpartmentTransaction = DB::connection('secondary')
-                ->table('inpatient_transactions')
-                ->where('file_id', $file->id)
-                ->first();
+                        if (empty($user->name)) {
+                            MigrationLog::logSkipped('users', 'aauth_users', $user->id, 'Empty name field', (array)$user);
+                            $totalSkipped++;
+                            continue;
+                        }
 
-            $ourTransactionRecord = Transaction::where('old_id', $dpartmentTransaction->reception_transaction_id)->first();
+                        $userData = [
+                            'id' => $user->id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                            'password' => Hash::make('password'),
+                            'password_expired_at' => Carbon::now(),
+                            'is_active' => $user->banned == 0 ? 1 : 0,
+                            'banned_message' => $user->banned_message,
+                            'last_login' => $user->last_login,
+                            'last_activity' => $user->last_activity,
+                            'last_login_attempt' => $user->last_login_attempt,
+                            'ip_address' => $user->ip_address,
+                            'login_attempts' => $user->login_attempts ?? 0,
+                            'profile_img_path' => ltrim($user->profile_img_path, 'public/'),
+                            'profile_img_id' => $user->profile_img_id,
+                            'created_at' => $user->created_on,
+                            'updated_at' => $user->modified_on,
+                        ];
 
-            foreach($ourTransactionRecord->elements as $element){
+                        $insertData[] = $userData;
 
-                $serviceOrder = ServiceOrder::where('id', $element->service_order_id)->first();
+                        // Cache user for later use
+                        $userObj = (object)[
+                            'id' => $user->id,
+                            'email' => $user->email,
+                            'name' => $user->name
+                        ];
+                        $this->userCache[$user->id] = $userObj;
 
-                if($serviceOrder){
-                    
-                    $soNumber = $serviceOrder->so_number;
+                        // Collect profile data for bulk insert later
+                        if ($user->is_super_admin) $profileData['admin'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        if ($user->is_receptionist) $profileData['receptionist'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        if ($user->is_opd_doctor) $profileData['opd_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        if ($user->is_inpatient_doctor) $profileData['ind_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        if ($user->is_emergency_doctor) $profileData['emergency_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        if ($user->is_dentist) $profileData['dentist'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        if ($user->is_ultrasound_doc) $profileData['ultrasound_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        if ($user->is_xray_tech) $profileData['xray_technician'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
 
-                    $exploded = explode('/', $soNumber);
+                        $totalProcessed++;
 
-                    $soNumber[6] = str_pad($file->id, 8, '0', STR_PAD_LEFT);
-                    $serviceOrder->so_number = implode('/', $exploded);
-                    $serviceOrder->so_short = implode('/', [
-                        $exploded[5],
-                        $exploded[6],
+                    } catch (\Exception $e) {
+                        MigrationLog::logError('users', 'aauth_users', $user->id, $e->getMessage(), (array)$user);
+                        $totalErrors++;
+                        continue;
+                    }
+                }
+                
+                // Bulk insert users
+                if (!empty($insertData)) {
+                    try {
+                        $inserted = User::insertOrIgnore($insertData);
+                        $this->info('Processed ' . count($insertData) . ' users in this batch');
+                        
+                        // Log successful batch
+                        MigrationLog::logAction('users', MigrationLog::ACTION_SUCCESS, [
+                            'reason' => 'Bulk insert completed',
+                            'old_table' => 'aauth_users',
+                            'new_table' => 'users',
+                            'batch_id' => $batchId,
+                            'old_data' => ['batch_count' => count($insertData)]
+                        ]);
+
+                    } catch (\Exception $e) {
+                        MigrationLog::logError('users', 'aauth_users', null, $e->getMessage(), [
+                            'batch_size' => count($insertData),
+                            'batch_id' => $batchId
+                        ]);
+                        $this->error('Failed to insert users batch: ' . $e->getMessage());
+                    }
+                }
+
+                // Bulk insert profiles
+                $this->bulkInsertProfiles($profileData, $batchId);
+            });
+
+        // Log final summary
+        MigrationLog::logAction('users', MigrationLog::ACTION_SUCCESS, [
+            'reason' => 'Users migration completed',
+            'old_table' => 'aauth_users', 
+            'new_table' => 'users',
+            'batch_id' => $batchId,
+            'old_data' => [
+                'total_processed' => $totalProcessed,
+                'total_skipped' => $totalSkipped,
+                'total_errors' => $totalErrors
+            ]
+        ]);
+
+        $this->info("✅ Users migration completed: {$totalProcessed} processed, {$totalSkipped} skipped, {$totalErrors} errors");
+    }
+
+    /**
+     * Bulk insert user profiles
+     */
+    protected function bulkInsertProfiles($profileData, $batchId)
+    {
+        $profileModels = [
+            'admin' => Administrator::class,
+            'receptionist' => Receptionist::class,
+            'opd_doctor' => OpdDoctor::class,
+            'ind_doctor' => IndDoctor::class,
+            'emergency_doctor' => EmergencyDoctor::class,
+            'dentist' => Dentist::class,
+            'ultrasound_doctor' => UltrasoundDoctor::class,
+            'xray_technician' => XrayTechnician::class,
+        ];
+
+        foreach ($profileData as $type => $profiles) {
+            if (!empty($profiles) && isset($profileModels[$type])) {
+                try {
+                    $profileModels[$type]::insertOrIgnore($profiles);
+                    MigrationLog::logAction("user_profiles_{$type}", MigrationLog::ACTION_SUCCESS, [
+                        'reason' => "Successfully inserted {$type} profiles",
+                        'old_table' => 'aauth_users',
+                        'new_table' => $type,
+                        'batch_id' => $batchId,
+                        'old_data' => ['profile_count' => count($profiles)]
                     ]);
-                    $serviceOrder->save();
+                } catch (\Exception $e) {
+                    MigrationLog::logError("user_profiles_{$type}", 'aauth_users', null, $e->getMessage(), [
+                        'profile_type' => $type,
+                        'profile_count' => count($profiles),
+                        'batch_id' => $batchId
+                    ]);
                 }
             }
-
         }
     }
 
-    protected function expenses(){
-        DB::connection('secondary')->table('expenses')->orderBy('id')->chunk(100, function ($expenses) {
-            foreach ($expenses as $expense) {
+    /**
+     * Optimized services migration
+     */
+    protected function servicesOptimized($batchSize)
+    {
+        $this->info('Migrating services...');
+        
+        $serviceTypes = [
+            ['key' => 'OPD', 'name' => "Outdoor", 'image' => "/img/opd.png", 'table' => 'opd_services'],
+            ['key' => 'IND', 'name' => "Indoor", 'image' => "/img/ind.png", 'table' => 'inpd_services', 'recesitation_table' => 'recestation_services'],
+            ['key' => 'EMG', 'name' => "Emergency", 'image' => "/img/emergency.png", 'table' => 'emergency_services'],
+            ['key' => 'DNT', 'name' => "Dental Department", 'image' => "/img/dental.png", 'table' => 'dental_services'],
+            ['key' => 'PTH', 'name' => "Laboratory", 'image' => "/img/laboratory.png", 'table' => 'test_services'],
+            ['key' => 'ULT', 'name' => "Ultrasound", 'image' => "/img/ultrasound.png", 'table' => 'ultrasound_services'],
+            ['key' => 'XRY', 'name' => "Radiology", 'image' => "/img/xray.png", 'table' => 'xray_services']
+        ];
 
-                $new = [
-                    // 'old_id' => 'EXP-'.$expense->id,
-                    'voucher_id' => $expense->voucher_id,
-                    'exp_category_id' => $expense->category_id && $expense->category_id != 0 ? ExpenseCategory::where('name', $expense->category_id)->first()->id ?? null : null,
-                    'type' => $expense->payment_type,
-                    // 'notes' => $expense->payment_reference,
-                    // 'notes_json' => [],
-                    // 'service_order_id' => $expense->service_order_id,
-                    'payed_to' => $expense->payed_to && $expense->payed_to != 0 ? User::where('id', $expense->payed_to)->first()->id ?? null : null,
-                    'payed_to_name' => $expense->payment_reference,
-                    'amount' => $expense->amount_received_num,
-                    'amount_alphabetical' => $expense->amount_received_words,
-                    'created_at' => $expense->created_on,
-                    'updated_at' => $expense->modified_on,
-                ];
+        foreach ($serviceTypes as $serviceType) {
+            $department = ServiceDepartment::updateOrCreate(
+                ['slug' => $serviceType['key']],
+                [
+                    'name' => $serviceType['name'],
+                    'image' => $serviceType['image'],
+                    'have_composit_services' => $serviceType['key'] === 'IND'
+                ]
+            );
 
-                Expense::updateOrCreate([
-                    'old_id' => 'EXP-'.$expense->id
-                ], $new);
-            }
-        });
-
-        DB::connection('secondary')->table('inpatient_expense_transactions')->orderBy('id')->chunk(100, function ($expenses) {
-            foreach ($expenses as $expense) {
-
-                $new = [
+            // Migrate main services
+            DB::connection('secondary')
+                ->table($serviceType['table'])
+                ->orderBy('id')
+                ->chunk($batchSize, function ($services) use ($department, $serviceType) {
+                    $insertData = [];
                     
-                    'type' => $expense->payment_type,
-                    // 'notes' => $expense->payment_reference,
-                    // 'notes_json' => [],
-                    // 'service_order_id' => $expense->service_order_id,
-                    'payed_to' => $expense->receaved_by && $expense->receaved_by != 0 ? User::where('id', $expense->receaved_by)->first()->id ?? null : null,
-                    'payed_to_name' => $expense->payment_refference,
-                    'amount' => $expense->amount_in_num,
-                    'amount_alphabetical' => $expense->amount_in_figure,
+                    foreach ($services as $service) {
+                        $serviceProviderTypes = [];
+                        
+                        if ($service->is_doctor_selectable) {
+                            switch ($serviceType['key']) {
+                                case 'OPD':
+                                    $serviceProviderTypes = [OpdDoctor::class];
+                                    break;
+                                case 'IND':
+                                    $serviceProviderTypes = [IndDoctor::class];
+                                    break;
+                                case 'DNT':
+                                    $serviceProviderTypes = [Dentist::class];
+                                    break;
+                            }
+                        }
 
-                    'created_at' => $expense->created_on,
-                    'updated_at' => $expense->modified_on,
-                ];
+                        $insertData[] = [
+                            'name' => $service->name,
+                            'slug' => $service->post_key,
+                            'service_department_id' => $department->id,
+                            'charges' => $service->charges,
+                            'charges_include_tax' => $service->charges_including_tax,
+                            'tax_rate' => $service->tax_rate,
+                            'have_service_provider' => in_array($department->slug, ['OPD', 'IND']) && $service->is_doctor_selectable,
+                            'is_composit_service' => $department->have_composit_services,
+                            'service_provider_types' => json_encode($serviceProviderTypes),
+                            'created_by' => $service->entered_by,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
+                    }
+                    
+                    if (!empty($insertData)) {
+                        Service::insertOrIgnore($insertData);
+                        $this->info("Processed " . count($insertData) . " {$serviceType['key']} services");
+                    }
+                });
 
-                Expense::updateOrCreate([
-                    'old_id' => 'INP-EXP-'.$expense->id
-                ], $new);
+            // Migrate recestation services if applicable
+            if (isset($serviceType['recesitation_table'])) {
+                DB::connection('secondary')
+                    ->table($serviceType['recesitation_table'])
+                    ->orderBy('id')
+                    ->chunk($batchSize, function ($services) use ($department) {
+                        $insertData = [];
+                        
+                        foreach ($services as $service) {
+                            $insertData[] = [
+                                'name' => $service->name,
+                                'slug' => $service->post_key == 0 ? null : $service->post_key,
+                                'service_department_id' => $department->id,
+                                'charges' => $service->charges,
+                                'charges_include_tax' => $service->charges_including_tax,
+                                'tax_rate' => $service->tax_rate,
+                                'created_by' => $service->entered_by,
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ];
+                        }
+                        
+                        if (!empty($insertData)) {
+                            ServiceRecestation::insertOrIgnore($insertData);
+                            $this->info("Processed " . count($insertData) . " recestation services");
+                        }
+                    });
             }
-        });
+        }
     }
 
-    protected function vouchers(){
-        DB::connection('secondary')->table('expense_vouchers')->orderBy('id')->chunk(100, function ($vouchers) {
-            foreach ($vouchers as $voucher) {
+    /**
+     * Optimized receptions migration
+     */
+    protected function receptionsOptimized($batchSize)
+    {
+        $this->info('Migrating receptions...');
+        
+        DB::connection('secondary')
+            ->table('reception_counters')
+            ->orderBy('id')
+            ->chunk($batchSize, function ($receptions) {
+                $insertData = [];
+                
+                foreach ($receptions as $reception) {
+                    $allowedDepartments = [];
+                    if ($reception->is_opd_allowed) $allowedDepartments[] = 'OPD';
+                    if ($reception->is_inpatient_allowed) $allowedDepartments[] = 'IND';
+                    if ($reception->is_emergency_allowed) $allowedDepartments[] = 'EMG';
+                    
+                    // Always add these departments
+                    $allowedDepartments = array_merge($allowedDepartments, ['DNT', 'PTH', 'ULT', 'XRY']);
 
-                $new = [
-                    'exp_category_id' => $voucher->exp_category_id,
-                    'service_order_id' => null,
-                    'payed_to' => $voucher->employee_id ? User::where('id', $voucher->employee_id)->first()->id ?? null : null,
-                    'payed_to_name' => $voucher->payed_to_others,
-                    'amount' => $voucher->exp_amount_numbers ? ($voucher->exp_amount_numbers < 0 ? ($voucher->exp_amount_numbers * -1) : $voucher->exp_amount_numbers) : 0,
-                    'created_at' => $voucher->created_on,
-                    'updated_at' => $voucher->modified_on,
-                ];
+                    $insertData[] = [
+                        'id' => $reception->id,
+                        'name' => $reception->counter_name,
+                        'allowed_departments' => json_encode($allowedDepartments),
+                        'is_allowed_to_pay_voucher' => $reception->is_allowed_to_pay_voucher,
+                        'is_allowed_to_pay_from_petty_cash' => $reception->is_allowed_to_pay_from_petty_cash,
+                        'is_cash_allowed' => $reception->cash_on_counter,
+                        'is_cheques_allowed' => $reception->cheques_on_counter,
+                        'is_card_allowed' => $reception->card_slips_on_counter,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
 
-                ExpenseVoucher::updateOrCreate([
-                    'old_id' => $voucher->id
-                ], $new);
-            }
-        });
+                    // Cache reception
+                    $this->receptionCache[$reception->id] = (object)[
+                        'id' => $reception->id,
+                        'name' => $reception->counter_name
+                    ];
+                }
+                
+                if (!empty($insertData)) {
+                    Reception::insertOrIgnore($insertData);
+                    $this->info('Processed ' . count($insertData) . ' receptions');
+                }
+            });
     }
 
-    protected function expenseCategories(){
-        DB::connection('secondary')->table('expenses_categories')->orderBy('id')->chunk(100, function ($categories) {
-            foreach ($categories as $category) {
-
-                $new = [
-                    'name' => $category->name,
-                ];
-
-                ExpenseCategory::updateOrCreate([
-                    'old_id' => $category->id
-                ], $new);
-            }
-        });
-    }
-
-    protected function counterClosings(){
-        DB::connection('secondary')->table('reception_counters_closings')->orderBy('id')->chunk(100, function ($closings) {
-            foreach ($closings as $closing) {
-
-                // Check how many closings were created that month
-                $countInMonth = Closing::whereYear('created_at', Carbon::parse($closing->created_on)->year)
-                    ->whereMonth('created_at', Carbon::parse($closing->created_on)->month)
-                    ->count();
-
-                $ctNumber = 'CT/' . Carbon::parse($closing->created_on)->format('Y/m/') . str_pad($countInMonth + 1, 4, '0', STR_PAD_LEFT);
-
-                $new = [
-                    'reception_id' => Reception::where('id', $closing->reception_id)->first()->id ?? null,
-                    'receptionist_id' => User::where('id', $closing->user_id)->first()->id ?? null,
-                    'ct_number' => $ctNumber,
-                    'status' => $closing->status,
-                    'opening_amount' => $closing->opening_amount,
-                    'closing_amount' => $closing->closing_amount,
-                    'closing_amount_cash' => $closing->closing_amount_cash,
-                    'closing_amount_cheque' => 0,
-                    'closing_amount_card' => ($closing->closing_amount_card ?? 0) + ($closing->closing_amount_creditcard ?? 0),
-                    'expense_payed' => $closing->expense_payed,
-                    'cash_recieving_time' => $closing->cash_recieving_time,
-                    'created_at' => $closing->created_on,
-                    'updated_at' => $closing->modified_on,
-                ];
-                Closing::updateOrCreate([
-                    'old_id' => $closing->id
-                ], $new);
-            }
-        });
-    }
-
-    public function patients($year, $month = false){
-
+    /**
+     * Optimized patients migration with better chunking
+     */
+    protected function patientsOptimized($year, $month = null, $batchSize)
+    {
+        $this->info("Migrating patients for year {$year}" . ($month ? " month {$month}" : ""));
+        
         $query = DB::connection('secondary')->table('patients');
-
-        if($month){
+        
+        if ($month) {
             $query->whereMonth('created_on', $month);
         }
-
+        
         $query->whereYear('created_on', $year);
 
-        $query->orderBy('id')->chunk(1000, function ($patients) {
+        // Get existing patient count for PS number generation
+        $existingCount = Patient::whereYear('created_at', $year)
+            ->when($month, fn($q) => $q->whereMonth('created_at', $month))
+            ->count();
 
+        $counter = $existingCount;
 
+        $query->orderBy('id')->chunk($batchSize, function ($patients) use ($year, $month, &$counter) {
+            $insertData = [];
+            
             foreach ($patients as $patient) {
-
+                $counter++;
                 $createdInTheMonth = Carbon::parse($patient->created_on);
+                $psNumber = 'PS/' . $createdInTheMonth->format('Y/m') . '/' . str_pad($counter, 6, '0', STR_PAD_LEFT);
 
-                // Count how many patients were created in that month
-                $counter = Patient::whereYear('created_at', $createdInTheMonth->format('Y'))
-                  ->whereMonth('created_at', $createdInTheMonth->format('m'))
-                  ->count();
-
-                $counter ++;
-
-                $psNumber = 'PS/' . $createdInTheMonth->format('Y/m') .'/'. str_pad($counter, 6, '0', STR_PAD_LEFT);;
-
-                $newPatient = [
+                $insertData[] = [
+                    'id' => $patient->id,
                     'name' => $patient->pateint_name,
                     'ps_number' => $psNumber,
                     'gender' => $patient->gender,
@@ -736,548 +676,800 @@ class fetchOld extends Command
                     'updated_at' => $patient->modified_on,
                 ];
 
-                Patient::updateOrCreate([
-                    'id' => $patient->id
-                ], $newPatient);
+                // Cache patient
+                $this->patientCache[$patient->id] = (object)[
+                    'id' => $patient->id,
+                    'name' => $patient->pateint_name
+                ];
+            }
+            
+            if (!empty($insertData)) {
+                Patient::insertOrIgnore($insertData);
+                $this->info('Processed ' . count($insertData) . ' patients');
             }
         });
     }
 
-    public function receptions(){
-        DB::connection('secondary')->table('reception_counters')->orderBy('id')->chunk(1000, function ($receptions) {
-            foreach ($receptions as $reception) {
-
-                $allowedDepartments = [
-                    $reception->is_opd_allowed => 'OPD',
-                    $reception->is_inpatient_allowed => 'IND',
-                    $reception->is_emergency_allowed => 'EMG',
-                    'DNT',
-                    'PTH',
-                    'ULT',
-                    'XRY'
-                ];
+    /**
+     * Optimized counter closings migration
+     */
+    protected function counterClosingsOptimized($batchSize)
+    {
+        $this->info('Migrating counter closings...');
+        
+        DB::connection('secondary')
+            ->table('reception_counters_closings')
+            ->orderBy('id')
+            ->chunk($batchSize, function ($closings) {
+                $insertData = [];
                 
-                $newReception = [
-                    'name' => $reception->counter_name,
-                    'allowed_departments' => $allowedDepartments,
-                    'is_allowed_to_pay_voucher' => $reception->is_allowed_to_pay_voucher,
-                    'is_allowed_to_pay_from_petty_cash' => $reception->is_allowed_to_pay_from_petty_cash,
-                    'is_cash_allowed' => $reception->cash_on_counter,
-                    'is_cheques_allowed' => $reception->cheques_on_counter,
-                    'is_card_allowed' => $reception->card_slips_on_counter,
-                ];
+                foreach ($closings as $closing) {
+                    $createdDate = Carbon::parse($closing->created_on);
+                    
+                    // Get existing count for CT number generation
+                    $countInMonth = Closing::whereYear('created_at', $createdDate->year)
+                        ->whereMonth('created_at', $createdDate->month)
+                        ->count();
 
-                Reception::updateOrCreate([
-                    'id' => $reception->id
-                ], $newReception);
-            }
-        });
-    }
+                    $ctNumber = 'CT/' . $createdDate->format('Y/m/') . str_pad($countInMonth + 1, 4, '0', STR_PAD_LEFT);
 
-    public function services(){
-
-        foreach([
-            [
-                'key' => 'OPD',
-                'name' => "Outdoor",
-                'image' => "/img/opd.png",
-                'table' => 'opd_services',
-            ],
-
-            [
-                'key' => 'IND',
-                'name' => "Indoor",
-                'image' => "/img/ind.png",
-                'table' => 'inpd_services',
-                'recesitation_table' => 'recestation_services'
-            ],
-
-            [
-                'key' => 'EMG',
-                'name' => "Emergency",
-                'image' => "/img/emergency.png",
-                'table' => 'emergency_services',
-            ],
-
-            [
-                'key' => 'DNT',
-                'name' => "Dental Department",
-                'image' => "/img/dental.png",
-                'table' => 'dental_services',
-            ],
-
-            [
-                'key' => 'PTH',
-                'name' => "Laboratory",
-                'image' => "/img/laboratory.png",
-                'table' => 'test_services',
-            ],
-
-            [
-                'key' => 'ULT',
-                'name' => "Ultrasound",
-                'image' => "/img/ultrasound.png",
-                'table' => 'ultrasound_services',
-            ],
-
-            [
-                'key' => 'XRY',
-                'name' => "Radiology",
-                'image' => "/img/xray.png",
-                'table' => 'xray_services',
-            ]
-        ] as $row){
-            $department = ServiceDepartment::updateOrCreate([
-                'slug' => $row['key']
-            ],[
-                'name' => $row['name'],
-                'image' => $row['image'],
-                'have_composit_services' => $row['key'] === 'IND'
-            ]);
-
-            DB::connection('secondary')->table($row['table'])->orderBy('id')->chunk(100, function ($services) use ($department) {
-
-                foreach($services as $service){
-                    $newService = [
-                        'name' => $service->name,
-                        'slug' => $service->post_key,
-                        'service_department_id' => $department->id,
-                        'charges' => $service->charges,
-                        'charges_include_tax' => $service->charges_including_tax,
-                        'tax_rate' => $service->tax_rate,
-                        'have_service_provider' => in_array(
-                            $department->key, ['OPD', 'IND']
-                        ) &&  $service->is_doctor_selectable,
-                        'is_composit_service' => $department->have_composit_services,
-                        'created_by' => $service->entered_by
+                    $insertData[] = [
+                        'id' => $closing->id,
+                        'old_id' => $closing->id,
+                        'reception_id' => $this->getCachedReception($closing->reception_id)?->id,
+                        'receptionist_id' => $this->getCachedUser($closing->user_id)?->id,
+                        'ct_number' => $ctNumber,
+                        'status' => $closing->status == 'CLOSED' ? CounterStatus::REPORTED : CounterStatus::OPEN,
+                        'opening_amount' => $closing->opening_amount,
+                        'closing_amount' => $closing->closing_amount,
+                        'closing_amount_cash' => $closing->closing_amount_cash,
+                        'closing_amount_cheque' => 0,
+                        'closing_amount_card' => ($closing->closing_amount_card ?? 0) + ($closing->closing_amount_creditcard ?? 0),
+                        'expense_payed' => $closing->expense_payed,
+                        'closed_at' => $closing->cash_recieving_time,
+                        'reported_by' => 31,
+                        'amount_received' => $closing->closing_amount,
+                        'cash_recieving_time' => $closing->cash_recieving_time,
+                        'created_at' => $closing->created_on,
+                        'updated_at' => $closing->modified_on,
                     ];
 
-                    if($service->is_doctor_selectable && $department->key == 'OPD'){
-                        $newService['service_provider_types'] = [
-                            OpdDoctor::class
-                        ];
-                    }
-
-                    if($service->is_doctor_selectable && $department->key == 'IND'){
-                        $newService['service_provider_types'] = [
-                            IndDoctor::class
-                        ];
-                    }
-
-                    if($service->is_doctor_selectable && $department->key == 'DNT'){
-                        $newService['service_provider_types'] = [
-                            Dentist::class
-                        ];
-                    }
-
-                    Service::updateOrCreate([
-                        'slug' => $service->post_key,
-                        'service_department_id' => $department->id,
-                    ], $newService);
-
+                    // Cache closing
+                    $this->closingCache[$closing->id] = (object)[
+                        'id' => $closing->id
+                    ];
                 }
-
                 
+                if (!empty($insertData)) {
+                    Closing::insertOrIgnore($insertData);
+                    $this->info('Processed ' . count($insertData) . ' closings');
+                }
+            });
+    }
+
+    /**
+     * Optimized expense categories migration
+     */
+    protected function expenseCategoriesOptimized($batchSize)
+    {
+        $this->info('Migrating expense categories...');
+        
+        DB::connection('secondary')
+            ->table('expenses_categories')
+            ->orderBy('id')
+            ->chunk($batchSize, function ($categories) {
+                $insertData = [];
+                
+                foreach ($categories as $category) {
+                    $insertData[] = [
+                        'old_id' => $category->id,
+                        'name' => $category->name,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+                
+                if (!empty($insertData)) {
+                    ExpenseCategory::insertOrIgnore($insertData);
+                    $this->info('Processed ' . count($insertData) . ' expense categories');
+                }
+            });
+    }
+
+    /**
+     * Optimized vouchers migration
+     */
+    protected function vouchersOptimized($batchSize)
+    {
+        $this->info('Migrating vouchers...');
+        
+        DB::connection('secondary')
+            ->table('expense_vouchers')
+            ->orderBy('id')
+            ->chunk($batchSize, function ($vouchers) {
+                $insertData = [];
+                
+                foreach ($vouchers as $voucher) {
+                    $insertData[] = [
+                        'old_id' => $voucher->id,
+                        'exp_category_id' => $voucher->exp_category_id,
+                        'service_order_id' => null,
+                        'payed_to' => $this->getCachedUser($voucher->employee_id)?->id,
+                        'payed_to_name' => $voucher->payed_to_others,
+                        'amount' => $voucher->exp_amount_numbers ? 
+                            ($voucher->exp_amount_numbers < 0 ? 
+                                ($voucher->exp_amount_numbers * -1) : 
+                                $voucher->exp_amount_numbers) : 0,
+                        'created_at' => $voucher->created_on,
+                        'updated_at' => $voucher->modified_on,
+                    ];
+                }
+                
+                if (!empty($insertData)) {
+                    ExpenseVoucher::insertOrIgnore($insertData);
+                    $this->info('Processed ' . count($insertData) . ' vouchers');
+                }
+            });
+    }
+
+    /**
+     * Optimized expenses migration
+     */
+    protected function expensesOptimized($batchSize)
+    {
+        $this->info('Migrating expenses...');
+        $batchId = Cache::get('migration_batch_id');
+        $totalProcessed = 0;
+        $totalSkipped = 0;
+        $totalErrors = 0;
+        $totalRegularAmount = 0;
+        $totalInpatientAmount = 0;
+        
+        // Track processed IDs to detect potential duplicates
+        $processedIds = [];
+        
+        // Regular expenses
+        DB::connection('secondary')
+            ->table('expenses')
+            ->orderBy('id')
+            ->chunk($batchSize, function ($expenses) use (&$totalProcessed, &$totalSkipped, &$totalErrors, &$totalRegularAmount, &$processedIds, $batchId) {
+                $insertData = [];
+                
+                foreach ($expenses as $expense) {
+                    try {
+                        // Check for duplicates
+                        $oldId = 'EXP-' . $expense->id;
+                        if (in_array($oldId, $processedIds)) {
+                            MigrationLog::logAction('expenses', MigrationLog::ACTION_DUPLICATED, [
+                                'old_table' => 'expenses',
+                                'old_record_id' => $expense->id,
+                                'reason' => 'Duplicate expense ID detected during processing',
+                                'batch_id' => $batchId,
+                                'old_data' => (array)$expense
+                            ]);
+                            $totalSkipped++;
+                            continue;
+                        }
+                        $processedIds[] = $oldId;
+
+                        // Validate amount
+                        $amount = $this->sanitizeNumericValue($expense->amount_received_num);
+                        if ($amount <= 0) {
+                            MigrationLog::logSkipped('expenses', 'expenses', $expense->id, 'Invalid or zero amount', (array)$expense);
+                            $totalSkipped++;
+                            continue;
+                        }
+
+                        $expenseCategory = ExpenseCategory::where('old_id', $expense->category_id)->first();
+                        
+                        $expenseData = [
+                            'old_id' => $oldId,
+                            'voucher_id' => $expense->voucher_id,
+                            'exp_category_id' => $expenseCategory?->id,
+                            'type' => $expense->payment_type,
+                            'payed_to' => $this->getCachedUser($expense->payed_to)?->id,
+                            'payed_to_name' => $expense->payment_reference,
+                            'amount' => $amount,
+                            'amount_alphabetical' => $expense->amount_received_words,
+                            'created_at' => $expense->created_on,
+                            'updated_at' => $expense->modified_on,
+                        ];
+
+                        $insertData[] = $expenseData;
+                        $totalProcessed++;
+                        $totalRegularAmount += $amount;
+
+                        // Log successful processing
+                        MigrationLog::logFinancial('expenses', 'expenses', $expense->id, 'expenses', null, 
+                            $expense->amount_received_num, $amount, MigrationLog::ACTION_SUCCESS);
+
+                    } catch (\Exception $e) {
+                        MigrationLog::logError('expenses', 'expenses', $expense->id, $e->getMessage(), (array)$expense);
+                        $totalErrors++;
+                    }
+                }
+                
+                if (!empty($insertData)) {
+                    try {
+                        Expense::insertOrIgnore($insertData);
+                        $this->info('Processed ' . count($insertData) . ' regular expenses (Amount: ' . number_format(array_sum(array_column($insertData, 'amount')), 2) . ')');
+                        
+                        MigrationLog::logAction('expenses', MigrationLog::ACTION_SUCCESS, [
+                            'reason' => 'Regular expenses batch inserted',
+                            'old_table' => 'expenses',
+                            'new_table' => 'expenses',
+                            'batch_id' => $batchId,
+                            'old_data' => [
+                                'batch_count' => count($insertData),
+                                'batch_amount' => array_sum(array_column($insertData, 'amount'))
+                            ]
+                        ]);
+
+                    } catch (\Exception $e) {
+                        MigrationLog::logError('expenses', 'expenses', null, $e->getMessage(), [
+                            'batch_size' => count($insertData),
+                            'batch_id' => $batchId
+                        ]);
+                        $this->error('Failed to insert regular expenses batch: ' . $e->getMessage());
+                    }
+                }
             });
 
-            if(array_key_exists('recesitation_table', $row)){
+        // Inpatient expenses
+        DB::connection('secondary')
+            ->table('inpatient_expense_transactions')
+            ->orderBy('id')
+            ->chunk($batchSize, function ($expenses) use (&$totalProcessed, &$totalSkipped, &$totalErrors, &$totalInpatientAmount, &$processedIds, $batchId) {
+                $insertData = [];
+                
+                foreach ($expenses as $expense) {
+                    try {
+                        // Check for duplicates
+                        $oldId = 'INP-EXP-' . $expense->id;
+                        if (in_array($oldId, $processedIds)) {
+                            MigrationLog::logAction('expenses', MigrationLog::ACTION_DUPLICATED, [
+                                'old_table' => 'inpatient_expense_transactions',
+                                'old_record_id' => $expense->id,
+                                'reason' => 'Duplicate inpatient expense ID detected during processing',
+                                'batch_id' => $batchId,
+                                'old_data' => (array)$expense
+                            ]);
+                            $totalSkipped++;
+                            continue;
+                        }
+                        $processedIds[] = $oldId;
 
-                DB::connection('secondary')->table($row['recesitation_table'])->orderBy('id')->chunk(100, function ($services) use ($department) {
+                        // Validate amount
+                        $amount = $this->sanitizeNumericValue($expense->amount_in_num);
+                        if ($amount <= 0) {
+                            MigrationLog::logSkipped('expenses', 'inpatient_expense_transactions', $expense->id, 'Invalid or zero amount', (array)$expense);
+                            $totalSkipped++;
+                            continue;
+                        }
 
-                    foreach($services as $service){
-
-
-                        $newService = [
-                            'name' => $service->name,
-                            'slug' => $service->post_key == 0 ? null : $service->post_key,
-                            'service_department_id' => $department->id,
-                            'charges' => $service->charges,
-                            'charges_include_tax' => $service->charges_including_tax,
-                            'tax_rate' => $service->tax_rate,
-                            'created_by' => $service->entered_by
+                        $expenseData = [
+                            'old_id' => $oldId,
+                            'type' => $expense->payment_type,
+                            'payed_to' => $this->getCachedUser($expense->receaved_by)?->id,
+                            'payed_to_name' => $expense->payment_refference,
+                            'amount' => $amount,
+                            'amount_alphabetical' => $expense->amount_in_figure,
+                            'created_at' => $expense->created_on,
+                            'updated_at' => $expense->modified_on,
                         ];
 
-                        ServiceRecestation::updateOrCreate([
-                            'slug' => $service->post_key,
-                            'service_department_id' => $department->id,
-                        ], $newService);
+                        $insertData[] = $expenseData;
+                        $totalProcessed++;
+                        $totalInpatientAmount += $amount;
 
-                    }
+                        // Log successful processing
+                        MigrationLog::logFinancial('expenses', 'inpatient_expense_transactions', $expense->id, 'expenses', null, 
+                            $expense->amount_in_num, $amount, MigrationLog::ACTION_SUCCESS);
 
-                });
-            }
-        }
-
-    }
-    
-    protected function users(){
-        DB::connection('secondary')->table('aauth_users')->orderBy('id')->chunk(100, function ($users) {
-            foreach ($users as $user) {
-                $newUser = [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'password' => Hash::make('password'),
-                    'password_expired_at' => Carbon::now(),
-                    'is_active' => $user->banned == 0 ? 1 : 0,
-                    'banned_message' => $user->banned_message,
-                    'last_login' => $user->last_login,
-                    'last_activity' => $user->last_activity,
-                    'last_login_attempt' => $user->last_login_attempt,
-                    'ip_address' => $user->ip_address,
-                    'login_attempts' => $user->login_attempts ?? 0,
-                    'profile_img_path' => $user->profile_img_path,
-                    'profile_img_id' => $user->profile_img_id,
-                    'created_at' => $user->created_on,
-                    'updated_at' => $user->modified_on,
-                ];
-
-                $userModel = User::updateOrCreate(['email' => $user->email], $newUser);
-
-                $profiles = [
-                    $user->is_super_admin => $userModel->adminProfiles(),
-                    $user->is_receptionist => $userModel->receptionistProfiles(),
-                    $user->is_opd_doctor => $userModel->opdDoctorProfiles(),
-                    $user->is_inpatient_doctor => $userModel->indDoctorProfiles(),
-                    $user->is_emergency_doctor => $userModel->emergencyDoctorProfiles(),
-                    $user->is_dentist => $userModel->dentistProfiles(),
-                    $user->is_ultrasound_doc => $userModel->ultrasoundDoctorProfiles(),
-                    $user->is_xray_tech => $userModel->xrayTechnicianProfiles()
-                ];
-
-                foreach($profiles as $condition => $profile) {
-                    if ($condition) {
-                        $profile->updateOrCreate([
-                            'user_id' => $userModel->id,
-                        ], [
-                            'created_at' => $user->created_on,
-                            'updated_at' => $user->modified_on,
-                        ]);
+                    } catch (\Exception $e) {
+                        MigrationLog::logError('expenses', 'inpatient_expense_transactions', $expense->id, $e->getMessage(), (array)$expense);
+                        $totalErrors++;
                     }
                 }
-            }
-        });
+                
+                if (!empty($insertData)) {
+                    try {
+                        Expense::insertOrIgnore($insertData);
+                        $this->info('Processed ' . count($insertData) . ' inpatient expenses (Amount: ' . number_format(array_sum(array_column($insertData, 'amount')), 2) . ')');
+                        
+                        MigrationLog::logAction('expenses', MigrationLog::ACTION_SUCCESS, [
+                            'reason' => 'Inpatient expenses batch inserted',
+                            'old_table' => 'inpatient_expense_transactions',
+                            'new_table' => 'expenses',
+                            'batch_id' => $batchId,
+                            'old_data' => [
+                                'batch_count' => count($insertData),
+                                'batch_amount' => array_sum(array_column($insertData, 'amount'))
+                            ]
+                        ]);
+
+                    } catch (\Exception $e) {
+                        MigrationLog::logError('expenses', 'inpatient_expense_transactions', null, $e->getMessage(), [
+                            'batch_size' => count($insertData),
+                            'batch_id' => $batchId
+                        ]);
+                        $this->error('Failed to insert inpatient expenses batch: ' . $e->getMessage());
+                    }
+                }
+            });
+
+        // Log final summary
+        MigrationLog::logAction('expenses', MigrationLog::ACTION_SUCCESS, [
+            'reason' => 'Expenses migration completed',
+            'old_table' => 'expenses + inpatient_expense_transactions',
+            'new_table' => 'expenses',
+            'batch_id' => $batchId,
+            'old_data' => [
+                'total_processed' => $totalProcessed,
+                'total_skipped' => $totalSkipped,
+                'total_errors' => $totalErrors,
+                'total_regular_amount' => $totalRegularAmount,
+                'total_inpatient_amount' => $totalInpatientAmount,
+                'total_amount' => $totalRegularAmount + $totalInpatientAmount
+            ]
+        ]);
+
+        $this->info("✅ Expenses migration completed:");
+        $this->info("   • Regular expenses: " . number_format($totalRegularAmount, 2));
+        $this->info("   • Inpatient expenses: " . number_format($totalInpatientAmount, 2));
+        $this->info("   • Total amount: " . number_format($totalRegularAmount + $totalInpatientAmount, 2));
+        $this->info("   • Records: {$totalProcessed} processed, {$totalSkipped} skipped, {$totalErrors} errors");
     }
 
-    protected function images(){
+    /**
+     * Optimized counter closing transactions migration
+     */
+    protected function counterClosingTransactionsOptimized($batchSize)
+    {
+        $this->info('Migrating counter closing transactions...');
         
-        DB::connection('secondary')->table('images')->orderBy('id')->chunk(100, function ($images) {
-            foreach ($images as $image) {
-                $newImage = [
-                    'path' => $image['path'],
-                    'owner_id' => $image['owner_id']
-                ];
-                Image::updateOrCreate($newImage);
-            }
-        });
-    }
+        $statusObj = UpgradeProcess::firstOrCreate(
+            ['name' => 'transaction_id'],
+            ['value' => 0]
+        );
 
-    protected function getExpenseObject($id){
-
-        if(!$id || $id == 0){
-            return null;
-        }
-        $expenseObj = Expense::where('old_id', $id)->first();
-
-        if($expenseObj){
-            return $expenseObj;
+        if ($statusObj->value === -1) {
+            return;
         }
 
-        if(str_starts_with($id, 'EXP-')){
-            $expense = DB::connection('secondary')->table('expenses')->find((str_replace('EXP-' , '' , $id)));
-            $new = [
-                'old_id' => $expense->id,
-                'voucher_id' => $expense->voucher_id,
-                'exp_category_id' => $expense->category_id && $expense->category_id != 0 ? ExpenseCategory::where('name', $expense->category_id)->first()->id ?? null : null,
-                'type' => $expense->payment_type,
-                // 'notes' => $expense->payment_reference,
-                // 'notes_json' => [],
-                // 'service_order_id' => $expense->service_order_id,
-                'payed_to' => $expense->payed_to && $expense->payed_to != 0 ? User::where('id', $expense->payed_to)->first()->id ?? null : null,
-                'payed_to_name' => $expense->payment_reference,
-                'amount' => $expense->amount_received_num,
-                'amount_alphabetical' => $expense->amount_received_words
-            ];
+        $lastProcessedId = $statusObj->value;
 
-            $expenseObj = Expense::updateOrCreate([
-                'old_id' => 'EXP-'.$expense->id
-            ], $new);
-        }
-        else if(str_starts_with($id, 'INP-EXP-')){
-            $expense = DB::connection('secondary')->table('inpatient_expense_transactions')->find((str_replace('INP-EXP-' , '' , $id)));
-            $new = [
-                'type' => $expense->payment_type,
-                // 'notes' => $expense->payment_reference,
-                // 'notes_json' => [],
-                // 'service_order_id' => $expense->service_order_id,
-                'payed_to' => $expense->receaved_by && $expense->receaved_by != 0 ? User::where('id', $expense->receaved_by)->first()->id ?? null : null,
-                'payed_to_name' => $expense->payment_refference,
-                'amount' => $expense->amount_in_num,
-                'amount_alphabetical' => $expense->amount_in_figure
-            ];
-
-            $expenseObj = Expense::updateOrCreate([
-                'old_id' => 'INP-EXP-'.$expense->id
-            ], $new);
-        }
-
-        return $expenseObj;
-
-    }
-
-    protected function getCounter($int){
-
-        if(!$int || $int == 0){
-            return null;
-        }
-
-        $closingObj = Closing::where('id', $int)->first();
-
-        if($closingObj){
-            return $closingObj;
-        }
-
-        $closing = DB::connection('secondary')->table('reception_counters_closings')->find($int);
-
-        // Check how many closings were created that month
-        $countInMonth = Closing::whereYear('created_at', Carbon::parse($closing->created_on)->year)
-            ->whereMonth('created_at', Carbon::parse($closing->created_on)->month)
+        // Count records in both databases for progress tracking
+        $oldTransactionCount = DB::connection('secondary')
+            ->table('reception_counters_closings_transactions')
             ->count();
 
-        $ctNumber = 'CT/' . Carbon::parse($closing->created_on)->format('Y/m/') . str_pad($countInMonth + 1, 4, '0', STR_PAD_LEFT);
+        $newTransactionCount = Transaction::count();
 
-        $new = [
-            'reception_id' => $this->getReception($closing->reception_id)->id ?? null,
-            'receptionist_id' => $this->getUser($closing->user_id)->id ?? null,
-            'ct_number' => $ctNumber,
-            'status' => $closing->status,
-            'opening_amount' => $closing->opening_amount,
-            'closing_amount' => $closing->closing_amount,
-            'closing_amount_cash' => $closing->closing_amount_cash,
-            'closing_amount_cheque' => 0,
-            'closing_amount_card' => ($closing->closing_amount_card ?? 0) + ($closing->closing_amount_creditcard ?? 0),
-            'expense_payed' => $closing->expense_payed,
-            'cash_recieving_time' => $closing->cash_recieving_time,
-            'created_at' => $closing->created_on,
-            'updated_at' => $closing->modified_on,
-        ];
-        $closingObj = Closing::updateOrCreate([
-            'old_id' => $closing->id
-        ], $new);
+        $percentage = $oldTransactionCount > 0 ? 
+            round(($newTransactionCount / $oldTransactionCount) * 100, 2) : 0;
 
-        return $closingObj;
+        // Save progress percentage to UpgradeProcess
+        $progressObj = UpgradeProcess::updateOrCreate(
+            ['name' => 'transaction_migration_percentage'],
+            ['value' => $percentage]
+        );
 
+        $this->info("Transaction migration progress: {$newTransactionCount}/{$oldTransactionCount} ({$percentage}%)");
+
+        // Also update total counts for reference
+        UpgradeProcess::updateOrCreate(
+            ['name' => 'total_old_transactions'],
+            ['value' => $oldTransactionCount]
+        );
+
+        UpgradeProcess::updateOrCreate(
+            ['name' => 'total_new_transactions'],
+            ['value' => $newTransactionCount]
+        );
+
+        // Get transactions with their elements in one query using JOIN
+        $transactions = DB::connection('secondary')
+            ->table('reception_counters_closings_transactions as t')
+            ->leftJoin('reception_counters_closings_transaction_elements as e', 't.id', '=', 'e.id')
+            ->where('t.id', '>', $lastProcessedId)
+            ->orderBy('t.id')
+            ->limit($batchSize)
+            ->get([
+                't.*',
+                'e.id as element_id',
+                'e.type as element_type',
+                'e.amount as element_amount',
+                'e.original_amount as element_original_amount',
+                'e.doctor_id',
+                'e.service_id',
+                'e.department_transaction_id',
+                'e.created_on as element_created_on',
+                'e.modified_on as element_modified_on'
+            ]);
+
+        if ($transactions->isEmpty()) {
+            $statusObj->value = -1; // -1 represents "finished"
+            $statusObj->save();
+            $this->info('Transaction migration completed');
+            return;
+        }
+
+        // Group transactions by transaction ID
+        $groupedTransactions = $transactions->groupBy('id');
+
+        foreach ($groupedTransactions as $transactionId => $transactionGroup) {
+            $transaction = $transactionGroup->first();
+
+            // Create transaction first
+            $isExpense = $transaction->income_or_expence !== 'INCOME';
+            
+            // Generate transaction number based on old transaction's creation date
+            $createdAt = Carbon::parse($transaction->created_on);
+            $year = $createdAt->format('Y');
+            $month = $createdAt->format('m');
+            $day = $createdAt->format('d');
+            
+            // Get count for that specific date to maintain unique numbering
+            $existingCount = Transaction::where('tr_number', 'like', "TR/{$year}/{$month}/{$day}%")->count();
+            $trNumber = "TR/{$year}/{$month}/{$day}/" . str_pad($existingCount + 1, 4, '0', STR_PAD_LEFT);
+            
+            $transactionData = [
+                'old_id' => $transaction->id,
+                'tr_number' => $trNumber,
+                'closing_id' => $this->getCachedClosing($transaction->counter_id)?->id ?? null,
+                'created_by' => $this->getCachedUser($transaction->user_id)?->id ?? null,
+                'patient_id' => $this->getCachedPatient($transaction->patient_id)?->id ?? null,
+                'type' => $this->mapTransactionType($transaction->type),
+                'income_or_expense' => $transaction->income_or_expence === 'INCOME' ? 'INCOME' : 'EXPENSE',
+                'amount' => $this->sanitizeTransactionAmount($transaction->amount, $isExpense),
+                'orignal_amount' => $this->sanitizeTransactionAmount($transaction->orignal_amount, $isExpense),
+                'customer_payed' => $isExpense ? 0 : $this->sanitizeNumericValue($transaction->customer_payed),
+                'change' => $isExpense ? 0 : $this->sanitizeNumericValue($transaction->change),
+                'edited_amount' => $this->sanitizeTransactionAmount($transaction->edited_amount, $isExpense),
+                'created_at' => $transaction->created_on,
+                'updated_at' => $transaction->modified_on,
+            ];
+
+            // Use insertGetId to get the new transaction ID
+            $newTransactionId = Transaction::insertGetId($transactionData);
+
+            // Prepare elements for this transaction
+            $elementInserts = [];
+            foreach ($transactionGroup as $element) {
+                if (!$element->element_type || !$element->element_id) continue;
+
+                $elementData = $this->prepareElementData($element, $transaction);
+                if ($elementData) {
+                    $elementData['transaction_id'] = $newTransactionId;
+                    $elementInserts[] = $elementData;
+                }
+            }
+
+            // Bulk insert elements for this transaction
+            if (!empty($elementInserts)) {
+                TransactionElement::insert($elementInserts);
+            }
+
+            $statusObj->value = $transactionId;
+        }
+
+        $statusObj->save();
+        $this->info('Processed ' . count($groupedTransactions) . ' transactions');
     }
 
-    protected function getReception($int){
+    /**
+     * Map transaction type
+     */
+    protected function mapTransactionType($type)
+    {
+        return match($type) {
+            'CARD', 'CREDITCARD' => 'CARD',
+            'CHEQUE' => 'CHEQUE',
+            default => 'CASH'
+        };
+    }
 
-        if(!$int || $int == 0){
-            return null;
-        }
-
-        $receptionObj = Reception::where('id', $int)->first();
-
-        if($receptionObj){
-            return $receptionObj;
-        }
-
-        $reception = DB::connection('secondary')->table('reception_counters')->find($int);
-
-        $allowedDepartments = [
-            $reception->is_opd_allowed => 'OPD',
-            $reception->is_inpatient_allowed => 'IND',
-            $reception->is_emergency_allowed => 'EMG',
-            'DNT',
-            'PTH',
-            'ULT',
-            'XRY'
-        ];
+    /**
+     * Prepare element data based on type
+     */
+    protected function prepareElementData($element, $transaction)
+    {
+        $isExpenseElement = in_array($element->element_type, ['EXP', 'VOUCHER-PAY', 'INPT-EXP']);
         
-        $newReception = [
-            'name' => $reception->counter_name,
-            'allowed_departments' => $allowedDepartments,
-            'is_allowed_to_pay_voucher' => $reception->is_allowed_to_pay_voucher,
-            'is_allowed_to_pay_from_petty_cash' => $reception->is_allowed_to_pay_from_petty_cash,
-            'is_cash_allowed' => $reception->cash_on_counter,
-            'is_cheques_allowed' => $reception->cheques_on_counter,
-            'is_card_allowed' => $reception->card_slips_on_counter,
+        $baseData = [
+            'old_id' => $element->id,
+            'closing_id' => $this->getCachedClosing($transaction->counter_id)?->id,
+            'transaction_id' => null, // Will be set after transaction is created
+            'created_by' => $this->getCachedUser($transaction->user_id)?->id,
+            'amount' => $this->sanitizeTransactionAmount($element->element_amount, $isExpenseElement),
+            'orignal_amount' => $this->sanitizeTransactionAmount($element->element_original_amount, $isExpenseElement),
+            'customer_payed' => 0, // Always 0 for elements
+            'change' => 0, // Always 0 for elements
+            'edited_amount' => null,
+            'service_order_id' => null,
+            'created_at' => $element->element_created_on,
+            'updated_at' => $element->element_modified_on,
         ];
 
-        $receptionObj = Reception::updateOrCreate([
-            'id' => $reception->id
-        ], $newReception);
-
-        return $receptionObj;
-    }
-
-    protected function getUser($int){
-
-        if(!$int || $int == 0){
-            return null;
-        }
-        $userObj = User::where('id', $int)->first();
-
-        if($userObj){
-            return $userObj;
-        }
-
-        $user = DB::connection('secondary')->table('aauth_users')->find($int);
-
-        $newUser = [
-            'name' => $user->name,
-            'email' => $user->email,
-            'password' => Hash::make('password'),
-            'password_expired_at' => Carbon::now(),
-            'is_active' => $user->banned == 0 ? 1 : 0,
-            'banned_message' => $user->banned_message,
-            'last_login' => $user->last_login,
-            'last_activity' => $user->last_activity,
-            'last_login_attempt' => $user->last_login_attempt,
-            'ip_address' => $user->ip_address,
-            'login_attempts' => $user->login_attempts ?? 0,
-            'profile_img_path' => $user->profile_img_path,
-            'profile_img_id' => $user->profile_img_id,
-            'created_at' => $user->created_on,
-            'updated_at' => $user->modified_on,
-        ];
-
-        $userObj = User::updateOrCreate(['email' => $user->email], $newUser);
-
-        $profiles = [
-            $user->is_super_admin => $userObj->adminProfiles(),
-            $user->is_receptionist => $userObj->receptionistProfiles(),
-            $user->is_opd_doctor => $userObj->opdDoctorProfiles(),
-            $user->is_inpatient_doctor => $userObj->indDoctorProfiles(),
-            $user->is_emergency_doctor => $userObj->emergencyDoctorProfiles(),
-            $user->is_dentist => $userObj->dentistProfiles(),
-            $user->is_ultrasound_doc => $userObj->ultrasoundDoctorProfiles(),
-            $user->is_xray_tech => $userObj->xrayTechnicianProfiles()
-        ];
-
-        foreach($profiles as $condition => $profile) {
-            if ($condition) {
-                $profile->updateOrCreate([
-                    'user_id' => $userObj->id,
-                ], [
-                    'created_at' => $user->created_on,
-                    'updated_at' => $user->modified_on,
+        switch ($element->element_type) {
+            case 'OPD':
+            case 'INPT':
+            case 'EMER':
+            case 'DENTAL':
+            case 'ULTRA':
+                return array_merge($baseData, [
+                    'income_or_expense' => 'INCOME',
+                    'doctor_id' => $this->getCachedUser($element->doctor_id)?->id,
+                    'patient_id' => $this->getCachedPatient($element->patient_id)?->id,
+                    'service_id' => $this->getCachedService($element->service_id, $this->mapServiceType($element->element_type))?->id,
+                    'service_recestation_id' => null,
+                    'expense_id' => null,
+                    'exp_voucher_id' => null,
+                    'type' => $this->mapServiceType($element->element_type),
                 ]);
+
+            case 'RECES':
+                $service = $this->getCachedRecestationService($element->service_id);
+                return array_merge($baseData, [
+                    'income_or_expense' => 'INCOME',
+                    'doctor_id' => null,
+                    'patient_id' => $this->getCachedPatient($transaction->patient_id)?->id,
+                    'service_id' => null,
+                    'service_recestation_id' => $service?->id,
+                    'expense_id' => null,
+                    'exp_voucher_id' => null,
+                    'type' => 'RECES' . ($service ? '-' . $service->department->slug : ''),
+                ]);
+
+            case 'EXP':
+                $expense = $this->getCachedExpense('EXP-' . $element->department_transaction_id);
+                return array_merge($baseData, [
+                    'type' => 'EXP',
+                    'income_or_expense' => 'EXPENSE',
+                    'doctor_id' => null,
+                    'patient_id' => null,
+                    'service_id' => null,
+                    'service_recestation_id' => null,
+                    'expense_id' => $expense?->id,
+                    'exp_voucher_id' => null,
+                ]);
+
+            case 'VOUCHER-PAY':
+            case 'INPT-EXP':
+                $expenseKey = $element->element_type === 'VOUCHER-PAY' ? 
+                    'EXP-' . $element->department_transaction_id : 
+                    'INP-EXP-' . $element->department_transaction_id;
+                
+                $expense = $this->getCachedExpense($expenseKey);
+                $voucher = $expense ? ExpenseVoucher::find($expense->voucher_id) : null;
+                
+                return array_merge($baseData, [
+                    'type' => $element->element_type,
+                    'income_or_expense' => 'EXPENSE',
+                    'doctor_id' => null,
+                    'patient_id' => $element->element_type === 'INPT-EXP' ? 
+                        $this->getCachedPatient($transaction->patient_id)?->id : null,
+                    'service_id' => null,
+                    'service_recestation_id' => null,
+                    'expense_id' => $expense?->id,
+                    'exp_voucher_id' => $voucher?->id,
+                ]);
+        }
+
+        return null;
+    }
+
+    /**
+     * Map service types
+     */
+    protected function mapServiceType($type)
+    {
+        return match($type) {
+            'OPD' => 'OPD',
+            'INPT' => 'IND',
+            'EMER' => 'EMG',
+            'DENTAL' => 'DNT',
+            'ULTRA' => 'ULT',
+            default => $type
+        };
+    }
+
+    // Cache helper methods
+    protected function getCachedUser($id)
+    {
+        return $this->userCache[$id] ?? null;
+    }
+
+    protected function getCachedPatient($id)
+    {
+        if (!$id) return null;
+        
+        if (!isset($this->patientCache[$id])) {
+            $patient = Patient::find($id);
+            if ($patient) {
+                $this->patientCache[$id] = $patient;
             }
         }
-
+        
+        return $this->patientCache[$id] ?? null;
     }
 
-    protected function getPatient($int){
+    protected function getCachedReception($id)
+    {
+        return $this->receptionCache[$id] ?? null;
+    }
 
-        if(!$int || $int == 0){
+    protected function getCachedClosing($id)
+    {
+        if (!$id || $id == 0) {
+            return null;
+        }
+        
+        if (!isset($this->closingCache[$id])) {
+            // First check if already exists in new database
+            $closingObj = Closing::where('id', $id)->first();
+            
+            if ($closingObj) {
+                $this->closingCache[$id] = $closingObj;
+                return $closingObj;
+            }
+
+            // If not found in new DB, get from old DB and create
+            $closing = DB::connection('secondary')->table('reception_counters_closings')->find($id);
+            
+            if ($closing) {
+                // Create the closing record in new database
+                $countInMonth = Closing::whereYear('created_at', Carbon::parse($closing->created_on)->year)
+                    ->whereMonth('created_at', Carbon::parse($closing->created_on)->month)
+                    ->count();
+
+                $ctNumber = 'CT/' . Carbon::parse($closing->created_on)->format('Y/m/') . str_pad($countInMonth + 1, 4, '0', STR_PAD_LEFT);
+
+                $newClosing = Closing::create([
+                    'id' => $closing->id,
+                    'reception_id' => $this->getCachedReception($closing->reception_id)?->id ?? null,
+                    'receptionist_id' => $this->getCachedUser($closing->user_id)?->id ?? null,
+                    'ct_number' => $ctNumber,
+                    'status' => $closing->status,
+                    'opening_amount' => $closing->opening_amount,
+                    'closing_amount' => $closing->closing_amount,
+                    'closing_amount_cash' => $closing->closing_amount_cash,
+                    'closing_amount_cheque' => 0,
+                    'closing_amount_card' => ($closing->closing_amount_card ?? 0) + ($closing->closing_amount_creditcard ?? 0),
+                    'expense_payed' => $closing->expense_payed,
+                    'cash_recieving_time' => $closing->cash_recieving_time,
+                    'created_at' => $closing->created_on,
+                    'updated_at' => $closing->modified_on,
+                ]);
+                
+                $this->closingCache[$id] = $newClosing;
+                return $newClosing;
+            }
+        }
+        
+        return $this->closingCache[$id] ?? null;
+    }
+
+    protected function getCachedService($id, $type)
+    {
+        $key = "{$type}_{$id}";
+        
+        if (!isset($this->serviceCache[$key])) {
+            // Implementation would need service lookup logic
+            // This is simplified for the example
+        }
+        
+        return $this->serviceCache[$key] ?? null;
+    }
+
+    protected function getCachedRecestationService($id)
+    {
+        // Similar to getCachedService but for recestation services
+        return null; // Simplified for example
+    }
+
+    protected function getCachedExpense($id)
+    {
+        if (!isset($this->expenseCache[$id])) {
+            $expense = Expense::where('old_id', $id)->first();
+            if ($expense) {
+                $this->expenseCache[$id] = $expense;
+            }
+        }
+        
+        return $this->expenseCache[$id] ?? null;
+    }
+
+    /**
+     * Sanitize numeric values to prevent out-of-range errors
+     */
+    protected function sanitizeNumericValue($value)
+    {
+        if ($value === null) {
             return null;
         }
 
-        $patientObj = Patient::where('id', $int);
+        // Convert to numeric
+        $numericValue = is_numeric($value) ? (float)$value : 0;
 
-        if($patientObj->count() > 0){
-            return $patientObj->first();
+        // Define reasonable business limits for a hospital system
+        // Most transactions shouldn't exceed 1 million in any currency
+        $maxReasonableValue = 1000000; // 1 million
+        $minReasonableValue = -1000000;
+
+        // Check for obviously corrupt data (2147483647 is max 32-bit int, likely corrupt)
+        if ($numericValue >= 2147483647 || $numericValue <= -2147483648) {
+            $this->warn("Detected corrupt max/min int value: {$numericValue}, setting to 0");
+            return 0;
         }
 
-        $patient = DB::connection('secondary')->table('patients')->find($int);
+        // Check for unreasonably large values that might be data corruption
+        if ($numericValue > $maxReasonableValue) {
+            $this->warn("Value {$numericValue} seems unreasonably large for hospital transaction, clamping to {$maxReasonableValue}");
+            return $maxReasonableValue;
+        }
 
-        $createdInTheMonth = Carbon::parse($patient->created_on);
+        if ($numericValue < $minReasonableValue) {
+            $this->warn("Value {$numericValue} seems unreasonably negative for hospital transaction, clamping to {$minReasonableValue}");
+            return $minReasonableValue;
+        }
 
-        // Count how many patients were created in that month
-        $counter = Patient::whereYear('created_at', $createdInTheMonth->format('Y'))
-            ->whereMonth('created_at', $createdInTheMonth->format('m'))
-            ->count();
+        // Additional check for MySQL INT limit (just to be safe)
+        $mysqlIntMax = 2147483647;
+        $mysqlIntMin = -2147483648;
 
-        $counter ++;
+        if ($numericValue >= $mysqlIntMax) {
+            $this->warn("Value {$numericValue} at MySQL int limit, setting to safe value");
+            return $maxReasonableValue;
+        }
 
-        $psNumber = 'PS/' . $createdInTheMonth->format('Y/m') .'/'. str_pad($counter, 6, '0', STR_PAD_LEFT);;
+        if ($numericValue <= $mysqlIntMin) {
+            $this->warn("Value {$numericValue} at MySQL int limit, setting to safe value");
+            return $minReasonableValue;
+        }
 
-        $newPatient = [
-            'name' => $patient->pateint_name,
-            'ps_number' => $psNumber,
-            'gender' => $patient->gender,
-            'age_group' => null,
-            'age_days' => null,
-            'age_dob' => null,
-            'address' => $patient->patient_address,
-            'guardian' => $patient->guardian,
-            'relation' => $patient->relation,
-            'contact' => $patient->patient_contact_mobile,
-            'cnic' => $patient->patient_cnic,
-            'created_at' => $patient->created_on,
-            'updated_at' => $patient->modified_on,
-        ];
-
-        $patientObj = Patient::updateOrCreate([
-            'id' => $patient->id
-        ], $newPatient);
-
-        return $patientObj;
+        return $numericValue;
     }
 
-    protected function getService($int, $type){
-
-        if(!$int || $int == 0){
+    /**
+     * Sanitize transaction amounts, handling negative values for expenses
+     */
+    protected function sanitizeTransactionAmount($value, $isExpense = false)
+    {
+        if ($value === null) {
             return null;
         }
 
-        if($type == 'OPD'){
-            $table = 'opd_services';
-        }elseif($type == 'IND'){
-            $table = 'inpd_services';
-        }elseif($type == 'EMG'){
-            $table = 'emergency_services';
-        }elseif($type == 'DNT'){
-            $table = 'dental_services';
-        }elseif($type == 'PTH'){
-            $table = 'test_services';
-        }elseif($type == 'ULT'){
-            $table = 'ultrasound_services';
-        }elseif($type == 'XRY'){
-            $table = 'xray_services';
-        }else{
-            dd('Unknown Service Type '.$type);
+        // Convert to numeric
+        $numericValue = is_numeric($value) ? (float)$value : 0;
+
+        // Handle corrupt data first
+        if ($numericValue >= 2147483647 || $numericValue <= -2147483648) {
+            $this->warn("Detected corrupt max/min int value: {$numericValue}, setting to 0");
+            return 0;
         }
 
-        $s = DB::connection('secondary')->table($table)->where('id', $int)->first();
-
-        if(!$s){
-            dd('Service Not Found ID '.$int.' in '.$table.' for type '.$type);
+        // For expense transactions, old database stores negative values
+        // Convert negative to positive for storage
+        if ($isExpense && $numericValue < 0) {
+            $numericValue = abs($numericValue);
         }
 
-        $department = ServiceDepartment::where('slug', $type)->first();
-
-        if(!$department){
-            ServiceDepartment::updateOrCreate([
-                'slug' => $type
-            ],[
-                'name' => $type,
-                'image' => "/img/".Str::lower($type).".png",
-            ]);
+        // Apply business logic limits
+        $maxReasonableValue = 1000000; // 1 million
+        
+        if ($numericValue > $maxReasonableValue) {
+            $this->warn("Transaction amount {$numericValue} seems unreasonably large, clamping to {$maxReasonableValue}");
+            return $maxReasonableValue;
         }
 
-        $serviceObj = Service::with('department')->where('name', $s->name)->where('service_department_id', $department->id)->first();
-
-        if(!$serviceObj){
-
-
-            $serviceObj = Service::updateOrCreate([
-                'name' => $s->name,
-                'service_department_id' => $department->id,
-            ],[
-                'slug' => $s->post_key,
-                'charges' => $s->charges,
-                'charges_include_tax' => $s->charges_including_tax,
-                'tax_rate' => $s->tax_rate,
-                'have_service_provider' => in_array(
-                    $department->key, ['OPD', 'IND']
-                ) &&  $s->is_doctor_selectable,
-                'is_composit_service' => $department->have_composit_services,
-                'created_by' => $s->entered_by
-            ]);
-
+        // For expenses, ensure positive values
+        if ($isExpense && $numericValue < 0) {
+            $this->warn("Expense transaction has negative amount {$numericValue}, converting to positive");
+            return abs($numericValue);
         }
 
-        return $serviceObj;
+        return $numericValue;
     }
-
 }

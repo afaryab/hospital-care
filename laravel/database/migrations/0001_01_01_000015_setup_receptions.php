@@ -37,8 +37,10 @@ return new class extends Migration
             $table->decimal('closing_amount_cheque', 10, 2)->default(0);
             $table->decimal('closing_amount_card', 10, 2)->default(0);
             $table->decimal('expense_payed', 10, 2)->default(0);
-            $table->dateTime('cash_recieving_time')->nullable();
             $table->dateTime('closed_at')->nullable();
+            $table->dateTime('cash_recieving_time')->nullable();
+            $table->decimal('amount_received', 12, 2)->nullable();
+            $table->foreignId('reported_by')->nullable()->constrained('users');
             $table->timestamps();
         });
 
@@ -132,6 +134,7 @@ return new class extends Migration
         Schema::table('closings', function (Blueprint $table) {
             $table->dropForeign(['reception_id']);
             $table->dropForeign(['receptionist_id']);
+            $table->dropForeign(['reported_by']);
         });
         Schema::dropIfExists('transaction_elements');
         Schema::dropIfExists('transactions');

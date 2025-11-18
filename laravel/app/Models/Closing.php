@@ -19,7 +19,10 @@ class Closing extends Model
         'closing_amount_cheque',
         'closing_amount_card',
         'expense_payed',
+        'amount_received',
+        'closed_at',
         'cash_recieving_time',
+        'reported_by',
         'created_at',
         'updated_at'
     ];
@@ -92,6 +95,11 @@ class Closing extends Model
     public function transactions()
     {
         return $this->hasMany(Transaction::class, 'closing_id');
+    }
+
+    public function reportedBy()
+    {
+        return $this->belongsTo(User::class, 'reported_by');
     }
 
 }

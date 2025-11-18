@@ -15,6 +15,7 @@ import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LucideHome, BookAIcon, LucideShoppingBasket, Calendar1, CircleDollarSign, ListTree, ChartLine, Cog, ListPlus, LucideListPlus } from 'lucide-react';
 import AppLogo from './app-logo';
+import AppLogoIcon from './app-logo-icon';
 
 export function AppSidebar() {
 
@@ -78,9 +79,9 @@ export function AppSidebar() {
             <SidebarHeader>
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
-                            <Link href={home()} prefetch>
-                                <AppLogo />
+                        <SidebarMenuButton size="lg" asChild className='hover:bg-transparent'>
+                            <Link href={home()} prefetch >
+                                <AppLogoIcon size={10} direction="horizontal" />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

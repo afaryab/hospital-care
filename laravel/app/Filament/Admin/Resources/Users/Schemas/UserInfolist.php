@@ -22,6 +22,7 @@ use App\Models\XrayTechnician;
 use App\Models\NursingStaff;
 use App\Models\PatientManager;
 use App\Models\Patient;
+use Illuminate\Support\Collection;
 
 class UserInfolist
 {
@@ -122,117 +123,154 @@ class UserInfolist
                         TextEntry::make('adminProfiles')
                             ->label('Administrator')
                             ->formatStateUsing(function ($state) {
-                                if (!$state || $state->count() === 0) {
+                                $profiles = self::normalizeProfiles($state);
+
+                                if ($profiles->isEmpty()) {
                                     return '❌ Not assigned';
                                 }
-                                return $state->map(function ($profile) {
+
+                                return $profiles->map(function ($profile) {
                                     return '👑 ' . ucfirst($profile->authority);
                                 })->implode(', ');
                             })
                             ->icon('heroicon-o-shield-check')
-                            ->color(fn ($state) => !$state || $state->count() === 0 ? Color::Gray : Color::Purple)
+                            ->color(fn ($state) => self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Purple)
                             ->badge(),
                         
                         TextEntry::make('accountantProfiles')
                             ->label('Accountant')
                             ->formatStateUsing(function ($state) {
-                                if (!$state || $state->count() === 0) {
+                                $profiles = self::normalizeProfiles($state);
+
+                                if ($profiles->isEmpty()) {
                                     return '❌ Not assigned';
                                 }
-                                return $state->map(function ($profile) {
+                                return $profiles->map(function ($profile) {
                                     return '💼 ' . ucfirst($profile->authority);
                                 })->implode(', ');
                             })
                             ->icon('heroicon-o-calculator')
-                            ->color(fn ($state) => !$state || $state->count() === 0 ? Color::Gray : Color::Green)
+                            ->color(fn ($state) => self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Green)
                             ->badge(),
                         
                         TextEntry::make('receptionistProfiles')
                             ->label('Receptionist')
                             ->formatStateUsing(function ($state) {
-                                if (!$state || $state->count() === 0) {
+                                $profiles = self::normalizeProfiles($state);
+
+                                if ($profiles->isEmpty()) {
                                     return '❌ Not assigned';
                                 }
-                                return $state->map(function ($profile) {
+                                return $profiles->map(function ($profile) {
                                     return '📞 ' . ucfirst($profile->authority);
                                 })->implode(', ');
                             })
                             ->icon('heroicon-o-phone')
-                            ->color(fn ($state) => !$state || $state->count() === 0 ? Color::Gray : Color::Blue)
+                            ->color(fn ($state) => self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Blue)
                             ->badge(),
                         
                         TextEntry::make('opdDoctorProfiles')
                             ->label('OPD Doctor')
                             ->formatStateUsing(function ($state) {
-                                return !$state || $state->count() === 0 ? '❌ Not assigned' : '✅ Assigned (' . $state->count() . ')';
+                                $profiles = self::normalizeProfiles($state);
+
+                                return $profiles->isEmpty()
+                                    ? '❌ Not assigned'
+                                    : '✅ Assigned (' . $profiles->count() . ')';
                             })
                             ->icon('heroicon-o-user-circle')
                             ->color(function ($state) {
-                                return !$state || $state->count() === 0 ? Color::Gray : Color::Green;
+                                return self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Green;
                             })
                             ->badge(),
                         
                         TextEntry::make('indDoctorProfiles')
                             ->label('Inpatient Doctor')
                             ->formatStateUsing(function ($state) {
-                                return !$state || $state->count() === 0 ? '❌ Not assigned' : '✅ Assigned (' . $state->count() . ')';
+                                $profiles = self::normalizeProfiles($state);
+
+                                return $profiles->isEmpty()
+                                    ? '❌ Not assigned'
+                                    : '✅ Assigned (' . $profiles->count() . ')';
                             })
                             ->icon('heroicon-o-building-office-2')
-                            ->color(fn ($state) => !$state || $state->count() === 0 ? Color::Gray : Color::Teal)
+                            ->color(fn ($state) => self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Teal)
                             ->badge(),
                         
                         TextEntry::make('emergencyDoctorProfiles')
                             ->label('Emergency Doctor')
                             ->formatStateUsing(function ($state) {
-                                return !$state || $state->count() === 0 ? '❌ Not assigned' : '✅ Assigned (' . $state->count() . ')';
+                                $profiles = self::normalizeProfiles($state);
+
+                                return $profiles->isEmpty()
+                                    ? '❌ Not assigned'
+                                    : '✅ Assigned (' . $profiles->count() . ')';
                             })
                             ->icon('heroicon-o-bolt')
-                            ->color(fn ($state) => !$state || $state->count() === 0 ? Color::Gray : Color::Red)
+                            ->color(fn ($state) => self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Red)
                             ->badge(),
                         
                         TextEntry::make('dentistProfiles')
                             ->label('Dentist')
                             ->formatStateUsing(function ($state) {
-                                return !$state || $state->count() === 0 ? '❌ Not assigned' : '✅ Assigned (' . $state->count() . ')';
+                                $profiles = self::normalizeProfiles($state);
+
+                                return $profiles->isEmpty()
+                                    ? '❌ Not assigned'
+                                    : '✅ Assigned (' . $profiles->count() . ')';
                             })
                             ->icon('heroicon-o-face-smile')
-                            ->color(fn ($state) => !$state || $state->count() === 0 ? Color::Gray : Color::Orange)
+                            ->color(fn ($state) => self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Orange)
                             ->badge(),
                         
                         TextEntry::make('ultrasoundDoctorProfiles')
                             ->label('Ultrasound Doctor')
                             ->formatStateUsing(function ($state) {
-                                return !$state || $state->count() === 0 ? '❌ Not assigned' : '✅ Assigned (' . $state->count() . ')';
+                                $profiles = self::normalizeProfiles($state);
+
+                                return $profiles->isEmpty()
+                                    ? '❌ Not assigned'
+                                    : '✅ Assigned (' . $profiles->count() . ')';
                             })
                             ->icon('heroicon-o-radio')
-                            ->color(fn ($state) => !$state || $state->count() === 0 ? Color::Gray : Color::Cyan)
+                            ->color(fn ($state) => self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Cyan)
                             ->badge(),
                         
                         TextEntry::make('xrayTechnicianProfiles')
                             ->label('X-Ray Technician')
                             ->formatStateUsing(function ($state) {
-                                return !$state || $state->count() === 0 ? '❌ Not assigned' : '✅ Assigned (' . $state->count() . ')';
+                                $profiles = self::normalizeProfiles($state);
+
+                                return $profiles->isEmpty()
+                                    ? '❌ Not assigned'
+                                    : '✅ Assigned (' . $profiles->count() . ')';
                             })
                             ->icon('heroicon-o-camera')
-                            ->color(fn ($state) => !$state || $state->count() === 0 ? Color::Gray : Color::Violet)
+                            ->color(fn ($state) => self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Violet)
                             ->badge(),
                         
                         TextEntry::make('nursingStaffProfiles')
                             ->label('Nursing Staff')
                             ->formatStateUsing(function ($state) {
-                                return !$state || $state->count() === 0 ? '❌ Not assigned' : '✅ Assigned (' . $state->count() . ')';
+                                $profiles = self::normalizeProfiles($state);
+
+                                return $profiles->isEmpty()
+                                    ? '❌ Not assigned'
+                                    : '✅ Assigned (' . $profiles->count() . ')';
                             })
                             ->icon('heroicon-o-heart')
-                            ->color(fn ($state) => !$state || $state->count() === 0 ? Color::Gray : Color::Pink)
+                            ->color(fn ($state) => self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Pink)
                             ->badge(),
                         
                         TextEntry::make('patientManagerProfiles')
                             ->label('Patient Manager')
                             ->formatStateUsing(function ($state) {
-                                if (!$state || $state->count() === 0) {
+                                $profiles = self::normalizeProfiles($state);
+
+                                if ($profiles->isEmpty()) {
                                     return 'Not assigned to any patient';
                                 }
-                                $profiles = $state->map(function ($profile) {
+                                $profiles = $profiles->map(function ($profile) {
                                     if ($profile->patient_id) {
                                         $patient = Patient::find($profile->patient_id);
                                         return $patient ? "👥 Managing: {$patient->name} (ID: {$patient->id})" : "❌ Patient not found (ID: {$profile->patient_id})";
@@ -243,7 +281,7 @@ class UserInfolist
                             })
                             ->html()
                             ->icon('heroicon-o-users')
-                            ->color(fn ($state) => !$state || $state->count() === 0 ? Color::Gray : Color::Indigo)
+                            ->color(fn ($state) => self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Indigo)
                             ->badge(),
                     ])
                     ->icon('heroicon-o-user-group')
@@ -310,5 +348,21 @@ class UserInfolist
                     ->visible(fn ($record) => $record->two_factor_secret || $record->two_factor_recovery_codes || $record->two_factor_confirmed_at)
                     ->columns(3),
             ]);
+    }
+
+    /**
+     * Ensure profile relationship states behave like collections.
+     */
+    protected static function normalizeProfiles($state): Collection
+    {
+        if ($state instanceof Collection) {
+            return $state;
+        }
+
+        if (is_array($state)) {
+            return collect($state);
+        }
+
+        return $state ? collect([$state]) : collect();
     }
 }

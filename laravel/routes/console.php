@@ -11,4 +11,4 @@ Artisan::command('inspire', function () {
 Schedule::everyFiveSeconds()
     ->runInBackground()
     ->withoutOverlapping()
-    ->command('app:fetch-old-optimized');
+    ->command('app:fetch-old');
