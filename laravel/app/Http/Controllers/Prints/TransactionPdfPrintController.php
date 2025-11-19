@@ -58,9 +58,9 @@ class TransactionPdfPrintController extends Controller
 
         // Select the appropriate view based on variant
         $view = match($variant) {
-            'dot-printer' => 'pdf.transaction-dot-printer',
-            'thermal' => 'pdf.transaction-thermal',
-            default => 'pdf.transaction-full',
+            'dot-printer' => 'pdfs.transaction.transaction-dot-printer',
+            'thermal' => 'pdfs.transaction.transaction-thermal',
+            default => 'pdfs.transaction.transaction-full',
         };
 
         // Set paper size and orientation based on variant
