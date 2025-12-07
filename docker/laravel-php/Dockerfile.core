@@ -91,7 +91,7 @@ RUN curl -fsSL https://bun.sh/install | bash && \
 # RUN bun run build
 RUN cp .env.example .env || true
 # Install PHP dependencies
-# RUN composer install --no-dev 
+RUN composer install --no-dev 
 
 # Generate Laravel application key if .env exists
 RUN if [ -f .env ]; then php artisan key:generate --force; fi
