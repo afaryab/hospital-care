@@ -25,7 +25,7 @@ class TransactionElementObserver
 
             $s = $this->generateServiceOrderNumber($transactionElement->type);
 
-            $soShort = $service->department->slug.'/'.Carbon::now()->format('y/m').'/'.$s;
+            $soShort = $service->department->slug.'/'.Carbon::now()->format('Y/m').'/'.$s;
             $soNumber = $patient->ps_number . '/' . $service->department->slug.'/'.$s;
 
             // Create ServiceOrder when TransactionElement is created
