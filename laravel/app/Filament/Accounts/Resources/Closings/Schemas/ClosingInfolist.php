@@ -18,7 +18,8 @@ class ClosingInfolist
                     ->viewData(fn (Closing $record) => [
                         'closing' => $record,
                         'printUrl' => self::buildPrintUrl($record),
-                    ]),
+                    ])
+                    ->columnSpanFull(),
             ]);
     }
 

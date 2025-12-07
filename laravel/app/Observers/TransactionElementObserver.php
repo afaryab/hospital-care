@@ -22,8 +22,11 @@ class TransactionElementObserver
             if($patient == null || $service == null){
                 return;
             }
-            $soShort = $service->department->slug.'/'.$this->generateServiceOrderNumber();
-            $soNumber = $patient->ps_number . '/' . $soShort;
+
+            $s = $this->generateServiceOrderNumber($transactionElement->type);
+
+            $soShort = $service->department->slug.'/'.Carbon::now()->format('y/m').'/'.$s;
+            $soNumber = $patient->ps_number . '/' . $service->department->slug.'/'.$s;
 
             // Create ServiceOrder when TransactionElement is created
             $order = ServiceOrder::create([
@@ -88,11 +91,11 @@ class TransactionElementObserver
     /**
      * Generate a unique service order number
      */
-    private function generateServiceOrderNumber(): string
+    private function generateServiceOrderNumber($type): string
     {
 
         // Check how many service orders have been created this month where created_at is in the current month
-        $count = ServiceOrder::where('created_at', '>=', Carbon::now()->startOfMonth())
+        $count = ServiceOrder::where('type', $type)->where('created_at', '>=', Carbon::now()->startOfMonth())
             ->where('created_at', '<=', Carbon::now()->endOfMonth())
             ->count();
 

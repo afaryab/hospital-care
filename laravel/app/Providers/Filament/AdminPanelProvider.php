@@ -39,6 +39,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->authGuard('web')
             ->authPasswordBroker('users')
+            ->viteTheme('resources/css/filament/theme.css')
             ->colors(FilamentThemeService::getBrandColors())
             ->font('Inter')
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')

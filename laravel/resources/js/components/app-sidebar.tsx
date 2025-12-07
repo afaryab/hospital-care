@@ -55,8 +55,8 @@ export function AppSidebar() {
 
         adminMenuItems.push(
             {
-                title: 'Reports',
-                href: '/reports',
+                title: 'Accounts',
+                href: '/accounts',
                 icon: ChartLine,
             }
         );

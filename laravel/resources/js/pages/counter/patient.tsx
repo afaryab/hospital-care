@@ -25,7 +25,7 @@ import DepartmentMiniCard from '@/elements/department/mini-card';
 
 export default function Counter() {
 
-    const {selectedPatient, departments, departmentKey, openCounter, services, recesitation, existingServiceOrders} = usePage().props;
+    const {selectedPatient, departments, departmentKey, openCounter, services, providers, recesitation, existingServiceOrders} = usePage().props;
 
     const step = !selectedPatient ? 1 : (!departmentKey ? 2 : 3);
 
@@ -113,7 +113,7 @@ export default function Counter() {
                     <BulletsWrapper bullets={bullets}>
                         {step === 1 && <StepOne openCounter={openCounter} />}
                         {step === 2 && <StepTwo openCounter={openCounter} patient={selectedPatient} departments={departments} />}
-                        {step === 3 && <StepThree recesitation={recesitation} existingServiceOrders={existingServiceOrders} openCounter={openCounter} patient={selectedPatient} departments={departments} departmentKey={departmentKey} services={services} />}
+                        {step === 3 && <StepThree recesitation={recesitation} existingServiceOrders={existingServiceOrders} openCounter={openCounter} patient={selectedPatient} departments={departments} departmentKey={departmentKey} services={services} providers={providers} />}
                     </BulletsWrapper>
                 </div>
             </div>
@@ -123,7 +123,7 @@ export default function Counter() {
 
 
 
-function StepThree({recesitation, existingServiceOrders, openCounter, patient, departments, departmentKey, services}:any) {
+function StepThree({recesitation, existingServiceOrders, openCounter, patient, departments, departmentKey, services, providers}:any) {
 
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [mriNumber, setMriNumber] = useState<string>('');
@@ -278,12 +278,13 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
             const itemQuantity = 1;
             const itemTotal = itemQuantity * itemCharges;
             totalCharges += itemTotal;
-            
+            console.log(sl);
             return {
                 serviceId: sl?.id || '',
                 name: sl?.name || '',
                 quantity: itemQuantity,
                 charges: itemCharges,
+                providerId: providers.find((p:any) => p.serviceId == serviceId)?.id || '',
                 total: itemTotal
             };
         }, {});
@@ -349,6 +350,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                                         charges={item.charges}
                                         service={service}
                                         selectedProvider={serviceProviders[item.serviceId] || ''}
+                                        providers={providers}
                                         onUpdate={updateItemQuantityAndCharges}
                                         onProviderUpdate={updateServiceProvider}
                                         validationErrors={validationErrors}
@@ -783,7 +785,8 @@ function BillItemsEditableTableRow({
     selectedProvider,
     onUpdate,
     onProviderUpdate,
-    validationErrors
+    validationErrors,
+    providers,
 }:any) {
 
     const [q, setQ] = useState<number>(quantity);
@@ -821,7 +824,7 @@ function BillItemsEditableTableRow({
                                 <SelectValue placeholder="Select provider" />
                             </SelectTrigger>
                             <SelectContent>
-                                {service.available_providers.map((provider: any) => (
+                                {providers.filter((provider: any) => service.available_providers.includes(provider.id)).map((provider: any) => (
                                     <SelectItem key={provider.id} value={provider.id.toString()}>
                                         {provider.name}
                                     </SelectItem>

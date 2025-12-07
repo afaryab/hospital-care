@@ -29,7 +29,8 @@ class Service extends Model
         'is_composit_service' => 'boolean'
     ];
 
-    protected $attributes = [
+    // Auto-append computed attributes (accessors) when serializing
+    protected $appends = [
         'available_providers'
     ];
 
@@ -68,33 +69,15 @@ class Service extends Model
      */
     public function getAvailableProvidersAttribute()
     {
-        if(!$this->have_service_provider || empty($this->service_provider_types)) {
-            return collect();
+        $userIds = collect();
+
+        foreach ($this->service_provider_types ?? [] as $providerType) {
+            // Each providerType is expected to be a model class with a user_id field
+            $userIds = $userIds->merge($providerType::query()->pluck('user_id'));
         }
 
-        $users = collect();
-        
-        foreach($this->service_provider_types as $providerType) {
-            switch($providerType) {
-                case OpdDoctor::class:
-                    $users = $users->merge(User::whereHas('opdDoctorProfiles')->get());
-                    break;
-                case IndDoctor::class:
-                    $users = $users->merge(User::whereHas('indDoctorProfiles')->get());
-                    break;
-                case EmergencyDoctor::class:
-                    $users = $users->merge(User::whereHas('emergencyDoctorProfiles')->get());
-                    break;
-                case Dentist::class:
-                    $users = $users->merge(User::whereHas('dentistProfiles')->get());
-                    break;
-                case UltrasoundDoctor::class:
-                    $users = $users->merge(User::whereHas('ultrasoundDoctorProfiles')->get());
-                    break;
-            }
-        }
-        
-        return $users->unique('id');
+        // Return a collection of unique user IDs; callers can map/load as needed
+        return $userIds->toArray();
     }
 
     public function creator()

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Migration\ImportController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
 use App\Http\Controllers\Prints\TransactionPdfPrintController;
+use App\Http\Controllers\Reports\IncomeCashFlowReportController;
 use App\Http\Controllers\WebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -85,6 +86,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::get('DOWNLOAD/TR/{year}/{month}/{day}/{number}', [TransactionPdfPrintController::class, 'download'])
         ->name('download-transaction');
+
+    /**
+     * Report routes
+     */
+    Route::get('reports/income-cash-flow', [IncomeCashFlowReportController::class, 'generate'])
+        ->name('reports.income-cash-flow');
     
 });
 

@@ -12,3 +12,5 @@ Schedule::everyFiveSeconds()
     ->runInBackground()
     ->withoutOverlapping()
     ->command('app:fetch-old');
+
+Schedule::command('telescope:prune')->daily();

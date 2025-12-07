@@ -33,6 +33,7 @@ class AccountsPanelProvider extends PanelProvider
             ->maxContentWidth('full')
             ->login()
             ->authGuard('web')
+            ->viteTheme('resources/css/filament/theme.css')
             ->colors(FilamentThemeService::getBrandColors())
             ->font('Inter')
             ->discoverResources(in: app_path('Filament/Accounts/Resources'), for: 'App\\Filament\\Accounts\\Resources')

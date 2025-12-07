@@ -20,7 +20,7 @@
     ];
 @endphp
 
-<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-2 w-full">
     <div class="space-y-4">
         <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">Closing Details</h3>
         <dl class="space-y-3">

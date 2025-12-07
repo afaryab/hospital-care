@@ -242,7 +242,7 @@ class WebController extends Controller
 
     public function counterPatient($pYear = false, $pMonth = false, $number = false, $departmentKey = false)
     {
-        $openCounter = Closing::with('transactions')->where('status','open')->where('receptionist_id', request()->user()->id)->first();
+        $openCounter = Closing::where('status','open')->where('receptionist_id', request()->user()->id)->first();
 
         if(!$openCounter){
             return redirect(route('counter-open'));
@@ -250,12 +250,13 @@ class WebController extends Controller
         $pageData = [
             'openCounter' => $openCounter
         ];
-
+        
         if($pYear || $pMonth || $number){
 
             $psNumber = 'PS/'.$pYear.'/'.$pMonth.'/'.$number;
 
             $patientData = Patient::with('treatments','transactions')->where('ps_number', $psNumber)->firstOrFail();
+
 
             $pageData['selectedPatient'] = $patientData;
         }
@@ -271,6 +272,7 @@ class WebController extends Controller
             $departmentKey = $isRecesitation ? Str::replaceFirst('RECES-', '', $departmentKey) : $departmentKey;
             
             $department = ServiceDepartment::where('slug', $departmentKey)->firstOrFail();
+        
 
             $pageData['departments'] = ServiceDepartment::all();
 
@@ -278,17 +280,29 @@ class WebController extends Controller
                 $pageData['recesitation'] = true;
 
                 //Get Service orders of patient for this department
-
+                
                 $pageData['existingServiceOrders'] = ServiceOrder::with('service')->where('patient_id', $pageData['selectedPatient']->id)
                     ->where('type', $departmentKey)
                     ->get();
 
                 $pageData['services'] = ServiceRecestation::where('service_department_id', $department->id)->get();
             }else{
-                $pageData['services'] = Service::where('service_department_id', $department->id)->get()->map(function($service){
-                    $service->available_providers = $service->available_providers;
-                    return $service;
-                });
+                $pageData['services'] = Service::where('service_department_id', $department->id)->get();
+
+                $userIds = $pageData['services']->pluck('available_providers')->flatten()->unique();
+
+                $pageData['providers'] = \App\Models\User::whereIn('id', $userIds)->get();
+                
+                // dd($pageData['services']->map(function($service){
+                //     if(!$service->have_service_provider || empty($service->service_provider_types)) {
+                //         dd($service);
+                //     }
+                //     return [
+                //         'id' => $service->id,
+                //         'name' => $service->name,
+                //         'available_providers' => $service->serviceProviders()->get(),
+                //     ];
+                // }));
             }
 
         }
