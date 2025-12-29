@@ -248,6 +248,24 @@
 
         <div class="dashed-line"></div>
 
+        <!-- Receivables -->
+         @if($patient->receaveables->count() > 0)
+        <div class="section">
+            <div class="section-title">OUTSTANDING RECEIVABLES</div>
+            @foreach($patient->receaveables as $receaveable)
+            <div class="info-line">
+                <span class="info-label">Amount Due:</span>
+                <span>{{ number_format($receaveable->amount, 2) }}/-</span>
+            </div>
+            <div class="info-line">
+                <span class="info-label">Due Date:</span>
+                <span>{{ $receaveable->due_date ? $receaveable->due_date->format('d/m/Y') : 'N/A' }}</span>
+            </div>
+            <div class="dashed-line"></div>
+            @endforeach
+        </div>
+        @endif
+
         <!-- Footer -->
         <div class="footer">
             <div class="bold">Thank You!</div>

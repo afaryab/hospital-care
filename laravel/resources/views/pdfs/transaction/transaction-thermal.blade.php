@@ -236,6 +236,26 @@
                 <span class="total-value">{{ $transaction->change ?? '0.00' }}</span>
             </div>
         </div>
+
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- Receaveables -->
+        @if($patient->receaveables?->count() > 0)
+        <div class="totals">
+            <div class="total-line bold">
+                <span class="total-label">Outstanding Receivables:</span>
+                <span class="total-value">
+                    {{
+                        number_format(
+                            $patient->receaveables?->sum('amount'),
+                            2
+                        )
+                    }}
+                </span>
+            </div>
+        </div>
+        @endif
     </div>
 </body>
 </html>

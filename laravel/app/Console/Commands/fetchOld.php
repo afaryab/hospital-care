@@ -145,6 +145,7 @@ class FetchOld extends Command
      */
     protected function preloadCacheData()
     {
+        Log::info('Stage: Preloading cache data.');
         $this->info('Preloading cache data...');
 
         // Cache all users
@@ -172,6 +173,7 @@ class FetchOld extends Command
      */
     protected function executeStep($currentStep, $batchSize)
     {
+        Log::info("Stage: Executing migration step {$currentStep}.");
         switch ($currentStep) {
             case 1:
                 $this->imagesOptimized($batchSize);

@@ -228,7 +228,7 @@
             </div>
             <div class="info-row">
                 <div class="info-cell info-label">Counter:</div>
-                <div class="info-cell">{{ $transaction->counter->ct_number ?? 'N/A' }}</div>
+                <div class="info-cell">{{ $transaction->closing->ct_number ?? 'N/A' }}</div>
                 <div class="info-cell info-label">Type:</div>
                 <div class="info-cell">{{ ucfirst($transaction->income_or_expense) }}</div>
             </div>
@@ -275,8 +275,6 @@
                 <th width="5%">S.No</th>
                 <th width="35%">Service</th>
                 <th width="20%">Provider</th>
-                <th width="10%">Qty</th>
-                <th width="15%">Unit Price</th>
                 <th width="15%">Total</th>
             </tr>
         </thead>
@@ -284,11 +282,9 @@
             @foreach($items as $index => $item)
             <tr>
                 <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $item->service_name }}</td>
+                <td>{{ $item->service->name }}</td>
                 <td>{{ $item->provider->name ?? 'N/A' }}</td>
-                <td class="text-center">{{ $item->quantity }}</td>
-                <td class="text-right">{{ number_format($item->unit_price, 2) }}</td>
-                <td class="text-right">{{ number_format($item->total, 2) }}</td>
+                <td class="text-right">{{ number_format($item->amount, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -326,6 +322,21 @@
             <div class="total-value">{{ number_format($transaction->total_amount, 2) }}/- only</div>
         </div>
     </div>
+    @if($patient->receivables?->count() > 0)
+    <div class="totals-section">
+        <div class="total-row grand-total">
+            <div class="total-label">Outstanding Receivables:</div>
+            <div class="total-value">
+                {{
+                    number_format(
+                        $patient->receivables?->sum('amount'),
+                        2
+                    )
+                }}/- only
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Signature Section -->
     <div class="signature-section">

@@ -103,4 +103,9 @@ class Patient extends Model
     {
         return $this->hasMany(ServiceOrder::class, 'patient_id', 'id');
     }
+
+    public function receaveables()
+    {
+        return $this->hasMany(Receaveable::class, 'patient_id', 'id')->where('status', 'unpaid');
+    }
 }

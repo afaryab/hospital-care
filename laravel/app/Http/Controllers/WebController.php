@@ -314,6 +314,7 @@ class WebController extends Controller
 
     public function transactionStore(Request $request)
     {
+        
         $openCounter = Closing::with('transactions')->where('status','open')->where('receptionist_id', request()->user()->id)->first();
 
         if(!$openCounter){
@@ -414,6 +415,7 @@ class WebController extends Controller
 
 
         }elseif($validatedData['income_or_expense'] == 'INCOME'){
+
             $validatedData = $request->validate([
                 'income_or_expense' => 'required|in:INCOME,EXPENSE',
                 'patient_id' => 'required|exists:patients,id',
@@ -474,6 +476,20 @@ class WebController extends Controller
             $transaction->orignal_amount = $orinalTotal;
             $transaction->save();
 
+
+
+            if($validatedData['change_amount'] < 0){
+                // Create receaveable for the remaining amount
+                $receaveableAmount = abs($validatedData['change_amount']);
+
+                \App\Models\Receaveable::create([
+                    'patient_id' => $validatedData['patient_id'],
+                    'transaction_id' => $transaction->id,
+                    'amount' => $receaveableAmount, // Due in 30 days
+                    'status' => 'unpaid',
+                ]);
+            }
+
             return redirect()->route('transaction-view',[
                 'tYear' => $transaction->year,
                 'tMonth' => $transaction->month,
@@ -489,7 +505,7 @@ class WebController extends Controller
         $trNumber = 'TR/'.$tYear.'/'.$tMonth.'/'.$tDay.'/'.$tNumber;
 
 
-        $transaction = Transaction::with('elements','elements.service','elements.serviceOrder', 'closing','patient')->where('tr_number', $trNumber)->firstOrFail();
+        $transaction = Transaction::with('elements','elements.service','elements.serviceOrder', 'closing','patient','closing.reception', 'patient.receaveables')->where('tr_number', $trNumber)->firstOrFail();
 
         return Inertia::render('transaction',[
             'transaction' => $transaction

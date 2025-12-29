@@ -136,7 +136,7 @@ export default function TransactionView() {
                                                 <span>{transaction?.customer_payed}</span>
                                             </div>
                                             <div className="flex justify-between py-1 text-sm font-semibold">
-                                                <span>Change:</span>
+                                                <span>{transaction?.change > 0 ? `Change:` : `Balance`}</span>
                                                 <span>{transaction?.change}</span>
                                             </div>
                                             </div>

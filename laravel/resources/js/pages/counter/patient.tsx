@@ -139,7 +139,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
     });
 
     const calculateChange = () => {
-        return Math.max(0, amountPaid - formData.total);
+        return amountPaid - formData.total;
     };
 
     const validatedInput = (billData:any) => {
@@ -267,7 +267,6 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
     };
 
     useEffect(() => {
-        console.log(selectedServices);
 
         let totalCharges = 0;
         
@@ -297,14 +296,29 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
         setFormData(newFormData);
     }, [selectedServices]);
 
+    const [ department, setDepartment ] = useState<any>({
+        id: '',
+        name: '',
+        slug: '',
+    });
+
+    useEffect(() => {
+        const dept = departments.find((d:any) => d.slug === departmentKey);
+        setDepartment(dept);
+    }, [departmentKey]);
+
+    const [ changeAmount, setChangeAmount ] = useState<any>(0);
+
+    useEffect(() => {
+        setChangeAmount(calculateChange());
+    }, [amountPaid, formData.total]);
+
     return <div className='flex flex-col h-full w-full space-y-4'>
         <div className='flex flex-row h-full w-full space-x-6'>
             <div className='flex-1'>
                 <h3 className='text-3xl mb-2 font-bold'>Add Bill</h3>
                 <div className='flex-1 grid grid-cols-4 gap-4 w-full mb-2 '>
-                    {departments.filter((department:any) => department.slug === departmentKey).map((department:any) => (
-                        <DepartmentMiniCard department={department} patient={patient} className='h-full w-full border rounded-xl flex flex-col items-center justify-center' />
-                    ))}
+                    <DepartmentMiniCard department={department} patient={patient} className='h-full w-full border rounded-xl flex flex-col items-center justify-center' />
                     <PatientMiniCard patient={patient} className='col-span-3 w-full'/>
                 </div>
                 <div className='p-4 border dark:border-neutral-950 rounded-xl mb-2'>
@@ -326,6 +340,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                             value={selectedServices}
                             onValueChange={setSelectedServices}
                             placeholder="Select services..."
+                            disabled={department?.have_composit_services && selectedServices.length > 0}
                         />
                         {/* <InputError message={errors.email} /> */}
                     </div>
@@ -410,17 +425,18 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                                         <InputError message={validationErrors.amount_paid?.[0]} />
                                     </div>
 
-                                    <div>
+                                    {changeAmount > 0 && <div>
                                         <Label htmlFor="change_amount">Change</Label>
                                         <Input
                                             id="change_amount"
                                             type="text"
                                             name="change_amount"
                                             className="text-right font-semibold bg-green-50"
-                                            value={`${calculateChange().toFixed(2)}/- only`}
+                                            value={`${changeAmount.toFixed(2)}/- only`}
                                             readOnly
                                         />
-                                    </div>
+                                    </div>}
+
 
                                     <div className="pt-4">
                                         <Button 
