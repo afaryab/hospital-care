@@ -513,6 +513,23 @@ class WebController extends Controller
     }
 
 
+    public function receaveables()
+    {
+        $openCounter = Closing::with('transactions')->where('status','open')->where('receptionist_id', request()->user()->id)->first();
+
+        if(!$openCounter){
+            return redirect(route('counter-open'));
+        }
+
+        $receaveables = \App\Models\Receaveable::with('patient','transaction')->where('status','unpaid')->paginate();
+
+        return Inertia::render('counter/receaveables',[
+            'openCounter' => $openCounter,
+            'receaveables' => $receaveables
+        ]);
+    }
+
+
     public function counterExpense()
     {
         $openCounter = Closing::with('transactions')->where('status','open')->where('receptionist_id', request()->user()->id)->first();
@@ -527,6 +544,74 @@ class WebController extends Controller
             'categories' => ExpenseCategory::all()
         ]);
     }
+
+
+    public function opdQueue()
+    {
+
+        $serviceOrders = ServiceOrder::with('patient','service')->where('type','OPD')->where('status','open')->orderBy('created_at','ASC')->paginate();
+
+        return Inertia::render('hospital/queue',[
+            'serviceOrders' => $serviceOrders
+        ]);
+    }
+
+    public function indoorQueue()
+    {
+
+        $serviceOrders = ServiceOrder::with('patient','service')->where('type','IND')->where('status','open')->orderBy('created_at','ASC')->paginate();
+        
+        return Inertia::render('hospital/queue',[
+            'serviceOrders' => $serviceOrders
+        ]);
+    }
+
+    public function emergencyQueue()
+    {
+        $serviceOrders = ServiceOrder::with('patient','service')->where('type','EMER')->where('status','open')->orderBy('created_at','ASC')->paginate();
+
+        return Inertia::render('hospital/queue',[
+            'serviceOrders' => $serviceOrders
+        ]);
+    }
+
+    public function dentalQueue()
+    {
+        $serviceOrders = ServiceOrder::with('patient','service')->where('type','DENTAL')->where('status','PENDING')->orderBy('created_at','ASC')->paginate();
+
+        return Inertia::render('hospital/queue',[
+            'serviceOrders' => $serviceOrders
+        ]);
+    }
+
+    public function laboratoryQueue()
+    {
+        $serviceOrders = ServiceOrder::with('patient','service')->where('type','LAB')->where('status','PENDING')->orderBy('created_at','ASC')->paginate();
+
+        return Inertia::render('hospital/queue',[
+            'serviceOrders' => $serviceOrders
+        ]);
+    }
+
+    public function ultrasoundQueue()
+    {
+        $serviceOrders = ServiceOrder::with('patient','service')->where('type','ULTRASOUND')->where('status','PENDING')->orderBy('created_at','ASC')->paginate();
+        return Inertia::render('hospital/queue',[
+            'serviceOrders' => $serviceOrders
+        ]);
+    }
+
+    public function radiologyQueue()
+    {
+        $serviceOrders = ServiceOrder::with('patient','service')->where('type','XRAY')->where('status','PENDING')->orderBy('created_at','ASC')->paginate();
+
+        return Inertia::render('hospital/queue',[
+            'serviceOrders' => $serviceOrders
+        ]);
+    }
+
+
+
 
     public function hospitalSettings()
     {

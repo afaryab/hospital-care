@@ -22,6 +22,10 @@ return new class extends Migration
             $table->string('status')->default('unpaid');
             $table->timestamps();
         });
+
+        Schema::table('service_orders', function (Blueprint $table) {
+            $table->string('status')->default('open')->after('type');
+        });
     }
 
     /**

@@ -55,6 +55,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('CT-PS/{pYear}/{pMonth}/{number}/{departmentKey}', [WebController::class, 'counterPatient'])->name('counter-select-department-service');
     Route::get('CT-TR/{tYear}/{tMonth}/{tDay}/{tNumber}', [WebController::class, 'transactionView'])->name('transaction-view');
 
+    Route::get('RECEAVEABLES', [WebController::class, 'receaveables'])->name('receaveables');
+
     Route::get('CT-EXP', [WebController::class, 'counterExpense'])->name('counter-expense');
 
     Route::post('TR-CREATE', [WebController::class, 'transactionStore'])->name('transaction-store');
@@ -63,6 +65,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('appointments', [WebController::class, 'counter'])->name('appointments');
     Route::get('expenses', [WebController::class, 'counter'])->name('expenses');
+
+
+    /**
+     * Hospital Routes
+     */
+
+    Route::get('/que/opd', [WebController::class, 'opdQueue'])->name('hospital-opd-queue');
+    Route::get('/que/indoor', [WebController::class, 'indoorQueue'])->name('hospital-indoor-queue');
+    Route::get('/que/emergency', [WebController::class, 'emergencyQueue'])->name('hospital-emergency-queue');
+    Route::get('/que/dental', [WebController::class, 'dentalQueue'])->name('hospital-dental-queue');
+    Route::get('/que/lab', [WebController::class, 'laboratoryQueue'])->name('hospital-laboratory-queue');
+    Route::get('/que/ultrasound', [WebController::class, 'ultrasoundQueue'])->name('hospital-ultrasound-queue');
+    Route::get('/que/radiology', [WebController::class, 'radiologyQueue'])->name('hospital-radiology-queue');
 
 
     /**
