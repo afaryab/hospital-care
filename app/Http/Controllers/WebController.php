@@ -170,7 +170,7 @@ class WebController extends Controller
             'receptionist_id' => $request->user()->id,
             'ct_number' => Closing::generateCounterNumber(),
             'status' => CounterStatus::OPEN,
-            'opening_amount' => $request->opening_balance ?? 0
+            'opening_amount' => $request->opening_balance && $request->opening_balance != '' && $request->opening_balance != null ? $request->opening_balance : 0
         ]);
 
         return redirect(route('counter-view',[
