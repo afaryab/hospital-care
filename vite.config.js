@@ -9,7 +9,7 @@ export default defineConfig({
         laravel({
             input: ['resources/css/filament/theme.css', 'resources/css/app.css', 'resources/js/app.tsx'],
             ssr: 'resources/js/ssr.tsx',
-            refresh: true,
+            refresh: ['resources/**'],
         }),
         react({
             babel: {

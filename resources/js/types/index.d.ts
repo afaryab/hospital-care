@@ -45,6 +45,9 @@ export interface User {
 export interface Patient {
     id: string;
     ps_number: string;
+    year: number;
+    month: number;
+    number: number;
     name: string;
     image?: string;
     gender: 'm' | 'f' | 't' | 'o';

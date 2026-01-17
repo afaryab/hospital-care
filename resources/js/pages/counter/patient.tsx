@@ -266,6 +266,28 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
         }));
     };
 
+    const flattenObject = (obj: any, keysToInclude: any[] = []) => {
+        
+        if(typeof obj !== 'object' || obj === null){
+            return [];
+        }
+
+        // Object keys foreach loop
+        let items: any[] = [];
+        if(keysToInclude.length > 0){
+            keysToInclude.forEach((key:any) => {
+                const item = obj[key];
+                items = items.concat(item);
+            });
+            return items;
+        }
+        Object.keys(obj).forEach((key) => {
+            const item = obj[key];
+            items = items.concat(item);
+        });
+        return items;
+    };
+
     useEffect(() => {
 
         let totalCharges = 0;
@@ -278,12 +300,18 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
             const itemTotal = itemQuantity * itemCharges;
             totalCharges += itemTotal;
             console.log(sl);
+
+            // Flat providers array
+            let providerUsers = flattenObject(providers, sl?.service_provider_types || []);
+
+            console.log('Providers for service ', serviceId, providerUsers);
+
             return {
                 serviceId: sl?.id || '',
                 name: sl?.name || '',
                 quantity: itemQuantity,
                 charges: itemCharges,
-                providerId: providers.find((p:any) => p.serviceId == serviceId)?.id || '',
+                providerId: providerUsers.find((p:any) => p.serviceId == serviceId)?.id || '',
                 total: itemTotal
             };
         }, {});
@@ -302,12 +330,27 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
         slug: '',
     });
 
+    const [ isRecesitation, setIsRecestitation ] = useState<boolean>(false);
+
     useEffect(() => {
-        const dept = departments.find((d:any) => d.slug === departmentKey);
+        console.log(departmentKey);
+
+        // If depatmentKey is recesitation type then remove RECES- prefix
+        let departmentKeyCleaned = departmentKey;
+        if(departmentKey && departmentKey.startsWith('RECES-')){
+            setIsRecestitation(true);
+            departmentKeyCleaned = departmentKey.replace('RECES-', '');
+        }
+
+        const dept = departments.find((d:any) => d.slug === departmentKeyCleaned);
         setDepartment(dept);
     }, [departmentKey]);
 
     const [ changeAmount, setChangeAmount ] = useState<any>(0);
+
+    useEffect(() => {
+        console.log('Recesitation:', isRecesitation);
+    }, [isRecesitation]);
 
     useEffect(() => {
         setChangeAmount(calculateChange());
@@ -318,7 +361,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
             <div className='flex-1'>
                 <h3 className='text-3xl mb-2 font-bold'>Add Bill</h3>
                 <div className='flex-1 grid grid-cols-4 gap-4 w-full mb-2 '>
-                    <DepartmentMiniCard department={department} patient={patient} className='h-full w-full border rounded-xl flex flex-col items-center justify-center' />
+                    <DepartmentMiniCard department={department} recestitation={isRecesitation} patient={patient} className='h-full w-full border rounded-xl flex flex-col items-center justify-center' />
                     <PatientMiniCard patient={patient} className='col-span-3 w-full'/>
                 </div>
                 <div className='p-4 border dark:border-neutral-950 rounded-xl mb-2'>
@@ -365,7 +408,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                                         charges={item.charges}
                                         service={service}
                                         selectedProvider={serviceProviders[item.serviceId] || ''}
-                                        providers={providers}
+                                        providers={flattenObject(providers, service?.service_provider_types || [])}
                                         onUpdate={updateItemQuantityAndCharges}
                                         onProviderUpdate={updateServiceProvider}
                                         validationErrors={validationErrors}
@@ -442,7 +485,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                                         <Button 
                                             variant={'default'}
                                             onClick={generateBill}
-                                            disabled={formData.items.length === 0 || amountPaid <= 0}
+                                            disabled={formData.items.length === 0 || amountPaid < 0}
                                         >
                                             Generate Bill
                                         </Button>
@@ -828,19 +871,21 @@ function BillItemsEditableTableRow({
         setC(charges);
     }, [quantity, charges]);
 
+    console.log(providers);
+
 
     return (
         <>
             <tr className="border-b border-neutral-950 dark:bg-neutral-700 dark:text-white">
                 <td className="p-2">{service_name}</td>
                 <td className="p-2 text-right">
-                    {service?.available_providers && service.available_providers.length > 0 ? (<>
+                    {service?.service_provider_types && service.service_provider_types.length > 0 ? (<>
                         <Select value={selectedProvider} onValueChange={handleProviderChange}>
                             <SelectTrigger className="w-full">
                                 <SelectValue placeholder="Select provider" />
                             </SelectTrigger>
                             <SelectContent>
-                                {providers.filter((provider: any) => service.available_providers.includes(provider.id)).map((provider: any) => (
+                                {providers.map((provider: any) => (
                                     <SelectItem key={provider.id} value={provider.id.toString()}>
                                         {provider.name}
                                     </SelectItem>

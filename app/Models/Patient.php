@@ -29,6 +29,7 @@ class Patient extends Model
         'year',
         'month',
         'number',
+        'outstandings',
     ];
 
     public function getYearAttribute()
@@ -107,5 +108,14 @@ class Patient extends Model
     public function receaveables()
     {
         return $this->hasMany(Receaveable::class, 'patient_id', 'id')->where('status', 'unpaid');
+    }
+
+    public function getOutstandingsAttribute()
+    {
+        // Sum all unpaid receaveables for this patient
+        $total = $this->receaveables()->sum('amount');
+
+        // Only return a value if there is something outstanding
+        return $total > 0 ? $total : null;
     }
 }

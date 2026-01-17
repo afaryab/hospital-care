@@ -31,7 +31,7 @@ class Service extends Model
 
     // Auto-append computed attributes (accessors) when serializing
     protected $appends = [
-        'available_providers'
+        // 'available_providers'
     ];
 
     public function department()
@@ -67,18 +67,27 @@ class Service extends Model
     /**
      * Get all users who can provide this service based on service provider types
      */
-    public function getAvailableProvidersAttribute()
-    {
-        $userIds = collect();
+    // public function getAvailableProvidersAttribute()
+    // {
+    //     // Fast exit when service has no providers configured
+    //     if (! $this->have_service_provider || empty($this->service_provider_types)) {
+    //         return [];
+    //     }
 
-        foreach ($this->service_provider_types ?? [] as $providerType) {
-            // Each providerType is expected to be a model class with a user_id field
-            $userIds = $userIds->merge($providerType::query()->pluck('user_id'));
-        }
+    //     $userIds = collect([]);
 
-        // Return a collection of unique user IDs; callers can map/load as needed
-        return $userIds->toArray();
-    }
+    //     foreach ($this->service_provider_types as $providerType) {
+    //         // Skip invalid classes to avoid errors
+    //         if (! class_exists($providerType)) {
+    //             continue;
+    //         }
+
+    //         // Build a base query selecting only user_id to keep memory usage low
+    //         $userIds = $userIds->merge($providerType::query()->select('user_id')->pluck('user_id')->toArray());
+    //     }
+        
+    //     return $userIds;
+    // }
 
     public function creator()
     {

@@ -17,7 +17,7 @@ export default function CounterOpen({ status }: { status?: string }) {
 
     const { recptions } = usePage().props;
 
-    const [openingBalance, setOpeningBalance] = useState('');
+    const [openingBalance, setOpeningBalance] = useState(0);
     const [receptionId, setReceptionId] = useState('');
 
     return (

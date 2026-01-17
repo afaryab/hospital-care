@@ -16,6 +16,7 @@ use App\Models\ServiceOrder;
 use App\Models\ServiceRecestation;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -289,9 +290,24 @@ class WebController extends Controller
             }else{
                 $pageData['services'] = Service::where('service_department_id', $department->id)->get();
 
-                $userIds = $pageData['services']->pluck('available_providers')->flatten()->unique();
+                $providerTypes = $pageData['services']->pluck('service_provider_types')->flatten()->unique()->filter();
 
-                $pageData['providers'] = \App\Models\User::whereIn('id', $userIds)->get();
+                $userIds = collect([]);
+
+                foreach ($providerTypes as $providerType) {
+                    // Skip invalid classes to avoid errors
+                    if (! class_exists($providerType)) {
+                        continue;
+                    }
+
+                    // Build a base query selecting only user_id to keep memory usage low
+                    $userIds = $userIds->merge($providerType::query()->select('user_id')->pluck('user_id')->toArray());
+
+                    $pageData['providers'][$providerType] = User::whereIn('id', $userIds)->get();
+                    
+                }
+
+                
                 
                 // dd($pageData['services']->map(function($service){
                 //     if(!$service->have_service_provider || empty($service->service_provider_types)) {
