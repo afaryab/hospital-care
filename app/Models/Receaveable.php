@@ -23,4 +23,17 @@ class Receaveable extends Model
     {
         return $this->belongsTo(Transaction::class);
     }
+
+    // Get Service Order attached to transaction (if any)
+    public function serviceOrder()
+    {
+        return $this->hasOneThrough(
+            ServiceOrder::class,
+            Transaction::class,
+            'id', // Foreign key on transactions table...
+            'transaction_id', // Foreign key on service_orders table...
+            'transaction_id', // Local key on receaveables table...
+            'id'  // Local key on transactions table...
+        );
+    }
 }
