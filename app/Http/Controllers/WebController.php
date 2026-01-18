@@ -304,7 +304,7 @@ class WebController extends Controller
                     $userIds = $userIds->merge($providerType::query()->select('user_id')->pluck('user_id')->toArray());
 
                     $pageData['providers'][$providerType] = User::whereIn('id', $userIds)->get();
-                    
+
                 }
 
                 
@@ -459,7 +459,10 @@ class WebController extends Controller
                 'patient_id' => $validatedData['patient_id'],
                 'type' => $validatedData['payment_method'],
                 'income_or_expense' => 'INCOME',
-                'amount' => $validatedData['total_amount'],
+                'amount' => (
+                    $validatedData['amount_paid'] === 0 ? 0 : 
+                    ($validatedData['amount_paid'] - $validatedData['change_amount'])
+                ),
                 'customer_payed' => $validatedData['amount_paid'],
                 'change' => $validatedData['change_amount'],
             ]);
