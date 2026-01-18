@@ -94,7 +94,7 @@ class PateintController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'cnic' => 'nullable|string|size:13|unique:patients,cnic',
+                'cnic' => 'nullable|string|size:15|unique:patients,cnic',
                 'contact' => 'required|string|max:20',
                 'gender' => 'required|in:m,f,t',
                 'date_of_birth' => 'nullable|date',
@@ -111,7 +111,9 @@ class PateintController extends Controller
 
 
 
-            $patient = Patient::create($validated);
+            $patient = Patient::create([
+                ...$validated
+            ]);
 
             return response()->json([
                 'message' => 'Patient created successfully',
