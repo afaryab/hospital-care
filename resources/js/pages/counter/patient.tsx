@@ -678,7 +678,7 @@ function StepOne({openCounter}:any) {
                         autoFocus
                         tabIndex={2}
                         autoComplete="false"
-                        mask="99999-99999999-9"
+                        mask="99999-9999999-9"
                         placeholder='----- ------- -'
                         value={patientCnic} onValueChange={({ masked, unmasked }) => patientCnicIsChanged(masked, unmasked)}
                     />
@@ -710,8 +710,8 @@ function StepOne({openCounter}:any) {
                         tabIndex={3}
                         autoComplete="false"
                         value={patientContact} 
-                        mask="+99-9999-9999999"
-                        placeholder="+92-0000-0000000"
+                        mask="+99-999-9999999"
+                        placeholder="+92-000-0000000"
                         onValueChange={({ masked, unmasked }) => setPatientContact(masked)}
                     />
                     {/* <InputError message={errors.email} /> */}
