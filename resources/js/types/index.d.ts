@@ -105,3 +105,14 @@ export interface ServiceOrder {
     notes: string
     notes_json: any
 }
+
+export interface Receaveable {
+    id: number;
+    patient: Patient;
+    transaction: Transaction;
+    amount: number;
+    due_date: string;
+    status: string;
+    created_at: string;
+    closed_at?: string;
+}

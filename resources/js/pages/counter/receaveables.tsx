@@ -8,6 +8,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 import { router } from '@inertiajs/react';
+import ReceaveAblesButton from '@/elements/receaveables/ReceaveAblesButton';
 
 interface PageProps {
     yearSelected: string;
@@ -84,6 +85,9 @@ export default function ReveaveablesList() {
                                         </td>
                                         <td className="px-6 py-3">
                                             {r.closed_at}
+                                        </td>
+                                        <td className="px-6 py-3">
+                                            <ReceaveAblesButton receaveable={r} />
                                         </td>
                                     </tr>
                                 );
