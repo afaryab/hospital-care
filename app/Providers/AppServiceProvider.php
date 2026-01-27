@@ -6,10 +6,12 @@ use App\Models\ExpenseVoucher;
 use App\Models\Patient;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
+use App\Models\User;
 use App\Observers\ExpenseVoucherObserver;
 use App\Observers\PatientObserver;
 use App\Observers\TransactionElementObserver;
 use App\Observers\TransactionObserver;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -35,5 +37,9 @@ class AppServiceProvider extends ServiceProvider
         Transaction::observe(TransactionObserver::class);
         TransactionElement::observe(TransactionElementObserver::class);
         ExpenseVoucher::observe(ExpenseVoucherObserver::class);
+
+        Gate::define('viewPulse', function (User $user) {
+            return $user->adminProfiles()->count() > 0;
+        });
     }
 }
