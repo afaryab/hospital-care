@@ -37,14 +37,11 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl zip
 # Install Redis extension using PECL
 RUN pecl install redis && docker-php-ext-enable redis
 
+# Copy custom PHP configuration
+COPY docker/app/php.ini /usr/local/etc/php/conf.d/custom-php.ini
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Configure SSH
-RUN mkdir /var/run/sshd
-RUN echo 'root:root' | chpasswd
-RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
-RUN ssh-keygen -A
 
 # Configure PHP-FPM
 RUN sed -i 's/listen = 127.0.0.1:9000/listen = 9000/' /usr/local/etc/php-fpm.d/www.conf
@@ -65,10 +62,10 @@ RUN chmod -R 755 /var/log/nginx /var/lib/nginx /var/cache/nginx
 COPY . /var/www/html
 
 # Copy configurations
-COPY docker/php/nginx.conf /etc/nginx/nginx.conf
-COPY docker/php/default.conf /etc/nginx/conf.d/default.conf
-COPY docker/php/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY docker/php/start.sh /start.sh
+COPY docker/app/nginx.conf /etc/nginx/nginx.conf
+COPY docker/app/default.conf /etc/nginx/conf.d/default.conf
+COPY docker/app/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/app/start.sh /start.sh
 
 # Create .htpasswd file
 RUN touch /etc/nginx/.htpasswd
@@ -88,7 +85,8 @@ RUN curl -fsSL https://bun.sh/install | bash && \
 # RUN bun run build
 RUN cp .env.example .env || true
 # Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+RUN composer install --no-dev --optimize-autoloader || true
+# RUN composer install
 
 # Generate Laravel application key if .env exists
 RUN if [ -f .env ]; then php artisan key:generate --force; fi
@@ -105,7 +103,7 @@ RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null
 RUN mkdir -p /var/log/supervisor /var/log/nginx
 
 # Expose ports
-EXPOSE 80 443 22 9000
+EXPOSE 80 443
 
 # Start supervisor which will manage all services
 CMD ["/bin/sh", "/start.sh"]

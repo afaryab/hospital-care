@@ -15,20 +15,13 @@ if [ -f "/var/www/html/composer.json" ]; then
     composer install --no-dev --optimize-autoloader 2>/dev/null || true
 fi
 
-# Install and build frontend assets if package.json exists
-if [ -f "/var/www/html/package.json" ]; then
-    echo "Installing frontend dependencies..."
-    bun install --frozen-lockfile 2>/dev/null || true
-    echo "Building frontend assets..."
-    bun run build 2>/dev/null || true
-fi
-
 # Run Laravel optimizations and migrations if artisan exists
 if [ -f "/var/www/html/artisan" ]; then
     echo "Running Laravel optimizations..."
     php artisan config:cache 2>/dev/null || true
     php artisan route:cache 2>/dev/null || true
     php artisan view:cache 2>/dev/null || true
+    php artisan optimize:clear 2>/dev/null || true
 
     echo "Waiting for database and applying migrations..."
     tries=0
@@ -44,8 +37,6 @@ if [ -f "/var/www/html/artisan" ]; then
     done
 fi
 
-echo "Authentication is handled by Laravel middleware based on AUTH environment variable"
-echo "Current AUTH setting: ${AUTH:-none}"
 
 # Create log directories for supervisor
 mkdir -p /var/log/supervisor

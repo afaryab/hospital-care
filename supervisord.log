@@ -155701,3 +155701,102 @@
 2026-01-17 21:54:02,837 INFO reaped unknown pid 2465 (exit status 0)
 2026-01-17 21:55:08,218 INFO reaped unknown pid 2499 (exit status 0)
 2026-01-17 21:56:44,522 INFO reaped unknown pid 2533 (exit status 0)
+2026-01-18 12:33:50,685 INFO reaped unknown pid 2574 (exit status 0)
+2026-01-18 12:35:11,501 INFO reaped unknown pid 2609 (exit status 0)
+2026-01-18 12:36:33,937 INFO reaped unknown pid 2644 (exit status 0)
+2026-01-18 12:37:28,152 INFO reaped unknown pid 2681 (exit status 0)
+2026-01-18 12:46:09,615 INFO reaped unknown pid 2715 (exit status 0)
+2026-01-18 12:48:28,027 INFO reaped unknown pid 2751 (exit status 0)
+2026-01-18 12:55:21,100 INFO reaped unknown pid 2786 (exit status 0)
+2026-01-18 14:00:05,574 INFO reaped unknown pid 2825 (exit status 0)
+2026-01-18 14:01:19,252 INFO reaped unknown pid 2863 (exit status 0)
+2026-01-19 08:04:07,190 WARN received SIGQUIT indicating exit request
+2026-01-19 08:04:07,211 INFO waiting for nginx, php-fpm, sshd to die
+2026-01-19 08:04:07,258 INFO stopped: sshd (exit status 0)
+2026-01-27 00:22:42,968 INFO Set uid to user 0 succeeded
+2026-01-27 00:22:42,972 INFO RPC interface 'supervisor' initialized
+2026-01-27 00:22:42,972 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2026-01-27 00:22:42,972 INFO supervisord started with pid 1
+2026-01-27 00:22:43,978 INFO spawned: 'nginx' with pid 72
+2026-01-27 00:22:43,982 INFO spawned: 'php-fpm' with pid 73
+2026-01-27 00:22:43,984 INFO spawned: 'sshd' with pid 74
+2026-01-27 00:22:45,047 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-27 00:22:45,048 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-27 00:22:45,048 INFO success: sshd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-27 00:25:10,081 WARN received SIGQUIT indicating exit request
+2026-01-27 00:25:10,085 INFO waiting for nginx, php-fpm, sshd to die
+2026-01-27 00:25:10,091 INFO stopped: sshd (exit status 0)
+2026-01-27 00:40:46,382 INFO Set uid to user 0 succeeded
+2026-01-27 00:40:46,386 INFO RPC interface 'supervisor' initialized
+2026-01-27 00:40:46,386 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2026-01-27 00:40:46,386 INFO supervisord started with pid 1
+2026-01-27 00:40:47,393 INFO spawned: 'nginx' with pid 72
+2026-01-27 00:40:47,397 INFO spawned: 'php-fpm' with pid 73
+2026-01-27 00:40:48,455 INFO success: nginx entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-27 00:40:48,457 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-27 00:48:31,456 WARN For [program:laravel-scheduler], redirect_stderr=true but stderr_logfile has also been set to a filename, the filename has been ignored
+2026-01-27 00:48:31,456 INFO Set uid to user 0 succeeded
+2026-01-27 00:48:31,461 INFO RPC interface 'supervisor' initialized
+2026-01-27 00:48:31,461 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2026-01-27 00:48:31,462 INFO supervisord started with pid 1
+2026-01-27 00:48:32,470 INFO spawned: 'laravel-scheduler' with pid 36
+2026-01-27 00:48:32,473 INFO spawned: 'laravel-worker_00' with pid 37
+2026-01-27 00:48:32,475 INFO spawned: 'laravel-worker_01' with pid 39
+2026-01-27 00:48:32,477 INFO spawned: 'php-fpm' with pid 40
+2026-01-27 00:48:32,483 INFO spawned: 'sshd' with pid 41
+2026-01-27 00:48:34,251 INFO success: laravel-scheduler entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-27 00:48:34,252 INFO success: laravel-worker_00 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-27 00:48:34,252 INFO success: laravel-worker_01 entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-27 00:48:34,252 INFO success: php-fpm entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-27 00:48:34,252 INFO success: sshd entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
+2026-01-27 00:48:35,255 INFO reaped unknown pid 53 (exit status 0)
+2026-01-27 00:48:39,285 INFO reaped unknown pid 60 (exit status 0)
+2026-01-27 00:49:08,121 INFO reaped unknown pid 67 (exit status 0)
+2026-01-27 00:49:13,705 INFO reaped unknown pid 78 (exit status 0)
+2026-01-27 00:49:18,730 INFO reaped unknown pid 85 (exit status 0)
+2026-01-27 00:49:23,764 INFO reaped unknown pid 92 (exit status 0)
+2026-01-27 00:49:28,873 INFO reaped unknown pid 99 (exit status 0)
+2026-01-27 00:49:33,918 INFO reaped unknown pid 106 (exit status 0)
+2026-01-27 00:49:39,997 INFO reaped unknown pid 113 (exit status 0)
+2026-01-27 00:49:48,028 INFO reaped unknown pid 120 (exit status 0)
+2026-01-27 00:49:58,157 INFO reaped unknown pid 127 (exit status 0)
+2026-01-27 00:50:07,654 INFO reaped unknown pid 138 (exit status 0)
+2026-01-27 00:50:17,780 INFO reaped unknown pid 145 (exit status 0)
+2026-01-27 00:50:28,882 INFO reaped unknown pid 152 (exit status 0)
+2026-01-27 00:50:38,984 INFO reaped unknown pid 159 (exit status 0)
+2026-01-27 00:50:49,132 INFO reaped unknown pid 166 (exit status 0)
+2026-01-27 00:50:58,191 INFO reaped unknown pid 173 (exit status 0)
+2026-01-27 00:51:08,194 INFO reaped unknown pid 184 (exit status 0)
+2026-01-27 00:51:19,329 INFO reaped unknown pid 191 (exit status 0)
+2026-01-27 00:51:28,430 INFO reaped unknown pid 198 (exit status 0)
+2026-01-27 00:51:40,470 INFO reaped unknown pid 222 (exit status 0)
+2026-01-27 00:51:45,526 INFO reaped unknown pid 233 (exit status 0)
+2026-01-27 00:51:48,532 INFO reaped unknown pid 240 (exit status 0)
+2026-01-27 00:51:58,624 INFO reaped unknown pid 250 (exit status 0)
+2026-01-27 00:52:07,740 INFO reaped unknown pid 263 (exit status 0)
+2026-01-27 00:52:17,830 INFO reaped unknown pid 272 (exit status 0)
+2026-01-27 00:52:28,896 INFO reaped unknown pid 279 (exit status 0)
+2026-01-27 00:52:41,021 INFO reaped unknown pid 286 (exit status 0)
+2026-01-27 00:52:50,157 INFO reaped unknown pid 293 (exit status 0)
+2026-01-27 00:52:59,193 INFO reaped unknown pid 300 (exit status 0)
+2026-01-27 00:53:06,727 INFO reaped unknown pid 311 (exit status 0)
+2026-01-27 00:53:13,750 INFO reaped unknown pid 318 (exit status 0)
+2026-01-27 00:53:23,833 INFO reaped unknown pid 325 (exit status 0)
+2026-01-27 00:53:33,934 INFO reaped unknown pid 332 (exit status 0)
+2026-01-27 00:53:43,029 INFO reaped unknown pid 339 (exit status 0)
+2026-01-27 00:53:55,157 INFO reaped unknown pid 346 (exit status 0)
+2026-01-27 00:54:04,058 INFO reaped unknown pid 355 (exit status 0)
+2026-01-27 00:54:13,751 INFO reaped unknown pid 366 (exit status 0)
+2026-01-27 00:54:24,854 INFO reaped unknown pid 373 (exit status 0)
+2026-01-27 00:54:34,966 INFO reaped unknown pid 380 (exit status 0)
+2026-01-27 00:54:45,018 INFO reaped unknown pid 387 (exit status 0)
+2026-01-27 00:54:54,169 INFO reaped unknown pid 394 (exit status 0)
+2026-01-27 00:55:05,021 INFO reaped unknown pid 401 (exit status 0)
+2026-01-27 00:55:13,658 INFO reaped unknown pid 412 (exit status 0)
+2026-01-27 00:55:23,762 INFO reaped unknown pid 419 (exit status 0)
+2026-01-27 00:55:34,848 INFO reaped unknown pid 426 (exit status 0)
+2026-01-27 00:55:43,914 INFO reaped unknown pid 433 (exit status 0)
+2026-01-27 00:55:55,004 INFO reaped unknown pid 440 (exit status 0)
+2026-01-27 00:56:04,023 INFO reaped unknown pid 447 (exit status 0)
+2026-01-27 00:56:15,725 INFO reaped unknown pid 458 (exit status 0)
+2026-01-27 00:56:25,904 INFO reaped unknown pid 465 (exit status 0)

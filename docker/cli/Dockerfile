@@ -16,8 +16,6 @@ RUN apk add --no-cache \
     libzip-dev \
     supervisor \
     openssh-server \
-    openssh-client \
-    nginx \
     apache2-utils \
     autoconf \
     gcc \
@@ -38,7 +36,7 @@ RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd intl zip
 RUN pecl install redis && docker-php-ext-enable redis
 
 # Copy custom PHP configuration
-COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom-php.ini
+COPY docker/cli/php.ini /usr/local/etc/php/conf.d/custom-php.ini
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -58,23 +56,12 @@ RUN sed -i 's/;listen.mode = 0660/listen.mode = 0660/' /usr/local/etc/php-fpm.d/
 # Set working directory
 WORKDIR /var/www/html
 
-# Configure nginx user and directories
-RUN adduser -D -s /bin/sh nginx nginx || true
-RUN mkdir -p /var/log/nginx /var/lib/nginx/tmp /var/cache/nginx
-RUN chown -R nginx:nginx /var/log/nginx /var/lib/nginx /var/cache/nginx
-RUN chmod -R 755 /var/log/nginx /var/lib/nginx /var/cache/nginx
-
 # Copy application files
 COPY . /var/www/html
 
 # Copy configurations
-COPY docker/php/nginx.conf /etc/nginx/nginx.conf
-COPY docker/php/default.conf /etc/nginx/conf.d/default.conf
-COPY docker/php/supervisord-core.conf /etc/supervisor/conf.d/supervisord.conf
-COPY docker/php/start.sh /start.sh
-
-# Create .htpasswd file
-RUN touch /etc/nginx/.htpasswd
+COPY docker/cli/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/cli/start.sh /start.sh
 
 # Make start script executable
 RUN chmod +x /start.sh
@@ -106,10 +93,10 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 
 # Create log directories
-RUN mkdir -p /var/log/supervisor /var/log/nginx
+RUN mkdir -p /var/log/supervisor
 
 # Expose ports
-EXPOSE 80 443 22 9000
+EXPOSE 22
 
 # Start supervisor which will manage all services
 CMD ["/bin/sh", "/start.sh"]

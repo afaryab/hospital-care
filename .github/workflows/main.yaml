@@ -78,7 +78,7 @@ jobs:
 
 
 
-  next_publish:
+  next_app_publish:
     needs: [calculate_version, version_release]
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -103,14 +103,14 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/php/Dockerfile.core
+          file: ./docker/app/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:${{ env.VERSION_NO_V }}-next
-            ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:latest-next
+            ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:${{ env.VERSION_NO_V }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:latest
 
 
-  next_extended:
+  next_cli_publish:
     needs: [calculate_version, version_release]
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -138,5 +138,5 @@ jobs:
           file: ./docker/php/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:${{ env.VERSION_NO_V }}-extended
-            ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:latest-extended
+            ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:${{ env.VERSION_NO_V }}-cli
+            ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:latest-cli
