@@ -788,13 +788,7 @@ function StepOne({openCounter}:any) {
                     
                     <h3>Exact Match found</h3>
 
-                    {exactMatch.map((p) => <Link href={counterSelectDepartment({
-                        pYear: p.year,
-                        pMonth: p.month,
-                        number: p.number
-                    }).url} className='flex flex-row'>
-                        <PatientMiniCard patient={p} className='w-full' />
-                    </Link>)}
+                    {exactMatch.map((p) => <PatientMiniCard patient={p} className='w-full' link={counterSelectDepartment({ pYear: p.year, pMonth: p.month, number: p.number }).url} />)}
                 
                 </>}
 
@@ -802,13 +796,7 @@ function StepOne({openCounter}:any) {
                 
                     <h3>Possible Matches</h3>
 
-                    {patients.map((p, i) => <Link href={counterSelectDepartment({
-                        pYear: p.year,
-                        pMonth: p.month,
-                        number: p.number
-                    }).url} className='flex flex-row'>
-                        <PatientMiniCard patient={p} className='w-full' />
-                    </Link>)}
+                    {patients.map((p, i) => <PatientMiniCard patient={p} className='w-full' link={counterSelectDepartment({pYear: p.year, pMonth: p.month, number: p.number}).url} />)}
 
                 </>}
 
@@ -818,7 +806,7 @@ function StepOne({openCounter}:any) {
                     patientAge &&
                     patientGender
                     
-                    ) && <div className='bg-[#1c398e] dark:bg-[#0a0a0a] hover:bg-[#06df72] dark:bg-[#262626] text-white hover:text-[#1c398e] rounded-xl p-2 flex flex-col space-y-4 cursor-default'>
+                    ) && <div className='bg-[#1c398e] dark:bg-[#0a0a0a] hover:bg-[#06df72] dark:bg-[#262626] rounded-xl p-2 flex flex-col space-y-4 cursor-default'>
                     <PatientMiniCard patient={{name: patientName, gender: patientGender, ps_number: psInput, contact: patientContact, cnic: patientCnic, age: patientAge}} className='w-full' />
                     <div className='items-right justify-end'>
                         <Button onClick={() => createPatientInApi()}>

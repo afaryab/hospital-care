@@ -134,7 +134,7 @@ class ClosingsTable
                             'amount_received' => $data['amount_received'],
                             'status' => CounterStatus::REPORTED,
                             'cash_recieving_time' => now(),
-                            'reported_by' => request()->user()->id(),
+                            'reported_by' => auth()->id(),
 
                         ]);
 

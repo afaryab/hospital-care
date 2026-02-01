@@ -166,6 +166,26 @@
             width: 45%;
             text-align: right;
         }
+        .flex {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .flex-col {
+            display: flex;
+            flex-direction: column;
+        }
+        .flex-row {
+            display: flex;
+            flex-direction: row;
+        }
+        .footer {
+            text-align: center;
+            font-size: 8px;
+            margin-top: 3mm;
+        }
+
+
     </style>
 </head>
 <body>
@@ -173,27 +193,59 @@
         <!-- Header -->
         <div class="header">
             <h1>{{ $hospital_info['name'] }}</h1>
-            <h2>Receipt</h2>
-            <h2>{{ $transaction->tr_number }}</h2>
-            <p>{{ $generated_at->format('d/m/Y H:i') }}</p>
+            <h2>Transaction Receipt: {{ $transaction->tr_number }}</h2>
+        </div>
+        <div class="header">
+            <p>{{ $transaction->closing->ct_number }} @ {{ $generated_at->format('d/m/Y H:i') }}</p>
+            <p>By {{ $transaction->receptionist->name ?? 'N/A' }}</p>
             <div class="divider"></div>
             @if($transaction->patient)
+                <table width="100%" style="margin-bottom: 2mm;">
+                    <tr style="border-bottom: 1px dotted #0c0c0c;">
+                        <td class="label" width="40%">Patient:</td>
+                        <td class="value">{{ $transaction->patient->name }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px dotted #0c0c0c;">
+                        <td class="label">MR Number:</td>
+                        <td class="value">{{ $transaction->patient->ps_number }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px dotted #0c0c0c;">
+                        <td class="label">Age:</td>
+                        <td class="value">{{ $transaction->patient->age }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px dotted #0c0c0c;">
+                        <td class="label">Gender:</td>
+                        <td class="value">
+                            @if($transaction->patient->gender === 'm') Male
+                            @elseif($transaction->patient->gender === 'f') Female
+                            @elseif($transaction->patient->gender === 't') Transgender
+                            @else N/A
+                            @endif
+                        </td>
+                    </tr>
+                    @if($transaction->patient->contact)
+                        <tr style="border-bottom: 1px dotted #0c0c0c;">
+                            <td class="label">Contact:</td>
+                            <td class="value">{{ $transaction->patient->contact }}</td>
+                        </tr>
+                    @endif
+                </table>
+                
+            @endif
+            @if($transaction->receaveable_id)
             <div class="info-line">
-                <span class="label">Patient:</span>
-                <span class="value">{{ $transaction->patient->name }}</span>
-            </div>
-            <div class="info-line">
-                <span class="label">MR Number:</span>
-                <span class="value">{{ $transaction->patient->ps_number }}</span>
+                <span class="label">Receaveable ID:</span>
+                <span class="value">{{ $transaction->receaveable_id }}</span>
             </div>
             @endif
         </div>
         <div class="divider-2"></div>
         <!-- Items -->
+        @if($transaction->income_or_expense === 'INCOME')
         <div class="items">
             <div class="items-header">
                 <span class="col-product">Services</span>
-                <span class="col-total">Total</span>
+                <span class="col-total">Charges</span>
             </div>
             @foreach($transaction->elements as $item)
                 <div class="item-line">
@@ -213,6 +265,24 @@
                 @endif
             @endforeach
         </div>
+        @elseif($transaction->income_or_expense === 'EXPENSE')
+            <div class="items">
+                <div class="items-header">
+                    <span class="col-product">Category</span>
+                    <span class="col-total">Amount</span>
+                </div>
+            </div>
+            @foreach($transaction->elements as $item)
+                <div class="item-line">
+                    <span class="col-product">
+                        {{ $item->expense->category->name }}
+                        <p style="font-size: 8px;">{{ $item->expense->notes }}</p>
+                    </span>
+                    
+                    <span class="col-total">{{ $item->amount }}</span>
+                </div>
+            @endforeach
+        @endif
 
         <!-- Divider -->
         <div class="divider"></div>
@@ -221,41 +291,39 @@
         <div class="totals">
             <div class="total-line">
                 <span class="total-label">Total:</span>
-                <span class="total-value">{{ $transaction->amount }}</span>
+                <span class="total-value">{{ $transaction->amount }}/- only</span>
             </div>
             <div class="total-line">
                 <span class="total-label">Payment Method:</span>
-                <span class="total-value">{{ strtoupper($transaction->payment_method) }}</span>
-            </div>
-            <div class="total-line">
-                <span class="total-label">Amount Paid:</span>
-                <span class="total-value">{{ $transaction->customer_payed ?? $transaction->amount }}</span>
-            </div>
-            <div class="total-line bold">
-                <span class="total-label">Change:</span>
-                <span class="total-value">{{ $transaction->change ?? '0.00' }}</span>
+                <span class="total-value">{{ $transaction->income_or_expense === 'INCOME' ? ucfirst($transaction->type) : 'CASH' }}</span>
             </div>
         </div>
+        <!-- Receaveables -->
+        @if($patient?->receaveables?->count() > 0)
 
         <!-- Divider -->
         <div class="divider"></div>
-
-        <!-- Receaveables -->
-        @if($patient->receaveables?->count() > 0)
         <div class="totals">
             <div class="total-line bold">
                 <span class="total-label">Outstanding Receivables:</span>
                 <span class="total-value">
                     {{
                         number_format(
-                            $patient->receaveables?->sum('amount'),
+                            $patient?->receaveables?->sum('amount'),
                             2
                         )
-                    }}
+                    }}/- only
                 </span>
             </div>
         </div>
         @endif
+        <div class="divider"></div>
+        <div class="footer">
+            <p>Thank you for choosing {{ $hospital_info['name'] }}</p>    
+            <p>Phone: {{ $hospital_info['phone'] }} | Email: {{ $hospital_info['email'] }}</p>
+            <p>Generated on {{ $generated_at->format('d/m/Y H:i:s') }}</p>
+            <p>This is a computer-generated receipt and does not require a signature</p>
+        </div>
     </div>
 </body>
 </html>

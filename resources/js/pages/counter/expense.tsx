@@ -46,6 +46,8 @@ export default function CounterExpense() {
     const [pettyCashAmount, setPettyCashAmount] = useState('');
     const [pettyCashDescription, setPettyCashDescription] = useState('');
     const [pettyCashCategory, setPettyCashCategory] = useState('');
+    const [pettyCashPayedTo, setPettyCashPayedTo] = useState('');
+    const [pettyCashOtherName, setPettyCashOtherName] = useState('');
 
     // Search voucher function
     const searchVoucher = async (vcNumber: string) => {
@@ -151,6 +153,8 @@ export default function CounterExpense() {
             amount: parseFloat(pettyCashAmount),
             description: pettyCashDescription,
             category_id: pettyCashCategory,
+            payed_to: pettyCashPayedTo === 'other' ? null : pettyCashPayedTo,
+            payed_to_other: pettyCashPayedTo === 'other' ? pettyCashOtherName : null,
             income_or_expense: 'EXPENSE',
             type: 'EXP',
         };
@@ -164,6 +168,8 @@ export default function CounterExpense() {
                 setPettyCashAmount('');
                 setPettyCashDescription('');
                 setPettyCashCategory('');
+                setPettyCashPayedTo('');
+                setPettyCashOtherName('');
             },
             onError: (errors) => {
                 // Handle validation errors
@@ -384,6 +390,36 @@ export default function CounterExpense() {
                                             </SelectContent>
                                         </Select>
                                     </div>
+                                    <div className="w-full max-w-sm space-y-2">
+                                        <Label htmlFor="payed_to">Payed To</Label>
+                                        <Select
+                                            value={pettyCashPayedTo}
+                                            onValueChange={setPettyCashPayedTo}
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select a user" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="other">Other</SelectItem>
+                                                {users.map((user: any) => (
+                                                    <SelectItem key={user.id} value={user.id.toString()}>
+                                                        {user.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    {pettyCashPayedTo === 'other' && <div className="w-full max-w-sm space-y-2">
+                                        <Label htmlFor="other_name">Other name</Label>
+                                        <Input
+                                            id="other_name"
+                                            type="text"
+                                            value={pettyCashOtherName}
+                                            onChange={(e) => setPettyCashOtherName(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Enter other person name"
+                                        />
+                                    </div>}
                                     <div className="w-full max-w-sm space-y-2">
                                         <Label htmlFor="description">Description</Label>
                                         <textarea

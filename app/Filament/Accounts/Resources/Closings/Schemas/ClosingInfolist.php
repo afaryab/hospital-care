@@ -4,6 +4,8 @@ namespace App\Filament\Accounts\Resources\Closings\Schemas;
 
 use App\Models\Closing;
 use Filament\Infolists\Components\ViewEntry;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 
 class ClosingInfolist
@@ -12,14 +14,39 @@ class ClosingInfolist
     {
         return $schema
             ->components([
-                ViewEntry::make('closing_overview')
-                    ->label(false)
-                    ->view('filament.accounts.closings.infolists.closing-overview')
-                    ->viewData(fn (Closing $record) => [
-                        'closing' => $record,
-                        'printUrl' => self::buildPrintUrl($record),
+                Tabs::make('Tabs')
+                    ->tabs([
+                        Tabs\Tab::make('Summery')
+                            ->schema([
+                                ViewEntry::make('closing_overview')
+                                    ->label(false)
+                                    ->view('filament.accounts.closings.infolists.closing-overview')
+                                    ->viewData(fn (Closing $record) => [
+                                        'closing' => $record,
+                                        'transactions' => $record->transactions(),
+                                        'printUrl' => self::buildPrintUrl($record),
+                                    ])
+                                    ->columnSpanFull(),  
+                            ]),
+                        Tabs\Tab::make('Services Report')
+                            ->schema([
+                                // ...
+                            ]),
+                        Tabs\Tab::make('Income Report')
+                            ->schema([
+                                // ...
+                            ]),
+                        Tabs\Tab::make('Expense Report')
+                            ->schema([
+                                // ...
+                            ]),
+                        Tabs\Tab::make('Receivables Report')
+                            ->schema([
+                                // ...
+                            ]),
                     ])
                     ->columnSpanFull(),
+                
             ]);
     }
 

@@ -61,6 +61,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('TR-CREATE', [WebController::class, 'transactionStore'])->name('transaction-store');
 
+    Route::post('RECEAVEABLES-PAYMENT', [WebController::class, 'receaveablesPayment'])->name('receaveables-payment');
+
     
 
     Route::get('appointments', [WebController::class, 'counter'])->name('appointments');

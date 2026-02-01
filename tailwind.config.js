@@ -7,6 +7,8 @@ export default {
         "./resources/js/**/*.js",
         "./resources/js/**/*.vue",
         "./resources/js/**/*.tsx",
+        "./resources/js/**/**/*.tsx",
+        "./resources/js/**/**/**/*.tsx",
         "./app/Filament/**/*.php",
         "./resources/views/filament/**/*.blade.php",
         "./vendor/filament/**/*.blade.php",

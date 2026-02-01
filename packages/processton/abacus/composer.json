@@ -1,0 +1,24 @@
+{
+    "name": "processton/abacus",
+    "version": "1.0.0",
+    "require": {
+        "spatie/laravel-stats": "^2.3",
+        "owenvoke/blade-fontawesome": "^3.0",
+        "codeat3/blade-iconpark": "^1.7",
+        "filament/filament": "^4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Processton\\Abacus\\": "src/",
+            "Processton\\AbacusDatabase\\Factories\\": "database/factories/",
+            "Processton\\AbacusDatabase\\Seeders\\": "database/seeders/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Processton\\Abacus\\AbacusServiceProvider"
+            ]
+        }
+    }
+}

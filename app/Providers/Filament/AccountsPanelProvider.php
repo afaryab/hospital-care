@@ -21,6 +21,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Processton\Abacus\AbacusPlugin;
 
 class AccountsPanelProvider extends PanelProvider
 {
@@ -59,6 +60,9 @@ class AccountsPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->plugins([
+                AbacusPlugin::make(),
             ]);
     }
 

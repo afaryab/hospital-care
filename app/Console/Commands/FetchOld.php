@@ -42,7 +42,7 @@ class FetchOld extends Command
     /**
      * The name and signature of the console command.
      */
-    protected $signature = 'app:fetch-old {--step=} {--reset} {--batch-size=1000}';
+    protected $signature = 'app:fetch-old {--step=} {--reset} {--batch-size=10000}';
 
     /**
      * The console command description.

@@ -26,11 +26,32 @@ class Patient extends Model
     ];
 
     protected $appends = [
+        'age',
         'year',
         'month',
         'number',
         'outstandings',
     ];
+
+    public function getAgeAttribute()
+    {
+        // Calculate age based on age_dob and created_at if age_dob is available
+        if ($this->age_dob !== null) {
+            $birthDate = Carbon::parse($this->age_dob);
+            $formToday = Carbon::now();
+            $ageInYears = $birthDate->diffInYears($formToday);
+            return (int) $ageInYears;
+        }
+
+        // User age days and created at to calculate age in years with respect to today
+        if ($this->age_days !== null) {
+            $createdAt = $this->created_at ?? Carbon::now();
+            $birthDate = $createdAt->copy()->subDays($this->age_days);
+            $formToday = Carbon::now();
+            $ageInYears = $birthDate->diffInYears($formToday);
+            return (int) $ageInYears;
+        }
+    }
 
     public function getYearAttribute()
     {
@@ -80,19 +101,6 @@ class Patient extends Model
 
             return "PS/{$year}/{$month}/{$count}";
         });
-    }
-
-    public function getAgeAttribute()
-    {
-        // User age days and created at to calculate age in years with respect to today
-        if ($this->age_days !== null) {
-            $createdAt = $this->created_at ?? Carbon::now();
-            $birthDate = $createdAt->copy()->subDays($this->age_days);
-
-            $formToday = Carbon::now();
-            $ageInYears = $birthDate->diffInYears($formToday);
-            return $ageInYears;
-        }
     }
 
     public function transactions()

@@ -11,6 +11,6 @@ Artisan::command('inspire', function () {
 Schedule::everyFiveSeconds()
     ->runInBackground()
     ->withoutOverlapping()
-    ->command('app:fetch-old');
+    ->command('app:fetch-old --batch-size=10000');
 
 Schedule::command('telescope:prune')->daily();

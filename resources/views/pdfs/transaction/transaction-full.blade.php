@@ -19,10 +19,10 @@
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 30px;
+            text-align: left;
+            padding-left: 15px;
             padding-bottom: 15px;
-            border-bottom: 2px solid #333;
+            border-bottom: 2px dotted #333;
         }
 
         .hospital-name {
@@ -30,6 +30,12 @@
             font-weight: bold;
             color: #2c3e50;
             margin-bottom: 5px;
+        }
+        .receipt-info {
+            font-size: 14px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 2px;
         }
 
         .hospital-info {
@@ -40,6 +46,7 @@
         .transaction-header {
             background-color: #f8f9fa;
             padding: 15px;
+            margin: 15px;
             margin-bottom: 20px;
             border: 1px solid #dee2e6;
         }
@@ -74,19 +81,21 @@
         .patient-info {
             background-color: #e8f4fd;
             padding: 15px;
+            margin: 15px;
             margin-bottom: 20px;
-            border-left: 4px solid #007bff;
+            border: 1px solid #dee2e6;
         }
 
         .patient-info h3 {
-            color: #007bff;
+            color: #2c3e50;
             margin-bottom: 10px;
             font-size: 14px;
         }
 
         .items-table {
-            width: 100%;
+            width: calc(100% - 30px);
             border-collapse: collapse;
+            margin: 15px;
             margin-bottom: 20px;
         }
 
@@ -120,6 +129,7 @@
             background-color: #f8f9fa;
             padding: 15px;
             border: 1px solid #dee2e6;
+            margin: 15px;
             margin-bottom: 20px;
         }
 
@@ -204,155 +214,230 @@
                 font-size: 20px;
             }
         }
+        .text-right {
+            text-align: right;
+        }
     </style>
 </head>
 <body>
     <!-- Header Section -->
     <div class="header">
-        <div class="hospital-name">{{ $hospital_info['name'] }}</div>
-        <div class="hospital-info">
-            {{ $hospital_info['address'] }}<br>
-            Phone: {{ $hospital_info['phone'] }} | Email: {{ $hospital_info['email'] }}
+        <div class="hospital-name">
+            <h1>{{ $hospital_info['name'] }}</h1>
+        </div>
+        <div class="receipt-info">
+            <h4>Transaction Receipt: {{ $transaction->tr_number }}</h4>
         </div>
     </div>
-
-    <!-- Transaction Header -->
-    <div class="transaction-header">
-        <h2>Transaction Receipt</h2>
-        <div class="info-grid">
-            <div class="info-row">
-                <div class="info-cell info-label">Receipt No:</div>
-                <div class="info-cell">{{ $transaction->tr_number }}</div>
-                <div class="info-cell info-label">Date:</div>
-                <div class="info-cell">{{ $transaction->created_at->format('d/m/Y H:i:s') }}</div>
-            </div>
-            <div class="info-row">
-                <div class="info-cell info-label">Counter:</div>
-                <div class="info-cell">{{ $transaction->closing->ct_number ?? 'N/A' }}</div>
-                <div class="info-cell info-label">Type:</div>
-                <div class="info-cell">{{ ucfirst($transaction->income_or_expense) }}</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Patient Information -->
-    <div class="patient-info">
-        <h3>Patient Information</h3>
-        <div class="info-grid">
-            <div class="info-row">
-                <div class="info-cell info-label">Patient Name:</div>
-                <div class="info-cell">{{ $patient->name }}</div>
-                <div class="info-cell info-label">MR Number:</div>
-                <div class="info-cell">{{ $patient->ps_number }}</div>
-            </div>
-            <div class="info-row">
-                <div class="info-cell info-label">Age:</div>
-                <div class="info-cell">{{ $patient->age ?? 'N/A' }}</div>
-                <div class="info-cell info-label">Gender:</div>
-                <div class="info-cell">
-                    @if($patient->gender === 'm') Male
-                    @elseif($patient->gender === 'f') Female
-                    @elseif($patient->gender === 't') Transgender
-                    @else N/A
-                    @endif
+    <table style="width:100%">
+        <tr>
+            <td style="width:50%">
+                <!-- Transaction Header -->
+                <div class="transaction-header">
+                    <div class="info-grid">
+                        <div class="info-row">
+                            <div class="info-cell info-label">Date:</div>
+                            <div class="info-cell">{{ $transaction->created_at->format('d/m/Y H:i:s') }}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-cell info-label">Counter:</div>
+                            <div class="info-cell">{{ $transaction->closing->ct_number ?? 'N/A' }}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-cell info-label">Type:</div>
+                            <div class="info-cell">{{ ucfirst($transaction->income_or_expense) }}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-cell info-label">Receptionist:</div>
+                            <div class="info-cell">{{ $transaction->receptionist->name ?? 'N/A' }}</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            @if($patient->contact)
-            <div class="info-row">
-                <div class="info-cell info-label">Contact:</div>
-                <div class="info-cell">{{ $patient->contact }}</div>
-                <div class="info-cell info-label">CNIC:</div>
-                <div class="info-cell">{{ $patient->cnic ?? 'N/A' }}</div>
-            </div>
-            @endif
-        </div>
-    </div>
-
-    <!-- Items Table -->
-    <table class="items-table">
-        <thead>
-            <tr>
-                <th width="5%">S.No</th>
-                <th width="35%">Service</th>
-                <th width="20%">Provider</th>
-                <th width="15%">Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($items as $index => $item)
-            <tr>
-                <td class="text-center">{{ $index + 1 }}</td>
-                <td>{{ $item->service->name }}</td>
-                <td>{{ $item->provider->name ?? 'N/A' }}</td>
-                <td class="text-right">{{ number_format($item->amount, 2) }}</td>
-            </tr>
-            @endforeach
-        </tbody>
+            </td>
+            <td style="width:50%">
+                @if($patient)
+                    <!-- Patient Information -->
+                    <div class="patient-info">
+                        <div class="info-grid">
+                            <div class="info-row">
+                                <div class="info-cell info-label">Patient Name:</div>
+                                <div class="info-cell">{{ $patient->name }}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-cell info-label">MR Number:</div>
+                                <div class="info-cell">{{ $patient->ps_number }}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-cell info-label">Age:</div>
+                                <div class="info-cell">{{ $patient->age ?? 'N/A' }}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-cell info-label">Gender:</div>
+                                <div class="info-cell">
+                                    @if($patient->gender === 'm') Male
+                                    @elseif($patient->gender === 'f') Female
+                                    @elseif($patient->gender === 't') Transgender
+                                    @else N/A
+                                    @endif
+                                </div>
+                            </div>
+                            @if($patient->contact)
+                            <div class="info-row">
+                                <div class="info-cell info-label">Contact:</div>
+                                <div class="info-cell">{{ $patient->contact }}</div>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
+            </td>
+        </tr>
     </table>
 
-    <!-- Payment Information -->
-    <div class="payment-info">
-        <h3>Payment Details</h3>
-        <div class="info-grid">
-            <div class="info-row">
-                <div class="info-cell info-label">Payment Method:</div>
-                <div class="info-cell">{{ ucfirst($transaction->payment_method) }}</div>
-                <div class="info-cell info-label">Amount Paid:</div>
-                <div class="info-cell">{{ number_format($transaction->amount_paid, 2) }}/- only</div>
-            </div>
-            @if($transaction->change_amount > 0)
-            <div class="info-row">
-                <div class="info-cell info-label">Change Returned:</div>
-                <div class="info-cell">{{ number_format($transaction->change_amount, 2) }}/- only</div>
-                <div class="info-cell"></div>
-                <div class="info-cell"></div>
-            </div>
-            @endif
-        </div>
-    </div>
-
-    <!-- Totals Section -->
-    <div class="totals-section">
-        <div class="total-row">
-            <div class="total-label">Subtotal:</div>
-            <div class="total-value">{{ number_format($transaction->total_amount, 2) }}/-</div>
-        </div>
-        <div class="total-row grand-total">
-            <div class="total-label">Grand Total:</div>
-            <div class="total-value">{{ number_format($transaction->total_amount, 2) }}/- only</div>
-        </div>
-    </div>
-    @if($patient->receivables?->count() > 0)
-    <div class="totals-section">
-        <div class="total-row grand-total">
-            <div class="total-label">Outstanding Receivables:</div>
-            <div class="total-value">
-                {{
-                    number_format(
-                        $patient->receivables?->sum('amount'),
-                        2
-                    )
-                }}/- only
-            </div>
-        </div>
-    </div>
+    
+    
+    @if($transaction->income_or_expense === 'INCOME')
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th width="5%">S.No</th>
+                    <th width="35%">Service</th>
+                    <th width="20%">Provider</th>
+                    <th width="15%">Charges</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($items as $index => $item)
+                    @if($item->income_or_expense === 'INCOME')
+                        <tr>
+                            <td class="text-center">{{ $index + 1 }}</td>
+                            <td>
+                                <div>{{ $item->service_id ? $item->service->name : ($item->service_recestation_id ? $item->serviceRecestation->name : '') }}</div>
+                                @if($item->serviceOrder) <div>MRI: {{ $item->serviceOrder->so_number }}</div>@endif
+                            </td>
+                            <td>{{ $item->doctor->name ?? 'N/A' }}</td>
+                            <td class="text-right">{{ number_format($item->amount, 2) }}</td>
+                        </tr>
+                    @endif
+                @endforeach
+            <tfoot class="grand-total">
+                <tr>
+                    <td colspan="2"></td>
+                    <td class="text-right">Total Payment:</td>
+                    <td class="text-right">
+                        {{
+                            number_format(
+                                $transaction->amount,
+                                2
+                            )
+                        }}/- only
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                    <td class="text-right">Payment Method:</td>
+                    <td class="text-right">
+                        {{ ucfirst($transaction->type) ?? 'N/A' }}
+                    </td>
+                </tr>
+            </tfoot>
+            </tbody>
+        </table>
+    @elseif($transaction->income_or_expense === 'EXPENSE')
+        <!-- Items Table -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th width="5%">S.No</th>
+                    <th width="55%">Description</th>
+                    <th width="25%">Category</th>
+                    <th width="15%">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($items as $index => $item)
+                    @if($item->income_or_expense === 'EXPENSE')
+                        <tr>
+                            <td class="text-center">{{ $index + 1 }}</td>
+                            <td>{{ $item->expense->notes ?? '' }}</td>
+                            <td>{{ $item->expense->category->name ?? 'N/A' }}</td>
+                            <td class="text-right">{{ number_format($item->amount, 2) }}</td>
+                        </tr>
+                    @endif
+                @endforeach
+            </tbody>
+            <tfoot class="grand-total">
+                <tr>
+                    <td colspan="2"></td>
+                    <td class="text-right">Total Expense:</td>
+                    <td class="text-right">
+                        {{
+                            number_format(
+                                $transaction->amount,
+                                2
+                            )
+                        }}/- only
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2"></td>
+                    <td class="text-right">Payment Method:</td>
+                    <td class="text-right">
+                        {{ $transaction->income_or_expense === 'INCOME' ? ucfirst($transaction->type) : 'CASH' }}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
     @endif
 
-    <!-- Signature Section -->
-    <div class="signature-section">
-        <div class="signature">
-            <div class="signature-line"></div>
-            <div>Cashier Signature</div>
-        </div>
-        <div class="signature">
-            <div class="signature-line"></div>
-            <div>Patient Signature</div>
-        </div>
-    </div>
+    @if($patient?->receaveables?->count() > 0)
+    <table style="width:100%">
+        <tr>
+            <td style="width:40%"></td>
+            <td>
+                <div class="totals-section text-right">
+                    <div class="total-row inline-block">
+                        <div class="total-label" style="padding:0px;">Outstanding Receivables</div>
+                    </div>
+                    <div class="total-row text-right">
+                        <table style="width:100%;">
+                            <thead>
+                                <tr>
+                                    <th width="30%" class="text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($patient->receaveables as $index => $receaveable)
+                                <tr>
+                                    <td class="text-right">{{ number_format($receaveable->amount, 2) }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot class="grand-total">
+                                <tr>
+                                    <td class="text-right">
+                                        {{
+                                            number_format(
+                                                $patient->receaveables?->sum('amount'),
+                                                2
+                                            )
+                                        }}/- only
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+    @endif
 
     <!-- Footer -->
     <div class="footer">
         <p>Thank you for choosing {{ $hospital_info['name'] }}</p>
+        <p>Phone: {{ $hospital_info['phone'] }} | Email: {{ $hospital_info['email'] }}</p>
         <p>Generated on {{ $generated_at->format('d/m/Y H:i:s') }}</p>
         <p>This is a computer-generated receipt and does not require a signature</p>
     </div>

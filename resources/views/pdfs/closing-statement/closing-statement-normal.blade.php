@@ -3,150 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Hospital Closing Statement - {{ $closing['ct_number'] }}</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'DejaVu Sans', sans-serif;
-            font-size: 12px; 
-            line-height: 1.4; 
-            color: #333;
-            margin: 20mm;
-        }
-        .header { 
-            text-align: center; 
-            margin-bottom: 30px;
-            border-bottom: 3px solid #333;
-            padding-bottom: 15px;
-        }
-        .header h1 { 
-            font-size: 24px; 
-            margin-bottom: 10px; 
-            text-transform: uppercase;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        .header h2 { 
-            font-size: 18px; 
-            margin-bottom: 5px; 
-            color: #34495e;
-        }
-        .header p { 
-            font-size: 12px; 
-            color: #666; 
-        }
-        .info-grid { 
-            display: table;
-            width: 100%;
-            margin-bottom: 30px;
-            border: 1px solid #ddd;
-        }
-        .info-row {
-            display: table-row;
-        }
-        .info-item { 
-            display: table-cell;
-            padding: 10px 15px;
-            border-bottom: 1px solid #eee;
-            vertical-align: top;
-        }
-        .info-item:first-child {
-            border-right: 1px solid #eee;
-            width: 50%;
-        }
-        .section { 
-            margin-bottom: 30px; 
-            break-inside: avoid;
-        }
-        .section-title { 
-            font-weight: bold; 
-            font-size: 16px; 
-            margin-bottom: 15px; 
-            padding: 10px 15px; 
-            background: #f8f9fa; 
-            text-align: center;
-            border: 2px solid #dee2e6;
-            color: #495057;
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-bottom: 20px; 
-            font-size: 11px;
-        }
-        th, td { 
-            border: 1px solid #dee2e6; 
-            padding: 8px 12px; 
-            text-align: left; 
-            vertical-align: top;
-        }
-        th { 
-            background-color: #f8f9fa; 
-            font-weight: bold; 
-            text-align: center;
-            color: #495057;
-        }
-        .amount { 
-            text-align: right !important; 
-            font-weight: bold;
-            font-family: monospace;
-        }
-        .total-row { 
-            font-weight: bold; 
-            background-color: #d4edda; 
-            border-top: 2px solid #28a745;
-        }
-        .total-row td {
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .summary {
-            margin-top: 30px;
-            border-top: 3px solid #333;
-            padding-top: 20px;
-        }
-        .summary-grid {
-            display: table;
-            width: 100%;
-            border: 2px solid #333;
-        }
-        .summary-row {
-            display: table-row;
-        }
-        .summary-label {
-            display: table-cell;
-            padding: 10px 15px;
-            font-weight: bold;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-            border-right: 1px solid #dee2e6;
-        }
-        .summary-value {
-            display: table-cell;
-            padding: 10px 15px;
-            text-align: right;
-            font-weight: bold;
-            font-family: monospace;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .footer { 
-            margin-top: 40px; 
-            text-align: center; 
-            font-size: 11px; 
-            color: #666;
-            border-top: 2px solid #333;
-            padding-top: 20px;
-        }
-        .page-break {
-            page-break-before: always;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
 
-<div class="header">
-    <h1>Hospital Closing Statement</h1>
-    <h2>{{ $closing['ct_number'] }}</h2>
-    <p>{{ $generated_at->format('d/m/Y H:i:s') }}</p>
+<div class="px-2 py-8 max-w-xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center">
+            <div class="text-gray-700 font-semibold text-lg">{{ config('app.name') }}</div>
+        </div>
+        <div class="text-gray-700">
+            <div class="font-bold text-xl mb-2 uppercase">Closing Statement</div>
+            <div class="text-sm">Date: {{ $generated_at->format('d/m/Y') }}</div>
+            <div class="text-sm">Closing #: {{ $closing['ct_number'] }}</div>
+        </div>
+    </div>
 </div>
 
 <div class="info-grid">

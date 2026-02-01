@@ -28,7 +28,7 @@ class TransactionPdfPrintController extends Controller
 
         // Find the transaction by date components and number
         $transaction = Transaction::where('tr_number', $trNumber)
-            ->with(['patient', 'elements.doctor', 'elements.service', 'elements.serviceRecestation', 'elements.serviceOrder', 'elements.doctor', 'closing'])
+            ->with(['patient', 'receaveable', 'elements.doctor', 'elements.expense', 'elements.expense.category', 'elements.service', 'elements.serviceRecestation', 'elements.serviceOrder', 'elements.doctor', 'closing', 'closing.receptionist', 'closing.reception'])
             ->first();
 
 
@@ -44,6 +44,7 @@ class TransactionPdfPrintController extends Controller
         $data = [
             'transaction' => $transaction,
             'patient' => $transaction->patient,
+            'receaveable' => $transaction->receaveable,
             'items' => $transaction->elements,
             'counter' => $transaction->closing,
             'variant' => $variant,
@@ -132,7 +133,7 @@ class TransactionPdfPrintController extends Controller
 
         // Find the transaction by date components and number
         $transaction = Transaction::where('tr_number', $trNumber)
-            ->with(['patient', 'doctor', 'elements.service', 'elements.serviceOrder', 'elements.doctor', 'closing'])
+            ->with(['patient', 'receaveable', 'elements.doctor', 'elements.expense', 'elements.expense.category', 'elements.service', 'elements.serviceRecestation', 'elements.serviceOrder', 'elements.doctor', 'closing', 'closing.receptionist', 'closing.reception'])
             ->first();
 
         if (!$transaction) {
@@ -145,6 +146,7 @@ class TransactionPdfPrintController extends Controller
         $data = [
             'transaction' => $transaction,
             'patient' => $transaction->patient,
+            'receaveable' => $transaction->receaveable,
             'items' => $transaction->elements,
             'counter' => $transaction->closing,
             'variant' => $variant,

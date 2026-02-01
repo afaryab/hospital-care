@@ -15,6 +15,7 @@ class Transaction extends Model
         'closing_id',
         'created_by',
         'patient_id',
+        'receaveable_id',
         'type',
         'income_or_expense',
         'amount',
@@ -88,6 +89,11 @@ class Transaction extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function receaveable()
+    {
+        return $this->belongsTo(Receaveable::class, 'receaveable_id');
     }
 
     public function closing()

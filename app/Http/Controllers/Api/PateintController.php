@@ -106,7 +106,7 @@ class PateintController extends Controller
             if($request->get('age', false)){
                 // Calculate age in days from age in years
                 $birthDate = now()->subYears(intval($request->get('age')));
-                $validated['date_of_birth'] = $birthDate->toDateString();
+                $validated['age_days'] = $birthDate->diffInDays(now());
             }
 
 
@@ -136,7 +136,7 @@ class PateintController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Service $service)
+    public function show(Patient $patient)
     {
         //
     }
@@ -144,15 +144,61 @@ class PateintController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Service $service)
+    public function update($id, Request $request)
     {
-        //
+        $patient = Patient::findOrFail($id);
+        // dd($request->all());
+
+        $data = $request->validate([
+            // 'cnic' => 'nullable|string|size:15|unique:patients,cnic,'.$patient->id,
+            'contact' => 'required|string|max:20',
+            'age' => 'required|integer|min:0',
+            // 'address' => 'nullable|string|max:500',
+            // 'emergency_contact' => 'nullable|string|max:20',
+            // 'blood_group' => 'nullable|string|max:5',
+            'gender' => 'in:m,f,t',
+        ]);
+
+        $patient->contact = $data['contact'];
+
+        $birthDate = now()->subYears(intval($request->get('age')));
+        // Get age in days
+
+        $patient->age_days = $birthDate->diffInDays(now());
+
+
+        if($request->get('cnic', false)){
+            $patient->cnic = $request->get('cnic');
+        }
+
+        if($request->get('address', false)){
+            $patient->address = $request->get('address');
+        }
+
+        if($request->get('emergency_contact', false)){
+            $patient->emergency_contact = $request->get('emergency_contact');
+        }
+
+        if($request->get('blood_group', false)){
+            $patient->blood_group = $request->get('blood_group');
+        }
+
+        if($request->get('gender', false)){
+            $patient->gender = $request->get('gender');
+        }
+
+        $patient->save();
+
+        return response()->json([
+            'message' => 'Patient updated successfully',
+            'data' => $patient
+        ], 200);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Service $service)
+    public function destroy(Patient $patient)
     {
         //
     }
