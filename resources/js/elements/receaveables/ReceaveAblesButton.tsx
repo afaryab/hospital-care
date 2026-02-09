@@ -35,6 +35,8 @@ export default function ReceaveAblesButton({
 	);
 	const [note, setNote] = useState('');
 
+	console.log('Receaveable in button:', receaveable);
+
 	return (
 		<Dialog>
 			<DialogTrigger asChild>

@@ -37,12 +37,12 @@ use App\Models\MigrationLog;
 
 class FetchOld extends Command
 {
-    public static $TOTAL_STEPS = 70;
+    public static $TOTAL_STEPS = 82;
 
     /**
      * The name and signature of the console command.
      */
-    protected $signature = 'app:fetch-old {--step=} {--reset} {--batch-size=10000}';
+    protected $signature = 'app:fetch-old {--step=} {--reset} {--batch-size=2000}';
 
     /**
      * The console command description.
@@ -53,6 +53,8 @@ class FetchOld extends Command
     protected $userCache = [];
     protected $patientCache = [];
     protected $serviceCache = [];
+    protected $serviceRecesitationCache = [];
+    protected $serviceDeptCache = [];
     protected $receptionCache = [];
     protected $closingCache = [];
     protected $expenseCache = [];
@@ -174,6 +176,7 @@ class FetchOld extends Command
     protected function executeStep($currentStep, $batchSize)
     {
         Log::info("Stage: Executing migration step {$currentStep}.");
+        
         switch ($currentStep) {
             case 1:
                 $this->imagesOptimized($batchSize);
@@ -266,18 +269,33 @@ class FetchOld extends Command
                 $this->patientsOptimized(2025, $month, $batchSize);
                 break;
             case 66:
+            case 67:
+            case 68:
+            case 69:
+            case 70:
+            case 71:
+            case 72:
+            case 73:
+            case 74:
+            case 75:
+            case 76:
+            case 77:
+                $month = $currentStep - 65;
+                $this->patientsOptimized(2026, $month, $batchSize);
+                break;
+            case 78:
                 $this->counterClosingsOptimized($batchSize);
                 break;
-            case 67:
+            case 79:
                 $this->expenseCategoriesOptimized($batchSize);
                 break;
-            case 68:
+            case 80:
                 $this->vouchersOptimized($batchSize);
                 break;
-            case 69:
+            case 81:
                 $this->expensesOptimized($batchSize);
                 break;
-            case 70:
+            case 82:
                 $this->counterClosingTransactionsOptimized($batchSize);
                 break;
             default:
@@ -542,11 +560,12 @@ class FetchOld extends Command
                             'created_by' => $service->entered_by,
                             'created_at' => now(),
                             'updated_at' => now(),
+                            'old_id' => $service->id
                         ];
                     }
                     
                     if (!empty($insertData)) {
-                        Service::insertOrIgnore($insertData);
+                        Service::insert($insertData);
                         $this->info("Processed " . count($insertData) . " {$serviceType['key']} services");
                     }
                 });
@@ -570,11 +589,12 @@ class FetchOld extends Command
                                 'created_by' => $service->entered_by,
                                 'created_at' => now(),
                                 'updated_at' => now(),
+                                'old_id' => $service->id
                             ];
                         }
                         
                         if (!empty($insertData)) {
-                            ServiceRecestation::insertOrIgnore($insertData);
+                            ServiceRecestation::insert($insertData);
                             $this->info("Processed " . count($insertData) . " recestation services");
                         }
                     });
@@ -1142,16 +1162,18 @@ class FetchOld extends Command
                 if (!$element->element_type || !$element->element_id) continue;
 
                 $elementData = $this->prepareElementData($element, $transaction);
+                
                 if ($elementData) {
                     $elementData['transaction_id'] = $newTransactionId;
-                    $elementInserts[] = $elementData;
+                    $elementData['closing_id'] = $transactionData['closing_id'];
+                    $elementInserts[] = TransactionElement::create($elementData);
                 }
             }
 
             // Bulk insert elements for this transaction
-            if (!empty($elementInserts)) {
-                TransactionElement::insert($elementInserts);
-            }
+            // if (!empty($elementInserts)) {
+            //     TransactionElement::create($elementInserts);
+            // }
 
             $statusObj->value = $transactionId;
         }
@@ -1212,7 +1234,8 @@ class FetchOld extends Command
                 ]);
 
             case 'RECES':
-                $service = $this->getCachedRecestationService($element->service_id);
+                $service = $this->getCachedRecestationService($element->service_id, $element->element_type);
+                
                 return array_merge($baseData, [
                     'income_or_expense' => 'INCOME',
                     'doctor_id' => null,
@@ -1221,7 +1244,7 @@ class FetchOld extends Command
                     'service_recestation_id' => $service?->id,
                     'expense_id' => null,
                     'exp_voucher_id' => null,
-                    'type' => 'RECES' . ($service ? '-' . $service->department->slug : ''),
+                    'type' => 'RECES-IND',
                 ]);
 
             case 'EXP':
@@ -1358,17 +1381,39 @@ class FetchOld extends Command
         $key = "{$type}_{$id}";
         
         if (!isset($this->serviceCache[$key])) {
-            // Implementation would need service lookup logic
-            // This is simplified for the example
+            // Get ServiceDepartment based on type
+            $serviceDepartment = ServiceDepartment::where('slug', $type)->first();
+
+            $service = Service::where('old_id', $id)
+                ->where('service_department_id', $serviceDepartment?->id)
+                ->first();
+
+            if ($service) {
+                $this->serviceCache[$key] = $service;
+            }
         }
         
         return $this->serviceCache[$key] ?? null;
     }
 
-    protected function getCachedRecestationService($id)
+    protected function getCachedRecestationService($id, $type)
     {
-        // Similar to getCachedService but for recestation services
-        return null; // Simplified for example
+        $key = "{$type}_{$id}";
+        
+        if (!isset($this->serviceRecesitationCache[$key])) {
+            // Get ServiceDepartment based on type
+            $serviceDepartment = ServiceDepartment::where('slug', 'IND')->first();
+
+            $service = ServiceRecestation::where('old_id', $id)
+                ->where('service_department_id', $serviceDepartment?->id)
+                ->first();
+
+            if ($service) {
+                $this->serviceRecesitationCache[$key] = $service;
+            }
+        }
+        
+        return $this->serviceRecesitationCache[$key] ?? null;
     }
 
     protected function getCachedExpense($id)
@@ -1459,12 +1504,12 @@ class FetchOld extends Command
         }
 
         // Apply business logic limits
-        $maxReasonableValue = 1000000; // 1 million
+        // $maxReasonableValue = 1000000; // 1 million
         
-        if ($numericValue > $maxReasonableValue) {
-            $this->warn("Transaction amount {$numericValue} seems unreasonably large, clamping to {$maxReasonableValue}");
-            return $maxReasonableValue;
-        }
+        // if ($numericValue > $maxReasonableValue) {
+        //     $this->warn("Transaction amount {$numericValue} seems unreasonably large, clamping to {$maxReasonableValue}");
+        //     return $maxReasonableValue;
+        // }
 
         // For expenses, ensure positive values
         if ($isExpense && $numericValue < 0) {
@@ -1474,4 +1519,6 @@ class FetchOld extends Command
 
         return $numericValue;
     }
+
+
 }

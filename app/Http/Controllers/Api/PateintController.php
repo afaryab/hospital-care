@@ -56,13 +56,13 @@ class PateintController extends Controller
             $patientContact = $request->get('patient_contact', false);
 
             if($patientContact){
-                $query->where('contact', 'LIKE', "{$patientContact}%");
+                $query->orWhere('contact', 'LIKE', "{$patientContact}%");
             }
 
             $patientGender = $request->get('patient_gender', false);
 
             if($patientGender){
-                $query->where('gender', $patientGender);
+                $query->orWhere('gender', $patientGender);
             }
 
             if(count($exactMatches) > 0){

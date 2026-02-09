@@ -6,7 +6,7 @@ import BulletsWrapper from '@/elements/bullets-wrapper';
 import PatientMiniCard from '@/elements/patient/mini-card';
 import HumanSimpleBody from '@/human/simple-body';
 import AppLayout from '@/layouts/app-layout';
-import { counterExpense, counterList, counterSelectPatient, counterView, home, myCounterList, patientsRegister, patientsRegisterPsNumberDepartment, printClosingStatement, printTransaction } from '@/routes';
+import { counterExpense, counterList, counterSelectDepartment, counterSelectPatient, counterView, home, myCounterList, patientsRegister, patientsRegisterPsNumberDepartment, printClosingStatement, printTransaction } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import clsx from 'clsx';
@@ -50,7 +50,11 @@ export default function TransactionView() {
 
         bullets.push({
             title: `Patient ${transaction?.patient?.ps_number}`,
-            url: '#',
+            url: transaction?.patient?.ps_number && counterSelectDepartment({
+                pYear: transaction.patient.year,
+                pMonth: transaction.patient.month,
+                number: transaction.patient.number
+            }).url,
             active: false
         });
 

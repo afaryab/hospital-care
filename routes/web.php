@@ -81,6 +81,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/que/ultrasound', [WebController::class, 'ultrasoundQueue'])->name('hospital-ultrasound-queue');
     Route::get('/que/radiology', [WebController::class, 'radiologyQueue'])->name('hospital-radiology-queue');
 
+    
+
+
 
     /**
      * Accounts routes

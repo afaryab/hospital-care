@@ -257,7 +257,7 @@ class WebController extends Controller
 
             $psNumber = 'PS/'.$pYear.'/'.$pMonth.'/'.$number;
 
-            $patientData = Patient::with('treatments','transactions', 'receaveables')->where('ps_number', $psNumber)->firstOrFail();
+            $patientData = Patient::with('treatments','transactions','transactions.elements','transactions.elements.service','transactions.elements.serviceOrder', 'receaveables')->where('ps_number', $psNumber)->firstOrFail();
 
 
             $pageData['selectedPatient'] = $patientData;
@@ -467,8 +467,8 @@ class WebController extends Controller
                 'type' => $validatedData['payment_method'],
                 'income_or_expense' => 'INCOME',
                 'amount' => (
-                    $validatedData['amount_paid'] === 0 ? 0 : 
-                    ($validatedData['amount_paid'] - $validatedData['change_amount'])
+                    $validatedData['amount_paid'] === 0 ? 0 : (
+                        $validatedData['total_amount'] > $validatedData['amount_paid'] ? $validatedData['amount_paid'] : $validatedData['amount_paid'] - $validatedData['change_amount'])
                 ),
                 'customer_payed' => $validatedData['amount_paid'],
                 'change' => $validatedData['change_amount'] > 0 ? $validatedData['change_amount'] : 0,

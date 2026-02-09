@@ -31,6 +31,7 @@ return new class extends Migration
             $table->json('service_provider_types')->nullable();
             $table->tinyInteger('is_composit_service')->default(0);
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->integer('old_id')->nullable()->index();
             $table->timestamps();
         });
         Schema::create('service_recestations', function (Blueprint $table) {
@@ -45,6 +46,7 @@ return new class extends Migration
             $table->tinyInteger('have_service_provider')->default(0);
             $table->json('service_provider_types')->nullable();
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
+            $table->integer('old_id')->nullable()->index();
             $table->timestamps();
         });
         Schema::create('service_orders', function (Blueprint $table) {

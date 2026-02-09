@@ -56,6 +56,7 @@ export interface Patient {
     age: number;
     treatments: ServiceOrder[];
     transactions: Transaction[];
+    receaveables: Receaveable[];
 }
 
 export interface ServiceDepartment {

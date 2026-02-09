@@ -20,7 +20,7 @@ import { clsx } from 'clsx';
 import { patient } from '@/actions/App/Http/Controllers/WebController';
 import BulletsWrapper from '@/elements/bullets-wrapper';
 import PatientMiniCard from '@/elements/patient/mini-card';
-import PatientTransactionsHistoryCard from '@/elements/patient/transactions-history-card';
+import PatientHistorySideBar from '@/elements/patient/transactions-history-card';
 import DepartmentMiniCard from '@/elements/department/mini-card';
 
 export default function Counter() {
@@ -503,7 +503,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
 
 function StepTwo({openCounter, patient, departments}:any) {
     return <div className='flex flex-row h-full w-full space-y-4'>
-        <PatientTransactionsHistoryCard patient={patient} className='w-1/4' />
+        <PatientHistorySideBar patient={patient} className='w-1/4' />
         <div className='flex-1 flex flex-col h-full w-full space-y-4 px-4'>
             <PatientMiniCard patient={patient} className='w-full'/>
             <h3 className='text-3xl mb-2 font-bold'>Departments</h3>
@@ -788,7 +788,7 @@ function StepOne({openCounter}:any) {
                     
                     <h3>Exact Match found</h3>
 
-                    {exactMatch.map((p) => <PatientMiniCard patient={p} className='w-full' link={counterSelectDepartment({ pYear: p.year, pMonth: p.month, number: p.number }).url} />)}
+                    {exactMatch.map((p) => <PatientMiniCard patient={p} tempAge={patientAge} tempGender={patientGender} tempContact={patientContact} tempCnic={patientCnic} className='w-full' link={counterSelectDepartment({ pYear: p.year, pMonth: p.month, number: p.number }).url} />)}
                 
                 </>}
 
@@ -796,7 +796,7 @@ function StepOne({openCounter}:any) {
                 
                     <h3>Possible Matches</h3>
 
-                    {patients.map((p, i) => <PatientMiniCard patient={p} className='w-full' link={counterSelectDepartment({pYear: p.year, pMonth: p.month, number: p.number}).url} />)}
+                    {patients.map((p, i) => <PatientMiniCard patient={p} tempAge={patientAge} tempGender={patientGender} tempContact={patientContact} tempCnic={patientCnic} className='w-full' link={counterSelectDepartment({pYear: p.year, pMonth: p.month, number: p.number}).url} />)}
 
                 </>}
 

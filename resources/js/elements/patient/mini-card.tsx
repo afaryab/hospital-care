@@ -1,5 +1,5 @@
 import { Patient } from '@/types';
-import { LucidePhoneIncoming } from 'lucide-react';
+import { LucideAlertTriangle, LucidePhoneIncoming } from 'lucide-react';
 import React from 'react';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { Button } from '@/components/ui/button';
@@ -12,15 +12,23 @@ import { apiPatientsEdit } from '@/routes';
 interface PatientMiniCardProps {
     patient: Patient;
     className?: string;
+    tempAge?: string | number;
+    tempGender?: string;
+    tempContact?: string;
+    tempCnic?: string;
+    link?: string;
 }
 
-const PatientEditPopup: React.FC<{ patient: Patient; link?: string; onClose: () => void }> = ({ patient, link = '', onClose }) => {
+const PatientEditPopup: React.FC<{ patient: Patient; link?: string; onClose: () => void, tempAge?: string | number, tempGender?: string, tempContact?: string, tempCnic?: string }> = ({ patient, link = '', onClose, tempAge, tempGender, tempContact, tempCnic }) => {
 
-    const [patientCnic, setPatientCnic] = React.useState(patient.cnic);
-    const [patientContact, setPatientContact] = React.useState(patient.contact);
-    const [patientAge, setPatientAge] = React.useState(patient.age ? patient.age : '');
-    const [patientGender, setPatientGender] = React.useState(patient.gender);
+    const InitialGender = patient.gender ? patient.gender : (tempGender ? tempGender : '');
 
+
+    const [patientCnic, setPatientCnic] = React.useState(patient.cnic ? patient.cnic : tempCnic ? tempCnic : '');
+    const [patientContact, setPatientContact] = React.useState(patient.contact ? patient.contact : tempContact ? tempContact : '');
+    const [patientAge, setPatientAge] = React.useState(patient.age ? patient.age : tempAge ? tempAge : '');
+    const [patientGender, setPatientGender] = React.useState(InitialGender);
+    console.log({ patient, tempAge, tempGender, tempContact, tempCnic });
     const ContinueToTheLink = () => {
         router.visit(link);
     };
@@ -146,13 +154,13 @@ const PatientEditPopup: React.FC<{ patient: Patient; link?: string; onClose: () 
                             {/* <InputError message={errors.email} /> */}
                         </div>
                         <div className='grid gap-2'>
-                            <Label htmlFor="patient_gender" required={true}>Patient Gender</Label>
+                            <Label htmlFor="gender" required={true}>Patient Gender</Label>
                             <div className='flex flex-row space-x-4'>
-                                <Label htmlFor="patient_gender_m">
+                                <Label htmlFor="gender_m">
                                     <RadioInput
-                                        id="patient_gender_m"
+                                        id="gender_m"
                                         type="radio"
-                                        name="patient_gender"
+                                        name="gender"
                                         required
                                         tabIndex={5}
                                         autoComplete="false"
@@ -161,11 +169,11 @@ const PatientEditPopup: React.FC<{ patient: Patient; link?: string; onClose: () 
                                         checked={patientGender === 'm'} onChange={(e) => setPatientGender(e.target.value as Patient['gender'])}
                                     />
                                     Male</Label>
-                                <Label htmlFor="patient_gender_f">
+                                <Label htmlFor="gender_f">
                                     <RadioInput
-                                        id="patient_gender_f"
+                                        id="gender_f"
                                         type="radio"
-                                        name="patient_gender"
+                                        name="gender"
                                         required
                                         tabIndex={5}
                                         autoComplete="false"
@@ -174,11 +182,11 @@ const PatientEditPopup: React.FC<{ patient: Patient; link?: string; onClose: () 
                                         checked={patientGender === 'f'} onChange={(e) => setPatientGender(e.target.value as Patient['gender'])}
                                     />
                                     Female</Label>
-                                <Label htmlFor="patient_gender_t">
+                                <Label htmlFor="gender_t">
                                     <RadioInput
-                                        id="patient_gender_t"
+                                        id="gender_t"
                                         type="radio"
-                                        name="patient_gender"
+                                        name="gender"
                                         required
                                         tabIndex={5}
                                         autoComplete="false"
@@ -203,7 +211,7 @@ const PatientEditPopup: React.FC<{ patient: Patient; link?: string; onClose: () 
     );
 };
 
-const PatientMiniCard: React.FC<PatientMiniCardProps> = ({ patient, link = '', className = '' }) => {
+const PatientMiniCard: React.FC<PatientMiniCardProps> = ({ patient, link = '', className = '', tempAge = undefined, tempGender = undefined, tempContact = undefined, tempCnic = undefined }) => {
 
     const [showPopup, setShowPopup] = React.useState(false);
 
@@ -221,7 +229,7 @@ const PatientMiniCard: React.FC<PatientMiniCardProps> = ({ patient, link = '', c
                     <span>Set missing Information and continue</span>
                 </Button>
             </div>
-            {showPopup && <PatientEditPopup patient={patient} onClose={() => setShowPopup(false)} link={link} />}
+            {showPopup && <PatientEditPopup patient={patient} tempAge={tempAge} tempGender={tempGender} tempContact={tempContact} tempCnic={tempCnic} onClose={() => setShowPopup(false)} link={link} />}
         </div>
     }
 
@@ -236,6 +244,8 @@ const PatientMiniCard: React.FC<PatientMiniCardProps> = ({ patient, link = '', c
 
 const PatientMiniCardInner: React.FC<PatientMiniCardProps> = ({ patient, className = '' }) => {
     const { ps_number, name, gender, contact, cnic, age } = patient;
+
+    const pendingReceaveablesTotal = patient?.receaveables ? patient?.receaveables?.reduce((total, receaveable) => total + Number(receaveable.amount), 0) : 0;
 
     return (
         <div className={`bg-white dark:bg-neutral-950 dark:text-white rounded-lg shadow-md p-4 ${className}`}>
@@ -268,6 +278,17 @@ const PatientMiniCardInner: React.FC<PatientMiniCardProps> = ({ patient, classNa
                         
                     </div>
                 </div>
+                {pendingReceaveablesTotal > 0 && <div className="flex flex-col space-y-2 text-right">
+                    <div className="text-center">
+                        <span className="text-red-500">
+                            <LucideAlertTriangle size={18} className='inline-block mr-2' />
+                            Receaveables
+                        </span>
+                    </div>
+                    <div className='text-center'>
+                        <span className="font-bold text-2xl">{pendingReceaveablesTotal}</span>
+                    </div>
+                </div>}
                 <div className="flex flex-col space-y-2 text-right">
                     <div className="flex flex-row items-end text-sm">
                         <span className="text-blue-500">
