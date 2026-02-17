@@ -77,9 +77,31 @@ jobs:
           git push origin latest --force
 
 
+  sentry_release:
+    needs: [calculate_version, version_release]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.calculate_version.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create Sentry release (production)
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        with:
+          environment: production
+          version: ${{ env.VERSION }}
+          projects: ${{ secrets.SENTRY_PROJECT }}
+
+
 
   next_app_publish:
-    needs: [calculate_version, version_release]
+    needs: [calculate_version, version_release, sentry_release]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -105,13 +127,17 @@ jobs:
           context: .
           file: ./docker/app/Dockerfile
           push: true
+          build-args: |
+            SENTRY_RELEASE=${{ env.VERSION }}
+            SENTRY_ENVIRONMENT=production
+            APP_ENV=production
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:${{ env.VERSION_NO_V }}
             ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:latest
 
 
   next_cli_publish:
-    needs: [calculate_version, version_release]
+    needs: [calculate_version, version_release, sentry_release]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -137,6 +163,10 @@ jobs:
           context: .
           file: ./docker/cli/Dockerfile
           push: true
+          build-args: |
+            SENTRY_RELEASE=${{ env.VERSION }}
+            SENTRY_ENVIRONMENT=production
+            APP_ENV=production
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:${{ env.VERSION_NO_V }}-cli
             ${{ secrets.DOCKERHUB_USERNAME }}/hospital-care:latest-cli

@@ -1,5 +1,13 @@
 FROM php:8.4-fpm-alpine
 
+# Embed release and production environment
+ARG SENTRY_RELEASE
+ARG SENTRY_ENVIRONMENT=production
+ARG APP_ENV=production
+ENV SENTRY_RELEASE=${SENTRY_RELEASE}
+ENV SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT}
+ENV APP_ENV=${APP_ENV}
+
 # Install system dependencies
 RUN apk add --no-cache \
     git \
