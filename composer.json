@@ -19,8 +19,9 @@
         "laravel/wayfinder": "^0.1.9",
         "livewire/livewire": "^3",
         "owenvoke/blade-fontawesome": "^3.0",
-        "troccoli/blade-health-icons": "^5.0",
-        "processton/abacus": "*"
+        "processton/abacus": "*",
+        "sentry/sentry-laravel": "^4.20",
+        "troccoli/blade-health-icons": "^5.0"
     },
     "require-dev": {
         "doctrine/dbal": "^4.3",
