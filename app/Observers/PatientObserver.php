@@ -15,6 +15,7 @@ class PatientObserver
      */
     public function creating(Patient $patient): void
     {
+        \Sentry\traceMetrics()->count('patients-created', 1, ['id' => $patient->id]);
         // Only generate PS number if it's not already set
         if (empty($patient->ps_number)) {
             $patient->ps_number = $patient->generateCounterNumber();

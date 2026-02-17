@@ -10,7 +10,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { appointments, counter, counterListAll, receaveables, expenses, home, hospitalDentalQueue, hospitalEmergencyQueue, hospitalIndoorQueue, hospitalLaboratoryQueue, hospitalOpdQueue, hospitalRadiologyQueue, hospitalUltrasoundQueue, myCounterList, patientsRegister, register } from '@/routes';
+import { appointments, counter, counterListAll, receaveables, expenses, home, hospitalDentalQueue, hospitalEmergencyQueue, hospitalIndoorQueue, hospitalLaboratoryQueue, hospitalOpdQueue, hospitalRadiologyQueue, hospitalUltrasoundQueue, myCounterList, patientsRegister, register, transactionSearch } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LucideHome, BookAIcon, LucideShoppingBasket, Calendar1, LucideWaypoints, ListTree, ChartLine, Cog, ListPlus, LucideListPlus, LucideBlinds } from 'lucide-react';
@@ -160,11 +160,25 @@ export function AppSidebar() {
                             isActive={page.url.startsWith(
                                 receaveables().url
                             ) || page.url == receaveables().url}
-                            tooltip={{ children: 'Counter' }}
+                            tooltip={{ children: 'Receaveables' }}
                         >
                             <Link href={receaveables().url} prefetch>
                                 <LucideWaypoints />
                                 <span>Receaveables</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={page.url.startsWith(
+                                transactionSearch().url
+                            ) || page.url == transactionSearch().url}
+                            tooltip={{ children: 'Transaction Lookup' }}
+                        >
+                            <Link href={transactionSearch().url} prefetch>
+                                <LucideWaypoints />
+                                <span>Transaction Lookup</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

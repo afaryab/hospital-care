@@ -15,6 +15,7 @@ class TransactionObserver
      */
     public function creating(Transaction $transaction): void
     {
+        \Sentry\traceMetrics()->count('transaction-created', 1, ['id' => $transaction->id]);
         // Only generate PS number if it's not already set
         if (empty($transaction->tr_number)) {
             $transaction->tr_number = $transaction->generateTransactionNumber();

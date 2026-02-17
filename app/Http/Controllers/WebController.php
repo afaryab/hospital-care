@@ -590,16 +590,90 @@ class WebController extends Controller
         ]);
     }
 
-    public function transactionView($tYear, $tMonth, $tDay, $tNumber)
+    public function transactionView($tYear = null, $tMonth = null, $tDay = null, $tNumber = null)
     {
+        if(!$tYear || !$tMonth || !$tDay || !$tNumber){
+            return Inertia::render('transaction/search');
+        }
         $trNumber = 'TR/'.$tYear.'/'.$tMonth.'/'.$tDay.'/'.$tNumber;
 
 
         $transaction = Transaction::with('elements','elements.service','elements.serviceOrder', 'closing','patient','closing.reception', 'patient.receaveables')->where('tr_number', $trNumber)->firstOrFail();
 
-        return Inertia::render('transaction',[
+        return Inertia::render('transaction/view',[
             'transaction' => $transaction
         ]);
+    }
+
+    public function transactionEdit($tYear = null, $tMonth = null, $tDay = null, $tNumber = null){
+        if(!$tYear || !$tMonth || !$tDay || !$tNumber){
+            return Inertia::render('transaction/search');
+        }
+        $trNumber = 'TR/'.$tYear.'/'.$tMonth.'/'.$tDay.'/'.$tNumber;
+
+
+        $transaction = Transaction::with('elements','elements.service','elements.serviceOrder', 'closing','patient','closing.reception', 'patient.receaveables')->where('tr_number', $trNumber)->firstOrFail();
+
+        return Inertia::render('transaction/edit',[
+            'transaction' => $transaction
+        ]);
+    }
+
+    public function transactionUpdate(Request $request)
+    {
+        $validated = $request->validate([
+            'transaction_id' => 'required|exists:transactions,id',
+            'type' => 'nullable|in:CASH,CARD,INSURANCE,OTHER',
+            'amount' => 'nullable|numeric',
+            'customer_payed' => 'nullable|numeric',
+            'change' => 'nullable|numeric',
+            'elements' => 'nullable|array',
+            'elements.*.id' => 'required|exists:transaction_elements,id',
+            'elements.*.amount' => 'nullable|numeric',
+            'elements.*.doctor_id' => 'nullable|exists:users,id',
+            'elements.*.note' => 'nullable|string',
+        ]);
+
+        $transaction = Transaction::with('elements')->findOrFail($validated['transaction_id']);
+
+        if (array_key_exists('type', $validated) && $validated['type'] !== null) {
+            $transaction->type = $validated['type'];
+        }
+        if (array_key_exists('amount', $validated) && $validated['amount'] !== null) {
+            $transaction->amount = $validated['amount'];
+        }
+        if (array_key_exists('customer_payed', $validated) && $validated['customer_payed'] !== null) {
+            $transaction->customer_payed = $validated['customer_payed'];
+        }
+        if (array_key_exists('change', $validated) && $validated['change'] !== null) {
+            $transaction->change = $validated['change'];
+        }
+        $transaction->save();
+
+        if (!empty($validated['elements'])) {
+            foreach ($validated['elements'] as $elementData) {
+                $element = TransactionElement::find($elementData['id']);
+                if (!$element) continue;
+
+                if (array_key_exists('amount', $elementData) && $elementData['amount'] !== null) {
+                    $element->amount = $elementData['amount'];
+                }
+                if (array_key_exists('doctor_id', $elementData)) {
+                    $element->doctor_id = $elementData['doctor_id'];
+                }
+                if (array_key_exists('note', $elementData)) {
+                    $element->note = $elementData['note'];
+                }
+                $element->save();
+            }
+        }
+
+        return redirect()->route('transaction-view', [
+            'tYear' => $transaction->year,
+            'tMonth' => $transaction->month,
+            'tDay' => $transaction->day,
+            'tNumber' => $transaction->number,
+        ])->with('success', 'Transaction updated');
     }
 
 

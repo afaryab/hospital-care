@@ -53,13 +53,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('CT-PS', [WebController::class, 'counterPatient'])->name('counter-select-patient');
     Route::get('CT-PS/{pYear}/{pMonth}/{number}', [WebController::class, 'counterPatient'])->name('counter-select-department');
     Route::get('CT-PS/{pYear}/{pMonth}/{number}/{departmentKey}', [WebController::class, 'counterPatient'])->name('counter-select-department-service');
-    Route::get('CT-TR/{tYear}/{tMonth}/{tDay}/{tNumber}', [WebController::class, 'transactionView'])->name('transaction-view');
+    Route::get('CT-TR/{tYear}/{tMonth}/{tDay}/{tNumber}', [WebController::class, 'transactionView']);
+    Route::get('CT-TR/{tYear}/{tMonth}/{tDay}/{tNumber}/edit', [WebController::class, 'transactionEdit'])->name('transaction-edit');
+
+    Route::get('TR', [WebController::class, 'transactionView'])->name('transaction-search');
+    Route::get('TR/{tYear}/{tMonth}/{tDay}/{tNumber}', [WebController::class, 'transactionView'])->name('transaction-view');
 
     Route::get('RECEAVEABLES', [WebController::class, 'receaveables'])->name('receaveables');
 
     Route::get('CT-EXP', [WebController::class, 'counterExpense'])->name('counter-expense');
 
     Route::post('TR-CREATE', [WebController::class, 'transactionStore'])->name('transaction-store');
+    Route::post('TR-UPDATE', [WebController::class, 'transactionUpdate'])->name('transaction-update');
 
     Route::post('RECEAVEABLES-PAYMENT', [WebController::class, 'receaveablesPayment'])->name('receaveables-payment');
 
@@ -106,6 +111,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::get('DOWNLOAD/TR/{year}/{month}/{day}/{number}', [TransactionPdfPrintController::class, 'download'])
         ->name('download-transaction');
+
+    // Service Order PDF (stream)
+    Route::get('PRINT/SO/{id}', [\App\Http\Controllers\Prints\ServiceOrderPdfPrintController::class, 'stream'])
+        ->name('print-serviceorder');
 
     /**
      * Report routes

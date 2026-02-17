@@ -1,6 +1,7 @@
 import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
 import PatientMiniCard from '@/elements/patient/mini-card';
 import PatientTreatmentsHistoryCard from '@/elements/patient/treatments-history-card';
+import EmergencyClinicalPerforma from '@/elements/serviceorder/view';
 import HumanSimpleBody from '@/human/simple-body';
 import AppLayout from '@/layouts/app-layout';
 import { home, patientsRegister, patientsRegisterPsNumberDepartment } from '@/routes';
@@ -62,8 +63,8 @@ export default function PatientView() {
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72] dark:bg-[#262626]">
                 <PatientMiniCard patient={patientData} className='w-full'/>
                 <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-0 bg-white dark:bg-neutral-950 text-[#1c398e]">
-                    <div className='h-full grid gap-6 grid-cols-2 xl:grid-cols-6 divide-x divide-gray-200'>
-                        <div className='col-span-1 xl:col-span-2 divide-y divide-gray-200'>
+                    <div className='h-full flex flex-row divide-x divide-gray-200'>
+                        <div className='divide-y divide-gray-200'>
                             {serviceDepartments.map((dept: any) => (
                                 <Link href={patientsRegisterPsNumberDepartment({
                                     year: explodedPsid[1] || '',
@@ -79,20 +80,14 @@ export default function PatientView() {
                                 </Link>
                             ))}
                         </div>
-                        <div className='col-span-1 xl:col-span-4 grid gap-6 grid-cols-2'>
+                        <div className='flex-1 grid gap-6 grid-cols-2'>
                             <div className='hidden xl:block'>
                                 <PatientTreatmentsHistoryCard patient={patientData} departmentKey={departmentKey} className='h-full'/>
                             </div>
                             <div className='col-span-2 xl:col-span-1'>
                                 {
                                     serviceOrder ? (
-                                        <div className='p-4 border border-gray-200 rounded-lg'>
-                                            <h2 className='font-bold text-lg mb-2'>Service Order Details</h2>
-                                            <p><span className='font-bold'>SO Number:</span> {serviceOrder.so_number}</p>
-                                            <p><span className='font-bold'>Department:</span> {serviceOrder?.department?.name}</p>
-                                            {/* <p><span className='font-bold'>Service:</span> {serviceOrder.service_name}</p>
-                                            <p><span className='font-bold'>Status:</span> {serviceOrder.status}</p> */}
-                                        </div>
+                                        <EmergencyClinicalPerforma patient={patientData} serviceOrder={serviceOrder} className='h-full'/>
                                     ) : (
                                         <></>
                                     )

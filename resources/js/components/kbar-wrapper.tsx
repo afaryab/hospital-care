@@ -1,14 +1,4 @@
-import React, { useMemo } from "react";
-import {
-  KBarProvider,
-  KBarPortal,
-  KBarPositioner,
-  KBarAnimator,
-  KBarSearch,
-  KBarResults,
-  useMatches,
-  useKBar,
-} from "kbar";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Home,
@@ -46,94 +36,111 @@ import { router } from "@inertiajs/react";
 export default function CommandPaletteLayout({
   children,
   navigate,
-  routes = {},
 }: {
   children: React.ReactNode;
   navigate?: (url: string) => void;
-  routes?: Record<string, string>;
 }) {
-const go = (url: string) => {
-    console.log('Navigating to:', url);
+  const [open, setOpen] = useState(false);
+  const [queryText, setQueryText] = useState("");
+  const [items, setItems] = useState<Array<{ name: string; url?: string; type?: string }>>([]);
+  const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number>(-1);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const go = (url: string) => {
     return navigate ? navigate(url) : router.visit(url);
-};
+  };
 
-  const actions = useMemo(
-    () => [
-      {
-        id: "dashboard",
-        name: "Go to Dashboard",
-        shortcut: ["g", "d"],
-        keywords: "home main overview",
-        section: "Pages",
-        icon: <Home className="w-4 h-4" />,
-        perform: () => go('dashboard'),
-      },
-      {
-        id: "services",
-        name: "Services",
-        shortcut: ["g", "s"],
-        keywords: "products offerings",
-        section: "Pages",
-        icon: <LayoutGrid className="w-4 h-4" />,
-        perform: () => go('services'),
-      },
-      {
-        id: "departments",
-        name: "Departments",
-        shortcut: ["g", "p"],
-        keywords: "service departments",
-        section: "Pages",
-        icon: <Building2 className="w-4 h-4" />,
-        perform: () => routes.departments && go(routes.departments),
-      },
-      {
-        id: "createService",
-        name: "Create New Service",
-        shortcut: ["c", "s"],
-        keywords: "new add service",
-        section: "Actions",
-        icon: <Plus className="w-4 h-4" />,
-        perform: () => routes.createService && go(routes.createService),
-      },
-      {
-        id: "docs",
-        name: "Documentation",
-        shortcut: ["?"],
-        keywords: "help guide manual",
-        section: "Help",
-        icon: <FileText className="w-4 h-4" />,
-        perform: () => routes.help && go(routes.help),
-      },
-      {
-        id: "settings",
-        name: "Settings",
-        shortcut: ["g", "t"],
-        keywords: "preferences account",
-        section: "Pages",
-        icon: <Settings className="w-4 h-4" />,
-        perform: () => routes.settings && go(routes.settings),
-      },
-    ], [routes]);
+  // Global keyboard shortcut: Cmd/Ctrl + K
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isTrigger = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k";
+      if (isTrigger) {
+        e.preventDefault();
+        setOpen(true);
+        setTimeout(() => inputRef.current?.focus(), 0);
+      }
+      if (open && e.key === "Escape") {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  // Debounced API lookup based on queryText
+  useEffect(() => {
+    const controller = new AbortController();
+    const q = queryText.trim();
+    const timer = setTimeout(async () => {
+      if (!q) {
+        setItems([]);
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/lookup?q=${encodeURIComponent(q)}`, {
+          signal: controller.signal,
+          headers: { Accept: "application/json" },
+        });
+        if (!res.ok) throw new Error(`Lookup failed: ${res.status}`);
+        const data = await res.json();
+        const mapped: Array<{ name: string; url?: string; type?: string }> = Array.isArray(data.results)
+          ? data.results.map((item: any) => ({ name: item?.name ?? "Untitled", url: item?.url, type: item?.type }))
+          : [];
+        setItems(mapped);
+      } catch (err) {
+        console.error(err);
+        setItems([]);
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [queryText]);
+
+  // Keyboard navigation inside the list
+  const onInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, items.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      const item = items[activeIndex];
+      if (item && item.type === "link" && item.url) {
+        setOpen(false);
+        go(item.url);
+      }
+    }
+  };
 
   return (
-    <KBarProvider actions={actions} options={{ animations: {
-      enterMs: 160,
-      exitMs: 120,
-    }}}>
-      <div className="min-h-dvh bg-blue-800 text-white antialiased dark:bg-neutral-950 dark:text-neutral-100">
-        {children}
-        <KBarUI />
-        <CommandHintButton />
-      </div>
-    </KBarProvider>
-  );
-}
+    <div className="min-h-dvh bg-blue-800 text-gray-800 antialiased dark:bg-neutral-950 dark:text-neutral-100">
+      {children}
 
-function KBarUI() {
-  return (
-    <KBarPortal>
-      <KBarPositioner className="backdrop-blur-md bg-black/20 fixed inset-0 z-[100] flex items-start justify-center pt-24 p-4">
-        <KBarAnimator>
+      {/* Floating trigger button */}
+      <button
+        onClick={() => {
+          setOpen(true);
+          setTimeout(() => inputRef.current?.focus(), 0);
+        }}
+        className="fixed bottom-5 right-5 z-[99] inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/80 px-4 py-2 shadow-lg backdrop-blur-md transition hover:shadow-xl dark:bg-neutral-900/70 dark:text-neutral-100"
+        aria-label="Open command palette"
+      >
+        <kbd className="rounded-md bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 text-[10px]">⌘K</kbd>
+        <span className="text-sm">Command</span>
+      </button>
+
+      {/* Overlay */}
+      {open && (
+        <div className="backdrop-blur-md bg-black/20 fixed inset-0 z-[100] flex items-start justify-center pt-24 p-4">
           <motion.div
             initial={{ opacity: 0, y: 8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -145,10 +152,17 @@ function KBarUI() {
               <div className="pointer-events-none absolute inset-px rounded-[calc(theme(borderRadius.2xl)-2px)] bg-gradient-to-b from-white/70 to-white/5 dark:from-white/10 dark:to-white/5" />
               <div className="relative p-3">
                 <div className="flex items-center gap-2 rounded-xl border border-neutral-200/60 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-800/60 px-3 py-2 shadow-sm">
-                  <Search className="h-4 w-4 opacity-60" />
-                  <KBarSearch
-                    className="w-full bg-transparent text-sm outline-none placeholder:text-neutral-400"
-                    placeholder="Search commands… (⌘K / Ctrl K)"
+                  <Search className="h-4 w-4 opacity-60 text-gray-800" />
+                  <input
+                    ref={inputRef}
+                    className="w-full text-sm text-gray-800 outline-none bg-transparent placeholder:text-neutral-400"
+                    placeholder="Search… (PS… / TR…)"
+                    value={queryText}
+                    onChange={(e) => {
+                      setQueryText(e.target.value);
+                      setActiveIndex(-1);
+                    }}
+                    onKeyDown={onInputKeyDown}
                     autoFocus
                   />
                   <kbd className="hidden sm:flex items-center gap-0.5 rounded-md bg-neutral-100 dark:bg-neutral-700 px-2 py-1 text-[10px] tracking-wider text-neutral-500 dark:text-neutral-200">⌘K</kbd>
@@ -156,89 +170,56 @@ function KBarUI() {
               </div>
             </div>
 
-            <CommandResults />
+            <div className="max-h-[60vh] min-h-[20vh] overflow-y-auto p-2">
+              {loading && (
+                <div className="px-3 py-3 text-xs uppercase tracking-wider text-neutral-500">Searching…</div>
+              )}
+              {!loading && items.length === 0 && queryText.trim() && (
+                <div className="px-3 py-3 text-xs uppercase tracking-wider text-neutral-500">No results</div>
+              )}
+
+              {!loading && items.length > 0 && (
+                <div>
+                  <div className="px-3 py-2 text-xs uppercase tracking-wider text-neutral-500">Lookup</div>
+                  {items.map((item, idx) => (
+                    <motion.div
+                      key={`${item.name}-${item.url ?? idx}`}
+                      layout
+                      onClick={() => {
+                        if (item.type === "link" && item.url) {
+                          setOpen(false);
+                          go(item.url);
+                        }
+                      }}
+                      className={[
+                        "mx-1 my-1 flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2 text-gray-800 dark:text-neutral-100",
+                        idx === activeIndex
+                          ? "border-transparent bg-gradient-to-r from-indigo-500/10 via-fuchsia-500/10 to-cyan-500/10 ring-1 ring-indigo-500/30 dark:ring-indigo-400/30"
+                          : "border-transparent hover:border-neutral-200/70 dark:hover:border-neutral-700/70",
+                      ].join(" ")}
+                      initial={false}
+                      animate={{ scale: idx === activeIndex ? 1.01 : 1, opacity: 1 }}
+                      transition={{ duration: 0.08 }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="grid h-7 w-7 place-content-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
+                          <HelpCircle className="h-4 w-4" />
+                        </div>
+                        <div className="flex flex-col">
+                          <div className="text-sm font-medium leading-none">{item.name}</div>
+                          {item.type === "static" && (
+                            <div className="text-[11px] text-neutral-500 dark:text-neutral-400">Info</div>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
           </motion.div>
-        </KBarAnimator>
-      </KBarPositioner>
-    </KBarPortal>
-  );
-}
-
-function CommandResults() {
-  const { results } = useMatches();
-
-  return (
-    <div className="max-h-[60vh] overflow-y-auto p-2">
-      <KBarResults
-        items={results}
-        onRender={({ item, active }) => {
-          if (typeof item === "string") {
-            return (
-              <div className="px-3 py-3 text-xs uppercase tracking-wider text-neutral-500">
-                {item}
-              </div>
-            );
-          }
-
-          return <ResultItem action={item} active={active} />;
-        }}
-      />
+        </div>
+      )}
     </div>
-  );
-}
-
-function ResultItem({ action, active }: { action: any; active: boolean }) {
-  return (
-    <motion.div
-      layout
-      className={[
-        "mx-1 my-1 flex items-center justify-between rounded-xl border px-3 py-2",
-        active
-          ? "border-transparent bg-gradient-to-r from-indigo-500/10 via-fuchsia-500/10 to-cyan-500/10 ring-1 ring-indigo-500/30 dark:ring-indigo-400/30"
-          : "border-transparent hover:border-neutral-200/70 dark:hover:border-neutral-700/70",
-      ].join(" ")}
-      initial={false}
-      animate={{ scale: active ? 1.01 : 1, opacity: 1 }}
-      transition={{ duration: 0.08 }}
-    >
-      <div className="flex items-center gap-3">
-        <div className="grid h-7 w-7 place-content-center rounded-lg bg-neutral-100 dark:bg-neutral-800">
-          {action.icon ?? <HelpCircle className="h-4 w-4" />}
-        </div>
-        <div className="flex flex-col">
-          <div className="text-sm font-medium leading-none">{action.name}</div>
-          {action.subtitle && (
-            <div className="text-[11px] text-neutral-500 dark:text-neutral-400">{action.subtitle}</div>
-          )}
-        </div>
-      </div>
-
-      {action.shortcut?.length ? (
-        <div className="hidden sm:flex items-center gap-1">
-          {action.shortcut.map((sc: string, i: number) => (
-            <kbd
-              key={i}
-              className="rounded-md bg-neutral-100 dark:bg-neutral-800 px-1.5 py-1 text-[10px] tracking-wider text-neutral-600 dark:text-neutral-300 shadow"
-            >
-              {sc}
-            </kbd>
-          ))}
-        </div>
-      ) : null}
-    </motion.div>
-  );
-}
-
-function CommandHintButton() {
-  const { query } = useKBar();
-  return (
-    <button
-      onClick={() => query.toggle()}
-      className="fixed bottom-5 right-5 z-[99] inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/80 px-4 py-2 shadow-lg backdrop-blur-md transition hover:shadow-xl dark:bg-neutral-900/70 dark:text-neutral-100"
-      aria-label="Open command palette"
-    >
-      <kbd className="rounded-md bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 text-[10px]">⌘K</kbd>
-      <span className="text-sm">Command</span>
-    </button>
   );
 }
