@@ -12,6 +12,12 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
+use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse as TwoFactorLoginResponseContract;
+use App\Http\Responses\CaptivePortalLoginResponse;
+use App\Http\Responses\CaptivePortalRegisterResponse;
+use App\Http\Responses\CaptivePortalTwoFactorLoginResponse;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -20,7 +26,10 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Bind custom Fortify responses to handle captive portal flow
+        $this->app->singleton(LoginResponseContract::class, CaptivePortalLoginResponse::class);
+        $this->app->singleton(RegisterResponseContract::class, CaptivePortalRegisterResponse::class);
+        $this->app->singleton(TwoFactorLoginResponseContract::class, CaptivePortalTwoFactorLoginResponse::class);
     }
 
     /**
@@ -47,11 +56,23 @@ class FortifyServiceProvider extends ServiceProvider
      */
     private function configureViews(): void
     {
-        Fortify::loginView(fn (Request $request) => Inertia::render('auth/login', [
+        Fortify::loginView(function (Request $request) {
+            // Capture captive portal params from query into session to persist across auth flow
+            if ($request->query('clientMac')) {
+                $request->session()->put('captive.clientMac', $request->query('clientMac'));
+            }
+            if ($request->query('target')) {
+                $request->session()->put('captive.target', $request->query('target'));
+            }
+
+            return Inertia::render('auth/login', [
             'canResetPassword' => Features::enabled(Features::resetPasswords()),
             'canRegister' => Features::enabled(Features::registration()),
             'status' => $request->session()->get('status'),
-        ]));
+                'clientMac' => $request->query('clientMac'),
+                'target' => $request->query('target'),
+            ]);
+        });
 
         Fortify::resetPasswordView(fn (Request $request) => Inertia::render('auth/reset-password', [
             'email' => $request->email,
@@ -66,7 +87,15 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/register'));
+        Fortify::registerView(function (Request $request) {
+            if ($request->query('clientMac')) {
+                $request->session()->put('captive.clientMac', $request->query('clientMac'));
+            }
+            if ($request->query('target')) {
+                $request->session()->put('captive.target', $request->query('target'));
+            }
+            return Inertia::render('auth/register');
+        });
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));
 

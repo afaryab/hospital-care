@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'captive_portal' => [
+        'enabled' => env('ENABLE_CAPTIVE_PORTAL', false),
+        // Support both correct and mistyped env name
+        'endpoint' => env('CAPTIVE_PORTAL_ENDPOINT', env('CPTIVE_PORTAL_ENDPOINT')),
+        'duration' => env('CAPTIVE_PORTAL_DURATION', 3600),
+    ],
+
 ];
