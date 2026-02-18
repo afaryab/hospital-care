@@ -48,7 +48,7 @@ class PateintController extends Controller
             if($patientName){
                 $query->where(function ($query) use ($patientName) {
                     $query->where('name', 'LIKE', "{$patientName}%")
-                        ->orWhere('name', 'LIKE', "{$patientName}%")
+                        ->orWhere('name', 'LIKE', "%{$patientName}%")
                         ->orWhere('name', 'LIKE', "%{$patientName}");
                 });
             }
@@ -75,7 +75,7 @@ class PateintController extends Controller
             return response()->json([
                 "data" => [
                     "exact" => $exactMatches,
-                    "possible" => $query->limit(3)->get()
+                    "possible" => $query->limit(7)->get()
                 ]
             ]);
         }catch(\Exception $e){

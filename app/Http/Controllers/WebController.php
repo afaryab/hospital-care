@@ -8,6 +8,7 @@ use App\Models\Closing;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseVoucher;
+use App\Models\Panel;
 use App\Models\Patient;
 use App\Models\Receaveable;
 use App\Models\Reception;
@@ -19,6 +20,7 @@ use App\Models\Transaction;
 use App\Models\TransactionElement;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -226,11 +228,11 @@ class WebController extends Controller
 
         $ctNumber = 'CT/'.$ctYear.'/'.$ctMonth.'/'.$ctNumber;
 
-        $openCounter = Closing::with('transactions','transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceOrder', 'transactions.elements.expense', 'transactions.elements.expVoucher')->where('ct_number',$ctNumber)->first();
+        $openCounter = Closing::with('transactions','transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceRecestation', 'transactions.elements.serviceOrder', 'transactions.elements.expense', 'transactions.elements.expVoucher')->where('ct_number',$ctNumber)->first();
 
         //->where('receptionist_id', $request->user()->id)
 
-        // dd($openCounter);
+        // dd($openCounter->transactions->toArray());
 
         if(!$openCounter){
             return redirect(route('counter-open'));
@@ -269,6 +271,8 @@ class WebController extends Controller
             $pageData['departments'] = ServiceDepartment::all();
             
         }else{
+
+            // $pageData['panels'] = Panel::all();
 
             $isRecesitation = Str::startsWith($departmentKey, 'RECES-');
             $departmentKey = $isRecesitation ? Str::replaceFirst('RECES-', '', $departmentKey) : $departmentKey;
@@ -444,7 +448,8 @@ class WebController extends Controller
                 'patient_id' => 'required|exists:patients,id',
                 'department_key' => 'required|string',
                 'total_amount' => 'required|numeric',
-                'payment_method' => 'required|in:CASH,CARD,INSURANCE,OTHER',
+                'payment_method' => 'required|in:CASH,CARD,INSURANCE,CHEQUE',
+                'panel_id' => 'required_if:payment_method,INSURANCE|exists:panels,id',
                 'amount_paid' => 'required|numeric',
                 'change_amount' => 'required|numeric',
                 'items' => 'array|min:1',
@@ -466,6 +471,7 @@ class WebController extends Controller
                 'patient_id' => $validatedData['patient_id'],
                 'type' => $validatedData['payment_method'],
                 'income_or_expense' => 'INCOME',
+                'panel_id' => $validatedData['payment_method'] === 'INSURANCE' ? $validatedData['panel_id'] : null,
                 'amount' => (
                     $validatedData['amount_paid'] === 0 ? 0 : (
                         $validatedData['total_amount'] > $validatedData['amount_paid'] ? $validatedData['amount_paid'] : $validatedData['amount_paid'] - $validatedData['change_amount'])
@@ -492,6 +498,7 @@ class WebController extends Controller
                     'service_order_id' => $isRecesitation ? $request->get('service_order_id', null) : null,
                     'doctor_id' => $item['provider_id'] ?? null,
                     'type' => $request->department_key,
+                    'panel_id' => $validatedData['payment_method'] === 'INSURANCE' ? $validatedData['panel_id'] : null,
                     'income_or_expense' => 'INCOME',
                     'amount' => $item['total'],
                     'orignal_amount' => $service ? $service->charges * $item['quantity'] : 0,
@@ -534,13 +541,15 @@ class WebController extends Controller
             return redirect(route('counter-open'));
         }
 
-        $request->validate([
+        $validatedData = $request->validate([
             'receaveable_id' => 'required|exists:receaveables,id',
-            'amount_to_collect' => 'required|numeric',
+            'payment_method' => 'required|in:CASH,CARD,INSURANCE,CHEQUE',
+            'panel_id' => 'required_if:payment_method,INSURANCE|exists:panels,id',
+            'amount_to_collect' => 'required|numeric|gt:0',
             'note' => 'nullable|string',
         ]);
 
-        $receaveable = Receaveable::with('transaction')->findOrFail($request->receaveable_id);
+        $receaveable = Receaveable::with('transaction')->findOrFail($validatedData['receaveable_id']);
 
         $transaction = $receaveable->transaction;
 
@@ -556,9 +565,10 @@ class WebController extends Controller
             'closing_id' => $openCounter->id,
             'created_by' => $request->user()->id,
             'patient_id' => $receaveable->patient_id,
-            'type' => 'CASH',
+            'type' => $validatedData['payment_method'],
             'income_or_expense' => 'INCOME',
-            'amount' => $request->amount_to_collect,
+            'amount' => $validatedData['amount_to_collect'],
+            'panel_id' => $validatedData['payment_method'] === 'INSURANCE' ? $validatedData['panel_id'] : null,
         ]);
 
         $newTransactionElement = TransactionElement::create([
@@ -570,12 +580,12 @@ class WebController extends Controller
             'type' => $element->type,
             'income_or_expense' => $element->income_or_expense,
             'service_id' => $element->service_id,
-            'amount' => $request->amount_to_collect,
-            'note' => $request->note,
+            'amount' => $validatedData['amount_to_collect'],
+            'note' => $validatedData['note'],
         ]);
 
 
-        $receaveable->amount -= $request->amount_to_collect;
+        $receaveable->amount -= $validatedData['amount_to_collect'];
         if($receaveable->amount <= 0){
             $receaveable->status = 'paid';
             $receaveable->amount = 0;
@@ -712,65 +722,284 @@ class WebController extends Controller
 
     public function opdQueue()
     {
+        $type = 'OPD';
+        // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
+        $base = ServiceOrder::query()
+            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->where('type', $type)
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
 
-        $serviceOrders = ServiceOrder::with('patient','service')->where('type','OPD')->where('status','open')->orderBy('created_at','ASC')->paginate();
+        // Filter by rn in an outer query
+        $ids = DB::query()
+            ->fromSub($base, 't')
+            ->where('t.rn', '<=', 50)
+            ->orderBy('t.service_id')
+            ->orderBy('t.created_at', 'ASC')
+            ->pluck('id');
 
-        return Inertia::render('hospital/queue',[
-            'serviceOrders' => $serviceOrders
+        $serviceOrdersByService = ServiceOrder::query()
+            ->with([
+                'patient:id,name,ps_number',
+                'service:id,name'
+            ])
+            ->whereIn('id', $ids)
+            ->orderBy('service_id')
+            ->orderBy('created_at', 'ASC')
+            ->get()
+            ->groupBy('service_id')
+            // Filter out null keys (orders without a service) just in case
+            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+
+        // Get department services
+        $serviceIds = $serviceOrdersByService->keys()->filter()->values();
+        $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
+        
+        return Inertia::render('hospital/opd-queue',[
+            'serviceOrdersByService' => $serviceOrdersByService,
+            'services' => $services
         ]);
     }
 
     public function indoorQueue()
     {
 
-        $serviceOrders = ServiceOrder::with('patient','service')->where('type','IND')->where('status','open')->orderBy('created_at','ASC')->paginate();
+        $type = 'IND';
+        // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
+        $base = ServiceOrder::query()
+            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->where('type', $type)
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
+
+        // Filter by rn in an outer query
+        $ids = DB::query()
+            ->fromSub($base, 't')
+            ->where('t.rn', '<=', 15)
+            ->orderBy('t.service_id')
+            ->orderBy('t.created_at', 'ASC')
+            ->pluck('id');
+
+        $serviceOrdersByService = ServiceOrder::query()
+            ->with([
+                'patient:id,name,ps_number',
+                'service:id,name'
+            ])
+            ->whereIn('id', $ids)
+            ->orderBy('service_id')
+            ->orderBy('created_at', 'ASC')
+            ->get()
+            ->groupBy('service_id')
+            // Filter out null keys (orders without a service) just in case
+            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+
+        // Get department services
+        $serviceIds = $serviceOrdersByService->keys()->filter()->values();
+        $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
         
-        return Inertia::render('hospital/queue',[
-            'serviceOrders' => $serviceOrders
+        return Inertia::render('hospital/opd-queue',[
+            'serviceOrdersByService' => $serviceOrdersByService,
+            'services' => $services
         ]);
     }
 
     public function emergencyQueue()
     {
-        $serviceOrders = ServiceOrder::with('patient','service')->where('type','EMER')->where('status','open')->orderBy('created_at','ASC')->paginate();
+        $type = 'EMER';
+        // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
+        $base = ServiceOrder::query()
+            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->where('type', $type)
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
 
-        return Inertia::render('hospital/queue',[
-            'serviceOrders' => $serviceOrders
+        // Filter by rn in an outer query
+        $ids = DB::query()
+            ->fromSub($base, 't')
+            ->where('t.rn', '<=', 50)
+            ->orderBy('t.service_id')
+            ->orderBy('t.created_at', 'ASC')
+            ->pluck('id');
+
+        $serviceOrdersByService = ServiceOrder::query()
+            ->with([
+                'patient:id,name,ps_number',
+                'service:id,name'
+            ])
+            ->whereIn('id', $ids)
+            ->orderBy('service_id')
+            ->orderBy('created_at', 'ASC')
+            ->get()
+            ->groupBy('service_id')
+            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+
+        // Get department services
+        $serviceIds = $serviceOrdersByService->keys()->filter()->values();
+        $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
+        
+        return Inertia::render('hospital/opd-queue',[
+            'serviceOrdersByService' => $serviceOrdersByService,
+            'services' => $services
         ]);
     }
 
     public function dentalQueue()
     {
-        $serviceOrders = ServiceOrder::with('patient','service')->where('type','DENTAL')->where('status','PENDING')->orderBy('created_at','ASC')->paginate();
+        $type = 'DNT';
+        // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
+        $base = ServiceOrder::query()
+            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->where('type', $type)
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
 
-        return Inertia::render('hospital/queue',[
-            'serviceOrders' => $serviceOrders
+        // Filter by rn in an outer query
+        $ids = DB::query()
+            ->fromSub($base, 't')
+            ->where('t.rn', '<=', 50)
+            ->orderBy('t.service_id')
+            ->orderBy('t.created_at', 'ASC')
+            ->pluck('id');
+
+        $serviceOrdersByService = ServiceOrder::query()
+            ->with([
+                'patient:id,name,ps_number',
+                'service:id,name'
+            ])
+            ->whereIn('id', $ids)
+            ->orderBy('service_id')
+            ->orderBy('created_at', 'ASC')
+            ->get()
+            ->groupBy('service_id')
+            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+
+        // Get department services
+        $serviceIds = $serviceOrdersByService->keys()->filter()->values();
+        $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
+        
+        return Inertia::render('hospital/opd-queue',[
+            'serviceOrdersByService' => $serviceOrdersByService,
+            'services' => $services
         ]);
     }
 
     public function laboratoryQueue()
     {
-        $serviceOrders = ServiceOrder::with('patient','service')->where('type','LAB')->where('status','PENDING')->orderBy('created_at','ASC')->paginate();
+        $type = 'DNT';
+        // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
+        $base = ServiceOrder::query()
+            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->where('type', $type)
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
 
-        return Inertia::render('hospital/queue',[
-            'serviceOrders' => $serviceOrders
+        // Filter by rn in an outer query
+        $ids = DB::query()
+            ->fromSub($base, 't')
+            ->where('t.rn', '<=', 50)
+            ->orderBy('t.service_id')
+            ->orderBy('t.created_at', 'ASC')
+            ->pluck('id');
+
+        $serviceOrdersByService = ServiceOrder::query()
+            ->with([
+                'patient:id,name,ps_number',
+                'service:id,name'
+            ])
+            ->whereIn('id', $ids)
+            ->orderBy('service_id')
+            ->orderBy('created_at', 'ASC')
+            ->get()
+            ->groupBy('service_id')
+            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+
+        // Get department services
+        $serviceIds = $serviceOrdersByService->keys()->filter()->values();
+        $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
+        
+        return Inertia::render('hospital/opd-queue',[
+            'serviceOrdersByService' => $serviceOrdersByService,
+            'services' => $services
         ]);
     }
 
     public function ultrasoundQueue()
     {
-        $serviceOrders = ServiceOrder::with('patient','service')->where('type','ULTRASOUND')->where('status','PENDING')->orderBy('created_at','ASC')->paginate();
-        return Inertia::render('hospital/queue',[
-            'serviceOrders' => $serviceOrders
+        $type = 'ULT';
+        // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
+        $base = ServiceOrder::query()
+            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->where('type', $type)
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
+
+        // Filter by rn in an outer query
+        $ids = DB::query()
+            ->fromSub($base, 't')
+            ->where('t.rn', '<=', 50)
+            ->orderBy('t.service_id')
+            ->orderBy('t.created_at', 'ASC')
+            ->pluck('id');
+
+        $serviceOrdersByService = ServiceOrder::query()
+            ->with([
+                'patient:id,name,ps_number',
+                'service:id,name'
+            ])
+            ->whereIn('id', $ids)
+            ->orderBy('service_id')
+            ->orderBy('created_at', 'ASC')
+            ->get()
+            ->groupBy('service_id')
+            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+
+        // Get department services
+        $serviceIds = $serviceOrdersByService->keys()->filter()->values();
+        $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
+        
+        return Inertia::render('hospital/opd-queue',[
+            'serviceOrdersByService' => $serviceOrdersByService,
+            'services' => $services
         ]);
     }
 
     public function radiologyQueue()
     {
-        $serviceOrders = ServiceOrder::with('patient','service')->where('type','XRAY')->where('status','PENDING')->orderBy('created_at','ASC')->paginate();
+        $type = 'RAD';
+        // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
+        $base = ServiceOrder::query()
+            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->where('type', $type)
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
 
-        return Inertia::render('hospital/queue',[
-            'serviceOrders' => $serviceOrders
+        // Filter by rn in an outer query
+        $ids = DB::query()
+            ->fromSub($base, 't')
+            ->where('t.rn', '<=', 50)
+            ->orderBy('t.service_id')
+            ->orderBy('t.created_at', 'ASC')
+            ->pluck('id');
+
+        $serviceOrdersByService = ServiceOrder::query()
+            ->with([
+                'patient:id,name,ps_number',
+                'service:id,name'
+            ])
+            ->whereIn('id', $ids)
+            ->orderBy('service_id')
+            ->orderBy('created_at', 'ASC')
+            ->get()
+            ->groupBy('service_id')
+            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+
+        // Get department services
+        $serviceIds = $serviceOrdersByService->keys()->filter()->values();
+        $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
+        
+        return Inertia::render('hospital/opd-queue',[
+            'serviceOrdersByService' => $serviceOrdersByService,
+            'services' => $services
         ]);
     }
 

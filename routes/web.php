@@ -42,8 +42,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('CT-CLOSE', [WebController::class, 'counterClose'])->name('counter-close-post');
     Route::get('CT', [WebController::class, 'counter'])->name('counter');
     
-    Route::get('CT/{ctYear}', [WebController::class, 'countersList'])->name('counters-year');
-    Route::get('CT/{ctYear}/{ctMonth}', [WebController::class, 'countersList'])->name('counters-year-month');
+    // Route::get('CT/{ctYear}', [WebController::class, 'countersList'])->name('counters-year');
+    // Route::get('CT/{ctYear}/{ctMonth}', [WebController::class, 'countersList'])->name('counters-year-month');
     Route::get('CT/{ctYear}/{ctMonth}/{ctNumber}', [WebController::class, 'counterView'])->name('counter-view');
 
     Route::get('MY-CT-LIST', [WebController::class, 'userCountersList'])->name('my-counter-list');
@@ -55,6 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('CT-PS/{pYear}/{pMonth}/{number}/{departmentKey}', [WebController::class, 'counterPatient'])->name('counter-select-department-service');
     Route::get('CT-TR/{tYear}/{tMonth}/{tDay}/{tNumber}', [WebController::class, 'transactionView']);
     Route::get('CT-TR/{tYear}/{tMonth}/{tDay}/{tNumber}/edit', [WebController::class, 'transactionEdit'])->name('transaction-edit');
+    Route::get('CT-TR/edit', [WebController::class, 'transactionEdit'])->name('transaction-edit-search');
 
     Route::get('TR', [WebController::class, 'transactionView'])->name('transaction-search');
     Route::get('TR/{tYear}/{tMonth}/{tDay}/{tNumber}', [WebController::class, 'transactionView'])->name('transaction-view');

@@ -12,6 +12,26 @@ import clsx from 'clsx';
 import { LucideChevronDown, LucideChevronRight, LucideChevronUp, LucidePrinter, LucideShoppingBasket, LucideX } from 'lucide-react';
 import { useState } from 'react';
 
+function formatRelativeTime(input: string | Date): string {
+    const date = typeof input === 'string' ? new Date(input) : input;
+    if (!date || isNaN(date.getTime())) return '';
+    const diffMs = Date.now() - date.getTime();
+    const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+
+    const seconds = Math.round(diffMs / 1000);
+    if (seconds < 60) return rtf.format(-seconds, 'second');
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) return rtf.format(-minutes, 'minute');
+    const hours = Math.round(minutes / 60);
+    if (hours < 24) return rtf.format(-hours, 'hour');
+    const days = Math.round(hours / 24);
+    if (days < 30) return rtf.format(-days, 'day');
+    const months = Math.round(days / 30);
+    if (months < 12) return rtf.format(-months, 'month');
+    const years = Math.round(months / 12);
+    return rtf.format(-years, 'year');
+}
+
 export default function CounterView() {
 
     const { openCounter } = usePage().props
@@ -127,33 +147,80 @@ export default function CounterView() {
                                             }).url + `?variant=${printVariant}`}
                                             className='w-full min-h-[300px] h-full border'
                                         ></iframe>
-                                    </div> : <div className='flex-1 border shadow-lg h-full grid grid-cols-1 overflow-y-auto min-h-96 max-h-[700px] my-4 '>
-                                        <table className='text-xs text-gray-700 uppercase bg-gray-50 dark:bg-neutral-950 dark:text-gray-400 text-left'>
+                                    </div> : <div className='overflow-y-auto min-h-96 max-h-[700px] my-4 w-full'>
+                                        <table className='text-xs text-gray-700 uppercase bg-white dark:bg-neutral-950 dark:text-gray-400 text-left w-full'>
                                             <thead className='text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400'>
                                                 <tr className='border-b-2'>
-                                                    <th className='px-4 py-2'>Transaction</th>
-                                                    <th className='px-4 py-2'>Patient</th>
-                                                    <th className='px-4 py-2'>Drives</th>
-                                                    <th className='px-4 py-2'>Amount</th>
-                                                    <th className='px-4 py-2'>Date</th>
+                                                    <th className='sticky top-0 px-4 py-2'>Transaction</th>
+                                                    <th className='sticky top-0 px-4 py-2'>Patient</th>
+                                                    <th className='sticky top-0 px-4 py-2'>Drives</th>
+                                                    <th className='sticky top-0 px-4 py-2'>Amount</th>
+                                                    <th className='sticky top-0 px-4 py-2'>Date</th>
+                                                    <th className='sticky top-0 px-4 py-2'>Date</th>
                                                 </tr>
                                             </thead>
                                             {openCounter?.transactions.length > 0 && <tbody>
                                                 {openCounter?.transactions?.map((transaction:any, index:number) => (
-                                                    <tr key={index} className='border-b dark:border-gray-600'>
+                                                    <tr key={index} className='border-b dark:border-gray-600 h-12'>
                                                         <td className='px-4 py-2 font-medium text-gray-900 dark:text-white'><Link href={'/CT-'+transaction.tr_number} target='_blank' className='text-blue-600 hover:underline'>
                                                             {transaction.income_or_expense == 'INCOME' ? (
-                                                                <LucideChevronUp className='inline-block mr-1 h-4 w-4 text-green-500' />
+                                                                <LucideChevronUp className='inline-block mr-1 h-6 w-6 text-green-500' />
                                                             ) : (
-                                                                <LucideChevronDown className='inline-block mr-1 h-4 w-4 text-red-500' />
+                                                                <LucideChevronDown className='inline-block mr-1 h-6 w-6 text-red-500' />
                                                             )}
 
-                                                                    {transaction.tr_number}
+                                                                    <div className='inline-block mr-1 h-6 w-6 text-gray-500'>
+                                                                        {transaction.tr_number}
+                                                                    </div>
+                                                                    <div className='flex flex-row'>
+                                                                        {transaction.income_or_expense == 'INCOME' && (
+                                                                            <>
+                                                                                {transaction.elements.map((element:any, idx:number) => (<>
+                                                                                    {element.service && <span key={idx} className='text-blue-600 hover:underline ml-2 text-xs bg-blue-100 px-1 rounded border border-blue-300'>
+                                                                                        {element?.service?.name}
+                                                                                    </span>}
+                                                                                    {element.service_recestation && <span key={idx} className='text-yellow-600 hover:underline ml-2 text-xs bg-yellow-100 px-1 rounded border border-yellow-300'>
+                                                                                        {element?.service_recestation?.name}
+                                                                                    </span>}
+                                                                                    </>
+                                                                                ))}
+                                                                            </>
+                                                                        )}
+                                                                        {transaction.income_or_expense == 'EXPENSE' && (
+                                                                            <>
+                                                                                {transaction.elements.map((element:any, idx:number) => (<>
+                                                                                        {element.exp_voucher && <span key={idx} className='text-blue-600 hover:underline ml-2 text-xs bg-blue-100 px-1 rounded border border-blue-300'>
+                                                                                            {element.exp_voucher.type}: {element.exp_voucher.vc_number}
+                                                                                        </span>}
+                                                                                        {element.expense && <span className='inline-block mr-1 h-6 w-6 text-gray-500'>
+                                                                                            {element.expense.type}: {element.expense.id}
+                                                                                        </span>}
+                                                                                    </>
+                                                                                ))}
+                                                                            </>
+                                                                        )}
+                                                                    </div>
                                                                 </Link></td>
                                                         <td className='px-4 py-2 font-medium text-gray-900 dark:text-white'>{
                                                             transaction.income_or_expense == 'INCOME' ? (
                                                                 <Link href={'/'+transaction.patient.ps_number} target='__blank' className='text-blue-600 hover:underline'>
-                                                                    {transaction.patient.ps_number}
+                                                                    <div className='inline-block mr-1 h-6 w-6 text-gray-500'>
+                                                                        {transaction.patient.ps_number}
+                                                                    </div>
+                                                                    <div className='flex flex-row'>
+                                                                        {transaction.patient.name && <span className='text-blue-600 hover:underline text-xs bg-blue-100 px-1 rounded-l border border-blue-300'>
+                                                                            {transaction.patient.name}
+                                                                        </span>}
+                                                                        {transaction.patient.contact && <span className='text-gray-600 hover:underline text-xs bg-gray-100 px-1 border border-gray-300'>
+                                                                            {transaction.patient.contact}
+                                                                        </span>}
+                                                                        {transaction.patient.age && <span className='text-green-600 hover:underline text-xs bg-green-100 px-1 border border-green-300'>
+                                                                            {transaction.patient.age} yrs
+                                                                        </span>}
+                                                                        {transaction.patient.gender && <span className='text-pink-600 hover:underline text-xs bg-pink-100 px-1 rounded-r border border-pink-300'>
+                                                                            {transaction.patient.gender}
+                                                                        </span>}
+                                                                    </div>
                                                                 </Link>
                                                             ) : (
                                                                 transaction.income_or_expense
@@ -161,31 +228,29 @@ export default function CounterView() {
                                                         }</td>
                                                         <td className='px-4 py-2 font-medium text-gray-900 dark:text-white'>
                                                             {transaction.elements && transaction.elements.length > 0 ? (
-                                                                <ul className='list-none list-inside'>
-                                                                    {transaction.elements.map((element:any, idx:number) => (
-                                                                        element.service_order && <li key={idx}>
-                                                                            <Link href={'/'+element.service_order.so_number} target='__blank' className='text-blue-600 hover:underline'>
-                                                                                {element?.service_order?.so_number}
-                                                                            </Link>
-                                                                        </li>
-                                                                    ))}
-                                                                    {transaction?.elements.map((element:any, idx:number) => (
-                                                                        element.exp_voucher && <li key={idx}>
-                                                                            <Link href={'/'+element.exp_voucher.vc_number} target='__blank' className='text-blue-600 hover:underline'>
-                                                                                {element?.exp_voucher?.vc_number}
-                                                                            </Link>
-                                                                        </li>
-                                                                    ))}
-                                                                    {/* {transaction?.elements.map((element:any, idx:number) => (
-                                                                        <li key={idx}>{element?.expense?.id}</li>
-                                                                    ))} */}
-                                                                </ul>
+                                                                <div className='flex flex-row'>
+                                                                    {transaction.elements.map((element:any, idx:number) => (<>
+                                                                        {element.service_order && <span className='text-indigo-600 hover:underline text-xs bg-blue-100 px-1 rounded-l border border-blue-300'>
+                                                                            {element.service_order.type}: {element.service_order.so_number}
+                                                                        </span>}
+                                                                    </>))}
+                                                                </div>
                                                             ) : (
-                                                                ""
+                                                                <></>
                                                             )}
                                                         </td>
-                                                        <td className='px-4 py-2 font-medium text-gray-900 dark:text-white'>{transaction.amount}</td>
-                                                        <td className='px-4 py-2 font-medium text-gray-900 dark:text-white'>{new Date(transaction.created_at).toLocaleString()}</td>
+                                                        <td className='px-4 py-2 font-medium text-gray-900 dark:text-white'>
+                                                            <div className='flex flex-row gap-1'>
+                                                                <span className='text-slate-600 hover:underline ml-2 text-xs bg-slate-100 px-1 rounded border border-slate-300'>
+                                                                    {transaction.amount} PKR
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className='px-4 py-2 font-medium text-gray-900 dark:text-white'>
+                                                            <span title={new Date(transaction.created_at).toLocaleString()}>
+                                                                {formatRelativeTime(transaction.created_at)}
+                                                            </span>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>}
@@ -194,6 +259,13 @@ export default function CounterView() {
                                                     <td colSpan={4} className='px-4 py-2 font-medium text-gray-900 dark:text-white'>No transactions found.</td>
                                                 </tr>
                                             </tbody>}
+                                            {openCounter?.transactions.length > 0 && <tfoot>
+                                                <tr className='border-t-2 dark:border-gray-600'>
+                                                    <th className='px-4 py-2 text-gray-900 dark:text-white text-left' colSpan={3}>Total</th>
+                                                    <th className='px-4 py-2 text-gray-900 dark:text-white text-left'>{openCounter?.transactions.reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
+                                                    <th className='px-4 py-2' colSpan={3}></th>
+                                                </tr>
+                                            </tfoot>}
                                         </table>
                                     </div>}
 

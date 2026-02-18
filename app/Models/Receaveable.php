@@ -8,6 +8,7 @@ class Receaveable extends Model
 {
     protected $fillable = [
         'patient_id',
+        'panel_id',
         'transaction_id',
         'amount',
         'due_date',
@@ -22,6 +23,11 @@ class Receaveable extends Model
     public function transaction()
     {
         return $this->belongsTo(Transaction::class);
+    }
+
+    public function panel()
+    {
+        return $this->belongsTo(Panel::class, 'panel_id');
     }
 
     // Get Service Order attached to transaction (if any)

@@ -15,13 +15,14 @@ import { apiPatientsSearch, apiPatientsStore, counter, counterSelectDepartment, 
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage, router } from '@inertiajs/react';
 import { AlertTriangle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense, use } from 'react';
 import { clsx } from 'clsx';
 import { patient } from '@/actions/App/Http/Controllers/WebController';
 import BulletsWrapper from '@/elements/bullets-wrapper';
 import PatientMiniCard from '@/elements/patient/mini-card';
 import PatientHistorySideBar from '@/elements/patient/transactions-history-card';
 import DepartmentMiniCard from '@/elements/department/mini-card';
+const CreatePatientPolicy = lazy(() => import('@/policy/create-patient-policy'));
 
 export default function Counter() {
 
@@ -432,6 +433,9 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="CASH">Cash</SelectItem>
+                                            <SelectItem value="CARD">Card</SelectItem>
+                                            <SelectItem value="CHEQUE">Cheque</SelectItem>
+                                            {/* <SelectItem value="INSURANCE">INSURANCE</SelectItem> */}
                                         </SelectContent>
                                     </Select>
                                     <InputError message={validationErrors.payment_method?.[0]} />
@@ -459,7 +463,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                                             type="number"
                                             name="amount_paid"
                                             className="text-right"
-                                            value={amountPaid}
+                                            value={amountPaid === 0 ? '' : amountPaid}
                                             onChange={(e) => setAmountPaid(parseFloat(e.target.value))}
                                             min={0}
                                             step={0.01}
@@ -709,7 +713,7 @@ function StepOne({openCounter}:any) {
                         autoFocus
                         tabIndex={3}
                         autoComplete="false"
-                        value={patientContact} 
+                        value={patientContact === '' ? '+92-' : patientContact}
                         mask="+99-999-9999999"
                         placeholder="+92-000-0000000"
                         onValueChange={({ masked, unmasked }) => setPatientContact(masked)}
@@ -729,7 +733,6 @@ function StepOne({openCounter}:any) {
                         placeholder='Patient age'
                         value={patientAge} onChange={(e) => setPatientAge(e.target.value)}
                     />
-                    {/* <InputError message={errors.email} /> */}
                 </div>
                 <div className='grid gap-2'>
                     <Label htmlFor="patient_gender" required={true}>Patient Gender</Label>
@@ -779,6 +782,9 @@ function StepOne({openCounter}:any) {
                     </div>
                     {/* <InputError message={errors.email} /> */}
                 </div>
+                <Suspense fallback={<div className='text-xs text-gray-400'>Loading policy…</div>}>
+                    <CreatePatientPolicy className='text-xs text-gray-500' />
+                </Suspense>
             </div>
         </div>
         <div className='flex flex-col p-4 pr-8 space-y-4'>

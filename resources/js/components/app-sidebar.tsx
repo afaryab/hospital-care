@@ -10,9 +10,9 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { appointments, counter, counterListAll, receaveables, expenses, home, hospitalDentalQueue, hospitalEmergencyQueue, hospitalIndoorQueue, hospitalLaboratoryQueue, hospitalOpdQueue, hospitalRadiologyQueue, hospitalUltrasoundQueue, myCounterList, patientsRegister, register, transactionSearch } from '@/routes';
+import { appointments, counter, counterListAll, receaveables, expenses, home, hospitalDentalQueue, hospitalEmergencyQueue, hospitalIndoorQueue, hospitalLaboratoryQueue, hospitalOpdQueue, hospitalRadiologyQueue, hospitalUltrasoundQueue, myCounterList, patientsRegister, register, transactionSearch, transactionEdit, transactionEditSearch } from '@/routes';
 import { type NavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LucideHome, BookAIcon, LucideShoppingBasket, Calendar1, LucideWaypoints, ListTree, ChartLine, Cog, ListPlus, LucideListPlus, LucideBlinds } from 'lucide-react';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
@@ -23,7 +23,7 @@ export function AppSidebar() {
 
     const { props } = page;
 
-    const { auth } = props;
+    const { auth, routeName } = props;
 
     const { user } = auth;
 
@@ -71,6 +71,9 @@ export function AppSidebar() {
             }
         );
     }
+
+    const isEditingTransaction = routeName === 'transaction-edit' || page.url == transactionEditSearch().url;
+    const isViewingTransaction = routeName === 'transaction-view' || page.url == transactionSearch().url;
 
 
 
@@ -143,9 +146,15 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             asChild
-                            isActive={page.url.startsWith(
-                                counter().url
-                            ) || page.url == counter().url}
+                            isActive={(
+                                routeName === 'counter' ||
+                                routeName === 'counter-view' ||
+                                routeName === 'counter-open' ||
+                                routeName === 'counter-close' ||
+                                routeName === 'counter-select-patient' || 
+                                routeName === 'counter-patient-services' ||
+                                routeName === 'counter-select-department-service'
+                            )}
                             tooltip={{ children: 'Counter' }}
                         >
                             <Link href={counter().url} prefetch>
@@ -157,9 +166,7 @@ export function AppSidebar() {
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             asChild
-                            isActive={page.url.startsWith(
-                                receaveables().url
-                            ) || page.url == receaveables().url}
+                            isActive={routeName === 'receaveables'}
                             tooltip={{ children: 'Receaveables' }}
                         >
                             <Link href={receaveables().url} prefetch>
@@ -168,20 +175,30 @@ export function AppSidebar() {
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
-                    <SidebarMenuItem>
+                    {(routeName === 'transaction-view' || routeName === 'transaction-search') && <SidebarMenuItem>
                         <SidebarMenuButton
                             asChild
-                            isActive={page.url.startsWith(
-                                transactionSearch().url
-                            ) || page.url == transactionSearch().url}
-                            tooltip={{ children: 'Transaction Lookup' }}
+                            isActive={true}
+                            tooltip={{ children: 'Print Reciept' }}
                         >
                             <Link href={transactionSearch().url} prefetch>
                                 <LucideWaypoints />
-                                <span>Transaction Lookup</span>
+                                <span>Print Reciept</span>
                             </Link>
                         </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    </SidebarMenuItem>}
+                    {(routeName === 'transaction-edit' || routeName === 'transaction-edit-search') && <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={true}
+                            tooltip={{ children: 'Edit Reciept' }}
+                        >
+                            <Link href={transactionEditSearch().url} prefetch>
+                                <LucideWaypoints />
+                                <span>Edit Reciept</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>}
                     <SidebarMenuItem>
                         <SidebarMenuButton
                             asChild

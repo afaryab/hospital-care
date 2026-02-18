@@ -17,6 +17,8 @@ import { Receaveable } from '@/types';
 import { Form, Head } from '@inertiajs/react';
 import { receaveablesPayment } from '@/routes';
 import { Spinner } from '@/components/ui/spinner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import InputError from '@/components/input-error';
 
 interface ReceaveAblesButtonProps {
 	receaveable: Receaveable
@@ -33,7 +35,10 @@ export default function ReceaveAblesButton({
 	const [amountToReceave, setAmountToReceave] = useState<string>(
 		String(receaveable.amount ?? ''),
 	);
+	const [paymentMethod, setPaymentMethod] = useState<string>('CASH');
 	const [note, setNote] = useState('');
+
+	// Load Error messages from 
 
 	console.log('Receaveable in button:', receaveable);
 
@@ -122,7 +127,24 @@ export default function ReceaveAblesButton({
 										required
 										min={0}
 									/>
+                                    <InputError message={errors?.amount_to_collect} />
 								</div>
+
+								<div className="grid gap-2">
+									<Label htmlFor="payment_method">Payment Method</Label>
+                                    <Select value={paymentMethod} onValueChange={setPaymentMethod} name='payment_method'>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select payment method" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="CASH">Cash</SelectItem>
+                                            <SelectItem value="CARD">Card</SelectItem>
+                                            <SelectItem value="CHEQUE">Cheque</SelectItem>
+                                            {/* <SelectItem value="INSURANCE">INSURANCE</SelectItem> */}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.payment_method} />
+                                </div>
 
 								<div className="grid gap-2">
 									<Label htmlFor="receaveable_note">
@@ -135,6 +157,7 @@ export default function ReceaveAblesButton({
 										value={note}
 										onChange={(event) => setNote(event.target.value)}
 									/>
+                                    <InputError message={errors.receaveable_note} />
 								</div>
 
 								<DialogFooter className="mt-4">

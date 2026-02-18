@@ -168,7 +168,7 @@ export default function Register() {
                             tabIndex={3}
                             autoComplete="false"
                             placeholder='Patient name'
-                            value={patientContact} onChange={(e) => setPatientContact(e.target.value)}
+                            value={patientContact === '' ? '+92-' : patientContact} onChange={(e) => setPatientContact(e.target.value)}
                         />
                         {/* <InputError message={errors.email} /> */}
                     </div>

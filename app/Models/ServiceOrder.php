@@ -11,6 +11,7 @@ class ServiceOrder extends Model
 
     protected $fillable = [
         'type',
+        'token',
         'so_number',
         'so_short',
         'created_by',

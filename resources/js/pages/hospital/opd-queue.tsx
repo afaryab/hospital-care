@@ -6,24 +6,12 @@ import AppLayout from '@/layouts/app-layout';
 import { counter, counterView, home, myCounterList, myCounterListYear, myCounterListYearMonth, patientsRegister, patientsRegisterPsNumber, patientsRegisterPsNumberDepartment, patientsRegisterYear, patientsRegisterYearMonth } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { router } from '@inertiajs/react';
 
 interface opdQueuePageProps {
-    yearSelected: string;
-    monthSelected: string;
-    closings: {
-        data: Array<{
-            id: number;
-            name: string;
-            [key: string]: any;
-        }>;
-        current_page: number;
-        last_page: number;
-        total: number;
-        per_page: number;
-        [key: string]: any;
-    };
+    serviceOrdersByService: any;
+    services: any;
     [key: string]: any;
 }
 
@@ -40,154 +28,303 @@ export default function ServiceOrdersList() {
         }
     ];
     
-    const { serviceOrders } = usePage<opdQueuePageProps>().props;
+    const { serviceOrdersByService, services } = usePage<opdQueuePageProps>().props;
 
-    console.log("serviceOrders",serviceOrders);
+    console.log("serviceOrdersByService", serviceOrdersByService);
+    console.log("services", services);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="OPD Hospital Queue" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72] dark:bg-[#262626]">
-                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-0 bg-white dark:bg-neutral-950 text-[#1c398e]">
-                    <table className='text-xs text-gray-700 uppercase bg-gray-50 dark:bg-neutral-950 dark:text-gray-400 text-left'>
-                        <thead>
-                            <tr>
-                                <th scope="col" className="px-6 py-3">Info</th>
-                                <th scope="col" className="px-6 py-3">Opening Amount</th>
-                                <th scope="col" className="px-6 py-3">Closing Amount</th>
-                                <th scope="col" className="px-6 py-3">Expense Payed</th>
-                                <th scope="col" className="px-6 py-3">Closed At</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {serviceOrders?.data.map((serviceOrder) => {
-
-                                let explodedPsid = serviceOrder.ct_number.split('/');
-
-                                return (
-                                    <tr key={serviceOrder.id} className='bg-white border-b dark:bg-neutral-800 dark:border-neutral-950 border-gray-200'>
-                                        <td scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white flex flex-col">
-                                            <Link href={counterView({
-                                                ctYear: explodedPsid[1] || '',
-                                                ctMonth: explodedPsid[2] || '',
-                                                ctNumber: explodedPsid[3] || ''
-                                            }).url} ><span className='text-blue-500'>CT# {serviceOrder.ct_number}</span></Link>
-                                        </td>
-                                        <td className="px-6 py-3">
-                                            {serviceOrder.so_number}
-                                        </td>
-                                        <td className="px-6 py-3">
-                                            {serviceOrder.status}
-                                        </td>
-                                        <td className="px-6 py-3">
-                                            {serviceOrder.notes}
-                                        </td>
-                                        <td className="px-6 py-3">
-                                            {serviceOrder.closed_at}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <td colSpan={4} className='text-right'>
-
-                                    
-                                    {
-                                        (() => {
-                                            const current = serviceOrders.current_page;
-                                            const last = serviceOrders.last_page;
-
-                                            function buildRange(curr: number, lastPage: number) {
-                                                if (lastPage <= 7) {
-                                                    return Array.from({ length: lastPage }, (_, i) => i + 1) as (number | '...')[];
-                                                }
-
-                                                const delta = 1; // show current +/- delta
-                                                const range: number[] = [];
-                                                for (let i = Math.max(2, curr - delta); i <= Math.min(lastPage - 1, curr + delta); i++) {
-                                                    range.push(i);
-                                                }
-
-                                                const pages: (number | '...')[] = [1];
-                                                if (range.length && range[0] > 2) pages.push('...');
-                                                pages.push(...range);
-                                                if (range.length && range[range.length - 1] < lastPage - 1) pages.push('...');
-                                                pages.push(lastPage);
-                                                return pages;
-                                            }
-
-                                            const pages = buildRange(current, last);
-
-                                            const makeHref = (page: number) =>
-                                                `?page=${page}`;
-
-                                            return (
-                                                <nav className="flex items-center justify-center gap-2 py-2">
-                                                    {/* Prev */}
-                                                    {current > 1 ? (
-                                                        <a
-                                                            href={makeHref(current - 1)}
-                                                            className="px-3 py-1 rounded border bg-white text-[#1c398e] hover:underline"
-                                                            aria-label="Previous page"
-                                                        >
-                                                            ‹
-                                                        </a>
-                                                    ) : (
-                                                        <span className="px-3 py-1 rounded border bg-gray-100 text-gray-400">‹</span>
-                                                    )}
-
-                                                    {/* Page items */}
-                                                    {pages.map((p, idx) =>
-                                                        p === '...' ? (
-                                                            <span key={`dots-${idx}`} className="px-3 py-1 text-gray-500">
-                                                                …
-                                                            </span>
-                                                        ) : p === current ? (
-                                                            <span
-                                                                key={p}
-                                                                aria-current="page"
-                                                                className="px-3 py-1 rounded bg-[#06df72] dark:bg-neutral-800 text-white font-medium"
-                                                            >
-                                                                {p}
-                                                            </span>
-                                                        ) : (
-                                                            <a
-                                                                key={p}
-                                                                href={makeHref(p)}
-                                                                className="px-3 py-1 rounded border bg-white text-[#1c398e] hover:underline"
-                                                            >
-                                                                {p}
-                                                            </a>
-                                                        )
-                                                    )}
-
-                                                    {/* Next */}
-                                                    {current < last ? (
-                                                        <a
-                                                            href={makeHref(current + 1)}
-                                                            className="px-3 py-1 rounded border bg-white text-[#1c398e] hover:underline"
-                                                            aria-label="Next page"
-                                                        >
-                                                            ›
-                                                        </a>
-                                                    ) : (
-                                                        <span className="px-3 py-1 rounded border bg-gray-100 text-gray-400">›</span>
-                                                    )}
-                                                </nav>
-                                            );
-                                        })()
-                                    }
-
-
-
-                                </td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-0 bg-white dark:bg-neutral-950 text-[#1c398e] p-6">
+                    {Object.keys(serviceOrdersByService).length === 0 ? (
+                        <div className="flex h-full flex-col items-center justify-center gap-2">
+                            <h2 className="text-lg font-semibold">No active OPD queues</h2>
+                            <p className="text-sm text-slate-500">All service orders are currently closed.</p>
+                        </div>
+                    ) : (
+                        Object.entries(serviceOrdersByService).map(([serviceId, orders]) => {
+                            const service = services[serviceId];
+                            return (
+                                <div key={serviceId}>
+                                    <OPDQueueSlider
+                                        serviceName={service ? service.name : `Service ${serviceId}`}
+                                        nowServing={orders.find(o => o.status.toLowerCase() === 'in-progress')}
+                                        waiting={orders.filter(o => o.status.toLowerCase() === 'open')}
+                                        onViewAll={() => console.log("View all for service", serviceId)}
+                                    />
+                                </div>
+                            );
+                        })
+                    )}
                 </div>
             </div>
         </AppLayout>
     );
+}
+
+function cn(...classes) {
+  return classes.filter(Boolean).join(" ");
+}
+
+function TokenCard({ item, variant = "open", minify }) {
+  const isNow = variant === "in-progress";
+    console.log("TokenCard", { item, variant, isNow });
+  return (
+    <div
+      className={cn(
+        "min-w-[260px] max-w-[260px] rounded-2xl border bg-white shadow-sm",
+        "p-4 md:p-5",
+        isNow ? "border-emerald-200 ring-1 ring-emerald-100" : "border-slate-200"
+      )}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="space-y-1">
+          <div className="text-xs font-semibold tracking-wide text-slate-500">
+            Token #{item.token ? item.token : item.so_short}
+          </div>
+          <div className="text-lg font-semibold text-slate-900 leading-tight">
+            {item.patient.name}
+          </div>
+        </div>
+
+        <span
+          className={cn(
+            "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold",
+            isNow
+              ? "bg-emerald-50 text-emerald-700"
+              : "bg-slate-100 text-slate-700"
+          )}
+        >
+          {isNow ? "Now Serving" : "Waiting"}
+        </span>
+      </div>
+
+      {minify == false && (
+        <>
+          {item.patient?.ps_number && minify == false ? (
+            <div className="text-xs text-slate-500">MR #: {item.patient.ps_number}</div>
+          ) : null}
+          {item.so_number && minify == false ? (
+            <div className="text-xs text-slate-500">MRI #: {item.so_number}</div>
+          ) : null}
+            <div className="mt-4 flex items-center justify-between text-sm">
+            <div className="text-slate-600">Estimated</div>
+            <div className={cn("font-semibold", isNow ? "text-emerald-700" : "text-slate-800")}>
+                {item.eta ?? "—"}
+            </div>
+            </div>
+
+            <div className="mt-3 h-px bg-slate-100" />
+
+            <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+                <span>Queue status</span>
+                <span className="font-medium">{item.status ?? (isNow ? "Now Serving" : "Waiting")}</span>
+            </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function IconChevronLeft(props) {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+      <path
+        fillRule="evenodd"
+        d="M12.78 15.53a.75.75 0 0 1-1.06 0l-5-5a.75.75 0 0 1 0-1.06l5-5a.75.75 0 1 1 1.06 1.06L8.31 10l4.47 4.47a.75.75 0 0 1 0 1.06Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+function IconChevronRight(props) {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" {...props}>
+      <path
+        fillRule="evenodd"
+        d="M7.22 4.47a.75.75 0 0 1 1.06 0l5 5a.75.75 0 0 1 0 1.06l-5 5a.75.75 0 1 1-1.06-1.06L11.69 10 7.22 5.53a.75.75 0 0 1 0-1.06Z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+function OPDQueueSlider({
+  serviceName,
+  nowServing,
+  waiting,
+  countersOpen,
+  onViewAll,
+} : {
+    serviceName: string;
+    nowServing: {
+        token: string | number;
+        name: string;
+        mrn?: string;
+    }[],
+    waiting: {
+        token: string | number;
+        name: string;
+        mrn?: string;
+    }[],
+    countersOpen: number;
+    onViewAll?: () => void;
+}) {
+    console.log("OPDQueueSlider", { serviceName, nowServing, waiting, countersOpen });
+  const scrollerRef = useRef(null);
+  const nowCardRef = useRef(null);
+
+  const items = useMemo(() => {
+    const list = [];
+    if (nowServing) list.push({ ...nowServing, _variant: "now" });
+    for (const w of waiting || []) list.push({ ...w, _variant: "waiting" });
+    return list;
+  }, [nowServing, waiting]);
+
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(true);
+
+  const updateEdges = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft < max - 4);
+  };
+
+  const scrollByCards = (dir = 1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    // Scroll roughly 2 cards
+    const amount = Math.round(el.clientWidth * 0.7) * dir;
+    el.scrollBy({ left: amount, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+
+    updateEdges();
+    const onScroll = () => updateEdges();
+    el.addEventListener("scroll", onScroll, { passive: true });
+
+    const ro = new ResizeObserver(() => updateEdges());
+    ro.observe(el);
+
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      ro.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Keep "Now Serving" visible on mount / when token changes
+    if (!nowCardRef.current) return;
+    nowCardRef.current.scrollIntoView({ behavior: "smooth", inline: "start", block: "nearest" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nowServing?.token]);
+
+
+  const [minify, setMinify] = useState(true);
+
+  return (
+    <div className="w-full">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        {/* Title row (no global header) */}
+        <div className="flex items-center justify-between gap-4 p-4 md:p-5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center">
+                <span className="text-slate-700 text-sm font-bold">OPD</span>
+              </div>
+              <div className="min-w-0">
+                <h2 className="truncate text-base md:text-lg font-semibold text-slate-900">
+                  {serviceName}
+                </h2>
+                <p className="text-xs md:text-sm text-slate-600">
+                  {items.length} in queue • {countersOpen} counter(s) open
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => (onViewAll ? onViewAll() : null)}
+              className="hidden sm:inline-flex items-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              View All
+            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={!canLeft}
+                onClick={() => scrollByCards(-1)}
+                className={cn(
+                  "inline-flex h-10 w-10 items-center justify-center rounded-xl border",
+                  canLeft
+                    ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    : "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
+                )}
+                aria-label="Scroll left"
+              >
+                <IconChevronLeft className="h-5 w-5" />
+              </button>
+
+              <button
+                type="button"
+                disabled={!canRight}
+                onClick={() => scrollByCards(1)}
+                className={cn(
+                  "inline-flex h-10 w-10 items-center justify-center rounded-xl border",
+                  canRight
+                    ? "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    : "border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed"
+                )}
+                aria-label="Scroll right"
+              >
+                <IconChevronRight className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="h-px bg-slate-100" />
+
+        {/* Slider */}
+        <div className="relative p-4 md:p-5">
+          <div
+            ref={scrollerRef}
+            className={cn(
+              "flex gap-4 overflow-x-auto scroll-smooth",
+              "pb-2",
+              "[scrollbar-width:thin] [scrollbar-color:#cbd5e1_transparent]"
+            )}
+          >
+            {items.map((item, idx) => (
+              <div key={`${item.token}-${idx}`} ref={item._variant === "now" ? nowCardRef : null}>
+                <TokenCard item={item} variant={item.status} minify={minify} />
+              </div>
+            ))}
+
+            {/* End spacer */}
+            <div className="min-w-[1px]" />
+          </div>
+
+          {/* small hint */}
+          <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+            <span>Tip: swipe/scroll horizontally to see more</span>
+            <span className="tabular-nums">
+              Now: {nowServing ? `#${nowServing.token}` : "—"}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }

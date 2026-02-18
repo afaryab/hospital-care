@@ -13,6 +13,6 @@ Schedule::everyFiveSeconds()
     ->withoutOverlapping()
     ->command('app:fetch-old --batch-size=3000');
 
-Schedule::command('app:close-old-service-orders')->daily()->runInBackground()->withoutOverlapping();
+Schedule::command('app:close-old-service-orders')->everyFiveSeconds()->runInBackground()->withoutOverlapping();
 
 Schedule::command('telescope:prune')->daily();

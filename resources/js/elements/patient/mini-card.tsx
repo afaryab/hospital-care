@@ -131,7 +131,7 @@ const PatientEditPopup: React.FC<{ patient: Patient; link?: string; onClose: () 
                                 autoFocus
                                 tabIndex={3}
                                 autoComplete="false"
-                                value={patientContact} 
+                                value={patientContact === '' ? '+92-' : patientContact} 
                                 onValueChange={({ masked, unmasked }: { masked: string, unmasked: string }) => setPatientContact(masked)}
                                 mask="+99-999-9999999"
                                 placeholder="+92-000-0000000"
