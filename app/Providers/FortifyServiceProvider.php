@@ -49,6 +49,37 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
         Fortify::createUsersUsing(CreateNewUser::class);
+
+        // Allow login using email OR username OR mobile
+        Fortify::authenticateUsing(function (Request $request) {
+            $identifier = $request->input('email'); // UI uses 'email' field for identifier
+            $password = $request->input('password');
+
+            if (!$identifier || !$password) {
+                return null;
+            }
+
+            $query = \App\Models\User::query();
+            if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
+                $query->where('email', $identifier);
+            } elseif (preg_match('/^\+?\d[\d\-\s]*$/', $identifier)) {
+                // Normalize mobile: remove non-digits, convert local 0XXXXXXXXX to +92XXXXXXXXX
+                $digits = preg_replace('/\D+/', '', $identifier);
+                $normalized = str_starts_with($digits, '0')
+                    ? '+92' . substr($digits, 1)
+                    : '+' . $digits;
+                $query->where('mobile', $normalized);
+            } else {
+                $query->where('username', $identifier);
+            }
+
+            $user = $query->first();
+            if (!$user) {
+                return null;
+            }
+
+            return \Illuminate\Support\Facades\Hash::check($password, $user->getAuthPassword()) ? $user : null;
+        });
     }
 
     /**

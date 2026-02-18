@@ -10,6 +10,8 @@ import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
+import { MaskInput } from '@/components/ui/mask-input';
 
 interface LoginProps {
     status?: string;
@@ -22,6 +24,33 @@ export default function Login({
     canResetPassword,
     canRegister,
 }: LoginProps) {
+    const [identifier, setIdentifier] = useState('');
+    const isMobileCandidate = useMemo(() => {
+        const v = identifier.trim();
+        if (v.includes('@')) return false;
+        if (v.startsWith('+')) return true;
+        const digits = v.replace(/[^\d]/g, '');
+        // Treat local mobile starting with 0 and total length 9 to 13 as mobile candidate
+        return /^0\d{8,13}$/.test(digits);
+    }, [identifier]);
+
+    const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setIdentifier(e.target.value);
+    };
+
+    const convertNumberToInternationalFormat = (value: string) => {
+        const digits = value.replace(/[^\d]/g, '');
+        if (digits.startsWith('0')) {
+            return `+92${digits}`;
+        }
+        return `${value}`;
+    };
+
+    const handleMaskedChange = (v: { masked: string; unmasked: string }) => {
+        // Normalize to +digits for submission, display remains masked in the component
+        const normalized = v.unmasked ? v.unmasked : '';
+        setIdentifier(normalized);
+    };
     return (
         <AuthLayout
             title="Log in to your account"
@@ -38,16 +67,18 @@ export default function Login({
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">Email / Username / Mobile</Label>
                                 <Input
                                     id="email"
-                                    type="email"
+                                    type="text"
                                     name="email"
                                     required
                                     autoFocus
                                     tabIndex={1}
-                                    autoComplete="email"
-                                    placeholder="email@example.com"
+                                    autoComplete="username"
+                                    placeholder="email, username or mobile"
+                                    value={identifier}
+                                    onChange={handleIdentifierChange}
                                 />
                                 <InputError message={errors.email} />
                             </div>
