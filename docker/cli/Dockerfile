@@ -81,9 +81,9 @@ RUN chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
 RUN curl -fsSL https://bun.sh/install | bash && \
     mv /root/.bun/bin/bun /usr/local/bin/bun
-# RUN bun install --frozen-lockfile
-# RUN bun install
-# RUN bun run build
+RUN bun install --frozen-lockfile
+RUN bun install
+RUN bun run build
 RUN cp .env.example .env || true
 # Install PHP dependencies
 RUN git config --global --add safe.directory /var/www/html

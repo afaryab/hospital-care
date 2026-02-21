@@ -3,11 +3,19 @@ namespace Processton\AbacusDatabase\Seeders;
 
 use Processton\Abacus\Models\AbacusChartOfAccount;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class ChartOfAccountsSeeder extends Seeder
 {
     public function run(): void
     {
+        
+    
+        // $year = AbacusYear::create([
+        //     'start_date' => Carbon::create(2026, 1, 1),
+        //     'end_date' => Carbon::create(2026, 12, 31),
+        // ]);
+
         $accounts = [
             // ASSETS
             ['code' => '1000', 'name' => 'Assets', 'base_type' => 'asset', 'is_group' => true],
@@ -64,8 +72,9 @@ class ChartOfAccountsSeeder extends Seeder
         // First pass: create group accounts
         foreach ($accounts as $acc) {
             if (!empty($acc['is_group'])) {
-                $map[$acc['code']] = AbacusChartOfAccount::create([
+                $map[$acc['code']] = AbacusChartOfAccount::firstOrCreate([
                     'code'       => $acc['code'],
+                ],[
                     'name'       => $acc['name'],
                     'base_type'  => $acc['base_type'],
                     'type'       => $acc['type'] ?? null,
@@ -78,8 +87,9 @@ class ChartOfAccountsSeeder extends Seeder
         // Second pass: create leaf accounts
         foreach ($accounts as $acc) {
             if (empty($acc['is_group'])) {
-                AbacusChartOfAccount::create([
+                AbacusChartOfAccount::firstOrCreate([
                     'code'       => $acc['code'],
+                ],[
                     'name'       => $acc['name'],
                     'base_type'  => $acc['base_type'],
                     'type'       => $acc['type'] ?? null,
