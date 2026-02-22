@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -88,6 +89,10 @@ class FortifyServiceProvider extends ServiceProvider
     private function configureViews(): void
     {
         Fortify::loginView(function (Request $request) {
+            if (User::query()->nonSystem()->doesntExist()) {
+                return redirect()->route('register', $request->query());
+            }
+
             // Capture captive portal params from query into session to persist across auth flow
             if ($request->query('clientMac')) {
                 $request->session()->put('captive.clientMac', $request->query('clientMac'));
@@ -125,7 +130,9 @@ class FortifyServiceProvider extends ServiceProvider
             if ($request->query('target')) {
                 $request->session()->put('captive.target', $request->query('target'));
             }
-            return Inertia::render('auth/register');
+            return Inertia::render('auth/register', [
+                'isFirstSignup' => User::query()->nonSystem()->doesntExist(),
+            ]);
         });
 
         Fortify::twoFactorChallengeView(fn () => Inertia::render('auth/two-factor-challenge'));

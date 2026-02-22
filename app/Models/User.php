@@ -15,6 +15,8 @@ class User extends Authenticatable implements FilamentUser
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, TwoFactorAuthenticatable;
 
+    public const SYSTEM_SEEDER_EMAIL = 'system-seeder@hospital-care.local';
+
     /**
      * The attributes that are mass assignable.
      *
@@ -73,6 +75,14 @@ class User extends Authenticatable implements FilamentUser
      * @var array
      */
     protected $appends = ['profiles'];
+
+    public function scopeNonSystem($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereNull('email')
+                ->orWhere('email', '!=', self::SYSTEM_SEEDER_EMAIL);
+        });
+    }
 
     public function getProfilesAttribute(){
 
