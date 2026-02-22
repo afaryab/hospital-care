@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             ServicesAndDepartmentsSeeder::class,
+            ExpenseCategorySeeder::class,
             ChartOfAccountsSeeder::class
         ]);
 

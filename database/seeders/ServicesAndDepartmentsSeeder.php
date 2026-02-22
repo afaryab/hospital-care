@@ -3,10 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\Dentist;
+use App\Models\EmergencyDoctor;
 use App\Models\IndDoctor;
+use App\Models\NursingStaff;
 use App\Models\OpdDoctor;
 use App\Models\Service;
 use App\Models\ServiceDepartment;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +22,19 @@ class ServicesAndDepartmentsSeeder extends Seeder
      */
     public function run(): void
     {
+        $createdByUserId = User::query()->value('id');
+
+        if (!$createdByUserId) {
+            $createdByUserId = User::query()->firstOrCreate(
+                ['email' => 'system-seeder@hospital-care.local'],
+                [
+                    'name' => 'System Seeder',
+                    'password' => 'password',
+                    'email_verified_at' => now(),
+                ]
+            )->id;
+        }
+
                 
         $opdDepartment = ServiceDepartment::firstOrCreate([
             'slug' => 'OPD',
@@ -1513,6 +1529,72 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
                 "is_composit_service"=>"0"
+            ],
+            [
+                "slug" => "EMR-RED",
+                "name" => "Immediate Resuscitation (Red)",
+                "service_department_id"=>$emergencyDepartment->id,
+                "charges"=>"0",
+                "have_service_provider"=>1,
+                "service_provider_types"=>[
+                    EmergencyDoctor::class
+                ],
+                "is_composit_service"=>"1"
+            ],
+            [
+                "slug" => "EMR-YELLOW",
+                "name" => "Emergency (Yellow)",
+                "service_department_id"=>$emergencyDepartment->id,
+                "charges"=>"0",
+                "have_service_provider"=>1,
+                "service_provider_types"=>[
+                    EmergencyDoctor::class
+                ],
+                "is_composit_service"=>"1"
+            ],
+            [
+                "slug" => "EMR-BLUE",
+                "name" => "Urgent (Blue)",
+                "service_department_id"=>$emergencyDepartment->id,
+                "charges"=>"0",
+                "have_service_provider"=>1,
+                "service_provider_types"=>[
+                    EmergencyDoctor::class
+                ],
+                "is_composit_service"=>"1"
+            ],
+            [
+                "slug" => "EMR-SKY",
+                "name" => "Semi Urgent (Sky Blue)",
+                "service_department_id"=>$emergencyDepartment->id,
+                "charges"=>"0",
+                "have_service_provider"=>1,
+                "service_provider_types"=>[
+                    EmergencyDoctor::class
+                ],
+                "is_composit_service"=>"1"
+            ],
+            [
+                "slug" => "EMR-SKY",
+                "name" => "Semi Urgent (Sky Blue)",
+                "service_department_id"=>$emergencyDepartment->id,
+                "charges"=>"0",
+                "have_service_provider"=>1,
+                "service_provider_types"=>[
+                    EmergencyDoctor::class
+                ],
+                "is_composit_service"=>"1"
+            ],
+            [
+                "slug" => "EMR-GREEN",
+                "name" => "Non Urgent (Green)",
+                "service_department_id"=>$emergencyDepartment->id,
+                "charges"=>"0",
+                "have_service_provider"=>1,
+                "service_provider_types"=>[
+                    EmergencyDoctor::class
+                ],
+                "is_composit_service"=>"1"
             ]
         ]);
 
@@ -1541,9 +1623,10 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>$service["charges"],
                 "charges_include_tax" => 1,
                 "tax_rate" => 0,
-                "created_by" => 1,
+                "created_by" => $createdByUserId,
                 "have_service_provider"=>$service["have_service_provider"],
                 "is_composit_service"=>$service["is_composit_service"],
+                "service_provider_types"=>$service["service_provider_types"],
             ]);
         }
 
