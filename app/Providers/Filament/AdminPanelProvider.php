@@ -2,10 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Admin\Widgets\AdminStatsOverview;
+use App\Filament\Admin\Widgets\MigrationStatsOverview;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Resources\Users\UserResource;
-use App\Filament\Widgets\AdminStatsOverview;
-use App\Filament\Widgets\MigrationStatsOverview;
 use App\Http\Middleware\AdminPanelAccess;
 use App\Services\Filament\FilamentThemeService;
 use Filament\Http\Middleware\Authenticate;
@@ -30,6 +30,18 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
+
+
+        $widgets = [
+            AdminStatsOverview::class,
+            // AccountWidget::class,
+            // FilamentInfoWidget::class,
+        ];
+
+        if(env('ENABLE_OLD_SYNC', false) !== false) {
+            $widgets[] = MigrationStatsOverview::class;
+        }
+
         return $panel
             ->default()
             ->id('admin')
@@ -47,11 +59,8 @@ class AdminPanelProvider extends PanelProvider
             // ->pages([
             //     // Dashboard::class
             // ])
-            ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
-            // ->widgets([
-            //     // MigrationStatsOverview::class,
-            //     // AdminStatsOverview::class,
-            // ])
+            // ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
+            ->widgets($widgets)
             ->resources([
                 // Resources will be auto-discovered from Admin/Resources
             ])
