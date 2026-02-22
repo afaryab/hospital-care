@@ -79,16 +79,16 @@ RUN mkdir -p /var/www/html/bootstrap/cache /var/www/html/storage/app /var/www/ht
 RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
-RUN curl -fsSL https://bun.sh/install | bash && \
-    mv /root/.bun/bin/bun /usr/local/bin/bun
-RUN bun install --frozen-lockfile
-RUN bun install
-RUN bun run build
 RUN cp .env.example .env || true
 # Install PHP dependencies
 RUN git config --global --add safe.directory /var/www/html
 RUN composer install --no-dev --optimize-autoloader || true
 
+RUN curl -fsSL https://bun.sh/install | bash && \
+    mv /root/.bun/bin/bun /usr/local/bin/bun
+RUN bun install --frozen-lockfile
+RUN bun install
+RUN bun run build
 # Generate Laravel application key if .env exists
 RUN if [ -f .env ]; then php artisan key:generate --force; fi
 
