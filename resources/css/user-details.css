@@ -1,0 +1,15 @@
+.user-details-container {
+    @apply flex flex-col space-y-1;
+}
+
+.user-details-name {
+    @apply font-medium text-gray-900 dark:text-white;
+}
+
+.user-details-email {
+    @apply text-sm text-gray-500 dark:text-gray-400;
+}
+
+.user-details-banned-message {
+    @apply text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-2 py-1 rounded;
+}

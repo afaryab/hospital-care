@@ -228,7 +228,7 @@ class WebController extends Controller
 
         $ctNumber = 'CT/'.$ctYear.'/'.$ctMonth.'/'.$ctNumber;
 
-        $openCounter = Closing::with('transactions','transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceRecestation', 'transactions.elements.serviceOrder', 'transactions.elements.expense', 'transactions.elements.expVoucher')->where('ct_number',$ctNumber)->first();
+        $openCounter = Closing::with('transactions', 'transactions.receaveable', 'transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceRecestation', 'transactions.elements.serviceOrder', 'transactions.elements.expense', 'transactions.elements.expVoucher')->where('ct_number',$ctNumber)->first();
 
         //->where('receptionist_id', $request->user()->id)
 
@@ -330,6 +330,8 @@ class WebController extends Controller
         // dd(Service::where('id', 33)->first()->available_providers);
         // dd($pageData['services']);
 
+        $pageData['panelCompanies'] = Panel::all();
+
         return Inertia::render('counter/patient',$pageData);
     }
 
@@ -345,6 +347,8 @@ class WebController extends Controller
             'income_or_expense' => 'required|in:INCOME,EXPENSE',
         ]);
 
+        
+
         if($validatedData['income_or_expense'] == 'EXPENSE'){
             $request->validate([
                 'type' => 'required|in:EXP,VOUCHER-PAY',
@@ -357,34 +361,45 @@ class WebController extends Controller
                     'payed_to_other' => 'nullable|string',
                 ]);
 
-                $voucher = ExpenseVoucher::find($expenseVData['voucher_id']);
+                DB::beginTransaction();
 
-                $transaction = Transaction::create([
-                    'closing_id' => $openCounter->id,
-                    'created_by' => $request->user()->id,
-                    'type' => TransactionElementType::VOUCHER_PAY,
-                    'income_or_expense' => 'EXPENSE',
-                    'amount' => $voucher->amount
-                ]);
+                try{
 
-                $expense = Expense::create([
-                    'voucher_id' => $voucher->id,
-                    'type' => 'CASH',
-                    'payed_to' => $request->get('payed_to', 'Other') !== 'Other' ? $expenseVData['payed_to'] : null,
-                    'payed_to_other' => $request->get('payed_to', 'Other') === 'Other' ? $expenseVData['payed_to_other'] : null,
-                    'amount' => $voucher->amount,
-                ]);
+                    $voucher = ExpenseVoucher::find($expenseVData['voucher_id']);
 
-                TransactionElement::create([
-                    'closing_id' => $openCounter->id,
-                    'transaction_id' => $transaction->id,
-                    'expense_id' => $expense->id,
-                    'exp_voucher_id' => $voucher->id,
-                    'created_by' => $request->user()->id,
-                    'type' => 'VOUCHER_PAY',
-                    'income_or_expense' => 'EXPENSE',
-                    'amount' => $voucher->amount,
-                ]);
+                    $transaction = Transaction::create([
+                        'closing_id' => $openCounter->id,
+                        'created_by' => $request->user()->id,
+                        'type' => TransactionElementType::VOUCHER_PAY,
+                        'income_or_expense' => 'EXPENSE',
+                        'amount' => $voucher->amount
+                    ]);
+
+                    $expense = Expense::create([
+                        'voucher_id' => $voucher->id,
+                        'type' => 'CASH',
+                        'payed_to' => $request->get('payed_to', 'Other') !== 'Other' ? $expenseVData['payed_to'] : null,
+                        'payed_to_other' => $request->get('payed_to', 'Other') === 'Other' ? $expenseVData['payed_to_other'] : null,
+                        'amount' => $voucher->amount,
+                    ]);
+
+                    TransactionElement::create([
+                        'closing_id' => $openCounter->id,
+                        'transaction_id' => $transaction->id,
+                        'expense_id' => $expense->id,
+                        'exp_voucher_id' => $voucher->id,
+                        'created_by' => $request->user()->id,
+                        'type' => 'VOUCHER_PAY',
+                        'income_or_expense' => 'EXPENSE',
+                        'amount' => $voucher->amount,
+                    ]);
+
+                }catch(\Exception $e){
+                    DB::rollBack();
+                    return back()->withErrors(['message' => 'An error occurred while processing the transaction. Please try again.']);
+                }
+
+                DB::commit();
 
                 return redirect()->route('transaction-view',[
                     'tYear' => $transaction->year,
@@ -404,32 +419,43 @@ class WebController extends Controller
                     'payed_to_other' => 'nullable|string',
                 ]);
 
-                $transaction = Transaction::create([
-                    'closing_id' => $openCounter->id,
-                    'created_by' => $request->user()->id,
-                    'type' => TransactionElementType::EXP,
-                    'income_or_expense' => 'EXPENSE',
-                    'amount' => $expenseData['amount']
-                ]);
+                DB::beginTransaction();
 
-                $expense = Expense::create([
-                    'notes' => $expenseData['description'],
-                    'type' => 'CASH',
-                    'amount' => $expenseData['amount'],
-                    'exp_category_id' => $expenseData['category_id'] ?? null,
-                    'payed_to' => $request->get('payed_to', 'other') !== 'other' ? $expenseData['payed_to'] : null,
-                    'payed_to_name' => $request->get('payed_to', 'other') === 'other' ? $expenseData['payed_to_other'] : null,
-                ]);
+                try{
 
-                TransactionElement::create([
-                    'closing_id' => $openCounter->id,
-                    'transaction_id' => $transaction->id,
-                    'expense_id' => $expense->id,
-                    'created_by' => $request->user()->id,
-                    'type' => TransactionElementType::EXP,
-                    'income_or_expense' => 'EXPENSE',
-                    'amount' => $expenseData['amount'],
-                ]);
+                    $transaction = Transaction::create([
+                        'closing_id' => $openCounter->id,
+                        'created_by' => $request->user()->id,
+                        'type' => TransactionElementType::EXP,
+                        'income_or_expense' => 'EXPENSE',
+                        'amount' => $expenseData['amount']
+                    ]);
+
+                    $expense = Expense::create([
+                        'notes' => $expenseData['description'],
+                        'type' => 'CASH',
+                        'amount' => $expenseData['amount'],
+                        'exp_category_id' => $expenseData['category_id'] ?? null,
+                        'payed_to' => $request->get('payed_to', 'other') !== 'other' ? $expenseData['payed_to'] : null,
+                        'payed_to_name' => $request->get('payed_to', 'other') === 'other' ? $expenseData['payed_to_other'] : null,
+                    ]);
+
+                    TransactionElement::create([
+                        'closing_id' => $openCounter->id,
+                        'transaction_id' => $transaction->id,
+                        'expense_id' => $expense->id,
+                        'created_by' => $request->user()->id,
+                        'type' => TransactionElementType::EXP,
+                        'income_or_expense' => 'EXPENSE',
+                        'amount' => $expenseData['amount'],
+                    ]);
+
+                }catch(\Exception $e){
+                    DB::rollBack();
+                    return back()->withErrors(['message' => 'An error occurred while processing the transaction. Please try again.']);
+                }
+
+                DB::commit();
 
                 return redirect()->route('transaction-view',[
                     'tYear' => $transaction->year,
@@ -448,12 +474,19 @@ class WebController extends Controller
                 'patient_id' => 'required|exists:patients,id',
                 'department_key' => 'required|string',
                 'total_amount' => 'required|numeric',
-                'payment_method' => 'required|in:CASH,CARD,INSURANCE,CHEQUE',
-                'panel_id' => 'required_if:payment_method,INSURANCE|exists:panels,id',
+                'payment_method' => 'required|in:CASH,CARD,PANEL,CHEQUE,BANK_TRANSFER',
+                'panel_company' => 'required_if:payment_method,PANEL',
                 'amount_paid' => 'required|numeric',
                 'change_amount' => 'required|numeric',
                 'items' => 'array|min:1',
             ]);
+
+            if($validatedData['payment_method'] === 'PANEL'){
+                $request->validate([
+                    'panel_company' => 'exists:panels,id'
+                ]);
+            }
+
 
             $isRecesitation = Str::startsWith($validatedData['department_key'], 'RECES-');
             $departmentKey = $isRecesitation ? Str::replaceFirst('RECES-', '', $validatedData['department_key']) : $validatedData['department_key'];
@@ -465,63 +498,75 @@ class WebController extends Controller
                 ]);
             }
 
-            $transaction = Transaction::create([
-                'closing_id' => $openCounter->id,
-                'created_by' => $request->user()->id,
-                'patient_id' => $validatedData['patient_id'],
-                'type' => $validatedData['payment_method'],
-                'income_or_expense' => 'INCOME',
-                'panel_id' => $validatedData['payment_method'] === 'INSURANCE' ? $validatedData['panel_id'] : null,
-                'amount' => (
-                    $validatedData['amount_paid'] === 0 ? 0 : (
-                        $validatedData['total_amount'] > $validatedData['amount_paid'] ? $validatedData['amount_paid'] : $validatedData['amount_paid'] - $validatedData['change_amount'])
-                ),
-                'customer_payed' => $validatedData['amount_paid'],
-                'change' => $validatedData['change_amount'] > 0 ? $validatedData['change_amount'] : 0,
-            ]);
+            DB::beginTransaction();
 
-            $orinalTotal = 0;
+            try{
 
-            foreach($validatedData['items'] as $item){
-
-                $service = !$isRecesitation ? Service::find($item['service_id']) : ServiceRecestation::find($item['service_id']);
-
-                $orinalTotal += $service ? $service->charges * $item['quantity'] : 0;
-
-                TransactionElement::create([
+                $transaction = Transaction::create([
                     'closing_id' => $openCounter->id,
-                    'transaction_id' => $transaction->id,
                     'created_by' => $request->user()->id,
                     'patient_id' => $validatedData['patient_id'],
-                    'service_id' => !$isRecesitation ? $item['service_id'] : null,
-                    'service_recestation_id' => $isRecesitation ? $item['service_id'] : null,
-                    'service_order_id' => $isRecesitation ? $request->get('service_order_id', null) : null,
-                    'doctor_id' => $item['provider_id'] ?? null,
-                    'type' => $request->department_key,
-                    'panel_id' => $validatedData['payment_method'] === 'INSURANCE' ? $validatedData['panel_id'] : null,
+                    'type' => $validatedData['payment_method'],
                     'income_or_expense' => 'INCOME',
-                    'amount' => $item['total'],
-                    'orignal_amount' => $service ? $service->charges * $item['quantity'] : 0,
+                    'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_company'] : null,
+                    'amount' => (
+                        $validatedData['amount_paid'] === 0 ? 0 : (
+                            $validatedData['total_amount'] > $validatedData['amount_paid'] ? $validatedData['amount_paid'] : $validatedData['amount_paid'] - $validatedData['change_amount'])
+                    ),
+                    'customer_payed' => $validatedData['amount_paid'],
+                    'change' => $validatedData['change_amount'] > 0 ? $validatedData['change_amount'] : 0,
                 ]);
+
+                $orinalTotal = 0;
+
+                foreach($validatedData['items'] as $item){
+
+                    $service = !$isRecesitation ? Service::find($item['service_id']) : ServiceRecestation::find($item['service_id']);
+
+                    $orinalTotal += $service ? $service->charges * $item['quantity'] : 0;
+
+                    TransactionElement::create([
+                        'closing_id' => $openCounter->id,
+                        'transaction_id' => $transaction->id,
+                        'created_by' => $request->user()->id,
+                        'patient_id' => $validatedData['patient_id'],
+                        'service_id' => !$isRecesitation ? $item['service_id'] : null,
+                        'service_recestation_id' => $isRecesitation ? $item['service_id'] : null,
+                        'service_order_id' => $isRecesitation ? $request->get('service_order_id', null) : null,
+                        'doctor_id' => $item['provider_id'] ?? null,
+                        'type' => $request->department_key,
+                        'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
+                        'income_or_expense' => 'INCOME',
+                        'amount' => $item['total'],
+                        'orignal_amount' => $service ? $service->charges * $item['quantity'] : 0,
+                    ]);
+                }
+
+                // Update original amount
+                $transaction->orignal_amount = $orinalTotal;
+                $transaction->save();
+
+
+
+                if($validatedData['change_amount'] < 0){
+                    // Create receaveable for the remaining amount
+                    $receaveableAmount = abs($validatedData['change_amount']);
+
+                    \App\Models\Receaveable::create([
+                        'patient_id' => $validatedData['patient_id'],
+                        'transaction_id' => $transaction->id,
+                        'amount' => $receaveableAmount, // Due in 30 days
+                        'status' => 'unpaid',
+                    ]);
+                }
+
+
+            }catch(\Exception $e){
+                DB::rollBack();
+                return back()->withErrors(['message' => 'An error occurred while processing the transaction. Please try again.']);
             }
 
-            // Update original amount
-            $transaction->orignal_amount = $orinalTotal;
-            $transaction->save();
-
-
-
-            if($validatedData['change_amount'] < 0){
-                // Create receaveable for the remaining amount
-                $receaveableAmount = abs($validatedData['change_amount']);
-
-                \App\Models\Receaveable::create([
-                    'patient_id' => $validatedData['patient_id'],
-                    'transaction_id' => $transaction->id,
-                    'amount' => $receaveableAmount, // Due in 30 days
-                    'status' => 'unpaid',
-                ]);
-            }
+            DB::commit();
 
             return redirect()->route('transaction-view',[
                 'tYear' => $transaction->year,
@@ -535,69 +580,83 @@ class WebController extends Controller
     
     public function receaveablesPayment(Request $request)
     {
-        $openCounter = Closing::with('transactions')->where('status','open')->where('receptionist_id', request()->user()->id)->first();
-
-        if(!$openCounter){
-            return redirect(route('counter-open'));
-        }
-
-        $validatedData = $request->validate([
-            'receaveable_id' => 'required|exists:receaveables,id',
-            'payment_method' => 'required|in:CASH,CARD,INSURANCE,CHEQUE',
-            'panel_id' => 'required_if:payment_method,INSURANCE|exists:panels,id',
-            'amount_to_collect' => 'required|numeric|gt:0',
-            'note' => 'nullable|string',
-        ]);
-
-        $receaveable = Receaveable::with('transaction')->findOrFail($validatedData['receaveable_id']);
-
-        $transaction = $receaveable->transaction;
-
-        $elements = $transaction->elements;
-
-        if($elements->count() !== 1){
-            return redirect()->back()->withErrors(['error' => 'Invalid receaveable transaction elements.']);
-        }
-
-        $element = $elements->first();
-
-        $newTransaction = Transaction::create([
-            'closing_id' => $openCounter->id,
-            'created_by' => $request->user()->id,
-            'patient_id' => $receaveable->patient_id,
-            'type' => $validatedData['payment_method'],
-            'income_or_expense' => 'INCOME',
-            'amount' => $validatedData['amount_to_collect'],
-            'panel_id' => $validatedData['payment_method'] === 'INSURANCE' ? $validatedData['panel_id'] : null,
-        ]);
-
-        $newTransactionElement = TransactionElement::create([
-            'closing_id' => $openCounter->id,
-            'transaction_id' => $newTransaction->id,
-            'receaveable_id' => $receaveable->id,
-            'created_by' => $request->user()->id,
-            'patient_id' => $receaveable->patient_id,
-            'type' => $element->type,
-            'income_or_expense' => $element->income_or_expense,
-            'service_id' => $element->service_id,
-            'amount' => $validatedData['amount_to_collect'],
-            'note' => $validatedData['note'],
-        ]);
 
 
-        $receaveable->amount -= $validatedData['amount_to_collect'];
-        if($receaveable->amount <= 0){
-            $receaveable->status = 'paid';
-            $receaveable->amount = 0;
-        }
-        $receaveable->save();
+            $openCounter = Closing::with('transactions')->where('status','open')->where('receptionist_id', request()->user()->id)->first();
 
-        return redirect()->route('transaction-view',[
-            'tYear' => $newTransaction->year,
-            'tMonth' => $newTransaction->month,
-            'tDay' => $newTransaction->day,
-            'tNumber' => $newTransaction->number
-        ]);
+            if(!$openCounter){
+                return redirect(route('counter-open'));
+            }
+
+            $validatedData = $request->validate([
+                'receaveable_id' => 'required|exists:receaveables,id',
+                'payment_method' => 'required|in:CASH,CARD,PANEL,CHEQUE,BANK_TRANSFER',
+                'panel_id' => 'required_if:payment_method,PANEL|exists:panels,id',
+                'amount_to_collect' => 'required|numeric|gt:0',
+                'note' => 'nullable|string',
+            ]);
+
+            $receaveable = Receaveable::with('transaction')->findOrFail($validatedData['receaveable_id']);
+
+            $transaction = $receaveable->transaction;
+
+            $elements = $transaction->elements;
+
+            if($elements->count() !== 1){
+                return redirect()->back()->withErrors(['error' => 'Invalid receaveable transaction elements.']);
+            }
+
+            $element = $elements->first();
+
+            DB::beginTransaction();
+
+            try{
+
+                $newTransaction = Transaction::create([
+                    'closing_id' => $openCounter->id,
+                    'created_by' => $request->user()->id,
+                    'patient_id' => $receaveable->patient_id,
+                    'type' => $validatedData['payment_method'],
+                    'income_or_expense' => 'INCOME',
+                    'amount' => $validatedData['amount_to_collect'],
+                    'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
+                ]);
+
+                $newTransactionElement = TransactionElement::create([
+                    'closing_id' => $openCounter->id,
+                    'transaction_id' => $newTransaction->id,
+                    'receaveable_id' => $receaveable->id,
+                    'created_by' => $request->user()->id,
+                    'patient_id' => $receaveable->patient_id,
+                    'type' => $element->type,
+                    'income_or_expense' => $element->income_or_expense,
+                    'service_id' => $element->service_id,
+                    'amount' => $validatedData['amount_to_collect'],
+                    'note' => $validatedData['note'] ?? null,
+                ]);
+
+
+                $receaveable->amount -= $validatedData['amount_to_collect'];
+                if($receaveable->amount <= 0){
+                    $receaveable->status = 'paid';
+                    $receaveable->amount = 0;
+                }
+                $receaveable->save();
+
+            }catch(\Exception $e){
+                DB::rollBack();
+                return redirect()->back()->withErrors(['error' => 'An error occurred while processing the payment: '.$e->getMessage()]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('transaction-view',[
+                'tYear' => $newTransaction->year,
+                'tMonth' => $newTransaction->month,
+                'tDay' => $newTransaction->day,
+                'tNumber' => $newTransaction->number
+            ]);
+
     }
 
     public function transactionView($tYear = null, $tMonth = null, $tDay = null, $tNumber = null)
@@ -704,7 +763,7 @@ class WebController extends Controller
     }
 
 
-    public function counterExpense()
+    public function counterExpense(Request $request)
     {
         $openCounter = Closing::with('transactions')->where('status','open')->where('receptionist_id', request()->user()->id)->first();
 
@@ -712,10 +771,80 @@ class WebController extends Controller
             return redirect(route('counter-open'));
         }
 
+        $paymentTypeInUrl = $request->get('type', null);
+
+        $categoryNameInUrl = $request->get('category', null);
+
+        $categoryIdInUrl = $request->get('category_id', null);
+
+        $amountInUrl = $request->get('amount', null);
+
+        $doctorIdInUrl = $request->get('doctor_id', null);
+
+        $transactionIdInUrl = $request->get('transaction_id', null);
+
+        $transactionNumberInUrl = $request->get('transaction_number', null);
+
+        $payedToOtherInUrl = $request->get('payed_to_other', null);
+
+        $expenseCategory = null;
+
+        if($categoryNameInUrl && $categoryIdInUrl){
+            $expenseCategory = ExpenseCategory::find($categoryIdInUrl);
+        }else{
+            if($categoryNameInUrl){
+                $expenseCategory = ExpenseCategory::firstOrCreate(['name' => $categoryNameInUrl]);
+            }elseif($categoryIdInUrl){
+                $expenseCategory = ExpenseCategory::find($categoryIdInUrl);
+            }else{
+                $expenseCategory = null;
+            }
+        }
+
+        $doctor = null;
+
+        if($doctorIdInUrl){
+            $doctor = User::find($doctorIdInUrl);
+        }
+
+        $trnsaction = null;
+
+        if($transactionIdInUrl && $transactionNumberInUrl){
+            $trnsaction = Transaction::find($transactionIdInUrl);
+        }else{
+            if($transactionNumberInUrl){
+                $trnsaction = Transaction::where('tr_number', $transactionNumberInUrl)->first();
+            }elseif($transactionIdInUrl){
+                $trnsaction = Transaction::find($transactionIdInUrl);
+            }else{
+                $trnsaction = null;
+            }
+        }
+
+        dd([
+                'type' => $paymentTypeInUrl,
+                'amount' => $amountInUrl,
+                'category' => $expenseCategory,
+                'doctor' => $doctor,
+                'transaction' => $trnsaction,
+                'payed_to_other' => $payedToOtherInUrl,
+            ]);
+
+
+
+
         return Inertia::render('counter/expense',[
             'openCounter' => $openCounter,
             'users' => \App\Models\User::all(),
-            'categories' => ExpenseCategory::all()
+            'categories' => ExpenseCategory::all(),
+            'selected' => [
+                'type' => $paymentTypeInUrl,
+                'amount' => $amountInUrl,
+                'category' => $expenseCategory,
+                'doctor' => $doctor,
+                'transaction' => $trnsaction,
+                'payed_to_other' => $payedToOtherInUrl,
+            ]
         ]);
     }
 

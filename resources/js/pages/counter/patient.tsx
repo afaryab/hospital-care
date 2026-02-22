@@ -26,7 +26,7 @@ const CreatePatientPolicy = lazy(() => import('@/policy/create-patient-policy'))
 
 export default function Counter() {
 
-    const {selectedPatient, departments, departmentKey, openCounter, services, providers, recesitation, existingServiceOrders} = usePage().props;
+    const {selectedPatient, departments, departmentKey, openCounter, services, providers, recesitation, existingServiceOrders, panelCompanies} = usePage().props;
 
     const step = !selectedPatient ? 1 : (!departmentKey ? 2 : 3);
 
@@ -114,7 +114,7 @@ export default function Counter() {
                     <BulletsWrapper bullets={bullets}>
                         {step === 1 && <StepOne openCounter={openCounter} />}
                         {step === 2 && <StepTwo openCounter={openCounter} patient={selectedPatient} departments={departments} />}
-                        {step === 3 && <StepThree recesitation={recesitation} existingServiceOrders={existingServiceOrders} openCounter={openCounter} patient={selectedPatient} departments={departments} departmentKey={departmentKey} services={services} providers={providers} />}
+                        {step === 3 && <StepThree recesitation={recesitation} existingServiceOrders={existingServiceOrders} openCounter={openCounter} patient={selectedPatient} departments={departments} departmentKey={departmentKey} services={services} providers={providers} panelCompanies={panelCompanies ?? []} />}
                     </BulletsWrapper>
                 </div>
             </div>
@@ -124,15 +124,18 @@ export default function Counter() {
 
 
 
-function StepThree({recesitation, existingServiceOrders, openCounter, patient, departments, departmentKey, services, providers}:any) {
+function StepThree({recesitation, existingServiceOrders, openCounter, patient, departments, departmentKey, services, providers, panelCompanies}:any) {
 
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [mriNumber, setMriNumber] = useState<string>('');
     const [paymentMethod, setPaymentMethod] = useState<string>('CASH');
+    const [panelCompany, setPanelCompany] = useState<string>('');
     const [amountPaid, setAmountPaid] = useState<number>(0);
     const [validationErrors, setValidationErrors] = useState<any>({});
     const [serviceProviders, setServiceProviders] = useState<any>({});
     const [selectedServiceOrder, setSelectedServiceOrder] = useState<string>();
+
+    console.log(services);
 
     const [formData, setFormData] = useState<any>({
         total: 0,
@@ -140,6 +143,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
     });
 
     const calculateChange = () => {
+        console.log('Calculating change with amountPaid:', amountPaid, 'and total:', formData.total);
         return amountPaid - formData.total;
     };
 
@@ -191,7 +195,8 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                 })),
                 total_amount: formData.total,
                 payment_method: paymentMethod,
-                amount_paid: amountPaid,
+                panel_company: paymentMethod === 'PANEL' ? panelCompany : null,
+                amount_paid: amountPaid ? amountPaid : 0,
                 change_amount: calculateChange()
             };
 
@@ -426,19 +431,37 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                         <div className="mt-4 flex justify-end">
                             <div className="w-full grid grid-cols-2 grid-col-1s gap-4">
                                 <div>
-                                    <Label htmlFor="payment_method">Payment Method</Label>
-                                    <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select payment method" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="CASH">Cash</SelectItem>
-                                            <SelectItem value="CARD">Card</SelectItem>
-                                            <SelectItem value="CHEQUE">Cheque</SelectItem>
-                                            {/* <SelectItem value="INSURANCE">INSURANCE</SelectItem> */}
-                                        </SelectContent>
-                                    </Select>
-                                    <InputError message={validationErrors.payment_method?.[0]} />
+                                    <div>
+                                        <Label htmlFor="payment_method">Payment Method</Label>
+                                        <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select payment method" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="CASH">Cash</SelectItem>
+                                                <SelectItem value="CARD">Card</SelectItem>
+                                                <SelectItem value="CHEQUE">Cheque</SelectItem>
+                                                <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
+                                                <SelectItem value="PANEL">INSURANCE</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError message={validationErrors.payment_method} />
+                                    </div>
+
+                                    {paymentMethod === 'PANEL' && <div>
+                                        <Label htmlFor="panel_company">Panel Company</Label>
+                                        <Select value={panelCompany} onValueChange={setPanelCompany}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select panel company" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {panelCompanies.map((company:any) => (
+                                                    <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError message={validationErrors.panel_company} />
+                                    </div>}
                                 </div>
 
                                 <div>
@@ -453,7 +476,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                                             value={`${formData.total.toFixed(2)}/- only`}
                                             readOnly
                                         />
-                                        <InputError message={validationErrors.total_amount?.[0]} />
+                                        <InputError message={validationErrors.total_amount} />
                                     </div>
 
                                     <div>
@@ -469,7 +492,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                                             step={0.01}
                                             placeholder="0.00"
                                         />
-                                        <InputError message={validationErrors.amount_paid?.[0]} />
+                                        <InputError message={validationErrors.amount_paid} />
                                     </div>
 
                                     {changeAmount > 0 && <div>

@@ -10,11 +10,19 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import AuthLayout from '@/layouts/auth-layout';
 
-export default function Register() {
+interface RegisterProps {
+    isFirstSignup?: boolean;
+}
+
+export default function Register({ isFirstSignup = false }: RegisterProps) {
     return (
         <AuthLayout
-            title="Create an account"
-            description="Enter your details below to create your account"
+            title={isFirstSignup ? 'Create the first account' : 'Create an account'}
+            description={
+                isFirstSignup
+                    ? 'This first sign up becomes the administrator account.'
+                    : 'Enter your details below to create your account'
+            }
         >
             <Head title="Register" />
             <Form
@@ -26,6 +34,12 @@ export default function Register() {
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-6">
+                            {isFirstSignup && (
+                                <p className="text-sm text-muted-foreground">
+                                    This account will be assigned administrator access.
+                                </p>
+                            )}
+
                             <div className="grid gap-2">
                                 <Label htmlFor="name">Name</Label>
                                 <Input
