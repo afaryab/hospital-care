@@ -2,9 +2,19 @@
 
 namespace App\Actions\Fortify;
 
+use App\Models\Accountant;
+use App\Models\Administrator;
+use App\Models\Dentist;
+use App\Models\EmergencyDoctor;
+use App\Models\IndDoctor;
+use App\Models\NursingStaff;
+use App\Models\OpdDoctor;
 use App\Models\User;
 use App\Models\Patient;
 use App\Models\PatientManager;
+use App\Models\Receptionist;
+use App\Models\UltrasoundDoctor;
+use App\Models\XrayTechnician;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -59,6 +69,8 @@ class CreateNewUser implements CreatesNewUsers
         })->validate();
 
         return DB::transaction(function () use ($data) {
+            $isFirstUser = User::query()->lockForUpdate()->nonSystem()->doesntExist();
+
             // Determine username: whichever of email or mobile is provided first
             $username = !empty($data['email']) ? $data['email'] : $data['mobile'];
 
@@ -70,25 +82,69 @@ class CreateNewUser implements CreatesNewUsers
                 'password' => $data['password'],
             ]);
 
-            // Create patient record with provided demographic info
-            $patient = Patient::create([
-                'name' => $data['name'],
-                'gender' => $data['gender'],
-                'age_group' => null,
-                'age_days' => null,
-                'age_dob' => $data['dob'],
-                'address' => null,
-                'guardian' => null,
-                'relation' => null,
-                'contact' => $data['mobile'] ?? null,
-                'cnic' => null,
-            ]);
+            if ($isFirstUser) {
+                Administrator::create([
+                    'user_id' => $user->id,
+                    'authority' => 'superadmin',
+                ]);
+                Receptionist::create([
+                    'user_id' => $user->id,
+                    'authority' => 'manager',
+                ]);
+                OpdDoctor::create([
+                    'user_id' => $user->id,
+                    'authority' => 'manager',
+                ]);
+                IndDoctor::create([
+                    'user_id' => $user->id,
+                    'authority' => 'manager',
+                ]);
+                EmergencyDoctor::create([
+                    'user_id' => $user->id,
+                    'authority' => 'manager',
+                ]);
+                Dentist::create([
+                    'user_id' => $user->id,
+                    'authority' => 'manager',
+                ]);
+                UltrasoundDoctor::create([
+                    'user_id' => $user->id,
+                    'authority' => 'manager',
+                ]);
+                XrayTechnician::create([
+                    'user_id' => $user->id,
+                ]);
+                NursingStaff::create([
+                    'user_id' => $user->id,
+                    'authority' => 'manager',
+                ]);
+                Accountant::create([
+                    'user_id' => $user->id,
+                    'authority' => 'manager',
+                ]);
 
-            // Link user to patient via PatientManager
-            PatientManager::create([
-                'user_id' => $user->id,
-                'patient_id' => $patient->id,
-            ]);
+            }else{
+
+                // Create patient record with provided demographic info
+                $patient = Patient::create([
+                    'name' => $data['name'],
+                    'gender' => $data['gender'],
+                    'age_group' => null,
+                    'age_days' => null,
+                    'age_dob' => $data['dob'],
+                    'address' => null,
+                    'guardian' => null,
+                    'relation' => null,
+                    'contact' => $data['mobile'] ?? null,
+                    'cnic' => null,
+                ]);
+
+                // Link user to patient via PatientManager
+                PatientManager::create([
+                    'user_id' => $user->id,
+                    'patient_id' => $patient->id,
+                ]);
+            }
 
             return $user;
         });
