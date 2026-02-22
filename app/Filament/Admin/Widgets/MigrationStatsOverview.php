@@ -2,7 +2,7 @@
 
 namespace App\Filament\Admin\Widgets;
 
-use App\Console\Commands\fetchOld;
+use App\Console\Commands\FetchOldHIMS;
 use App\Enum\CounterStatus;
 use App\Enum\ExpenseVoucherStatus;
 use App\Helpers\NumberHelper;
@@ -35,7 +35,7 @@ class MigrationStatsOverview extends StatsOverviewWidget
         $endDate = $this->pageFilters['endDate'] ?? null;
 
         $MigratedSteps = UpgradeProcess::where('name', 'currentStep')->first()->value ?? 0;
-        $totalSteps = fetchOld::$TOTAL_STEPS;
+        $totalSteps = FetchOldHIMS::$TOTAL_STEPS;
 
         $percentageMigrated = $totalSteps > 0 ? round(($MigratedSteps / $totalSteps) * 100, 2) . '%' : '0%';
 

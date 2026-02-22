@@ -2,7 +2,6 @@
 
 namespace App\Filament\Admin\Widgets;
 
-use App\Console\Commands\fetchOld;
 use App\Enum\CounterStatus;
 use App\Enum\ExpenseVoucherStatus;
 use App\Helpers\NumberHelper;
@@ -48,14 +47,19 @@ class AdminStatsOverview extends StatsOverviewWidget
     public function getUserStats($startDate = null, $endDate = null): StatsOverviewWidget\Stat
     {
 
-        $totalUsers = User::count();
+        $totalUsers = User::query()->nonSystem()->count();
+
+        $allowedUsers = env('MAX_USERS_ALLOWED', 10);
+        $isUserLimitReached = $totalUsers >= $allowedUsers;
 
         $userThisDuration = User::query()
+            ->nonSystem()
             ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
             ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
             ->count();
 
         $userChartThisDuration = User::query()
+            ->nonSystem()
             ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
             ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
             ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
@@ -67,7 +71,7 @@ class AdminStatsOverview extends StatsOverviewWidget
                 label: 'New Users',
                 value: NumberHelper::moneyfy($userThisDuration),
             )
-            ->description("Total: " . NumberHelper::moneyfy($totalUsers))
+            ->description("Total: " . NumberHelper::moneyfy($totalUsers) . " / " . NumberHelper::moneyfy($allowedUsers))
             ->chart($userChartThisDuration->pluck('count')->toArray());
     }
 
