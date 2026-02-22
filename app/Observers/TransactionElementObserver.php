@@ -24,11 +24,20 @@ class TransactionElementObserver
             }
 
             $s = $this->generateServiceOrderNumber($transactionElement->type);
+            $ss = $this->generateShortServiceOrderNumber($transactionElement->type);
 
-            $soShort = $service->department->slug.'/'.Carbon::now()->format('Y/m').'/'.str_pad($s, 8, '0', STR_PAD_LEFT);
+            $soShort = $service->department->slug.'/'.str_pad($ss, 8, '0', STR_PAD_LEFT);
             $soNumber = $patient->ps_number . '/' . $service->department->slug.'/'.str_pad($s, 8, '0', STR_PAD_LEFT);
 
             $token = Carbon::now()->format('Ym').str_pad($s, 6, '0', STR_PAD_LEFT);
+            $payee = null;
+            // Order payee set to patient
+            if($transactionElement->transaction->type == 'PANEL'){
+                $payee = $transactionElement->transaction->panel;
+            }else{
+                $payee = $transactionElement->transaction->patient;
+            }
+
             // Create ServiceOrder when TransactionElement is created
             $order = ServiceOrder::create([
                 'type' => $transactionElement->type,
@@ -42,7 +51,9 @@ class TransactionElementObserver
                 'doctor_id' => $transactionElement->doctor_id,
                 'is_composit' => $service->is_composit_service, // Default to false
                 'notes' => "Auto-generated service order for transaction element #{$transactionElement->id}",
-                'notes_json' => []
+                'notes_json' => [],
+                'payee_type' => get_class($payee),
+                'payee_id' => $payee->id
             ]);
 
             $transactionElement->service_order_id = $order->id;
@@ -99,6 +110,20 @@ class TransactionElementObserver
         // Check how many service orders have been created this month where created_at is in the current month
         $count = ServiceOrder::where('type', $type)->where('created_at', '>=', Carbon::now()->startOfMonth())
             ->where('created_at', '<=', Carbon::now()->endOfMonth())
+            ->count();
+
+        $count += 1; // Increment for the new service order
+
+        // STRPAD the count to be 8 digits
+        $count = str_pad($count, 8, '0', STR_PAD_LEFT);
+        return  $count;
+    }
+
+    private function generateShortServiceOrderNumber($type): string
+    {
+
+        // Check how many service orders have been created this month where created_at is in the current month
+        $count = ServiceOrder::where('type', $type)
             ->count();
 
         $count += 1; // Increment for the new service order
