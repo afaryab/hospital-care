@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enum\CounterStatus;
+use App\Enum\ServiceOrderStatus;
 use App\Models\Closing;
 use App\Models\UpgradeProcess;
 use Illuminate\Console\Command;
@@ -35,7 +36,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\MigrationLog;
 
-class FetchOld extends Command
+class FetchOldHIMS extends Command
 {
     public static $TOTAL_STEPS = 82;
 
@@ -54,6 +55,7 @@ class FetchOld extends Command
     protected $patientCache = [];
     protected $serviceCache = [];
     protected $serviceRecesitationCache = [];
+    protected $serviceOrderCache = [];
     protected $serviceDeptCache = [];
     protected $receptionCache = [];
     protected $closingCache = [];
@@ -64,6 +66,12 @@ class FetchOld extends Command
      */
     public function handle()
     {
+
+        if(env('ENABLE_OLD_SYNC', false) !== 'hims') {
+            return 1;
+        }
+
+
         Log::info('Starting optimized fetch-old command execution.');
 
         // Set memory and time limits
@@ -300,6 +308,12 @@ class FetchOld extends Command
                 break;
             default:
                 break;
+
+            // if($currentStep < 200) {
+            //     $this->info('Step ' . $currentStep . ' completed. Please run the command again to execute the next step.');
+            // } else if($currentStep > self::$TOTAL_STEPS) {
+            //     $this->info('No more steps to execute.');
+            // }
         }
     }
 
@@ -320,7 +334,7 @@ class FetchOld extends Command
                     $insertData[] = [
                         'path' => $image->path,
                         'owner_id' => $image->owner_id,
-                        'created_at' => now(),
+                        'created_at' => $image->created_on,
                         'updated_at' => now(),
                     ];
                 }
@@ -558,7 +572,7 @@ class FetchOld extends Command
                             'is_composit_service' => $department->have_composit_services,
                             'service_provider_types' => json_encode($serviceProviderTypes),
                             'created_by' => $service->entered_by,
-                            'created_at' => now(),
+                            'created_at' => $service->created_on,
                             'updated_at' => now(),
                             'old_id' => $service->id
                         ];
@@ -587,7 +601,7 @@ class FetchOld extends Command
                                 'charges_include_tax' => $service->charges_including_tax,
                                 'tax_rate' => $service->tax_rate,
                                 'created_by' => $service->entered_by,
-                                'created_at' => now(),
+                                'created_at' => $service->created_on,
                                 'updated_at' => now(),
                                 'old_id' => $service->id
                             ];
@@ -633,7 +647,7 @@ class FetchOld extends Command
                         'is_cash_allowed' => $reception->cash_on_counter,
                         'is_cheques_allowed' => $reception->cheques_on_counter,
                         'is_card_allowed' => $reception->card_slips_on_counter,
-                        'created_at' => now(),
+                        'created_at' => $reception->created_on,
                         'updated_at' => now(),
                     ];
 
@@ -786,7 +800,11 @@ class FetchOld extends Command
                     $insertData[] = [
                         'old_id' => $category->id,
                         'name' => $category->name,
-                        'created_at' => now(),
+                        'type' => $category->type,
+                        'pay_doc' => $category->pay_doc,
+                        'pay_others' => $category->pay_others,
+                        'pay_users' => $category->pay_users,
+                        'created_at' => $category->created_on,
                         'updated_at' => now(),
                     ];
                 }
@@ -1166,7 +1184,39 @@ class FetchOld extends Command
                 if ($elementData) {
                     $elementData['transaction_id'] = $newTransactionId;
                     $elementData['closing_id'] = $transactionData['closing_id'];
-                    $elementInserts[] = TransactionElement::create($elementData);
+                    $elementInserts[] = $te = TransactionElement::createQuietly($elementData);
+
+                    // If Income and department is inpatient and $element->department_transaction_id is present, link it to the service order
+
+                    if ($transaction->type === 'INCOME' && $element->department_transaction_id && in_array($element->element_type, ['INPT'])) {
+                        
+                        $InpFile = DB::connection('secondary')->table('inpatient_file')
+                            ->select('*')
+                            ->where('id', $element->department_transaction_id)
+                            ->get();
+                        if ($InpFile->isNotEmpty()) {
+                            $InpFile = $InpFile->first();
+
+                            $s = ServiceOrder::where('type', 'IND')->where('created_at', '>=', Carbon::now()->startOfMonth())
+                                ->where('created_at', '<=', Carbon::now()->endOfMonth())
+                                ->count();
+
+                            $s = $s + 1;
+
+                            $serviceOrder = ServiceOrder::create([
+                                'so_number' => 'SO/' . Carbon::parse($element->element_created_on)->format('Ymd') . '/' . str_pad($s, 4, '0', STR_PAD_LEFT),
+                                'so_short' => 'INPT/' . $te->id,
+                                'transaction_element_id' => $te->id,
+                                'patient_id' => $this->getCachedPatient($transaction->patient_id)?->id,
+                                'service_id' => $this->getCachedService($element->service_id, $this->mapServiceType($element->element_type))?->id,
+                                'doctor_id' => $this->getCachedUser($element->doctor_id)?->id,
+                                'status' => ServiceOrderStatus::OPEN,
+                                'created_at' => $element->element_created_on,
+                                'updated_at' => $element->element_modified_on,
+                            ]);
+                    }
+
+
                 }
             }
 
@@ -1180,6 +1230,7 @@ class FetchOld extends Command
 
         $statusObj->save();
         $this->info('Processed ' . count($groupedTransactions) . ' transactions');
+        }
     }
 
     /**
@@ -1217,8 +1268,18 @@ class FetchOld extends Command
         ];
 
         switch ($element->element_type) {
-            case 'OPD':
             case 'INPT':
+                return array_merge($baseData, [
+                    'income_or_expense' => 'INCOME',
+                    'doctor_id' => $this->getCachedUser($element->doctor_id)?->id,
+                    'patient_id' => $this->getCachedPatient($element->patient_id)?->id,
+                    'service_id' => $this->getCachedService($element->service_id, $this->mapServiceType($element->element_type))?->id,
+                    'service_recestation_id' => null,
+                    'expense_id' => null,
+                    'exp_voucher_id' => null,
+                    'type' => $this->mapServiceType($element->element_type),
+                ]);
+            case 'OPD':
             case 'EMER':
             case 'DENTAL':
             case 'ULTRA':
@@ -1503,14 +1564,6 @@ class FetchOld extends Command
             $numericValue = abs($numericValue);
         }
 
-        // Apply business logic limits
-        // $maxReasonableValue = 1000000; // 1 million
-        
-        // if ($numericValue > $maxReasonableValue) {
-        //     $this->warn("Transaction amount {$numericValue} seems unreasonably large, clamping to {$maxReasonableValue}");
-        //     return $maxReasonableValue;
-        // }
-
         // For expenses, ensure positive values
         if ($isExpense && $numericValue < 0) {
             $this->warn("Expense transaction has negative amount {$numericValue}, converting to positive");
@@ -1518,6 +1571,40 @@ class FetchOld extends Command
         }
 
         return $numericValue;
+    }
+
+    protected function mapInpatientFileToServiceOrder($departmentTransactionId)
+    {
+        if (!$departmentTransactionId) {
+            return null;
+        }
+
+        // Check cache first
+        if (isset($this->serviceOrderCache[$departmentTransactionId])) {
+            return $this->serviceOrderCache[$departmentTransactionId];
+        }
+
+        // Get the inpatient file based on department transaction ID
+        $inpatientFile = DB::connection('secondary')
+            ->table('inpatient_files')
+            ->where('id', $departmentTransactionId)
+            ->first();
+
+        if ($inpatientFile) {
+            // Cache the result
+            $this->serviceOrderCache[$departmentTransactionId] = $inpatientFile;
+
+            return [
+                'old_id' => $inpatientFile->id,
+                'patient_id' => $this->getCachedPatient($inpatientFile->patient_id)?->id,
+                'admission_date' => $inpatientFile->admission_date,
+                'discharge_date' => $inpatientFile->discharge_date,
+                'created_at' => $inpatientFile->created_on,
+                'updated_at' => $inpatientFile->modified_on,
+            ];
+        }
+
+        return null;
     }
 
 
