@@ -21,7 +21,9 @@ class ServiceOrder extends Model
         'doctor_id',
         'is_composit',
         'notes',
-        'notes_json'
+        'notes_json',
+        'payee_type',
+        'payee_id'
     ];
 
     protected $casts = [
@@ -105,6 +107,13 @@ class ServiceOrder extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    /**
+     * Get the payee of the service order (could be a patient, insurance company, etc.)
+     */ public function payee()
+    {
+        return $this->morphTo();
     }
 
     
