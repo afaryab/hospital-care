@@ -340,7 +340,7 @@ export default function CounterView() {
                                                 </tr>
                                                 <tr className='border-t-2 dark:border-gray-600 bg-gray-50 dark:bg-gray-700'>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.receaveable.length > 0).reduce((total:number, transaction:any) => total + Number(transaction.receaveable.id), 0)} PKR</th>
+                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.receaveable && transaction.receaveable.length > 0).reduce((total:number, transaction:any) => total + Number(transaction.receaveable.id), 0)} PKR</th>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Reveaveables</th>
                                                 </tr>
                                             </tfoot>}
