@@ -45,12 +45,68 @@ function SelectTrigger({
   )
 }
 
+type SelectContentProps = React.ComponentProps<typeof SelectPrimitive.Content> & {
+  searchable?: boolean
+  searchPlaceholder?: string
+}
+
+function filterSelectChildren(
+  children: React.ReactNode,
+  query: string
+): React.ReactNode {
+  const normalizedQuery = query.trim().toLowerCase()
+  if (!normalizedQuery) return children
+
+  return React.Children.toArray(children)
+    .map((child) => {
+      if (!React.isValidElement(child)) return child
+
+      if (child.type === SelectItem) {
+        const textValue =
+          child.props.textValue ??
+          (typeof child.props.children === "string"
+            ? child.props.children
+            : "")
+        if (!textValue) return child
+        return textValue.toLowerCase().includes(normalizedQuery) ? child : null
+      }
+
+      if (child.type === SelectGroup) {
+        const filteredGroupChildren = filterSelectChildren(
+          child.props.children,
+          normalizedQuery
+        )
+        const hasItems = React.Children.toArray(filteredGroupChildren).some(
+          (groupChild) => {
+            if (!React.isValidElement(groupChild)) return false
+            return groupChild.type === SelectItem
+          }
+        )
+        if (!hasItems) return null
+        return React.cloneElement(child, {
+          children: filteredGroupChildren,
+        })
+      }
+
+      return child
+    })
+    .filter(Boolean)
+}
+
 function SelectContent({
   className,
   children,
   position = "popper",
+  searchable = false,
+  searchPlaceholder = "Search...",
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+}: SelectContentProps) {
+  const [query, setQuery] = React.useState("")
+  const filteredChildren = React.useMemo(
+    () => (searchable ? filterSelectChildren(children, query) : children),
+    [children, query, searchable]
+  )
+
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -64,6 +120,18 @@ function SelectContent({
         position={position}
         {...props}
       >
+        {searchable ? (
+          <div className="border-b border-border p-2">
+            <input
+              data-slot="select-search"
+              className="border-input bg-background placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 flex h-8 w-full rounded-md border px-2 text-sm outline-none focus-visible:ring-[3px]"
+              placeholder={searchPlaceholder}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => event.stopPropagation()}
+            />
+          </div>
+        ) : null}
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
           className={cn(
@@ -72,7 +140,7 @@ function SelectContent({
               "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1"
           )}
         >
-          {children}
+          {filteredChildren}
         </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
       </SelectPrimitive.Content>

@@ -30,7 +30,7 @@ interface VoucherSearchResults {
 
 export default function CounterExpense() {
 
-    const { openCounter, users, categories } = usePage<{ openCounter: any, users: User[], categories: any[] }>().props
+    const { openCounter, users, categories, selected } = usePage<{ openCounter: any, users: User[], categories: any[] }>().props
 
     // Voucher search state
     const [voucherNumber, setVoucherNumber] = useState('');
@@ -43,11 +43,13 @@ export default function CounterExpense() {
     
 
     // Petty cash state
-    const [pettyCashAmount, setPettyCashAmount] = useState('');
+    const [pettyCashAmount, setPettyCashAmount] = useState(selected?.amount ? selected.amount.toString() : '');
     const [pettyCashDescription, setPettyCashDescription] = useState('');
-    const [pettyCashCategory, setPettyCashCategory] = useState('');
-    const [pettyCashPayedTo, setPettyCashPayedTo] = useState('');
-    const [pettyCashOtherName, setPettyCashOtherName] = useState('');
+    const [pettyCashCategory, setPettyCashCategory] = useState(selected?.category?.id ? selected.category.id.toString() : '');
+    const [pettyCashPayedTo, setPettyCashPayedTo] = useState(selected?.doctor?.id ? selected.doctor.id.toString() : (selected?.payed_to_other ? 'other' : ''));
+    const [pettyCashOtherName, setPettyCashOtherName] = useState(selected?.payed_to_other || '');
+    const [pettyCashTransactionId, setPettyCashTransactionId] = useState(selected?.transaction?.tr_number || '');
+    const [pettyCashFileNumber, setPettyCashFileNumber] = useState('');
 
     // Search voucher function
     const searchVoucher = async (vcNumber: string) => {
@@ -153,6 +155,7 @@ export default function CounterExpense() {
             amount: parseFloat(pettyCashAmount),
             description: pettyCashDescription,
             category_id: pettyCashCategory,
+            transaction_id: pettyCashTransactionId,
             payed_to: pettyCashPayedTo === 'other' ? null : pettyCashPayedTo,
             payed_to_other: pettyCashPayedTo === 'other' ? pettyCashOtherName : null,
             income_or_expense: 'EXPENSE',
@@ -170,6 +173,7 @@ export default function CounterExpense() {
                 setPettyCashCategory('');
                 setPettyCashPayedTo('');
                 setPettyCashOtherName('');
+                setPettyCashTransactionId('');
             },
             onError: (errors) => {
                 // Handle validation errors
@@ -381,7 +385,7 @@ export default function CounterExpense() {
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select a category" />
                                             </SelectTrigger>
-                                            <SelectContent>
+                                            <SelectContent searchable>
                                                 {categories.map((category: any) => (
                                                     <SelectItem key={category.id} value={category.id.toString()}>
                                                         {category.name}
@@ -390,6 +394,18 @@ export default function CounterExpense() {
                                             </SelectContent>
                                         </Select>
                                     </div>
+                                    {categories.find((category: any) => category.id.toString() === pettyCashCategory)?.name === 'Refund' && (
+                                        <div className="w-full max-w-sm space-y-2">
+                                            <Label htmlFor="transaction_id">Transaction Id</Label>
+                                            <Input
+                                                id="transaction_id"
+                                                type="text"
+                                                value={pettyCashTransactionId}
+                                            onChange={(e) => setPettyCashTransactionId(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Enter transaction id"
+                                        />
+                                    </div>)}
                                     <div className="w-full max-w-sm space-y-2">
                                         <Label htmlFor="payed_to">Payed To</Label>
                                         <Select
@@ -399,7 +415,7 @@ export default function CounterExpense() {
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select a user" />
                                             </SelectTrigger>
-                                            <SelectContent>
+                                            <SelectContent searchable>
                                                 <SelectItem value="other">Other</SelectItem>
                                                 {users.map((user: any) => (
                                                     <SelectItem key={user.id} value={user.id.toString()}>
@@ -420,6 +436,17 @@ export default function CounterExpense() {
                                             placeholder="Enter other person name"
                                         />
                                     </div>}
+                                    {categories.find((category: any) => category.id.toString() === pettyCashCategory)?.name === 'Inpatient Doctor Payment' && (<div className="w-full max-w-sm space-y-2">
+                                        <Label htmlFor="other_name">File Number</Label>
+                                        <Input
+                                            id="file_number"
+                                            type="text"
+                                            value={pettyCashFileNumber}
+                                            onChange={(e) => setPettyCashFileNumber(e.target.value)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            placeholder="Enter file number"
+                                        />
+                                    </div>)}
                                     <div className="w-full max-w-sm space-y-2">
                                         <Label htmlFor="description">Description</Label>
                                         <textarea

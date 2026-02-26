@@ -821,14 +821,14 @@ class WebController extends Controller
             }
         }
 
-        dd([
-                'type' => $paymentTypeInUrl,
-                'amount' => $amountInUrl,
-                'category' => $expenseCategory,
-                'doctor' => $doctor,
-                'transaction' => $trnsaction,
-                'payed_to_other' => $payedToOtherInUrl,
-            ]);
+        // dd([
+        //         'type' => $paymentTypeInUrl,
+        //         'amount' => $amountInUrl,
+        //         'category' => $expenseCategory,
+        //         'doctor' => $doctor,
+        //         'transaction' => $trnsaction,
+        //         'payed_to_other' => $payedToOtherInUrl,
+        //     ]);
 
 
 

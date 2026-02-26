@@ -300,6 +300,12 @@ class ExpenseCategorySeeder extends Seeder
                 "pay_doc"=>false,
                 "pay_others"=>false,
                 "pay_users"=>false
+            ],[
+                "name" => "Inpatient Doctor Payment",
+                "type"=>"",
+                "pay_doc"=>true,
+                "pay_others"=>true,
+                "pay_users"=>true
             ]
         ]);
 
