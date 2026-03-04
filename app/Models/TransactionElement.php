@@ -27,6 +27,7 @@ class TransactionElement extends Model
         'customer_payed',
         'change',
         'edited_amount',
+        'refunded_transaction_id',
         
         'service_order_id',
         'created_at',

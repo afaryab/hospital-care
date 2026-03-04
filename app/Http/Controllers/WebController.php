@@ -21,6 +21,7 @@ use App\Models\TransactionElement;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 
@@ -350,6 +351,7 @@ class WebController extends Controller
         
 
         if($validatedData['income_or_expense'] == 'EXPENSE'){
+
             $request->validate([
                 'type' => 'required|in:EXP,VOUCHER-PAY',
             ]);
@@ -417,18 +419,24 @@ class WebController extends Controller
                     'category_id' => 'nullable|exists:expense_categories,id',
                     'payed_to' => 'nullable|exists:users,id',
                     'payed_to_other' => 'nullable|string',
+                    'transaction_id' => 'nullable'
                 ]);
 
                 DB::beginTransaction();
 
                 try{
 
+                    $expenseCategory = ExpenseCategory::findOrFail($expenseData['category_id']);
+
+                    $isRefund = $expenseCategory->name == 'Refund';
+
                     $transaction = Transaction::create([
                         'closing_id' => $openCounter->id,
                         'created_by' => $request->user()->id,
                         'type' => TransactionElementType::EXP,
                         'income_or_expense' => 'EXPENSE',
-                        'amount' => $expenseData['amount']
+                        'amount' => $expenseData['amount'],
+                        'is_refunded' => $isRefund
                     ]);
 
                     $expense = Expense::create([
@@ -440,6 +448,7 @@ class WebController extends Controller
                         'payed_to_name' => $request->get('payed_to', 'other') === 'other' ? $expenseData['payed_to_other'] : null,
                     ]);
 
+
                     TransactionElement::create([
                         'closing_id' => $openCounter->id,
                         'transaction_id' => $transaction->id,
@@ -448,9 +457,13 @@ class WebController extends Controller
                         'type' => TransactionElementType::EXP,
                         'income_or_expense' => 'EXPENSE',
                         'amount' => $expenseData['amount'],
+                        'refunded_transaction_id' => $isRefund ? $expenseData['transaction_id'] : null,
+                        // 'expense_service_order_id'
                     ]);
 
                 }catch(\Exception $e){
+                    // Log exception
+                    Log::error("Expense Record Failed " .  $e->getMessage());
                     DB::rollBack();
                     return back()->withErrors(['message' => 'An error occurred while processing the transaction. Please try again.']);
                 }

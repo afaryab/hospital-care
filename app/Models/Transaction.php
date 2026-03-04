@@ -25,6 +25,7 @@ class Transaction extends Model
         'customer_payed',
         'change',
         'edited_amount',
+        'is_refunded',
 
         'created_at',
         'updated_at',
