@@ -208,13 +208,13 @@ export default function CounterView() {
                                                             {transaction.elements && transaction.elements.length > 0 ? (
                                                                 <>
                                                                     {transaction.elements.map((element:any, idx:number) => (<div key={idx} className='flex'>
-                                                                        {element.service_order && <span className='text-gray-600 text-xs bg-gray-100 px-1 rounded-l border border-gray-300'>
-                                                                            {element.service.name}
+                                                                        {element?.service_order && <span className='text-gray-600 text-xs bg-gray-100 px-1 rounded-l border border-gray-300'>
+                                                                            {element.service?.name}
                                                                         </span>}
-                                                                        {element.service_order && <span className='text-indigo-600 text-xs bg-indigo-100 px-1 border border-indigo-300'>
-                                                                            {element.service_order.so_number}
+                                                                        {element?.service_order && <span className='text-indigo-600 text-xs bg-indigo-100 px-1 border border-indigo-300'>
+                                                                            {element?.service_order?.so_number}
                                                                         </span>}
-                                                                        <Link href={'/'+element.service_order.so_number} target='_blank' className='text-gray-600 text-xs bg-gray-100 px-1 rounded-r border border-gray-300' >
+                                                                        <Link href={'/'+element?.service_order?.so_number} target='_blank' className='text-gray-600 text-xs bg-gray-100 px-1 rounded-r border border-gray-300' >
                                                                             <LucideLink className='inline h-3 w-3 text-gray-500' />
                                                                         </Link>
                                                                     </div>))}
