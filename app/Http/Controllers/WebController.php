@@ -430,10 +430,15 @@ class WebController extends Controller
 
                     $isRefund = $expenseCategory->name == 'Refund';
 
+                    if($isRefund){
+                        
+                        $refundedTransaction = Transaction::find($expenseData['transaction_id']);
+                    }
+
                     $transaction = Transaction::create([
                         'closing_id' => $openCounter->id,
                         'created_by' => $request->user()->id,
-                        'type' => TransactionElementType::EXP,
+                        'type' => 'CASH',
                         'income_or_expense' => 'EXPENSE',
                         'amount' => $expenseData['amount'],
                         'is_refunded' => $isRefund
@@ -460,6 +465,12 @@ class WebController extends Controller
                         'refunded_transaction_id' => $isRefund ? $expenseData['transaction_id'] : null,
                         // 'expense_service_order_id'
                     ]);
+
+                    if($isRefund && $refundedTransaction){
+                        
+                        $refundedTransaction->is_refunded = 1;
+                        $refundedTransaction->save();
+                    }
 
                 }catch(\Exception $e){
                     // Log exception
@@ -575,6 +586,7 @@ class WebController extends Controller
 
 
             }catch(\Exception $e){
+                Log::error($e->getMessage());
                 DB::rollBack();
                 return back()->withErrors(['message' => 'An error occurred while processing the transaction. Please try again.']);
             }

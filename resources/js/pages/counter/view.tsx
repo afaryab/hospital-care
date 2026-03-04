@@ -190,8 +190,8 @@ export default function CounterView() {
                                                                         {transaction.patient.ps_number}
                                                                     </div>
                                                                     <div className='flex flex-row'>
-                                                                        {transaction.patient.name && <span className='text-blue-600 text-xs bg-blue-100 rounded-l px-1 border border-blue-300'>
-                                                                            {transaction.patient.name}
+                                                                        {transaction?.patient?.name && <span className='text-blue-600 text-xs bg-blue-100 rounded-l px-1 border border-blue-300'>
+                                                                            {transaction?.patient?.name}
                                                                         </span>}
 
                                                                         <Link href={'/'+transaction.patient.ps_number} target='_blank' className='text-gray-600 text-xs bg-gray-100 px-1 rounded-r border border-gray-300' >
@@ -214,9 +214,9 @@ export default function CounterView() {
                                                                         {element?.service_order && <span className='text-indigo-600 text-xs bg-indigo-100 px-1 border border-indigo-300'>
                                                                             {element?.service_order?.so_number}
                                                                         </span>}
-                                                                        <Link href={'/'+element?.service_order?.so_number} target='_blank' className='text-gray-600 text-xs bg-gray-100 px-1 rounded-r border border-gray-300' >
+                                                                        {element?.service_order && <Link href={'/'+element?.service_order?.so_number} target='_blank' className='text-gray-600 text-xs bg-gray-100 px-1 rounded-r border border-gray-300' >
                                                                             <LucideLink className='inline h-3 w-3 text-gray-500' />
-                                                                        </Link>
+                                                                        </Link>}
                                                                     </div>))}
                                                                 </>
                                                             ) : (
@@ -264,13 +264,13 @@ export default function CounterView() {
                                                                     </DropdownMenuTrigger>
                                                                     <DropdownMenuContent align="end">
                                                                         <div className='flex flex-col'>
-                                                                            <Link href={'/CT-'+transaction.tr_number} target='_blank' >
+                                                                            {transaction?.is_refunded == 0 && <Link href={'/CT-'+transaction.tr_number} target='_blank' >
                                                                                 Print
-                                                                            </Link>
-                                                                            <Link href={'/CT-'+transaction.tr_number+'/edit'} target='_blank' >
+                                                                            </Link>}
+                                                                            {transaction?.is_refunded == 0 && <Link href={'/CT-'+transaction.tr_number+'/edit'} target='_blank' >
                                                                                 Edit
-                                                                            </Link>
-                                                                            {transaction.patient.name && <Link href={'/CT-EXP?type=petty&category=Refund&amount='+transaction.amount+'&transaction_number='+transaction.tr_number+'&payed_to_other='+transaction.patient.name} target='_blank' >
+                                                                            </Link>}
+                                                                            {(transaction?.patient?.name && transaction?.is_refunded == 0) && <Link href={'/CT-EXP?type=petty&category=Refund&amount='+transaction.amount+'&transaction_number='+transaction.tr_number+'&payed_to_other='+transaction.patient.name} target='_blank' >
                                                                                 Refund
                                                                             </Link>}
                                                                         </div>
@@ -300,42 +300,42 @@ export default function CounterView() {
                                             {openCounter?.transactions.length > 0 && <tfoot>
                                                 <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.type === 'CASH' || transaction.type === 'Cash' || transaction.type === 'cash').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
+                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'INCOME' && (transaction.type === 'CASH' || transaction.type === 'Cash' || transaction.type === 'cash')).reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Cash</th>
                                                 </tr>
                                                 <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.type === 'CHEQUE' || transaction.type === 'Cheque' || transaction.type === 'cheque').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
+                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'INCOME' && (transaction.type === 'CHEQUE' || transaction.type === 'Cheque' || transaction.type === 'cheque')).reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Cheque</th>
                                                 </tr>
                                                 <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.type === 'BANK_TRANSFER' || transaction.type === 'Bank_Transfer' || transaction.type === 'bank_transfer').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
+                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'INCOME' && (transaction.type === 'BANK_TRANSFER' || transaction.type === 'Bank_Transfer' || transaction.type === 'bank_transfer')).reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Bank Transfer</th>
                                                 </tr>
                                                 <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.type === 'CARD' || transaction.type === 'Card' || transaction.type === 'card').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
+                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'INCOME' && (transaction.type === 'CARD' || transaction.type === 'Card' || transaction.type === 'card')).reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Card</th>
                                                 </tr>
                                                 <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.type === 'PANEL' || transaction.type === 'Panel' || transaction.type === 'panel').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
+                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'INCOME' && (transaction.type === 'PANEL' || transaction.type === 'Panel' || transaction.type === 'panel')).reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Panel</th>
                                                 </tr>
                                                 <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.type === 'PANEL' || transaction.type === 'Panel' || transaction.type === 'panel').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
+                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'EXPENSE').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Expense Paid</th>
                                                 </tr>
                                                 <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.type === 'PANEL' || transaction.type === 'Panel' || transaction.type === 'panel').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
+                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'VOUCHER-PAY').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Voucher Payments</th>
                                                 </tr>
                                                 <tr className='border-t-2 dark:border-gray-600 bg-gray-50 dark:bg-gray-700'>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                                    <th className='text-right'>{openCounter?.transactions.reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
+                                                    <th className='text-right'>{openCounter?.transactions.reduce((total:number, transaction:any) => (transaction.income_or_expense === 'EXPENSE' || transaction.income_or_expense === 'VOUCHER-PAY') ? total - Number(transaction.amount) : total + Number(transaction.amount), 0)} PKR</th>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Total</th>
                                                 </tr>
                                                 <tr className='border-t-2 dark:border-gray-600 bg-gray-50 dark:bg-gray-700'>

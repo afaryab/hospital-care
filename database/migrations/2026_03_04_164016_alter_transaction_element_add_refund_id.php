@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('transactions', function (Blueprint $table){
-            $table->boolean('is_refunded', 0);
+            $table->boolean('is_refunded')->default(0);
         });
 
         Schema::table('transaction_elements', function (Blueprint $table){
