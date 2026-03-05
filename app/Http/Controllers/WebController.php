@@ -419,7 +419,8 @@ class WebController extends Controller
                     'category_id' => 'nullable|exists:expense_categories,id',
                     'payed_to' => 'nullable|exists:users,id',
                     'payed_to_other' => 'nullable|string',
-                    'transaction_id' => 'nullable'
+                    'transaction_id' => 'nullable',
+                    'file_number' => 'nullable',
                 ]);
 
                 DB::beginTransaction();
@@ -430,9 +431,22 @@ class WebController extends Controller
 
                     $isRefund = $expenseCategory->name == 'Refund';
 
+                    $isDoctorFilePayment = $expenseCategory->name == 'Inpatient Doctor Payment';
+
                     if($isRefund){
                         
                         $refundedTransaction = Transaction::find($expenseData['transaction_id']);
+                        
+                        if(!$refundedTransaction){
+                            $refundedTransaction = Transaction::where('tr_number', $expenseData['transaction_id'])->first();
+                        }
+                    }
+
+                    if($isDoctorFilePayment){
+                        $ServiceOrderExp = ServiceOrder::find($expenseData['file_number']);
+                        if(!$ServiceOrderExp){
+                            $ServiceOrderExp = ServiceOrder::where('so_number', $expenseData['file_number'])->first();
+                        }
                     }
 
                     $transaction = Transaction::create([
@@ -462,8 +476,8 @@ class WebController extends Controller
                         'type' => TransactionElementType::EXP,
                         'income_or_expense' => 'EXPENSE',
                         'amount' => $expenseData['amount'],
-                        'refunded_transaction_id' => $isRefund ? $expenseData['transaction_id'] : null,
-                        // 'expense_service_order_id'
+                        'refunded_transaction_id' => $isRefund ? $refundedTransaction->id : null,
+                        'expense_service_order_id' => $isDoctorFilePayment ? $ServiceOrderExp->id : null,
                     ]);
 
                     if($isRefund && $refundedTransaction){

@@ -16,8 +16,8 @@ return new class extends Migration
         });
 
         Schema::table('transaction_elements', function (Blueprint $table){
-            $table->uuid('refunded_transaction_id')->nullable();
-            $table->uuid('expense_service_order_id')->nullable();
+            $table->foreignUlid('refunded_transaction_id')->nullable()->constrained('transactions', 'id')->onDelete('set null');
+            $table->foreignUlid('expense_service_order_id')->nullable()->constrained('service_orders', 'id')->onDelete('set null');
         });
         
     }
@@ -32,7 +32,10 @@ return new class extends Migration
         });
 
         Schema::table('transaction_elements', function (Blueprint $table){
+            $table->dropForeign(['refunded_transaction_id']);
             $table->dropColumn('refunded_transaction_id');
+
+            $table->dropForeign(['expense_service_order_id']);
             $table->dropColumn('expense_service_order_id');
         });
     }
