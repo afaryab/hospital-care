@@ -179,7 +179,7 @@ return [
          *
          * @var string
          */
-        'default_font' => 'Noto Nastaliq Urdu',
+        'default_font' => 'Helvetica',
 
         /**
          * Image DPI setting

@@ -115,7 +115,7 @@ class Patient extends Model
 
     public function receaveables()
     {
-        return $this->hasMany(Receaveable::class, 'patient_id', 'id')->where('status', 'unpaid');
+        return $this->hasMany(Receaveable::class, 'patient_id', 'id')->where('status', 'unpaid')->whereNull('panel_id');
     }
 
     public function getOutstandingsAttribute()

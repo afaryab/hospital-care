@@ -320,11 +320,6 @@ export default function CounterView() {
                                                 </tr>
                                                 <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                                    <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'INCOME' && (transaction.type === 'PANEL' || transaction.type === 'Panel' || transaction.type === 'panel')).reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
-                                                    <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Panel</th>
-                                                </tr>
-                                                <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
-                                                    <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
                                                     <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'EXPENSE').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
                                                     <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Expense Paid</th>
                                                 </tr>

@@ -14,7 +14,7 @@ import AppLayout from '@/layouts/app-layout';
 import { apiPatientsSearch, apiPatientsStore, counter, counterSelectDepartment, counterSelectDepartmentService, counterSelectPatient, counterView, home, patientsRegisterPsNumberDepartment, printTransaction, downloadTransaction, transactionStore } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage, router } from '@inertiajs/react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, LoaderCircle } from 'lucide-react';
 import { useEffect, useState, lazy, Suspense, use } from 'react';
 import { clsx } from 'clsx';
 import { patient } from '@/actions/App/Http/Controllers/WebController';
@@ -24,7 +24,7 @@ import PatientHistorySideBar from '@/elements/patient/transactions-history-card'
 import DepartmentMiniCard from '@/elements/department/mini-card';
 const CreatePatientPolicy = lazy(() => import('@/policy/create-patient-policy'));
 
-export default function Counter() {
+export default function CounterIncome() {
 
     const {selectedPatient, departments, departmentKey, openCounter, services, providers, recesitation, existingServiceOrders, panelCompanies} = usePage().props;
 
@@ -94,17 +94,27 @@ export default function Counter() {
             }).url
         });
     }
-
-    (selectedPatient?.name && departmentKey != '') && bullets.push({ 
-        title: departmentKey != '' && `Departments (${departmentKey})`,
-        url: (selectedPatient && departmentKey != '') && counterSelectDepartmentService({
-            pYear: selectedPatient.year,
-            pMonth: selectedPatient.month,
-            number: selectedPatient.number,
-            departmentKey: departmentKey as string
-        }).url,
-        active: step === 3
-    });
+    if(selectedPatient?.name && departmentKey != ''){
+        bullets.push({ 
+            title: departmentKey != '' && `Departments (${departmentKey})`,
+            url: (selectedPatient && departmentKey != '') && counterSelectDepartmentService({
+                pYear: selectedPatient.year,
+                pMonth: selectedPatient.month,
+                number: selectedPatient.number,
+                departmentKey: departmentKey as string
+            }).url,
+            active: step === 3
+        });
+        breadcrumbs.push({
+            title: departmentKey != '' ? `Departments (${departmentKey})` : 'Select Department',
+            href: (selectedPatient && departmentKey != '') ? counterSelectDepartmentService({
+                pYear: selectedPatient.year,
+                pMonth: selectedPatient.month,
+                number: selectedPatient.number,
+                departmentKey: departmentKey as string
+            }).url : '#'
+        });
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -112,9 +122,9 @@ export default function Counter() {
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72] dark:bg-[#262626]">
                 <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-2 bg-white dark:bg-neutral-950 text-gray-800 dark:text-white">
                     <BulletsWrapper bullets={bullets}>
-                        {step === 1 && <StepOne openCounter={openCounter} />}
-                        {step === 2 && <StepTwo openCounter={openCounter} patient={selectedPatient} departments={departments} />}
-                        {step === 3 && <StepThree recesitation={recesitation} existingServiceOrders={existingServiceOrders} openCounter={openCounter} patient={selectedPatient} departments={departments} departmentKey={departmentKey} services={services} providers={providers} panelCompanies={panelCompanies ?? []} />}
+                        {step === 1 && <SelectPatient openCounter={openCounter} />}
+                        {step === 2 && <SelectDepartment openCounter={openCounter} patient={selectedPatient} departments={departments} />}
+                        {step === 3 && <CollectPayment recesitation={recesitation} existingServiceOrders={existingServiceOrders} openCounter={openCounter} patient={selectedPatient} departments={departments} departmentKey={departmentKey} services={services} providers={providers} panelCompanies={panelCompanies ?? []} />}
                     </BulletsWrapper>
                 </div>
             </div>
@@ -124,7 +134,7 @@ export default function Counter() {
 
 
 
-function StepThree({recesitation, existingServiceOrders, openCounter, patient, departments, departmentKey, services, providers, panelCompanies}:any) {
+function CollectPayment({recesitation, existingServiceOrders, openCounter, patient, departments, departmentKey, services, providers, panelCompanies}:any) {
 
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [mriNumber, setMriNumber] = useState<string>('');
@@ -134,6 +144,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
     const [validationErrors, setValidationErrors] = useState<any>({});
     const [serviceProviders, setServiceProviders] = useState<any>({});
     const [selectedServiceOrder, setSelectedServiceOrder] = useState<string>();
+    const [processing, setProcessing] = useState<boolean>(false);
 
     console.log(services);
 
@@ -170,9 +181,11 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
     const generateBill = async () => {
         // Clear previous validation errors
         setValidationErrors({});
+        setProcessing(true);
 
         if(recesitation && selectedServiceOrder === ''){
             alert('Please enter MRI number for recesitation services.');
+            setProcessing(false);
             return;
         }
         
@@ -202,6 +215,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
 
             if(!validatedInput(billData)){  
                 alert('Please fix the validation errors before generating the bill.');
+                setProcessing(false);
                 return;
             }
 
@@ -222,6 +236,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                     // }, 1000);
                     
                     setValidationErrors({});
+                    setProcessing(false);
                 },
                 onError: (errors) => {
                     console.error('Validation errors:', errors);
@@ -229,7 +244,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                     
                     // Show a general error message
                     const errorMessages = Object.values(errors).flat();
-                    alert(`Please fix the following errors:\n${errorMessages.join('\n')}`);
+                    setProcessing(false);
                 },
                 onFinish: () => {
                     console.log('Request completed');
@@ -429,8 +444,26 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                             </tbody>
                         </table>
                         <div className="mt-4 flex justify-end">
-                            <div className="w-full grid grid-cols-2 grid-col-1s gap-4">
+                            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
+
+                                    
+                                </div>
+
+                                <div className='flex flex-col space-y-2'>
+
+                                    <div>
+                                        <Label htmlFor="total_amount">Total Amount</Label>
+                                        <Input
+                                            id="total_amount"
+                                            type="text"
+                                            name="total_amount"
+                                            className="text-right font-semibold"
+                                            value={`${formData.total.toFixed(2)}/- only`}
+                                            readOnly
+                                        />
+                                        <InputError message={validationErrors.total_amount} />
+                                    </div>
                                     <div>
                                         <Label htmlFor="payment_method">Payment Method</Label>
                                         <Select value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -462,24 +495,8 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                                         </Select>
                                         <InputError message={validationErrors.panel_company} />
                                     </div>}
-                                </div>
 
-                                <div>
-
-                                    <div>
-                                        <Label htmlFor="total_amount">Total Amount</Label>
-                                        <Input
-                                            id="total_amount"
-                                            type="text"
-                                            name="total_amount"
-                                            className="text-right font-semibold"
-                                            value={`${formData.total.toFixed(2)}/- only`}
-                                            readOnly
-                                        />
-                                        <InputError message={validationErrors.total_amount} />
-                                    </div>
-
-                                    <div>
+                                    {(paymentMethod === 'CASH' || paymentMethod === 'CARD' || paymentMethod === 'CHEQUE' || paymentMethod === 'BANK_TRANSFER') && <div>
                                         <Label htmlFor="amount_paid">Amount Paid</Label>
                                         <Input
                                             id="amount_paid"
@@ -493,27 +510,34 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
                                             placeholder="0.00"
                                         />
                                         <InputError message={validationErrors.amount_paid} />
-                                    </div>
+                                    </div>}
 
-                                    {changeAmount > 0 && <div>
-                                        <Label htmlFor="change_amount">Change</Label>
+                                    <div className='cursor-not-allowed'>
+                                        <Label htmlFor="change_amount">{changeAmount > 0 ? `Change` : 'Pending Receivable'}</Label>
                                         <Input
                                             id="change_amount"
                                             type="text"
                                             name="change_amount"
-                                            className="text-right font-semibold bg-green-50"
+                                            className="text-right font-semibold bg-green-50 cursor-not-allowed"
                                             value={`${changeAmount.toFixed(2)}/- only`}
                                             readOnly
                                         />
-                                    </div>}
+                                    </div>
 
 
                                     <div className="pt-4">
                                         <Button 
                                             variant={'default'}
                                             onClick={generateBill}
-                                            disabled={formData.items.length === 0 || amountPaid < 0}
+                                            disabled={formData.items.length === 0 || amountPaid < 0 || processing}
+                                            className={clsx(
+                                                formData.items.length === 0 || amountPaid < 0 || processing ? 'opacity-50 cursor-not-allowed' : ''
+                                            )}
                                         >
+
+                                            {processing && (
+                                                <LoaderCircle className="h-4 w-4 animate-spin" />
+                                            )}
                                             Generate Bill
                                         </Button>
                                     </div>
@@ -528,7 +552,7 @@ function StepThree({recesitation, existingServiceOrders, openCounter, patient, d
     </div>
 }
 
-function StepTwo({openCounter, patient, departments}:any) {
+function SelectDepartment({openCounter, patient, departments}:any) {
     return <div className='flex flex-row h-full w-full space-y-4'>
         <PatientHistorySideBar patient={patient} className='w-1/4' />
         <div className='flex-1 flex flex-col h-full w-full space-y-4 px-4'>
@@ -569,7 +593,7 @@ function StepTwo({openCounter, patient, departments}:any) {
     </div>
 }
 
-function StepOne({openCounter}:any) {
+function SelectPatient({openCounter}:any) {
 
 
     const [patients, setPatients] = useState([]);

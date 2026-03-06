@@ -24,13 +24,33 @@ class ClosingInfolist
                                     ->viewData(fn (Closing $record) => [
                                         'closing' => $record,
                                         'transactions' => $record->transactions(),
+                                        'printUrl' => self::buildMiniPrintUrl($record),
+                                    ])
+                                    ->columnSpanFull(),  
+                            ]),
+                        Tabs\Tab::make('Detailed Summery')
+                            ->schema([
+                                ViewEntry::make('closing_overview')
+                                    ->label(false)
+                                    ->view('filament.accounts.closings.infolists.closing-overview')
+                                    ->viewData(fn (Closing $record) => [
+                                        'closing' => $record,
+                                        'transactions' => $record->transactions(),
                                         'printUrl' => self::buildPrintUrl($record),
                                     ])
                                     ->columnSpanFull(),  
                             ]),
                         Tabs\Tab::make('Services Report')
                             ->schema([
-                                // ...
+                                ViewEntry::make('closing_overview')
+                                    ->label(false)
+                                    ->view('filament.accounts.closings.infolists.closing-overview')
+                                    ->viewData(fn (Closing $record) => [
+                                        'closing' => $record,
+                                        'transactions' => $record->transactions(),
+                                        'printUrl' => self::buildPrintUrl($record),
+                                    ])
+                                    ->columnSpanFull(),  
                             ]),
                         Tabs\Tab::make('Income Report')
                             ->schema([
@@ -50,6 +70,22 @@ class ClosingInfolist
             ]);
     }
 
+    protected static function buildMiniPrintUrl(Closing $record): ?string
+    {
+        $parts = $record->ct_number_parts ?? [];
+
+        if (empty($parts['year']) || empty($parts['month']) || empty($parts['number'])) {
+            return null;
+        }
+
+        return route('print-closing-statement', [
+            'year' => $parts['year'],
+            'month' => $parts['month'],
+            'number' => $parts['number'],
+            'variant' => 'mini',
+        ]);
+    }
+
     protected static function buildPrintUrl(Closing $record): ?string
     {
         $parts = $record->ct_number_parts ?? [];
@@ -62,6 +98,7 @@ class ClosingInfolist
             'year' => $parts['year'],
             'month' => $parts['month'],
             'number' => $parts['number'],
+            'variant' => 'normal',
         ]);
     }
 }

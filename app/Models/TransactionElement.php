@@ -18,7 +18,7 @@ class TransactionElement extends Model
         'service_id',
         'service_recestation_id',
         'doctor_id',
-        'expense_id',
+        'expense_category_id',
         'exp_voucher_id',
         'type',
         'income_or_expense',
@@ -90,9 +90,9 @@ class TransactionElement extends Model
         return $this->belongsTo(User::class, 'doctor_id');
     }
 
-    public function expense(): BelongsTo
+    public function expenseCategory(): BelongsTo
     {
-        return $this->belongsTo(Expense::class);
+        return $this->belongsTo(ExpenseCategory::class, 'expense_category_id');
     }
 
     public function expVoucher(): BelongsTo

@@ -3,7 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <title>Hospital Closing Statement - {{ $closing['ct_number'] }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            color: #111827;
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+        .px-2 { padding-left: 8px; padding-right: 8px; }
+        .py-8 { padding-top: 32px; padding-bottom: 32px; }
+        .max-w-xl { max-width: 900px; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .flex { display: table; width: 100%; }
+        .items-center { vertical-align: middle; }
+        .justify-between > div { display: table-cell; vertical-align: top; }
+        .justify-between > div:last-child { text-align: right; }
+        .mb-8 { margin-bottom: 24px; }
+        .mb-2 { margin-bottom: 8px; }
+        .text-gray-700 { color: #374151; }
+        .font-semibold { font-weight: 600; }
+        .font-bold { font-weight: 700; }
+        .text-lg { font-size: 18px; }
+        .text-xl { font-size: 20px; }
+        .text-sm { font-size: 12px; }
+        .uppercase { text-transform: uppercase; }
+
+        .info-grid { margin: 0 8px 16px; }
+        .info-row { margin-bottom: 6px; }
+        .info-item { display: inline-block; width: 49%; vertical-align: top; }
+
+        .section { margin: 0 8px 14px; }
+        .section-title {
+            font-weight: 700;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            padding: 6px 8px;
+            margin-bottom: 6px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+        }
+        th, td {
+            border: 1px solid #d1d5db;
+            padding: 6px;
+            vertical-align: top;
+            text-align: left;
+        }
+        thead th { background: #f9fafb; }
+        .amount { text-align: right; white-space: nowrap; }
+        .total-row td { background: #f3f4f6; }
+        .footer {
+            margin: 18px 8px 0;
+            padding-top: 8px;
+            border-top: 1px solid #d1d5db;
+            color: #6b7280;
+            font-size: 11px;
+        }
+    </style>
 </head>
 <body>
 

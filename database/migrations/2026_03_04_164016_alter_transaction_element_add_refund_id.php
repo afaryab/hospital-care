@@ -16,8 +16,8 @@ return new class extends Migration
         });
 
         Schema::table('transaction_elements', function (Blueprint $table){
-            $table->foreignUlid('refunded_transaction_id')->nullable()->constrained('transactions', 'id')->onDelete('set null');
-            $table->foreignUlid('expense_service_order_id')->nullable()->constrained('service_orders', 'id')->onDelete('set null');
+            $table->foreignId('refunded_transaction_id')->nullable()->constrained('transactions', 'id')->onDelete('set null');
+            $table->foreignId('expense_service_order_id')->nullable()->constrained('service_orders', 'id')->onDelete('set null');
         });
         
     }

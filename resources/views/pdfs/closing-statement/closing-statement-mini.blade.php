@@ -50,11 +50,11 @@
         .section-title { 
             font-weight: bold; 
             font-size: 11px; 
-            margin-bottom: 5px; 
+            margin-bottom: 0px; 
             padding: 3px; 
-            background: #f0f0f0; 
-            text-align: center;
+            background: #f0f0f0;
             border: 1px solid #ccc;
+            border-bottom: none;
         }
         table { 
             width: 100%; 
@@ -122,67 +122,49 @@
     <p>{{ $generated_at->format('d/m/Y H:i') }}</p>
 </div>
 
-<div class="info">
-    <div><strong>Reception:</strong> {{ $reception['name'] }}</div>
-    <div><strong>Staff:</strong> {{ $receptionist['name'] }}</div>
-    <div><strong>Status:</strong> {{ $closing['status'] }}</div>
-    <hr>
-</div>
-
-{{-- Income Summary --}}
-@if(count($transactions['income']) > 0)
 <div class="section">
-    <div class="section-title">INCOME ({{ $summary['income_count'] }})</div>
+    <div class="section-title">Net Summary</div>
     <table>
-        @foreach($transactions['income'] as $transaction)
-            @foreach($transaction['elements'] as $element)
-            <tr>
-                <td>{{ \Carbon\Carbon::parse($element['created_at'])->format('H:i') }}</td>
-                <td>
-                    @if($element['patient_ps_number'])
-                        {{ $element['patient_ps_number'] }}
-                    @else
-                        {{ $element['service_name'] }}
-                    @endif
-                </td>
-                <td class="amount">{{ number_format($element['amount'], 0) }}</td>
-            </tr>
-            @endforeach
-        @endforeach
-        <tr class="total-row">
-            <td colspan="2">TOTAL INCOME</td>
-            <td class="amount">{{ number_format($totals['total_income'], 0) }}</td>
+        <tr>
+            <td class="section-title">Reception:</td>
+            <td class="">{{ $reception['name'] }}</td>
+        </tr>
+        <tr>
+            <td class="section-title">Receptionist:</td>
+            <td class="">{{ $receptionist['name'] }}</td>
+        </tr>
+        <tr>
+            <td class="section-title">Status:</td>
+            <td class="">{{ $closing['status'] }}</td>
+        </tr>
+        <tr>
+            <td class="section-title">Transactions Count:</td>
+            <td class="">{{ $totals['transactions_count'] }}</td>
+        </tr>
+        <tr>
+            <td class="section-title">Edited Count:</td>
+            <td class="">{{ $totals['edited_count'] }}</td>
+        </tr>
+        <tr>
+            <td class="section-title">Refunded Count:</td>
+            <td class="">{{ $totals['refund_count'] }}</td>
+        </tr>
+        <tr>
+            <td class="section-title">Receivables Count:</td>
+            <td class="">{{ $totals['receaveables_count'] }}</td>
         </tr>
     </table>
 </div>
-@endif
 
-{{-- Expense Summary --}}
-@if(count($transactions['expense']) > 0)
+
+{{-- Net Summary --}}
 <div class="section">
-    <div class="section-title">EXPENSES ({{ $summary['expense_count'] }})</div>
+    <div class="section-title">Net Summary</div>
     <table>
-        @foreach($transactions['expense'] as $transaction)
-            @foreach($transaction['elements'] as $element)
-            <tr>
-                <td>{{ \Carbon\Carbon::parse($element['created_at'])->format('H:i') }}</td>
-                <td>{{ $element['type'] }}</td>
-                <td class="amount">{{ number_format($element['amount'], 0) }}</td>
-            </tr>
-            @endforeach
-        @endforeach
-        <tr class="total-row">
-            <td colspan="2">TOTAL EXPENSES</td>
-            <td class="amount">{{ number_format($totals['total_expense'], 0) }}</td>
+        <tr>
+            <td>Total Transactions</td>
+            <td class="amount">{{ $totals['transactions_count']}}</td>
         </tr>
-    </table>
-</div>
-@endif
-
-{{-- Final Summary --}}
-<div class="section">
-    <div class="section-title">SUMMARY</div>
-    <table>
         <tr>
             <td>Income</td>
             <td class="amount">{{ number_format($totals['total_income'], 0) }}</td>
@@ -192,24 +174,38 @@
             <td class="amount">{{ number_format($totals['total_expense'], 0) }}</td>
         </tr>
         <tr class="total-row">
-            <td>NET</td>
+            <td>NET (Income - Expenses)</td>
             <td class="amount">{{ number_format($totals['net_amount'], 0) }}</td>
-        </tr>
-        <hr>
-        <tr>
-            <td>Cash</td>
-            <td class="amount">{{ number_format($closing['closing_amount_cash'], 0) }}</td>
-        </tr>
-        <tr>
-            <td>Card</td>
-            <td class="amount">{{ number_format($closing['closing_amount_card'], 0) }}</td>
-        </tr>
-        <tr>
-            <td>Cheque</td>
-            <td class="amount">{{ number_format($closing['closing_amount_cheque'], 0) }}</td>
         </tr>
     </table>
 </div>
+
+{{-- Payment Methods --}}
+<div class="section">
+    <div class="section-title">Payment Methods</div>
+    <table>
+        @foreach($totals['by_type'] as $type => $amount)
+        <tr>
+            <td>{{ ucfirst($type) }}</td>
+            <td class="amount">{{ number_format($amount, 0) }}</td>
+        </tr>
+        @endforeach
+    </table>
+</div>
+
+{{-- Panel --}}
+<div class="section">
+    <div class="section-title">PANEL</div>
+    <table>
+        @foreach($totals['by_type'] as $type => $amount)
+        <tr>
+            <td>{{ ucfirst($type) }}</td>
+            <td class="amount">{{ number_format($amount, 0) }}</td>
+        </tr>
+        @endforeach
+    </table>
+</div>
+
 
 <div class="footer">
     <hr>

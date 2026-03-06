@@ -77,7 +77,7 @@ return new class extends Migration
             $table->foreignId('service_id')->nullable()->constrained('services')->onDelete('cascade');
             $table->foreignId('service_recestation_id')->nullable()->constrained('service_recestations')->onDelete('cascade');
             $table->foreignId('doctor_id')->nullable()->constrained('users')->onDelete('cascade');
-            $table->foreignId('expense_id')->nullable()->constrained('expenses')->onDelete('cascade');
+            $table->foreignId('expense_category_id')->nullable()->constrained('expense_categories')->onDelete('cascade');
             $table->foreignId('exp_voucher_id')->nullable()->constrained('expense_vouchers')->onDelete('cascade');
             $table->foreignId('service_order_id')->nullable()->constrained('service_orders')->onDelete('cascade');
 
@@ -123,7 +123,7 @@ return new class extends Migration
             $table->dropForeign(['service_id']);
             $table->dropForeign(['service_recestation_id']);
             $table->dropForeign(['doctor_id']);
-            $table->dropForeign(['expense_id']);
+            $table->dropForeign(['expense_category_id']);
             $table->dropForeign(['exp_voucher_id']);
         });
         Schema::table('transactions', function (Blueprint $table) {

@@ -28,7 +28,7 @@ class TransactionPdfPrintController extends Controller
 
         // Find the transaction by date components and number
         $transaction = Transaction::where('tr_number', $trNumber)
-            ->with(['patient', 'receaveable', 'elements.doctor', 'elements.expense', 'elements.expense.category', 'elements.service', 'elements.serviceRecestation', 'elements.serviceOrder', 'elements.doctor', 'closing', 'closing.receptionist', 'closing.reception'])
+            ->with(['patient', 'receaveable', 'elements.doctor', 'elements.expenseCategory', 'elements.service', 'elements.serviceRecestation', 'elements.serviceOrder', 'elements.doctor', 'closing', 'closing.receptionist', 'closing.reception'])
             ->first();
 
 

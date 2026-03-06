@@ -165,17 +165,17 @@ class WebController extends Controller
     public function counterStore(Request $request)
     {
 
-        $request->validate([
+        $data = $request->validate([
             'opening_balance' => 'nullable|numeric',
             'reception_id' => 'required|exists:receptions,id'
         ]);
 
         $counter = Closing::create([
-            'reception_id' => $request->reception_id,
+            'reception_id' => $data['reception_id'],
             'receptionist_id' => $request->user()->id,
             'ct_number' => Closing::generateCounterNumber(),
             'status' => CounterStatus::OPEN,
-            'opening_amount' => $request->opening_balance && $request->opening_balance != '' && $request->opening_balance != null ? $request->opening_balance : 0
+            'opening_amount' => $data['opening_balance'] ?? 0
         ]);
 
         return redirect(route('counter-view',[
@@ -229,7 +229,7 @@ class WebController extends Controller
 
         $ctNumber = 'CT/'.$ctYear.'/'.$ctMonth.'/'.$ctNumber;
 
-        $openCounter = Closing::with('transactions', 'transactions.receaveable', 'transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceRecestation', 'transactions.elements.serviceOrder', 'transactions.elements.expense', 'transactions.elements.expVoucher')->where('ct_number',$ctNumber)->first();
+        $openCounter = Closing::with('transactions', 'transactions.receaveable', 'transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceRecestation', 'transactions.elements.serviceOrder', 'transactions.elements.expenseCategory', 'transactions.elements.expVoucher')->where('ct_number',$ctNumber)->first();
 
         //->where('receptionist_id', $request->user()->id)
 
@@ -333,7 +333,7 @@ class WebController extends Controller
 
         $pageData['panelCompanies'] = Panel::all();
 
-        return Inertia::render('counter/patient',$pageData);
+        return Inertia::render('counter/income',$pageData);
     }
 
     public function transactionStore(Request $request)
@@ -416,38 +416,61 @@ class WebController extends Controller
                 $expenseData = $request->validate([
                     'amount' => 'required|numeric',
                     'description' => 'required|string',
-                    'category_id' => 'nullable|exists:expense_categories,id',
-                    'payed_to' => 'nullable|exists:users,id',
-                    'payed_to_other' => 'nullable|string',
+                    'category_id' => 'required|exists:expense_categories,id',
+                    'payed_to' => 'required|exists:users,id',
                     'transaction_id' => 'nullable',
                     'file_number' => 'nullable',
                 ]);
+                if($expenseData['payed_to'] == 'Other' && empty($expenseData['payed_to_other'])){
+                    $array = $request->validate([
+                        'payed_to_other' => 'required|string',
+                    ]);
+                    $expenseData['payed_to_other'] = $array['payed_to_other'];
+                }
+
+                $expenseCategory = ExpenseCategory::find($expenseData['category_id']);
+
+                $isRefund = $expenseCategory->name == 'Refund';
+
+                $isDoctorFilePayment = $expenseCategory->name == 'Inpatient Doctor Payment';
+
+                if($isRefund && empty($expenseData['transaction_id'])){
+                    $array = $request->validate([
+                        'transaction_id' => 'required|exists:transactions,id|or_exists:transactions,tr_number',
+                    ]);
+
+                    $expenseData['transaction_id'] = $array['transaction_id'];
+                }
+
+                if($isDoctorFilePayment && empty($expenseData['file_number'])){
+                    $array = $request->validate([
+                        'file_number' => 'required|exists:service_orders,id|or_exists:service_orders,so_number',
+                    ]);
+
+                    $expenseData['file_number'] = $array['file_number'];
+                }
+
+                if($isRefund){
+                    
+                    $refundedTransaction = Transaction::find($expenseData['transaction_id']);
+                    
+                    if(!$refundedTransaction){
+                        $refundedTransaction = Transaction::where('tr_number', $expenseData['transaction_id'])->first();
+                    }
+                }
+
+                if($isDoctorFilePayment){
+                    $ServiceOrderExp = ServiceOrder::find($expenseData['file_number']);
+                    if(!$ServiceOrderExp){
+                        $ServiceOrderExp = ServiceOrder::where('so_number', $expenseData['file_number'])->first();
+                    }
+                }
+
+
 
                 DB::beginTransaction();
 
                 try{
-
-                    $expenseCategory = ExpenseCategory::findOrFail($expenseData['category_id']);
-
-                    $isRefund = $expenseCategory->name == 'Refund';
-
-                    $isDoctorFilePayment = $expenseCategory->name == 'Inpatient Doctor Payment';
-
-                    if($isRefund){
-                        
-                        $refundedTransaction = Transaction::find($expenseData['transaction_id']);
-                        
-                        if(!$refundedTransaction){
-                            $refundedTransaction = Transaction::where('tr_number', $expenseData['transaction_id'])->first();
-                        }
-                    }
-
-                    if($isDoctorFilePayment){
-                        $ServiceOrderExp = ServiceOrder::find($expenseData['file_number']);
-                        if(!$ServiceOrderExp){
-                            $ServiceOrderExp = ServiceOrder::where('so_number', $expenseData['file_number'])->first();
-                        }
-                    }
 
                     $transaction = Transaction::create([
                         'closing_id' => $openCounter->id,
@@ -458,23 +481,13 @@ class WebController extends Controller
                         'is_refunded' => $isRefund
                     ]);
 
-                    $expense = Expense::create([
-                        'notes' => $expenseData['description'],
-                        'type' => 'CASH',
-                        'amount' => $expenseData['amount'],
-                        'exp_category_id' => $expenseData['category_id'] ?? null,
-                        'payed_to' => $request->get('payed_to', 'other') !== 'other' ? $expenseData['payed_to'] : null,
-                        'payed_to_name' => $request->get('payed_to', 'other') === 'other' ? $expenseData['payed_to_other'] : null,
-                    ]);
-
-
                     TransactionElement::create([
                         'closing_id' => $openCounter->id,
                         'transaction_id' => $transaction->id,
-                        'expense_id' => $expense->id,
                         'created_by' => $request->user()->id,
                         'type' => TransactionElementType::EXP,
                         'income_or_expense' => 'EXPENSE',
+                        'exp_category_id' => $expenseData['category_id'] ?? null,
                         'amount' => $expenseData['amount'],
                         'refunded_transaction_id' => $isRefund ? $refundedTransaction->id : null,
                         'expense_service_order_id' => $isDoctorFilePayment ? $ServiceOrderExp->id : null,
@@ -515,9 +528,10 @@ class WebController extends Controller
                 'payment_method' => 'required|in:CASH,CARD,PANEL,CHEQUE,BANK_TRANSFER',
                 'panel_company' => 'required_if:payment_method,PANEL',
                 'amount_paid' => 'required|numeric',
-                'change_amount' => 'required|numeric',
                 'items' => 'array|min:1',
             ]);
+
+            $validatedData['change_amount'] = $validatedData['amount_paid'] - $validatedData['total_amount'];
 
             if($validatedData['payment_method'] === 'PANEL'){
                 $request->validate([
@@ -573,7 +587,7 @@ class WebController extends Controller
                         'service_order_id' => $isRecesitation ? $request->get('service_order_id', null) : null,
                         'doctor_id' => $item['provider_id'] ?? null,
                         'type' => $request->department_key,
-                        'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
+                        'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_company'] : null,
                         'income_or_expense' => 'INCOME',
                         'amount' => $item['total'],
                         'orignal_amount' => $service ? $service->charges * $item['quantity'] : 0,
@@ -595,6 +609,7 @@ class WebController extends Controller
                         'transaction_id' => $transaction->id,
                         'amount' => $receaveableAmount, // Due in 30 days
                         'status' => 'unpaid',
+                        'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_company'] : null,
                     ]);
                 }
 

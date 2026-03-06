@@ -12,13 +12,14 @@ import AuthLayout from '@/layouts/auth-layout';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { useState } from 'react';
 import { SelectValue } from '@radix-ui/react-select';
+import clsx from 'clsx';
 
 export default function CounterOpen({ status }: { status?: string }) {
 
     const { recptions } = usePage().props;
 
     const [openingBalance, setOpeningBalance] = useState(0);
-    const [receptionId, setReceptionId] = useState('');
+    const [receptionId, setReceptionId] = useState<number | null>(null);
 
     return (
         <AuthLayout
@@ -55,8 +56,8 @@ export default function CounterOpen({ status }: { status?: string }) {
 
                             <div className="mt-6 grid gap-2">
                                 <Label htmlFor="reception_id">Reception</Label>
-                                <Select value={receptionId} name='reception_id' onValueChange={(value) => setReceptionId(value)}>
-                                    <SelectTrigger id="year">
+                                <Select value={receptionId?.toString() || ''} name='reception_id' onValueChange={(value) => setReceptionId(value ? parseInt(value) : null)}>
+                                    <SelectTrigger id="reception">
                                         <SelectValue placeholder="Select Reception" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -72,7 +73,7 @@ export default function CounterOpen({ status }: { status?: string }) {
 
                             <div className="my-6 flex items-center justify-start">
                                 <Button
-                                    className="w-full"
+                                    className={clsx("w-full", processing ? 'opacity-50 cursor-not-allowed' : '')}
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >

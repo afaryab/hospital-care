@@ -10,7 +10,7 @@ import { apiExpenseVouchersIndex, counterExpense, counterList, counterSelectPati
 import { User, type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import clsx from 'clsx';
-import { LucidePrinter, LucideShoppingBasket, LucideSearch, LucideLoader2 } from 'lucide-react';
+import { LucidePrinter, LucideShoppingBasket, LucideSearch, LucideLoader2, LoaderCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 // Types for voucher data
@@ -40,6 +40,7 @@ export default function CounterExpense() {
     const [isSearching, setIsSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<VoucherSearchResults | null>(null);
     const [selectedVoucher, setSelectedVoucher] = useState<ExpenseVoucher | null>(null);
+    const [processingVoucherPayment, setProcessingVoucherPayment] = useState(false);
     
 
     // Petty cash state
@@ -50,6 +51,8 @@ export default function CounterExpense() {
     const [pettyCashOtherName, setPettyCashOtherName] = useState(selected?.payed_to_other || '');
     const [pettyCashTransactionId, setPettyCashTransactionId] = useState(selected?.transaction?.tr_number || '');
     const [pettyCashFileNumber, setPettyCashFileNumber] = useState('');
+    const [processingPettyCashPayment, setProcessingPettyCashPayment] = useState(false);
+    const [pettyCashErrors, setPettyCashErrors] = useState<string[]>([]);
 
     // Search voucher function
     const searchVoucher = async (vcNumber: string) => {
@@ -143,6 +146,7 @@ export default function CounterExpense() {
     // Handle petty cash payment
     const handlePettyCashPayment = (e: React.FormEvent) => {
         e.preventDefault();
+
         if (!pettyCashAmount || parseFloat(pettyCashAmount) <= 0) {
             alert('Please enter a valid amount');
             return;
@@ -163,7 +167,7 @@ export default function CounterExpense() {
         };
 
         console.log('Payment Data:', paymentData);
-
+        setProcessingPettyCashPayment(true);
         // POST paymentData to server...
         router.post(transactionStore().url, paymentData, {
             onSuccess: () => {
@@ -174,6 +178,7 @@ export default function CounterExpense() {
                 setPettyCashPayedTo('');
                 setPettyCashOtherName('');
                 setPettyCashTransactionId('');
+                setProcessingPettyCashPayment(false);
             },
             onError: (errors) => {
                 // Handle validation errors
@@ -181,7 +186,9 @@ export default function CounterExpense() {
                 
                 // Display errors to user
                 const errorMessages = Object.values(errors).flat().join('\n');
-                alert(`Payment failed:\n${errorMessages}`);
+                // alert(`Payment failed:\n${errorMessages}`);
+                setPettyCashErrors(Object.values(errors).flat());
+                setProcessingPettyCashPayment(false);
             }
         });
     };
@@ -364,7 +371,7 @@ export default function CounterExpense() {
                             <div className="flex-1 flex flex-col gap-4 p-4 border rounded-lg">
                                 <h2 className="text-xl font-semibold text-center">Petty Cash Payment</h2>
                                 <form onSubmit={handlePettyCashPayment} className="flex flex-col gap-4 items-center justify-center flex-1">
-                                    <div className="w-full max-w-sm space-y-2">
+                                    <div className="w-full max-w-sm">
                                         <Label htmlFor="amount">Amount</Label>
                                         <Input
                                             id="amount"
@@ -375,8 +382,13 @@ export default function CounterExpense() {
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Enter amount"
                                         />
+                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('amount')).map((error, index) => (
+                                            <div key={index} className="text-sm text-red-600">
+                                                {error}
+                                            </div>
+                                        ))}
                                     </div>
-                                    <div className="w-full max-w-sm space-y-2">
+                                    <div className="w-full max-w-sm">
                                         <Label htmlFor="category">Category</Label>
                                         <Select
                                             value={pettyCashCategory}
@@ -393,9 +405,14 @@ export default function CounterExpense() {
                                                 ))}
                                             </SelectContent>
                                         </Select>
+                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('category')).map((error, index) => (
+                                            <div key={index} className="text-sm text-red-600">
+                                                {error}
+                                            </div>
+                                        ))}
                                     </div>
                                     {categories.find((category: any) => category.id.toString() === pettyCashCategory)?.name === 'Refund' && (
-                                        <div className="w-full max-w-sm space-y-2">
+                                        <div className="w-full max-w-sm">
                                             <Label htmlFor="transaction_id">Transaction Id</Label>
                                             <Input
                                                 id="transaction_id"
@@ -406,7 +423,7 @@ export default function CounterExpense() {
                                             placeholder="Enter transaction id"
                                         />
                                     </div>)}
-                                    <div className="w-full max-w-sm space-y-2">
+                                    <div className="w-full max-w-sm">
                                         <Label htmlFor="payed_to">Payed To</Label>
                                         <Select
                                             value={pettyCashPayedTo}
@@ -425,7 +442,7 @@ export default function CounterExpense() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    {pettyCashPayedTo === 'other' && <div className="w-full max-w-sm space-y-2">
+                                    {pettyCashPayedTo === 'other' && <div className="w-full max-w-sm">
                                         <Label htmlFor="other_name">Other name</Label>
                                         <Input
                                             id="other_name"
@@ -436,7 +453,7 @@ export default function CounterExpense() {
                                             placeholder="Enter other person name"
                                         />
                                     </div>}
-                                    {categories.find((category: any) => category.id.toString() === pettyCashCategory)?.name === 'Inpatient Doctor Payment' && (<div className="w-full max-w-sm space-y-2">
+                                    {categories.find((category: any) => category.id.toString() === pettyCashCategory)?.name === 'Inpatient Doctor Payment' && (<div className="w-full max-w-sm">
                                         <Label htmlFor="other_name">File Number</Label>
                                         <Input
                                             id="file_number"
@@ -447,7 +464,7 @@ export default function CounterExpense() {
                                             placeholder="Enter file number"
                                         />
                                     </div>)}
-                                    <div className="w-full max-w-sm space-y-2">
+                                    <div className="w-full max-w-sm">
                                         <Label htmlFor="description">Description</Label>
                                         <textarea
                                             id="description"
@@ -457,8 +474,18 @@ export default function CounterExpense() {
                                             value={pettyCashDescription}
                                             onChange={(e) => setPettyCashDescription(e.target.value)}
                                         />
+                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('description')).map((error, index) => (
+                                            <div key={index} className="text-sm text-red-600">
+                                                {error}
+                                            </div>
+                                        ))}
                                     </div>
-                                    <Button type="submit" className="w-full max-w-sm">
+                                    <Button type="submit" className={clsx("w-full max-w-sm",{
+                                            'opacity-50 cursor-not-allowed': !pettyCashAmount || parseFloat(pettyCashAmount) <= 0 || processingPettyCashPayment
+                                    })} disabled={!pettyCashAmount || parseFloat(pettyCashAmount) <= 0 || processingPettyCashPayment}>
+                                        {processingPettyCashPayment && (
+                                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                                        )}
                                         Pay Amount
                                     </Button>
                                 </form>

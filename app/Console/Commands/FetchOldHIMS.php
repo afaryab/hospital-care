@@ -1160,7 +1160,7 @@ class FetchOldHIMS extends Command
                 'closing_id' => $this->getCachedClosing($transaction->counter_id)?->id ?? null,
                 'created_by' => $this->getCachedUser($transaction->user_id)?->id ?? null,
                 'patient_id' => $this->getCachedPatient($transaction->patient_id)?->id ?? null,
-                'type' => $this->mapTransactionType($transaction->type),
+                'type' => $transaction->income_or_expence === 'INCOME' ? $this->mapTransactionType($transaction->type) : 'CASH',
                 'income_or_expense' => $transaction->income_or_expence === 'INCOME' ? 'INCOME' : 'EXPENSE',
                 'amount' => $this->sanitizeTransactionAmount($transaction->amount, $isExpense),
                 'orignal_amount' => $this->sanitizeTransactionAmount($transaction->orignal_amount, $isExpense),

@@ -11,6 +11,8 @@ use Illuminate\Http\Response;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\View;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ClosingStatementPdfPrintController extends Controller
 {
@@ -74,6 +76,14 @@ class ClosingStatementPdfPrintController extends Controller
         $totalIncome = 0;
         $totalExpense = 0;
 
+        $transactonTypesTotals = [];
+
+        $refundCount = 0;
+        $editedCount = 0;
+        $receaveableCount = 0;
+
+        $pannelBills = [];
+
         foreach ($closing->transactions as $transaction) {
             $transactionData = [
                 'id' => $transaction->id,
@@ -86,6 +96,28 @@ class ClosingStatementPdfPrintController extends Controller
                 'created_at' => $transaction->created_at,
                 'elements' => []
             ];
+
+            if($transaction->income_or_expense === 'INCOME'){
+                $transactonTypesTotals[$transaction->type] = ($transactonTypesTotals[$transaction->type] ?? 0) + $transaction->amount;
+            }else{
+                $transactonTypesTotals['CASH'] = ($transactonTypesTotals['CASH'] ?? 0) - $transaction->amount;
+            }
+
+            if($transaction->is_refunded){
+                $refundCount++;
+            }
+            if($transaction->edited_amount > 0){
+                $editedCount++;
+            }
+            if($transaction->receaveable_id){
+                $receaveableCount++;
+            }
+
+            if($transaction->panel_id){
+                $panel = $transaction->panel;
+                dd($panel);
+                $pannelBills[] = $transaction;
+            }
 
             // Process transaction elements
             foreach ($transaction->elements as $element) {
@@ -148,6 +180,11 @@ class ClosingStatementPdfPrintController extends Controller
                 'total_income' => $totalIncome,
                 'total_expense' => $totalExpense,
                 'net_amount' => $netAmount,
+                'by_type' => $transactonTypesTotals,
+                'refund_count' => $refundCount,
+                'transactions_count' => count($closing->transactions),
+                'edited_count' => $editedCount,
+                'receaveables_count' => $receaveableCount,
             ],
             'summary' => [
                 'income_count' => count($incomeTransactions),
@@ -181,24 +218,26 @@ class ClosingStatementPdfPrintController extends Controller
 
         try {
             // Create PDF with proper paper size and orientation
-            $pdf = Pdf::loadView($viewName, $data);
+            $pdf = Pdf::setOption([
+                'defaultFont' => 'Helvetica',
+            ])->loadView($viewName, $data);
             
             // Configure PDF based on version
             if ($version === 'mini') {
-                // Thermal printer settings (80mm width)
-                $pdf->setPaper([0, 0, 226.77, 841.89], 'portrait'); // 80mm x 297mm in points
+                // Thermal printer settings (80mm width, auto height)
+                $pdf->setPaper([0, 0, 226.77, 500], 'portrait'); // 80mm width, auto-adjusting height
             } else {
                 // Standard A4 paper
                 $pdf->setPaper('A4', 'portrait');
             }
             
             // Set PDF options
-            $pdf->setOptions([
-                'dpi' => 96,
-                'defaultFont' => 'sans-serif',
-                'isRemoteEnabled' => false,
-                'isHtml5ParserEnabled' => true,
-            ]);
+            // $pdf->setOptions([
+            //     'dpi' => 96,
+            //     // 'defaultFont' => 'sans-serif',
+            //     // 'isRemoteEnabled' => false,
+            //     // 'isHtml5ParserEnabled' => true,
+            // ]);
             // Generate filename
             $filename = sprintf(
                 'closing-statement-%s-%s-%s.pdf',
@@ -215,10 +254,14 @@ class ClosingStatementPdfPrintController extends Controller
                 'Pragma' => 'public',
             ]);
             
-        } catch (\Exception $e) {
-            dd($e->getMessage(), $e->getTraceAsString());
-            // Return error response
-            abort(500, "PDF generation failed: " . $e->getMessage());
+        } catch (Throwable $e) {
+            Log::error('Closing statement PDF generation failed', [
+                'ct_number' => $data['closing']['ct_number'] ?? null,
+                'version' => $version,
+                'message' => $e->getMessage(),
+            ]);
+
+            abort(500, 'PDF generation failed');
         }
     }
 
