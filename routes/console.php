@@ -8,10 +8,10 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Schedule::everyFiveSeconds()
-//     ->runInBackground()
-//     ->withoutOverlapping()
-//     ->command('app:fetch-old --batch-size=3000');
+Schedule::everyFiveSeconds()
+    ->runInBackground()
+    ->withoutOverlapping()
+    ->command('app:fetch-old --batch-size=3000');
 
 // Schedule::command('app:close-old-service-orders')->everyFiveSeconds()->runInBackground()->withoutOverlapping();
 
