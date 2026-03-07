@@ -115,7 +115,6 @@ class ClosingStatementPdfPrintController extends Controller
 
             if($transaction->panel_id){
                 $panel = $transaction->panel;
-                dd($panel);
                 $pannelBills[] = $transaction;
             }
 

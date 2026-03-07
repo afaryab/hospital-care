@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -14,10 +15,25 @@ class ExpenseVoucher extends Model
         'exp_category_id',
         'service_order_id',
         'payed_to',
+        'payed_to_name',
         'amount',
+        'notes',
         'created_at',
         'updated_at'
     ];
+
+    protected $casts = [
+        'amount' => 'decimal:2',
+    ];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $voucher): void {
+            if (blank($voucher->vc_number)) {
+                $voucher->vc_number = self::generateExpenseVoucherNumber();
+            }
+        });
+    }
 
 
     /**
@@ -25,25 +41,45 @@ class ExpenseVoucher extends Model
      *
      * @return string
      */
-    public function generateExpenseVoucherNumber(): string
+    public static function generateExpenseVoucherNumber(): string
     {
-        // Example logic: "EV-" followed by current timestamp and a random number
         return DB::transaction(function () {
             $now = Carbon::now();
             $year = $now->format('Y');
             $month = $now->format('m');
 
-            // Count how many patients have been created this month with PS numbers
-            // Use FOR UPDATE to lock the table and prevent race conditions
-            $count = self::where('vc_number', 'like', "VC/{$year}/{$month}/%")
-                        ->lockForUpdate()
-                        ->count();
-            $count += 1; // Increment for the new patient
+            $latestVoucher = self::query()
+                ->where('vc_number', 'like', "VC/{$year}/{$month}/%")
+                ->lockForUpdate()
+                ->latest('id')
+                ->first();
 
-            // Pad the count to be 4 digits
-            $count = str_pad($count, 4, '0', STR_PAD_LEFT);
+            $nextSequence = 1;
+
+            if ($latestVoucher?->vc_number) {
+                $parts = explode('/', $latestVoucher->vc_number);
+                $lastSequence = (int) ($parts[3] ?? 0);
+                $nextSequence = $lastSequence + 1;
+            }
+
+            $count = str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
 
             return "VC/{$year}/{$month}/{$count}";
         });
+    }
+
+    public function expCategory(): BelongsTo
+    {
+        return $this->belongsTo(ExpenseCategory::class, 'exp_category_id');
+    }
+
+    public function serviceOrder(): BelongsTo
+    {
+        return $this->belongsTo(ServiceOrder::class, 'service_order_id');
+    }
+
+    public function payedTo(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'payed_to');
     }
 }

@@ -1153,7 +1153,7 @@ class FetchOldHIMS extends Command
             // Get count for that specific date to maintain unique numbering
             $existingCount = Transaction::where('tr_number', 'like', "TR/{$year}/{$month}/{$day}%")->count();
             $trNumber = "TR/{$year}/{$month}/{$day}/" . str_pad($existingCount + 1, 4, '0', STR_PAD_LEFT);
-            
+
             $transactionData = [
                 'old_id' => $transaction->id,
                 'tr_number' => $trNumber,
@@ -1171,6 +1171,42 @@ class FetchOldHIMS extends Command
                 'updated_at' => $transaction->modified_on,
             ];
 
+            // If is expense get expense record from secondary database and check if category is voucher pay or not, if voucher pay then set type as VOUCHER-PAY otherwise EXP
+            if ($isExpense) {
+                $expense = DB::connection('secondary')->table('expenses')->where('id', $transaction->expense_id)->first();
+                
+                $transactionData['expense_category_id'] = $expense ? ($this->getCachedExpenseCategory($expense->category_id)?->id ?? null) : null;
+                $transactionData['notes'] = $expense ? $expense->payment_reference : null;
+
+                $isVoucherPay = $expense->voucher_id ? true : false;
+
+                // If Voucher Pay get voucher record from seconday database and create it here.
+                if ($isVoucherPay) {
+                    $voucher = DB::connection('secondary')->table('expense_vouchers')->where('id', $expense->voucher_id)->first();
+
+                    if ($voucher) {
+                        $voucherData = [
+                            'old_id' => $voucher->id,
+                            'exp_category_id' => $this->getCachedExpenseCategory($voucher->exp_category_id)?->id,
+                            'service_order_id' => null,
+                            'payed_to' => $this->getCachedUser($voucher->employee_id)?->id ?? null,
+                            'payed_to_name' => $voucher->payed_to_others,
+                            'amount' => $this->sanitizeTransactionAmount($voucher->exp_amount_numbers, true),
+                            'notes' => $voucher->expense_notes,
+                            'created_at' => $voucher->created_on,
+                            'updated_at' => $voucher->modified_on,
+                        ];
+
+                        $newVoucherId = ExpenseVoucher::insertGetId($voucherData);
+                        $transactionData['type'] = 'VOUCHER-PAY';
+                        $transactionData['exp_voucher_id'] = $newVoucherId;
+                    }
+                } else {
+                    $transactionData['type'] = 'EXP';
+                }
+                
+            }
+
             // Use insertGetId to get the new transaction ID
             $newTransactionId = Transaction::insertGetId($transactionData);
 
@@ -1184,6 +1220,14 @@ class FetchOldHIMS extends Command
                 if ($elementData) {
                     $elementData['transaction_id'] = $newTransactionId;
                     $elementData['closing_id'] = $transactionData['closing_id'];
+
+                    if($isExpense) {
+                        $elementData['expense_category_id'] = $transactionData['expense_category_id'];
+                        $elementData['notes'] = $transactionData['notes'];
+                        $elementData['exp_voucher_id'] = $transactionData['exp_voucher_id'] ?? null;
+                    }
+
+
                     $elementInserts[] = $te = TransactionElement::createQuietly($elementData);
 
                     // If Income and department is inpatient and $element->department_transaction_id is present, link it to the service order

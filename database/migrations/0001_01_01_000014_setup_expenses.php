@@ -24,7 +24,7 @@ return new class extends Migration
             $table->integer('old_id')->nullable();
             $table->foreignId('exp_category_id')->constrained('expense_categories')->onDelete('cascade');
 
-            $table->foreignId('service_order_id')->nullable()->constrained('users')->onDelete('cascade');
+            $table->foreignId('service_order_id')->nullable()->constrained('service_orders')->onDelete('cascade');
 
             $table->foreignId('payed_to')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('payed_to_name')->nullable();

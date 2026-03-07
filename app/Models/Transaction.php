@@ -26,7 +26,9 @@ class Transaction extends Model
         'change',
         'edited_amount',
         'is_refunded',
-
+        'expense_category_id',
+        'exp_voucher_id',
+        'notes',
         'created_at',
         'updated_at',
     ];

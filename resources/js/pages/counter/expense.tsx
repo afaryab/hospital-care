@@ -1,17 +1,19 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
+import SelectExpenseCategory, { ExpenseCategoryOption } from '@/elements/expense-category/select-expense-category';
+import FilterAndSelectExpenseVoucher, { ExpenseVoucherSearchItem } from '@/elements/expense-voucher/filter-and-select-expense-voucher';
+import FilterAndSelectServiceOrder from '@/elements/serviceorder/filter-and-select-serviceorder';
+import FilterAndSelectTransaction, { TransactionSearchItem } from '@/elements/transaction/filter-and-select-transaction';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import BulletsWrapper from '@/elements/bullets-wrapper';
-import HumanSimpleBody from '@/human/simple-body';
 import AppLayout from '@/layouts/app-layout';
-import { apiExpenseVouchersIndex, counterExpense, counterList, counterSelectPatient, counterView, home, myCounterList, patientsRegister, patientsRegisterPsNumberDepartment, printClosingStatement, transactionStore } from '@/routes';
+import { counterExpense, counterView, home, myCounterList, transactionStore } from '@/routes';
 import { User, type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import clsx from 'clsx';
-import { LucidePrinter, LucideShoppingBasket, LucideSearch, LucideLoader2, LoaderCircle } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { LoaderCircle } from 'lucide-react';
+import { useState } from 'react';
 
 // Types for voucher data
 interface ExpenseVoucher {
@@ -28,18 +30,16 @@ interface VoucherSearchResults {
     possible: ExpenseVoucher[];
 }
 
+const normalizeCategoryName = (category?: ExpenseCategoryOption | null) => (category?.name ?? '').trim().toLowerCase();
+
 export default function CounterExpense() {
 
-    const { openCounter, users, categories, selected } = usePage<{ openCounter: any, users: User[], categories: any[] }>().props
+    const { openCounter, users, categories, selected } = usePage<{ openCounter: any, users: User[], categories: any[], selected?: any }>().props
 
-    // Voucher search state
-    const [voucherNumber, setVoucherNumber] = useState('');
     const [payedTo, setPayedTo] = useState('');
     const [payedToOther, setPayedToOther] = useState('');
-    const [voucherData, setVoucherData] = useState<ExpenseVoucher | null>(null);
-    const [isSearching, setIsSearching] = useState(false);
-    const [searchResults, setSearchResults] = useState<VoucherSearchResults | null>(null);
-    const [selectedVoucher, setSelectedVoucher] = useState<ExpenseVoucher | null>(null);
+    const [selectedVoucher, setSelectedVoucher] = useState<ExpenseVoucherSearchItem | null>(null);
+    const [selectedVoucherId, setSelectedVoucherId] = useState('');
     const [processingVoucherPayment, setProcessingVoucherPayment] = useState(false);
     
 
@@ -47,58 +47,13 @@ export default function CounterExpense() {
     const [pettyCashAmount, setPettyCashAmount] = useState(selected?.amount ? selected.amount.toString() : '');
     const [pettyCashDescription, setPettyCashDescription] = useState('');
     const [pettyCashCategory, setPettyCashCategory] = useState(selected?.category?.id ? selected.category.id.toString() : '');
-    const [pettyCashPayedTo, setPettyCashPayedTo] = useState(selected?.doctor?.id ? selected.doctor.id.toString() : (selected?.payed_to_other ? 'other' : ''));
+    const [selectedExpenseCategory, setSelectedExpenseCategory] = useState<ExpenseCategoryOption | null>(selected?.category ?? null);
+    const [pettyCashPayedTo, setPettyCashPayedTo] = useState(selected?.doctor?.id ? selected.doctor.id.toString() : '');
     const [pettyCashOtherName, setPettyCashOtherName] = useState(selected?.payed_to_other || '');
     const [pettyCashTransactionId, setPettyCashTransactionId] = useState(selected?.transaction?.tr_number || '');
     const [pettyCashFileNumber, setPettyCashFileNumber] = useState('');
     const [processingPettyCashPayment, setProcessingPettyCashPayment] = useState(false);
     const [pettyCashErrors, setPettyCashErrors] = useState<string[]>([]);
-
-    // Search voucher function
-    const searchVoucher = async (vcNumber: string) => {
-        if (!vcNumber || vcNumber.length < 3) {
-            setSearchResults(null);
-            return;
-        }
-
-        setIsSearching(true);
-        try {
-            const response = await fetch(apiExpenseVouchersIndex().url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    vc_number: vcNumber
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to search vouchers');
-            }
-
-            const data = await response.json();
-            setSearchResults(data.data);
-            
-            // If exact match found, auto-select it
-            if (data.data.exact && data.data.exact.length > 0) {
-                setSelectedVoucher(data.data.exact[0]);
-            }
-        } catch (error) {
-            console.error('Error searching vouchers:', error);
-            setSearchResults(null);
-        } finally {
-            setIsSearching(false);
-        }
-    };
-
-    // Handle voucher selection
-    const selectVoucher = (voucher: ExpenseVoucher) => {
-        setSelectedVoucher(voucher);
-        setVoucherNumber(voucher.vc_number);
-        setSearchResults(null);
-    };
 
     // Handle voucher payment
     const handleVoucherPayment = (e: React.FormEvent) => {
@@ -123,14 +78,15 @@ export default function CounterExpense() {
 
         // POST paymentData to server...
         // POST paymentData to server with error handling
+        setProcessingVoucherPayment(true);
         router.post(transactionStore().url, paymentData, {
             onSuccess: () => {
             // Reset form on success
             setSelectedVoucher(null);
-            setVoucherNumber('');
+            setSelectedVoucherId('');
             setPayedTo('');
             setPayedToOther('');
-            setSearchResults(null);
+            setProcessingVoucherPayment(false);
             },
             onError: (errors) => {
             // Handle validation errors
@@ -139,6 +95,7 @@ export default function CounterExpense() {
             // Display errors to user
             const errorMessages = Object.values(errors).flat().join('\n');
             alert(`Payment failed:\n${errorMessages}`);
+            setProcessingVoucherPayment(false);
             }
         });
     };
@@ -160,6 +117,7 @@ export default function CounterExpense() {
             description: pettyCashDescription,
             category_id: pettyCashCategory,
             transaction_id: pettyCashTransactionId,
+            file_number: pettyCashFileNumber,
             payed_to: pettyCashPayedTo === 'other' ? null : pettyCashPayedTo,
             payed_to_other: pettyCashPayedTo === 'other' ? pettyCashOtherName : null,
             income_or_expense: 'EXPENSE',
@@ -193,16 +151,13 @@ export default function CounterExpense() {
         });
     };
 
-    // Debounced search effect
-    useEffect(() => {
-        const timeoutId = setTimeout(() => {
-            if (voucherNumber) {
-                searchVoucher(voucherNumber);
-            }
-        }, 300);
+    const handleRefundTransactionSelect = (transaction: TransactionSearchItem | null) => {
+        setPettyCashTransactionId(transaction ? transaction.id.toString() : '');
 
-        return () => clearTimeout(timeoutId);
-    }, [voucherNumber]);
+        if (normalizeCategoryName(selectedExpenseCategory) === 'refund' && transaction?.patient?.name) {
+            setPettyCashDescription(`Refund for patient: ${transaction.patient.name}`);
+        }
+    };
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -253,81 +208,14 @@ export default function CounterExpense() {
                                 <h2 className="text-xl font-semibold text-center">Voucher Payment</h2>
                                 <form onSubmit={handleVoucherPayment} className="flex flex-col gap-4 items-center justify-center flex-1">
                                     <div className="w-full max-w-sm space-y-2">
-                                        <Label htmlFor="voucherNumber">Voucher Number</Label>
-                                        <div className="relative">
-                                            <input
-                                                id="voucherNumber"
-                                                type="text"
-                                                value={voucherNumber}
-                                                onChange={(e) => setVoucherNumber(e.target.value)}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                placeholder="Enter voucher number"
-                                            />
-                                            {isSearching && (
-                                                <LucideLoader2 className="absolute right-2 top-2.5 h-4 w-4 animate-spin text-gray-400" />
-                                            )}
-                                        </div>
-                                        
-                                        {/* Search Results */}
-                                        {searchResults && (searchResults.exact.length > 0 || searchResults.possible.length > 0) && (
-                                            <div className="border rounded-md bg-white shadow-lg max-h-60 overflow-auto">
-                                                {/* Exact Matches */}
-                                                {searchResults.exact.length > 0 && (
-                                                    <div>
-                                                        <div className="px-3 py-2 bg-green-50 border-b text-sm font-semibold text-green-700">
-                                                            Exact Match
-                                                        </div>
-                                                        {searchResults.exact.map((voucher: ExpenseVoucher) => (
-                                                            <div
-                                                                key={voucher.id}
-                                                                onClick={() => selectVoucher(voucher)}
-                                                                className="px-3 py-2 cursor-pointer hover:bg-gray-50 border-b last:border-b-0"
-                                                            >
-                                                                <div className="font-medium">{voucher.vc_number}</div>
-                                                                <div className="text-sm text-gray-600">
-                                                                    Amount: {voucher.amount || 'N/A'} | Status: {voucher.status || 'N/A'}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                                
-                                                {/* Possible Matches */}
-                                                {searchResults.possible.length > 0 && (
-                                                    <div>
-                                                        <div className="px-3 py-2 bg-blue-50 border-b text-sm font-semibold text-blue-700">
-                                                            Similar Matches
-                                                        </div>
-                                                        {searchResults.possible.map((voucher: ExpenseVoucher) => (
-                                                            <div
-                                                                key={voucher.id}
-                                                                onClick={() => selectVoucher(voucher)}
-                                                                className="px-3 py-2 cursor-pointer hover:bg-gray-50 border-b last:border-b-0"
-                                                            >
-                                                                <div className="font-medium">{voucher.vc_number}</div>
-                                                                <div className="text-sm text-gray-600">
-                                                                    Amount: {voucher.amount || 'N/A'} | Status: {voucher.status || 'N/A'}
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-                                        
-                                        {/* Selected Voucher Info */}
-                                        {selectedVoucher && (
-                                            <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                                                <div className="font-semibold text-green-700">Selected Voucher</div>
-                                                <div className="text-sm">
-                                                    <div>Number: {selectedVoucher.vc_number}</div>
-                                                    <div>Amount: {selectedVoucher.amount || 'N/A'}</div>
-                                                    <div>Status: {selectedVoucher.status || 'N/A'}</div>
-                                                </div>
-                                            </div>
-                                        )}
+                                        <FilterAndSelectExpenseVoucher
+                                            value={selectedVoucherId}
+                                            onValueChange={setSelectedVoucherId}
+                                            onSelect={setSelectedVoucher}
+                                            label="Voucher Number"
+                                        />
                                     </div>
-                                    {searchResults && (searchResults.exact.length > 0 || searchResults.possible.length > 0) && (<div className="w-full max-w-sm space-y-2">
+                                    {selectedVoucher && (<div className="w-full max-w-sm space-y-2">
                                         <Label htmlFor="payedTo">Payed To</Label>
                                         <div className="relative">
                                             <Select
@@ -360,8 +248,11 @@ export default function CounterExpense() {
                                     <Button 
                                         type="submit" 
                                         className="w-full max-w-sm"
-                                        disabled={!selectedVoucher}
+                                        disabled={!selectedVoucher || processingVoucherPayment}
                                     >
+                                        {processingVoucherPayment && (
+                                            <LoaderCircle className="h-4 w-4 animate-spin" />
+                                        )}
                                         Pay Voucher
                                     </Button>
                                 </form>
@@ -389,40 +280,35 @@ export default function CounterExpense() {
                                         ))}
                                     </div>
                                     <div className="w-full max-w-sm">
-                                        <Label htmlFor="category">Category</Label>
-                                        <Select
+                                        <SelectExpenseCategory
                                             value={pettyCashCategory}
                                             onValueChange={setPettyCashCategory}
-                                        >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select a category" />
-                                            </SelectTrigger>
-                                            <SelectContent searchable>
-                                                {categories.map((category: any) => (
-                                                    <SelectItem key={category.id} value={category.id.toString()}>
-                                                        {category.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            onSelect={setSelectedExpenseCategory}
+                                            label="Category"
+                                            placeholder="Select a category"
+                                        />
                                         {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('category')).map((error, index) => (
                                             <div key={index} className="text-sm text-red-600">
                                                 {error}
                                             </div>
                                         ))}
                                     </div>
-                                    {categories.find((category: any) => category.id.toString() === pettyCashCategory)?.name === 'Refund' && (
+                                    {normalizeCategoryName(selectedExpenseCategory) === 'refund' && (
                                         <div className="w-full max-w-sm">
-                                            <Label htmlFor="transaction_id">Transaction Id</Label>
-                                            <Input
-                                                id="transaction_id"
-                                                type="text"
+                                            <FilterAndSelectTransaction
                                                 value={pettyCashTransactionId}
-                                            onChange={(e) => setPettyCashTransactionId(e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Enter transaction id"
-                                        />
-                                    </div>)}
+                                                onValueChange={setPettyCashTransactionId}
+                                                onSelect={handleRefundTransactionSelect}
+                                                label="Transaction"
+                                                placeholder="Find refunded transaction"
+                                            />
+                                            {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('transaction_id')).map((error, index) => (
+                                                <div key={index} className="text-sm text-red-600">
+                                                    {error}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                     <div className="w-full max-w-sm">
                                         <Label htmlFor="payed_to">Payed To</Label>
                                         <Select
@@ -441,6 +327,11 @@ export default function CounterExpense() {
                                                 ))}
                                             </SelectContent>
                                         </Select>
+                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('payed_to')).map((error, index) => (
+                                            <div key={index} className="text-sm text-red-600">
+                                                {error}
+                                            </div>
+                                        ))}
                                     </div>
                                     {pettyCashPayedTo === 'other' && <div className="w-full max-w-sm">
                                         <Label htmlFor="other_name">Other name</Label>
@@ -452,17 +343,24 @@ export default function CounterExpense() {
                                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             placeholder="Enter other person name"
                                         />
+                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('payed_to_other')).map((error, index) => (
+                                            <div key={index} className="text-sm text-red-600">
+                                                {error}
+                                            </div>
+                                        ))}
                                     </div>}
-                                    {categories.find((category: any) => category.id.toString() === pettyCashCategory)?.name === 'Inpatient Doctor Payment' && (<div className="w-full max-w-sm">
-                                        <Label htmlFor="other_name">File Number</Label>
-                                        <Input
-                                            id="file_number"
-                                            type="text"
+                                    {normalizeCategoryName(selectedExpenseCategory) === 'inpatient doctor payment' && (<div className="w-full max-w-sm">
+                                        <FilterAndSelectServiceOrder
                                             value={pettyCashFileNumber}
-                                            onChange={(e) => setPettyCashFileNumber(e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Enter file number"
+                                            onValueChange={setPettyCashFileNumber}
+                                            label="File Number"
+                                            placeholder="Find service order"
                                         />
+                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('file_number')).map((error, index) => (
+                                            <div key={index} className="text-sm text-red-600">
+                                                {error}
+                                            </div>
+                                        ))}
                                     </div>)}
                                     <div className="w-full max-w-sm">
                                         <Label htmlFor="description">Description</Label>

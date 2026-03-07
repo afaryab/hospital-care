@@ -19,6 +19,7 @@ class TransactionElement extends Model
         'service_recestation_id',
         'doctor_id',
         'expense_category_id',
+        'notes',
         'exp_voucher_id',
         'type',
         'income_or_expense',

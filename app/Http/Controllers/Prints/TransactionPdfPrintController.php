@@ -56,7 +56,6 @@ class TransactionPdfPrintController extends Controller
                 'email' => config('hospital.email', 'info@hospital.com'),
             ],
         ];
-
         // Select the appropriate view based on variant
         $view = match($variant) {
             'dot-printer' => 'pdfs.transaction.transaction-dot-printer',

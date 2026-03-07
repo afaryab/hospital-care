@@ -275,8 +275,8 @@
             @foreach($transaction->elements as $item)
                 <div class="item-line">
                     <span class="col-product">
-                        {{ $item->expense->category->name }}
-                        <p style="font-size: 8px;">{{ $item->expense->notes }}</p>
+                        {{ $item?->expenseCategory?->name }}
+                        <p style="font-size: 8px;">{{ $item->notes }}</p>
                     </span>
                     
                     <span class="col-total">{{ $item->amount }}</span>

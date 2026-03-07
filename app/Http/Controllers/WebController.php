@@ -412,21 +412,27 @@ class WebController extends Controller
 
 
             }else if($request->get('type') == 'EXP'){
-
+                
                 $expenseData = $request->validate([
                     'amount' => 'required|numeric',
-                    'description' => 'required|string',
                     'category_id' => 'required|exists:expense_categories,id',
-                    'payed_to' => 'required|exists:users,id',
-                    'transaction_id' => 'nullable',
-                    'file_number' => 'nullable',
+                    'payed_to' => 'nullable',
                 ]);
+                if(empty($expenseData['payed_to'])){
+                    $expenseData['payed_to'] = 'Other';
+                }
                 if($expenseData['payed_to'] == 'Other' && empty($expenseData['payed_to_other'])){
                     $array = $request->validate([
                         'payed_to_other' => 'required|string',
                     ]);
                     $expenseData['payed_to_other'] = $array['payed_to_other'];
+                }else{
+                    $array = $request->validate([
+                        'payed_to' => 'exists:users,id',
+                    ]);
+                    $expenseData['payed_to'] = $array['payed_to'];
                 }
+                
 
                 $expenseCategory = ExpenseCategory::find($expenseData['category_id']);
 
@@ -457,6 +463,25 @@ class WebController extends Controller
                     if(!$refundedTransaction){
                         $refundedTransaction = Transaction::where('tr_number', $expenseData['transaction_id'])->first();
                     }
+
+                    $relatedServiceOrderId = TransactionElement::query()
+                        ->where('transaction_id', $refundedTransaction->id)
+                        ->whereNotNull('service_order_id')
+                        ->value('service_order_id');
+
+                    if (!$relatedServiceOrderId) {
+                        return back()->withErrors(['transaction_id' => 'Refund is only allowed for transactions linked to an open service order.']);
+                    }
+
+                    $relatedServiceOrder = ServiceOrder::find($relatedServiceOrderId);
+
+                    $isServiceOrderOpen = $relatedServiceOrder
+                        && in_array(strtolower((string) $relatedServiceOrder->status), ['open', 'in-progress'], true)
+                        && is_null($relatedServiceOrder->closed_at);
+
+                    if (!$isServiceOrderOpen) {
+                        return back()->withErrors(['transaction_id' => 'Refund is not allowed because the related service order is closed.']);
+                    }
                 }
 
                 if($isDoctorFilePayment){
@@ -466,7 +491,11 @@ class WebController extends Controller
                     }
                 }
 
+                $array = $request->validate([
+                    'description' => 'required|string',
+                ]);
 
+                $expenseData['description'] = $array['description'];
 
                 DB::beginTransaction();
 
@@ -477,6 +506,8 @@ class WebController extends Controller
                         'created_by' => $request->user()->id,
                         'type' => 'CASH',
                         'income_or_expense' => 'EXPENSE',
+                        'expense_category_id' => $expenseData['category_id'] ?? null,
+                        'notes' => $expenseData['description'] ?? null,
                         'amount' => $expenseData['amount'],
                         'is_refunded' => $isRefund
                     ]);
@@ -487,7 +518,7 @@ class WebController extends Controller
                         'created_by' => $request->user()->id,
                         'type' => TransactionElementType::EXP,
                         'income_or_expense' => 'EXPENSE',
-                        'exp_category_id' => $expenseData['category_id'] ?? null,
+                        'expense_category_id' => $expenseData['category_id'] ?? null,
                         'amount' => $expenseData['amount'],
                         'refunded_transaction_id' => $isRefund ? $refundedTransaction->id : null,
                         'expense_service_order_id' => $isDoctorFilePayment ? $ServiceOrderExp->id : null,
