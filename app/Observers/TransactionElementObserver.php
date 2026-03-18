@@ -23,8 +23,8 @@ class TransactionElementObserver
                 return;
             }
 
-            $s = $this->generateServiceOrderNumber($transactionElement->type);
-            $ss = $this->generateShortServiceOrderNumber($transactionElement->type);
+            $s = ServiceOrder::generateServiceOrderNumber($transactionElement->type);
+            $ss = ServiceOrder::generateShortServiceOrderNumber($transactionElement->type);
 
             $soShort = $service->department->slug.'/'.str_pad($ss, 8, '0', STR_PAD_LEFT);
             $soNumber = $patient->ps_number . '/' . $service->department->slug.'/'.str_pad($s, 8, '0', STR_PAD_LEFT);
@@ -99,37 +99,5 @@ class TransactionElementObserver
                 'notes_json' => []
             ]);
         }
-    }
-
-    /**
-     * Generate a unique service order number
-     */
-    private function generateServiceOrderNumber($type): string
-    {
-
-        // Check how many service orders have been created this month where created_at is in the current month
-        $count = ServiceOrder::where('type', $type)->where('created_at', '>=', Carbon::now()->startOfMonth())
-            ->where('created_at', '<=', Carbon::now()->endOfMonth())
-            ->count();
-
-        $count += 1; // Increment for the new service order
-
-        // STRPAD the count to be 8 digits
-        $count = str_pad($count, 8, '0', STR_PAD_LEFT);
-        return  $count;
-    }
-
-    private function generateShortServiceOrderNumber($type): string
-    {
-
-        // Check how many service orders have been created this month where created_at is in the current month
-        $count = ServiceOrder::where('type', $type)
-            ->count();
-
-        $count += 1; // Increment for the new service order
-
-        // STRPAD the count to be 8 digits
-        $count = str_pad($count, 8, '0', STR_PAD_LEFT);
-        return  $count;
     }
 }

@@ -16,4 +16,10 @@ class ExpenseCategory extends Model
         'created_at',
         'updated_at',
     ];
+
+    protected $casts = [
+        'pay_doc' => 'boolean',
+        'pay_others' => 'boolean',
+        'pay_users' => 'boolean',
+    ];
 }

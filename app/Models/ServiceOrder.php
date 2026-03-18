@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Carbon;
 
 class ServiceOrder extends Model
 {
@@ -116,5 +118,46 @@ class ServiceOrder extends Model
         return $this->morphTo();
     }
 
-    
+    /**
+     * Generate a unique service order number
+     */
+    public static function generateServiceOrderNumber($type): string
+    {
+
+        // Check how many service orders have been created this month where created_at is in the current month
+        $count = ServiceOrder::where('type', $type)->where('created_at', '>=', Carbon::now()->startOfMonth())
+            ->where('created_at', '<=', Carbon::now()->endOfMonth())
+            ->count();
+
+        $count += 1; // Increment for the new service order
+
+        // STRPAD the count to be 8 digits
+        $count = str_pad($count, 8, '0', STR_PAD_LEFT);
+        return  $count;
+    }
+
+    public static function generateShortServiceOrderNumber($type): string
+    {
+
+        // Check how many service orders have been created this month where created_at is in the current month
+        $count = ServiceOrder::where('type', $type)
+            ->count();
+
+        $count += 1; // Increment for the new service order
+
+        // STRPAD the count to be 8 digits
+        $count = str_pad($count, 8, '0', STR_PAD_LEFT);
+        return  $count;
+    }
+
+    public function expenseVouchers(): BelongsToMany
+    {
+        return $this->belongsToMany(ExpenseVoucher::class, 'expense_voucher_service_order')
+            ->withTimestamps();
+    }
+
+    public function transactionElements(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(TransactionElement::class, 'service_order_id');
+    }
 }

@@ -32,6 +32,8 @@ return new class extends Migration
             $table->tinyInteger('is_composit_service')->default(0);
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->integer('old_id')->nullable()->index();
+            $table->tinyInteger('is_featured')->default(0);
+            $table->tinyInteger('generate_service_order')->default(0);
             $table->timestamps();
         });
         Schema::create('service_recestations', function (Blueprint $table) {

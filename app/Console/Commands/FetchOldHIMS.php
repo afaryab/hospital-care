@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Dentist;
-use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseVoucher;
 use App\Models\Image;
@@ -38,12 +37,12 @@ use App\Models\MigrationLog;
 
 class FetchOldHIMS extends Command
 {
-    public static $TOTAL_STEPS = 82;
+    public static $TOTAL_STEPS = 77;
 
     /**
      * The name and signature of the console command.
      */
-    protected $signature = 'app:fetch-old {--step=} {--reset} {--batch-size=2000}';
+    protected $signature = 'app:fetch-old-x {--step=} {--reset} {--batch-size=2000}';
 
     /**
      * The console command description.
@@ -60,6 +59,13 @@ class FetchOldHIMS extends Command
     protected $receptionCache = [];
     protected $closingCache = [];
     protected $expenseCache = [];
+    protected $expenseCategoryCache = [];
+
+    public function info($string, $verbosity = null)
+    {
+        parent::info($string, $verbosity);
+        Log::info($string);
+    }
 
     /**
      * Execute the console command.
@@ -71,7 +77,7 @@ class FetchOldHIMS extends Command
             return 1;
         }
 
-
+        $this->info('Starting optimized fetch-old command execution.');
         Log::info('Starting optimized fetch-old command execution.');
 
         // Set memory and time limits
@@ -298,12 +304,6 @@ class FetchOldHIMS extends Command
                 $this->expenseCategoriesOptimized($batchSize);
                 break;
             case 80:
-                $this->vouchersOptimized($batchSize);
-                break;
-            case 81:
-                $this->expensesOptimized($batchSize);
-                break;
-            case 82:
                 $this->counterClosingTransactionsOptimized($batchSize);
                 break;
             default:
@@ -706,8 +706,8 @@ class FetchOldHIMS extends Command
                     'address' => $patient->patient_address,
                     'guardian' => $patient->guardian,
                     'relation' => $patient->relation,
-                    'contact' => $patient->patient_contact_mobile,
-                    'cnic' => $patient->patient_cnic,
+                    'contact' => $this->validatePhoneNumber($patient->patient_contact_mobile) ? $this->formatePhoneNumber($patient->patient_contact_mobile) : null,
+                    'cnic' => $this->validateCnic($patient->patient_cnic) ? $this->formateCnic($patient->patient_cnic) : null,
                     'created_at' => $patient->created_on,
                     'updated_at' => $patient->modified_on,
                 ];
@@ -724,6 +724,48 @@ class FetchOldHIMS extends Command
                 $this->info('Processed ' . count($insertData) . ' patients');
             }
         });
+    }
+                    
+    protected function validatePhoneNumber($number)
+    {
+        $number = preg_replace('/\D/', '', $number);
+        if (Str::startsWith($number, '92') && strlen($number) == 12) {
+            return true;
+        } elseif (Str::startsWith($number, '0') && strlen($number) == 11) {
+            return true;
+        } elseif (Str::startsWith($number, '3') && strlen($number) == 10) {
+            return true;
+        }
+        return false;
+    }
+    // Expected formats: +92-XXX-XXXXXXX
+    protected function formatePhoneNumber($number)
+    {
+        $number = preg_replace('/\D/', '', $number);
+        if (Str::startsWith($number, '92')) {
+            return '+92-' . substr($number, 2, 3) . '-' . substr($number, 5);
+
+        } elseif (Str::startsWith($number, '0')) {
+            return '+92-' . substr($number, 1, 3) . '-' . substr($number, 4);
+        } elseif (Str::startsWith($number, '3') && strlen($number) == 10) {
+            return '+92-' . substr($number, 0, 3) . '-' . substr($number, 3);
+        }
+        return $number; // Return as is if it doesn't match expected patterns
+    }
+
+    protected function validateCnic($cnic)
+    {
+        $cnic = preg_replace('/\D/', '', $cnic);
+        return strlen($cnic) == 13;
+    }
+    // Expected format: XXXXX-XXXXXXX-X
+    protected function formateCnic($cnic)
+    {
+        $cnic = preg_replace('/\D/', '', $cnic);
+        if (strlen($cnic) == 13) {
+            return substr($cnic, 0, 5) . '-' . substr($cnic, 5, 7) . '-' . substr($cnic, 12);
+        }
+        return $cnic; // Return as is if it doesn't match expected patterns
     }
 
     /**
@@ -810,255 +852,11 @@ class FetchOldHIMS extends Command
                 }
                 
                 if (!empty($insertData)) {
-                    ExpenseCategory::insertOrIgnore($insertData);
+                    $cat = ExpenseCategory::insertOrIgnore($insertData);
+                    $this->expenseCategoryCache[$category->id] = $cat;
                     $this->info('Processed ' . count($insertData) . ' expense categories');
                 }
             });
-    }
-
-    /**
-     * Optimized vouchers migration
-     */
-    protected function vouchersOptimized($batchSize)
-    {
-        $this->info('Migrating vouchers...');
-        
-        DB::connection('secondary')
-            ->table('expense_vouchers')
-            ->orderBy('id')
-            ->chunk($batchSize, function ($vouchers) {
-                $insertData = [];
-                
-                foreach ($vouchers as $voucher) {
-                    $insertData[] = [
-                        'old_id' => $voucher->id,
-                        'exp_category_id' => $voucher->exp_category_id,
-                        'service_order_id' => null,
-                        'payed_to' => $this->getCachedUser($voucher->employee_id)?->id,
-                        'payed_to_name' => $voucher->payed_to_others,
-                        'amount' => $voucher->exp_amount_numbers ? 
-                            ($voucher->exp_amount_numbers < 0 ? 
-                                ($voucher->exp_amount_numbers * -1) : 
-                                $voucher->exp_amount_numbers) : 0,
-                        'created_at' => $voucher->created_on,
-                        'updated_at' => $voucher->modified_on,
-                    ];
-                }
-                
-                if (!empty($insertData)) {
-                    ExpenseVoucher::insertOrIgnore($insertData);
-                    $this->info('Processed ' . count($insertData) . ' vouchers');
-                }
-            });
-    }
-
-    /**
-     * Optimized expenses migration
-     */
-    protected function expensesOptimized($batchSize)
-    {
-        $this->info('Migrating expenses...');
-        $batchId = Cache::get('migration_batch_id');
-        $totalProcessed = 0;
-        $totalSkipped = 0;
-        $totalErrors = 0;
-        $totalRegularAmount = 0;
-        $totalInpatientAmount = 0;
-        
-        // Track processed IDs to detect potential duplicates
-        $processedIds = [];
-        
-        // Regular expenses
-        DB::connection('secondary')
-            ->table('expenses')
-            ->orderBy('id')
-            ->chunk($batchSize, function ($expenses) use (&$totalProcessed, &$totalSkipped, &$totalErrors, &$totalRegularAmount, &$processedIds, $batchId) {
-                $insertData = [];
-                
-                foreach ($expenses as $expense) {
-                    try {
-                        // Check for duplicates
-                        $oldId = 'EXP-' . $expense->id;
-                        if (in_array($oldId, $processedIds)) {
-                            MigrationLog::logAction('expenses', MigrationLog::ACTION_DUPLICATED, [
-                                'old_table' => 'expenses',
-                                'old_record_id' => $expense->id,
-                                'reason' => 'Duplicate expense ID detected during processing',
-                                'batch_id' => $batchId,
-                                'old_data' => (array)$expense
-                            ]);
-                            $totalSkipped++;
-                            continue;
-                        }
-                        $processedIds[] = $oldId;
-
-                        // Validate amount
-                        $amount = $this->sanitizeNumericValue($expense->amount_received_num);
-                        if ($amount <= 0) {
-                            MigrationLog::logSkipped('expenses', 'expenses', $expense->id, 'Invalid or zero amount', (array)$expense);
-                            $totalSkipped++;
-                            continue;
-                        }
-
-                        $expenseCategory = ExpenseCategory::where('old_id', $expense->category_id)->first();
-                        
-                        $expenseData = [
-                            'old_id' => $oldId,
-                            'voucher_id' => $expense->voucher_id,
-                            'exp_category_id' => $expenseCategory?->id,
-                            'type' => $expense->payment_type,
-                            'payed_to' => $this->getCachedUser($expense->payed_to)?->id,
-                            'payed_to_name' => $expense->payment_reference,
-                            'amount' => $amount,
-                            'amount_alphabetical' => $expense->amount_received_words,
-                            'created_at' => $expense->created_on,
-                            'updated_at' => $expense->modified_on,
-                        ];
-
-                        $insertData[] = $expenseData;
-                        $totalProcessed++;
-                        $totalRegularAmount += $amount;
-
-                        // Log successful processing
-                        MigrationLog::logFinancial('expenses', 'expenses', $expense->id, 'expenses', null, 
-                            $expense->amount_received_num, $amount, MigrationLog::ACTION_SUCCESS);
-
-                    } catch (\Exception $e) {
-                        MigrationLog::logError('expenses', 'expenses', $expense->id, $e->getMessage(), (array)$expense);
-                        $totalErrors++;
-                    }
-                }
-                
-                if (!empty($insertData)) {
-                    try {
-                        Expense::insertOrIgnore($insertData);
-                        $this->info('Processed ' . count($insertData) . ' regular expenses (Amount: ' . number_format(array_sum(array_column($insertData, 'amount')), 2) . ')');
-                        
-                        MigrationLog::logAction('expenses', MigrationLog::ACTION_SUCCESS, [
-                            'reason' => 'Regular expenses batch inserted',
-                            'old_table' => 'expenses',
-                            'new_table' => 'expenses',
-                            'batch_id' => $batchId,
-                            'old_data' => [
-                                'batch_count' => count($insertData),
-                                'batch_amount' => array_sum(array_column($insertData, 'amount'))
-                            ]
-                        ]);
-
-                    } catch (\Exception $e) {
-                        MigrationLog::logError('expenses', 'expenses', null, $e->getMessage(), [
-                            'batch_size' => count($insertData),
-                            'batch_id' => $batchId
-                        ]);
-                        $this->error('Failed to insert regular expenses batch: ' . $e->getMessage());
-                    }
-                }
-            });
-
-        // Inpatient expenses
-        DB::connection('secondary')
-            ->table('inpatient_expense_transactions')
-            ->orderBy('id')
-            ->chunk($batchSize, function ($expenses) use (&$totalProcessed, &$totalSkipped, &$totalErrors, &$totalInpatientAmount, &$processedIds, $batchId) {
-                $insertData = [];
-                
-                foreach ($expenses as $expense) {
-                    try {
-                        // Check for duplicates
-                        $oldId = 'INP-EXP-' . $expense->id;
-                        if (in_array($oldId, $processedIds)) {
-                            MigrationLog::logAction('expenses', MigrationLog::ACTION_DUPLICATED, [
-                                'old_table' => 'inpatient_expense_transactions',
-                                'old_record_id' => $expense->id,
-                                'reason' => 'Duplicate inpatient expense ID detected during processing',
-                                'batch_id' => $batchId,
-                                'old_data' => (array)$expense
-                            ]);
-                            $totalSkipped++;
-                            continue;
-                        }
-                        $processedIds[] = $oldId;
-
-                        // Validate amount
-                        $amount = $this->sanitizeNumericValue($expense->amount_in_num);
-                        if ($amount <= 0) {
-                            MigrationLog::logSkipped('expenses', 'inpatient_expense_transactions', $expense->id, 'Invalid or zero amount', (array)$expense);
-                            $totalSkipped++;
-                            continue;
-                        }
-
-                        $expenseData = [
-                            'old_id' => $oldId,
-                            'type' => $expense->payment_type,
-                            'payed_to' => $this->getCachedUser($expense->receaved_by)?->id,
-                            'payed_to_name' => $expense->payment_refference,
-                            'amount' => $amount,
-                            'amount_alphabetical' => $expense->amount_in_figure,
-                            'created_at' => $expense->created_on,
-                            'updated_at' => $expense->modified_on,
-                        ];
-
-                        $insertData[] = $expenseData;
-                        $totalProcessed++;
-                        $totalInpatientAmount += $amount;
-
-                        // Log successful processing
-                        MigrationLog::logFinancial('expenses', 'inpatient_expense_transactions', $expense->id, 'expenses', null, 
-                            $expense->amount_in_num, $amount, MigrationLog::ACTION_SUCCESS);
-
-                    } catch (\Exception $e) {
-                        MigrationLog::logError('expenses', 'inpatient_expense_transactions', $expense->id, $e->getMessage(), (array)$expense);
-                        $totalErrors++;
-                    }
-                }
-                
-                if (!empty($insertData)) {
-                    try {
-                        Expense::insertOrIgnore($insertData);
-                        $this->info('Processed ' . count($insertData) . ' inpatient expenses (Amount: ' . number_format(array_sum(array_column($insertData, 'amount')), 2) . ')');
-                        
-                        MigrationLog::logAction('expenses', MigrationLog::ACTION_SUCCESS, [
-                            'reason' => 'Inpatient expenses batch inserted',
-                            'old_table' => 'inpatient_expense_transactions',
-                            'new_table' => 'expenses',
-                            'batch_id' => $batchId,
-                            'old_data' => [
-                                'batch_count' => count($insertData),
-                                'batch_amount' => array_sum(array_column($insertData, 'amount'))
-                            ]
-                        ]);
-
-                    } catch (\Exception $e) {
-                        MigrationLog::logError('expenses', 'inpatient_expense_transactions', null, $e->getMessage(), [
-                            'batch_size' => count($insertData),
-                            'batch_id' => $batchId
-                        ]);
-                        $this->error('Failed to insert inpatient expenses batch: ' . $e->getMessage());
-                    }
-                }
-            });
-
-        // Log final summary
-        MigrationLog::logAction('expenses', MigrationLog::ACTION_SUCCESS, [
-            'reason' => 'Expenses migration completed',
-            'old_table' => 'expenses + inpatient_expense_transactions',
-            'new_table' => 'expenses',
-            'batch_id' => $batchId,
-            'old_data' => [
-                'total_processed' => $totalProcessed,
-                'total_skipped' => $totalSkipped,
-                'total_errors' => $totalErrors,
-                'total_regular_amount' => $totalRegularAmount,
-                'total_inpatient_amount' => $totalInpatientAmount,
-                'total_amount' => $totalRegularAmount + $totalInpatientAmount
-            ]
-        ]);
-
-        $this->info("✅ Expenses migration completed:");
-        $this->info("   • Regular expenses: " . number_format($totalRegularAmount, 2));
-        $this->info("   • Inpatient expenses: " . number_format($totalInpatientAmount, 2));
-        $this->info("   • Total amount: " . number_format($totalRegularAmount + $totalInpatientAmount, 2));
-        $this->info("   • Records: {$totalProcessed} processed, {$totalSkipped} skipped, {$totalErrors} errors");
     }
 
     /**
@@ -1162,6 +960,8 @@ class FetchOldHIMS extends Command
                 'patient_id' => $this->getCachedPatient($transaction->patient_id)?->id ?? null,
                 'type' => $transaction->income_or_expence === 'INCOME' ? $this->mapTransactionType($transaction->type) : 'CASH',
                 'income_or_expense' => $transaction->income_or_expence === 'INCOME' ? 'INCOME' : 'EXPENSE',
+                // 'department_id' => $this->mapDepartmentId($transaction->department_id),
+                
                 'amount' => $this->sanitizeTransactionAmount($transaction->amount, $isExpense),
                 'orignal_amount' => $this->sanitizeTransactionAmount($transaction->orignal_amount, $isExpense),
                 'customer_payed' => $isExpense ? 0 : $this->sanitizeNumericValue($transaction->customer_payed),
@@ -1171,14 +971,31 @@ class FetchOldHIMS extends Command
                 'updated_at' => $transaction->modified_on,
             ];
 
+            $this->info("Processing transaction ID: {$transaction->id} with " . count($transactionGroup) . " elements and type {$transactionData['type']} and amount {$transactionData['amount']} and INC/EXP: {$transactionData['income_or_expense']}");
+
             // If is expense get expense record from secondary database and check if category is voucher pay or not, if voucher pay then set type as VOUCHER-PAY otherwise EXP
             if ($isExpense) {
-                $expense = DB::connection('secondary')->table('expenses')->where('id', $transaction->expense_id)->first();
+
+                // Expense transactions have only one element which contains the expense details, so we can directly use the first element for this.
+                $trE = $transactionGroup->first();
+
+                if($trE->type === 'INPT-EXP') {
+                    $this->info("Processing INPT-EXP transaction ID: {$transaction->id}");
+
+                    $inPatientFileExpense = DB::connection('secondary')->table('inpatient_file_expenses')->where('id', $trE->department_transaction_id)->first();
+                    if ($inPatientFileExpense) {
+                        $transactionData['notes'] = $inPatientFileExpense->payment_reference;
+                    }
+                    
+
+                }
+
+                $expense = DB::connection('secondary')->table('expenses')->where('id', $trE->department_transaction_id)->first();
                 
                 $transactionData['expense_category_id'] = $expense ? ($this->getCachedExpenseCategory($expense->category_id)?->id ?? null) : null;
                 $transactionData['notes'] = $expense ? $expense->payment_reference : null;
 
-                $isVoucherPay = $expense->voucher_id ? true : false;
+                $isVoucherPay = $expense?->voucher_id ? true : false;
 
                 // If Voucher Pay get voucher record from seconday database and create it here.
                 if ($isVoucherPay) {
@@ -1195,6 +1012,7 @@ class FetchOldHIMS extends Command
                             'notes' => $voucher->expense_notes,
                             'created_at' => $voucher->created_on,
                             'updated_at' => $voucher->modified_on,
+                            'vc_number' => ExpenseVoucher::generateExpenseVoucherNumber()
                         ];
 
                         $newVoucherId = ExpenseVoucher::insertGetId($voucherData);
@@ -1209,6 +1027,8 @@ class FetchOldHIMS extends Command
 
             // Use insertGetId to get the new transaction ID
             $newTransactionId = Transaction::insertGetId($transactionData);
+
+            $this->info("Processing transaction ID: {$transaction->id} => New ID: {$newTransactionId} with " . count($transactionGroup) . " elements");
 
             // Prepare elements for this transaction
             $elementInserts = [];
@@ -1227,13 +1047,17 @@ class FetchOldHIMS extends Command
                         $elementData['exp_voucher_id'] = $transactionData['exp_voucher_id'] ?? null;
                     }
 
+                    $elementData['income_or_expense'] = $transaction->income_or_expence;
+
 
                     $elementInserts[] = $te = TransactionElement::createQuietly($elementData);
 
                     // If Income and department is inpatient and $element->department_transaction_id is present, link it to the service order
 
                     if ($transaction->type === 'INCOME' && $element->department_transaction_id && in_array($element->element_type, ['INPT'])) {
-                        
+                    
+                        $this->info("Processing service order for transaction element ID: {$element->element_id}, department transaction ID: {$element->department_transaction_id}");
+
                         $InpFile = DB::connection('secondary')->table('inpatient_file')
                             ->select('*')
                             ->where('id', $element->department_transaction_id)
@@ -1254,7 +1078,7 @@ class FetchOldHIMS extends Command
                                 'patient_id' => $this->getCachedPatient($transaction->patient_id)?->id,
                                 'service_id' => $this->getCachedService($element->service_id, $this->mapServiceType($element->element_type))?->id,
                                 'doctor_id' => $this->getCachedUser($element->doctor_id)?->id,
-                                'status' => ServiceOrderStatus::OPEN,
+                                'status' => $InpFile->status,
                                 'created_at' => $element->element_created_on,
                                 'updated_at' => $element->element_modified_on,
                             ]);
@@ -1350,40 +1174,6 @@ class FetchOldHIMS extends Command
                     'expense_id' => null,
                     'exp_voucher_id' => null,
                     'type' => 'RECES-IND',
-                ]);
-
-            case 'EXP':
-                $expense = $this->getCachedExpense('EXP-' . $element->department_transaction_id);
-                return array_merge($baseData, [
-                    'type' => 'EXP',
-                    'income_or_expense' => 'EXPENSE',
-                    'doctor_id' => null,
-                    'patient_id' => null,
-                    'service_id' => null,
-                    'service_recestation_id' => null,
-                    'expense_id' => $expense?->id,
-                    'exp_voucher_id' => null,
-                ]);
-
-            case 'VOUCHER-PAY':
-            case 'INPT-EXP':
-                $expenseKey = $element->element_type === 'VOUCHER-PAY' ? 
-                    'EXP-' . $element->department_transaction_id : 
-                    'INP-EXP-' . $element->department_transaction_id;
-                
-                $expense = $this->getCachedExpense($expenseKey);
-                $voucher = $expense ? ExpenseVoucher::find($expense->voucher_id) : null;
-                
-                return array_merge($baseData, [
-                    'type' => $element->element_type,
-                    'income_or_expense' => 'EXPENSE',
-                    'doctor_id' => null,
-                    'patient_id' => $element->element_type === 'INPT-EXP' ? 
-                        $this->getCachedPatient($transaction->patient_id)?->id : null,
-                    'service_id' => null,
-                    'service_recestation_id' => null,
-                    'expense_id' => $expense?->id,
-                    'exp_voucher_id' => $voucher?->id,
                 ]);
         }
 
@@ -1481,6 +1271,20 @@ class FetchOldHIMS extends Command
         return $this->closingCache[$id] ?? null;
     }
 
+    protected function getCachedExpenseCategory($id)
+    {
+
+        // Cache if not already cached
+        if (!isset($this->expenseCategoryCache[$id])) {
+            $category = ExpenseCategory::where('old_id', $id)->first();
+            if ($category) {
+                $this->expenseCategoryCache[$id] = $category;
+            }
+        }
+
+        return $this->expenseCategoryCache[$id] ?? null;
+    }
+
     protected function getCachedService($id, $type)
     {
         $key = "{$type}_{$id}";
@@ -1519,18 +1323,6 @@ class FetchOldHIMS extends Command
         }
         
         return $this->serviceRecesitationCache[$key] ?? null;
-    }
-
-    protected function getCachedExpense($id)
-    {
-        if (!isset($this->expenseCache[$id])) {
-            $expense = Expense::where('old_id', $id)->first();
-            if ($expense) {
-                $this->expenseCache[$id] = $expense;
-            }
-        }
-        
-        return $this->expenseCache[$id] ?? null;
     }
 
     /**

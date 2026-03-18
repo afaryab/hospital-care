@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +19,8 @@ class ExpenseVoucher extends Model
         'payed_to_name',
         'amount',
         'notes',
+        'transaction_id',
+        'transaction_element_id',
         'created_at',
         'updated_at'
     ];
@@ -25,6 +28,13 @@ class ExpenseVoucher extends Model
     protected $casts = [
         'amount' => 'decimal:2',
     ];
+
+    protected $appends = ['status'];
+
+    public function getStatusAttribute(): string
+    {
+        return ($this->transaction_id && $this->transaction_element_id) ? 'payed' : 'pending';
+    }
 
     protected static function booted(): void
     {
@@ -81,5 +91,21 @@ class ExpenseVoucher extends Model
     public function payedTo(): BelongsTo
     {
         return $this->belongsTo(User::class, 'payed_to');
+    }
+
+    public function transaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class);
+    }
+
+    public function transactionElement(): BelongsTo
+    {
+        return $this->belongsTo(TransactionElement::class);
+    }
+
+    public function serviceOrders(): BelongsToMany
+    {
+        return $this->belongsToMany(ServiceOrder::class, 'expense_voucher_service_order')
+            ->withTimestamps();
     }
 }

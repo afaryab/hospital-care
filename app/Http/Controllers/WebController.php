@@ -385,7 +385,7 @@ class WebController extends Controller
                         'amount' => $voucher->amount,
                     ]);
 
-                    TransactionElement::create([
+                    $transactionElement = TransactionElement::create([
                         'closing_id' => $openCounter->id,
                         'transaction_id' => $transaction->id,
                         'expense_id' => $expense->id,
@@ -394,6 +394,11 @@ class WebController extends Controller
                         'type' => 'VOUCHER_PAY',
                         'income_or_expense' => 'EXPENSE',
                         'amount' => $voucher->amount,
+                    ]);
+
+                    $voucher->update([
+                        'transaction_id' => $transaction->id,
+                        'transaction_element_id' => $transactionElement->id,
                     ]);
 
                 }catch(\Exception $e){
@@ -516,7 +521,7 @@ class WebController extends Controller
                         'closing_id' => $openCounter->id,
                         'transaction_id' => $transaction->id,
                         'created_by' => $request->user()->id,
-                        'type' => TransactionElementType::EXP,
+                        'type' => TransactionElementType::PETTY_CASH,
                         'income_or_expense' => 'EXPENSE',
                         'expense_category_id' => $expenseData['category_id'] ?? null,
                         'amount' => $expenseData['amount'],
@@ -569,7 +574,6 @@ class WebController extends Controller
                     'panel_company' => 'exists:panels,id'
                 ]);
             }
-
 
             $isRecesitation = Str::startsWith($validatedData['department_key'], 'RECES-');
             $departmentKey = $isRecesitation ? Str::replaceFirst('RECES-', '', $validatedData['department_key']) : $validatedData['department_key'];
@@ -872,6 +876,8 @@ class WebController extends Controller
 
         $payedToOtherInUrl = $request->get('payed_to_other', null);
 
+        $voucherIdInUrl = $request->get('voucher_id', null);
+
         $expenseCategory = null;
 
         if($categoryNameInUrl && $categoryIdInUrl){
@@ -906,6 +912,12 @@ class WebController extends Controller
             }
         }
 
+        $voucher = null;
+
+        if($voucherIdInUrl){
+            $voucher = ExpenseVoucher::with('payedTo')->find($voucherIdInUrl);
+        }
+
         // dd([
         //         'type' => $paymentTypeInUrl,
         //         'amount' => $amountInUrl,
@@ -916,12 +928,12 @@ class WebController extends Controller
         //     ]);
 
 
-
+        $expenseCategories = ExpenseCategory::whereNotIn('name', ['Outdoor Doctors Payments'])->get();
 
         return Inertia::render('counter/expense',[
             'openCounter' => $openCounter,
             'users' => \App\Models\User::all(),
-            'categories' => ExpenseCategory::all(),
+            'categories' => $expenseCategories,
             'selected' => [
                 'type' => $paymentTypeInUrl,
                 'amount' => $amountInUrl,
@@ -929,6 +941,7 @@ class WebController extends Controller
                 'doctor' => $doctor,
                 'transaction' => $trnsaction,
                 'payed_to_other' => $payedToOtherInUrl,
+                'voucher' => $voucher,
             ]
         ]);
     }
@@ -1213,7 +1226,8 @@ class WebController extends Controller
         
         return Inertia::render('hospital/opd-queue',[
             'serviceOrdersByService' => $serviceOrdersByService,
-            'services' => $services
+            'services' => $services,
+            
         ]);
     }
 
@@ -1223,5 +1237,95 @@ class WebController extends Controller
     public function hospitalSettings()
     {
         return Inertia::render('admin/hospital-settings');
+    }
+
+    public function vouchersList(Request $request)
+    {
+        $query = ExpenseVoucher::with(['expCategory', 'payedTo']);
+
+        if ($year = $request->get('year')) {
+            $query->whereYear('created_at', $year);
+        }
+
+        if ($month = $request->get('month')) {
+            $query->whereMonth('created_at', $month);
+        }
+
+        $vouchers = $query->orderBy('created_at', 'DESC')->paginate(15);
+
+        return Inertia::render('counter/vouchers-list', [
+            'vouchers' => $vouchers,
+            'yearSelected' => $request->get('year', '0'),
+            'monthSelected' => $request->get('month', '0'),
+        ]);
+    }
+
+    public function newVoucher(){
+
+        $expenseCategories = ExpenseCategory::where('pay_doc', true)->get();
+
+        $users = User::where(function ($query) {
+            $query->whereHas('opdDoctorProfiles')
+                ->orWhereHas('indDoctorProfiles')
+                ->orWhereHas('emergencyDoctorProfiles')
+                ->orWhereHas('dentistProfiles')
+                ->orWhereHas('ultrasoundDoctorProfiles');
+        })->get();
+
+        return Inertia::render('counter/new-voucher',[
+            'categories' => $expenseCategories,
+            'users' => $users,
+
+        ]);
+    }
+
+    public function storeVoucher(Request $request)
+    {
+        $validated = $request->validate([
+            'exp_category_id' => ['required', 'integer', 'exists:expense_categories,id'],
+            'payed_to' => ['required', 'integer', 'exists:users,id'],
+            'service_order_ids' => ['nullable', 'array'],
+            'service_order_ids.*' => ['required', 'integer', 'exists:service_orders,id'],
+            'amount' => ['required', 'numeric', 'min:0.01', 'max:9999999.99'],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $category = ExpenseCategory::findOrFail($validated['exp_category_id']);
+        $serviceOrderIds = $validated['service_order_ids'] ?? [];
+
+        if ($category->pay_doc && !$category->pay_others && !$category->pay_users && empty($serviceOrderIds)) {
+            return back()->withErrors([
+                'service_order_ids' => 'Service orders are required for this category.',
+            ]);
+        }
+
+        if (!empty($serviceOrderIds)) {
+            // Backend validation: all service orders must be CLOSED
+            $serviceOrders = ServiceOrder::whereIn('id', $serviceOrderIds)->get();
+
+            $notClosed = $serviceOrders->filter(fn ($so) => $so->status !== 'CLOSED');
+            if ($notClosed->isNotEmpty()) {
+                return back()->withErrors([
+                    'service_order_ids' => 'All selected service orders must have CLOSED status. Invalid: ' . $notClosed->pluck('so_number')->implode(', '),
+                ]);
+            }
+        }
+
+        $voucher = DB::transaction(function () use ($validated, $serviceOrderIds) {
+            $voucher = ExpenseVoucher::create([
+                'exp_category_id' => $validated['exp_category_id'],
+                'payed_to' => $validated['payed_to'],
+                'amount' => $validated['amount'],
+                'notes' => $validated['description'] ?? null,
+            ]);
+
+            if (!empty($serviceOrderIds)) {
+                $voucher->serviceOrders()->attach($serviceOrderIds);
+            }
+
+            return $voucher;
+        });
+
+        return redirect()->route('counter-expense')->with('success', "Voucher {$voucher->vc_number} created successfully.");
     }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Enum;
 
-enum ExpenseVoucherStatus
+enum ExpenseVoucherStatus: string
 {
-    case OPEN;
-    case CLOSED;
+    case PENDING = 'pending';
+    case PAYED = 'payed';
 }

@@ -20,7 +20,10 @@ class ExpenseCategoryController extends Controller
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $query = ExpenseCategory::query()->latest('id');
+        $query = ExpenseCategory::query()->whereNotIn('name',[
+            'Outdoor Doctors Payments',
+            'Indoor Doctors Payments',
+            ])->latest('id');
 
         if (!empty($filters['name'])) {
             $query->where('name', 'like', "%{$filters['name']}%");

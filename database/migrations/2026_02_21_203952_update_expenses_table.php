@@ -16,6 +16,7 @@ return new class extends Migration
             $table->boolean('pay_doc')->default(false);
             $table->boolean('pay_others')->default(false);
             $table->boolean('pay_users')->default(false);
+            $table->boolean('pay_patient')->default(false);
         });
     }
 
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->dropColumn('pay_doc');
             $table->dropColumn('pay_others');
             $table->dropColumn('pay_users');
+            $table->dropColumn('pay_patient');
         });
     }
 };

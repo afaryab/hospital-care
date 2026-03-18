@@ -20,3 +20,5 @@ Route::post('/expense-categories/search', [ExpenseCategoryController::class, 'in
 Route::post('/users/search', [UserController::class, 'index'])->name('api-users-search');
 Route::post('/transactions/search', [TransactionController::class, 'index'])->name('api-transactions-search');
 Route::post('/service-orders/search', [ServiceOrderController::class, 'index'])->name('api-service-orders-search');
+Route::post('/service-orders/completed-unpaid', [ServiceOrderController::class, 'completedUnpaid'])->name('api-service-orders-completed-unpaid');
+Route::post('/closings/search', [App\Http\Controllers\Api\ClosingController::class, 'index'])->name('api-closings-search');

@@ -8,7 +8,7 @@ import FilterAndSelectTransaction, { TransactionSearchItem } from '@/elements/tr
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import BulletsWrapper from '@/elements/bullets-wrapper';
 import AppLayout from '@/layouts/app-layout';
-import { counterExpense, counterView, home, myCounterList, transactionStore } from '@/routes';
+import { counterExpense, counterExpenseNewVoucher, counterView, home, myCounterList, transactionStore } from '@/routes';
 import { User, type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import clsx from 'clsx';
@@ -36,10 +36,17 @@ export default function CounterExpense() {
 
     const { openCounter, users, categories, selected } = usePage<{ openCounter: any, users: User[], categories: any[], selected?: any }>().props
 
-    const [payedTo, setPayedTo] = useState('');
+    const [payedTo, setPayedTo] = useState(selected?.voucher?.payed_to ? selected.voucher.payed_to.toString() : '');
     const [payedToOther, setPayedToOther] = useState('');
-    const [selectedVoucher, setSelectedVoucher] = useState<ExpenseVoucherSearchItem | null>(null);
-    const [selectedVoucherId, setSelectedVoucherId] = useState('');
+    const [selectedVoucher, setSelectedVoucher] = useState<ExpenseVoucherSearchItem | null>(selected?.voucher ? {
+        id: selected.voucher.id,
+        vc_number: selected.voucher.vc_number,
+        amount: selected.voucher.amount,
+        payed_to: selected.voucher.payed_to,
+        payed_to_name: selected.voucher.payed_to_user?.name ?? selected.voucher.payedTo?.name,
+        payedTo: selected.voucher.payed_to_user ?? selected.voucher.payedTo,
+    } as ExpenseVoucherSearchItem : null);
+    const [selectedVoucherId, setSelectedVoucherId] = useState(selected?.voucher ? selected.voucher.id.toString() : '');
     const [processingVoucherPayment, setProcessingVoucherPayment] = useState(false);
     
 
@@ -196,6 +203,11 @@ export default function CounterExpense() {
         active: true
     });
 
+    const handleNewVoucher = () => {
+        // redirect to counterExpenseNewVoucher
+        router.get(counterExpenseNewVoucher().url);
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Counter ${openCounter?.ct_number} Expense`} />
@@ -207,6 +219,13 @@ export default function CounterExpense() {
                             <div className="flex-1 flex flex-col gap-4 p-4 border rounded-lg">
                                 <h2 className="text-xl font-semibold text-center">Voucher Payment</h2>
                                 <form onSubmit={handleVoucherPayment} className="flex flex-col gap-4 items-center justify-center flex-1">
+                                    <Button 
+                                        onClick={handleNewVoucher}
+                                        type="button" 
+                                        className="w-full max-w-sm"
+                                    >
+                                        New Voucher
+                                    </Button>
                                     <div className="w-full max-w-sm space-y-2">
                                         <FilterAndSelectExpenseVoucher
                                             value={selectedVoucherId}

@@ -107,7 +107,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"300",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"M.O_EV",
@@ -116,7 +118,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"300",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"M.O_NT",
@@ -125,7 +129,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"300",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"W.M.O_MOR",
@@ -134,7 +140,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"400",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"W.M.O_EV",
@@ -143,7 +151,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"400",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"W.M.O_NT",
@@ -152,7 +162,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"400",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"CONST",
@@ -163,7 +175,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=> [
                     OpdDoctor::class   
                 ],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -174,7 +188,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=> [
                     OpdDoctor::class
                 ],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -185,7 +201,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=> [
                     OpdDoctor::class   
                 ],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"DENTL",
@@ -196,7 +214,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=> [
                     OpdDoctor::class
                 ],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -207,7 +227,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=> [
                     OpdDoctor::class   
                 ],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -216,7 +238,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"0",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -227,7 +251,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=> [
                     OpdDoctor::class
                 ],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"col",
@@ -238,7 +264,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=> [
                     OpdDoctor::class   
                 ],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"gast",
@@ -249,7 +277,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=> [
                     OpdDoctor::class
                 ],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"Cotrl",
@@ -260,7 +290,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=> [
                     OpdDoctor::class   
                 ],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -269,7 +301,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"500",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -278,7 +312,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"500",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -287,7 +323,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"500",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"NRML_DLV_G",
@@ -298,7 +336,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"NRML_DLV_P",
@@ -309,7 +349,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"NRML_DLV_V",
@@ -320,7 +362,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"DNC_G",
@@ -331,7 +375,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"DNC_P",
@@ -342,7 +388,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"DNC_V",
@@ -353,7 +401,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"EXP_G",
@@ -364,7 +414,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"EXP_P",
@@ -375,7 +427,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"EXP_V",
@@ -386,7 +440,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"C_SEC_G",
@@ -397,7 +453,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"C_SEC_P",
@@ -408,7 +466,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"C_SEC_V",
@@ -419,7 +479,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"HYS_G",
@@ -430,7 +492,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"HYS_P",
@@ -441,7 +505,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"HYS_V",
@@ -452,7 +518,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"OV_CYSY_G",
@@ -463,7 +531,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"OV_CYSY_P",
@@ -474,7 +544,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"OV_CYSY_V",
@@ -485,7 +557,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"APNDX_G",
@@ -496,7 +570,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"APNDX_P",
@@ -507,7 +583,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"APNDX_V",
@@ -518,7 +596,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"OPN_MTHD_G",
@@ -529,7 +609,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"OPN_MTHD_P",
@@ -540,7 +622,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"OPN_MTHD_V",
@@ -551,7 +635,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"LAP_G",
@@ -562,7 +648,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"LAP_P",
@@ -573,7 +661,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"LAP_V",
@@ -584,7 +674,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"TVP_G",
@@ -595,7 +687,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"TVP_P",
@@ -606,7 +700,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"TVP_V",
@@ -617,7 +713,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"TURP_G",
@@ -628,7 +726,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"TURP_P",
@@ -639,7 +739,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"TURP_V",
@@ -650,7 +752,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"PIL_G",
@@ -661,7 +765,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"PIL_P",
@@ -672,7 +778,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"PIL_V",
@@ -683,7 +791,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ABD_G",
@@ -694,7 +804,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ABD_P",
@@ -705,7 +817,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ABD_V",
@@ -716,7 +830,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ING_G",
@@ -727,7 +843,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ING_P",
@@ -738,7 +856,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ING_V",
@@ -749,7 +869,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"INC_G",
@@ -760,7 +882,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"INC_P",
@@ -771,7 +895,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"INC_V",
@@ -782,7 +908,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"GOTRS_G",
@@ -793,7 +921,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"GOTRS_P",
@@ -804,7 +934,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"GOTRS_V",
@@ -815,7 +947,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"BLDR_STN_G",
@@ -826,7 +960,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"BLDR_STN_P",
@@ -837,7 +973,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"BLDR_STN_V",
@@ -848,7 +986,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"TNSL_G",
@@ -859,7 +999,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"TNSL_P",
@@ -870,7 +1012,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"TNSL_V",
@@ -881,7 +1025,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"NOS_OPR_G",
@@ -892,7 +1038,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"NOS_OPR_P",
@@ -903,7 +1051,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"NOS_OPR_V",
@@ -914,7 +1064,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"HRNIA_G",
@@ -925,7 +1077,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"HRNIA_P",
@@ -936,7 +1090,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"HRNIA_V",
@@ -947,7 +1103,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"URLG_G",
@@ -958,7 +1116,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"URLG_P",
@@ -969,7 +1129,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"URLG_V",
@@ -980,7 +1142,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ORTHO_G",
@@ -991,7 +1155,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ORTHO_P",
@@ -1002,7 +1168,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ORTHO_V",
@@ -1013,7 +1181,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ENT_G",
@@ -1024,7 +1194,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ENT_P",
@@ -1035,7 +1207,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"ENT_V",
@@ -1046,7 +1220,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"",
@@ -1057,7 +1233,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"",
@@ -1068,7 +1246,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"",
@@ -1079,7 +1259,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"LAP_G",
@@ -1088,7 +1270,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"60000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"LAP_P",
@@ -1097,7 +1281,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"65000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"LAP_VIP",
@@ -1106,7 +1292,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"70000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"MYO_G",
@@ -1115,7 +1303,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"60000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"MYO_P",
@@ -1124,7 +1314,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"65000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"MYO_VIP",
@@ -1133,7 +1325,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"70000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"CYS_G",
@@ -1142,7 +1336,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"60000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"CYS_P",
@@ -1151,7 +1347,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"65000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"CYS_VIP",
@@ -1160,7 +1358,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"70000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"HYS_G",
@@ -1169,7 +1369,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"60000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"HYS_P",
@@ -1178,7 +1380,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"65000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"HYS_VIP",
@@ -1187,7 +1391,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"70000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -1198,7 +1404,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"DGA",
@@ -1209,7 +1417,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     IndDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "0",
+                "generate_service_order" => "1"
             ],
             [
                 "slug"=>"DRIP",
@@ -1218,7 +1428,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"500",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"VENOFER",
@@ -1227,7 +1439,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"300",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"SHRT_STAY_12H",
@@ -1236,7 +1450,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"2000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"SHRT_STAY_24H",
@@ -1245,7 +1461,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"3000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"MJR_DRSNG",
@@ -1254,7 +1472,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"300",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"MNR_DRSNG",
@@ -1263,7 +1483,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"150",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"NBL",
@@ -1272,7 +1494,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"100",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"INJ",
@@ -1281,7 +1505,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"100",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"BLD_SUGR",
@@ -1290,7 +1516,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"100",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"ICU",
@@ -1299,7 +1527,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"6000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"FOL_CATH",
@@ -1308,7 +1538,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"1200",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"NG_TUB_PAS",
@@ -1317,7 +1549,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"1200",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"STMCH_WASH",
@@ -1326,7 +1560,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"5000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"CTG",
@@ -1335,7 +1571,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"600",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"ECG",
@@ -1344,7 +1582,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"500",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"BLD_TRNS",
@@ -1353,7 +1593,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"1500",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"BP",
@@ -1362,7 +1604,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"50",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"STCHS",
@@ -1371,7 +1615,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"500",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"X_RAY",
@@ -1380,7 +1626,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"1500",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"BED_P_H",
@@ -1389,7 +1637,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"200",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"OXG_P_H",
@@ -1398,7 +1648,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"200",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"VAC",
@@ -1407,7 +1659,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"1000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"SEM_PVT_RM",
@@ -1416,7 +1670,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"5000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"PVT_RM",
@@ -1425,7 +1681,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"7000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"VIP_RM",
@@ -1434,7 +1692,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"9000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"NURSRY",
@@ -1443,7 +1703,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"6000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -1452,7 +1714,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"500",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -1461,7 +1725,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"5000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -1470,7 +1736,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"7000",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"EEG",
@@ -1479,7 +1747,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"0",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"ECHO",
@@ -1488,7 +1758,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"0",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -1499,7 +1771,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     Dentist::class
                 ],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"",
@@ -1510,7 +1784,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types" => [
                     Dentist::class
                 ],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"ULT",
@@ -1519,7 +1795,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"1300",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug"=>"ECHO",
@@ -1528,7 +1806,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "charges"=>"0",
                 "have_service_provider"=>"0",
                 "service_provider_types"=>[],
-                "is_composit_service"=>"0"
+                "is_composit_service"=>"0",
+                "is_featured" => "0",
+                "generate_service_order" => "0"
             ],
             [
                 "slug" => "EMR-RED",
@@ -1539,7 +1819,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=>[
                     EmergencyDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "1",
+                "generate_service_order" => "1"
             ],
             [
                 "slug" => "EMR-YELLOW",
@@ -1550,7 +1832,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=>[
                     EmergencyDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "1",
+                "generate_service_order" => "1"
             ],
             [
                 "slug" => "EMR-BLUE",
@@ -1561,7 +1845,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=>[
                     EmergencyDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "1",
+                "generate_service_order" => "1"
             ],
             [
                 "slug" => "EMR-SKY",
@@ -1572,7 +1858,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=>[
                     EmergencyDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "1",
+                "generate_service_order" => "1"
             ],
             [
                 "slug" => "EMR-SKY",
@@ -1583,7 +1871,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=>[
                     EmergencyDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "1",
+                "generate_service_order" => "1"
             ],
             [
                 "slug" => "EMR-GREEN",
@@ -1594,7 +1884,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "service_provider_types"=>[
                     EmergencyDoctor::class
                 ],
-                "is_composit_service"=>"1"
+                "is_composit_service"=>"1",
+                "is_featured" => "1",
+                "generate_service_order" => "1"
             ]
         ]);
 
@@ -1627,6 +1919,8 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 "have_service_provider"=>$service["have_service_provider"],
                 "is_composit_service"=>$service["is_composit_service"],
                 "service_provider_types"=>$service["service_provider_types"],
+                "is_featured"=>$service["is_featured"],
+                "generate_service_order"=>$service["generate_service_order"]
             ]);
         }
 

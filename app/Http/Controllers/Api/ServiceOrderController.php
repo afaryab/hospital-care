@@ -144,4 +144,47 @@ class ServiceOrderController extends Controller
             'message' => 'Service order deleted successfully.',
         ]);
     }
+
+    public function completedUnpaid(Request $request)
+    {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'doctor_only' => ['nullable', 'boolean'],
+            'payed_to' => ['nullable', 'integer', 'exists:users,id'],
+            'closing_id' => ['nullable', 'integer', 'exists:closings,id'],
+        ]);
+
+        $query = ServiceOrder::query()
+            ->with(['patient', 'doctor', 'service'])
+            ->where('status', 'CLOSED')
+            ->latest('id');
+
+        if (!empty($filters['payed_to'])) {
+            $query->whereDoesntHave('expenseVouchers', fn ($q) => $q->where('payed_to', $filters['payed_to']));
+        } else {
+            $query->whereDoesntHave('expenseVouchers');
+        }
+
+        if (!empty($filters['doctor_only']) && !empty($filters['payed_to'])) {
+            $query->where('doctor_id', $filters['payed_to']);
+        }
+
+        if (!empty($filters['closing_id'])) {
+            $closingId = $filters['closing_id'];
+            $query->whereHas('transactionElements', fn ($q) => $q->where('closing_id', $closingId));
+        }
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('so_number', 'like', "%{$search}%")
+                  ->orWhereHas('patient', fn ($pq) => $pq->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        return response()->json([
+            'data' => $query->limit($filters['limit'] ?? 25)->get(),
+        ]);
+    }
 }

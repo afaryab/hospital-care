@@ -6,11 +6,12 @@ enum TransactionElementType
 {
     case OPD;
     case IND;
-    case ENG;
+    case EMG;
     case LAB;
     case RAD;
     case DNT;
     case ULT;
-    case EXP;
+    case PETTY_CASH;
     case VOUCHER_PAY;
+    case IND_EXP;
 }

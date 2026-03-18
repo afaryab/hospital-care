@@ -222,8 +222,8 @@ const PatientMiniCard: React.FC<PatientMiniCardProps> = ({ patient, link = '', c
 
 
     if(patient.age === null || patient.age === undefined || patient.contact === null || patient.contact === undefined || patient.contact === '') {
-        return <div className='border-1 rounded-md p-2 space-y-2'>
-            <PatientMiniCardInner patient={patient} className={className} />
+        return <div className={'border-1 rounded-md p-2 space-y-2' + ' ' + className}>
+            <PatientMiniCardInner patient={patient} />
             <div className='items-right justify-end'>
                 <Button onClick={() => updatePatient()}>
                     <span>Set missing Information and continue</span>

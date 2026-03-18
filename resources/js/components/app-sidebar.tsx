@@ -10,7 +10,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { appointments, counter, counterListAll, receaveables, expenses, home, hospitalDentalQueue, hospitalEmergencyQueue, hospitalIndoorQueue, hospitalLaboratoryQueue, hospitalOpdQueue, hospitalRadiologyQueue, hospitalUltrasoundQueue, myCounterList, patientsRegister, register, transactionSearch, transactionEdit, transactionEditSearch } from '@/routes';
+import { appointments, counter, counterListAll, receaveables, expenses, home, hospitalDentalQueue, hospitalEmergencyQueue, hospitalIndoorQueue, hospitalLaboratoryQueue, hospitalOpdQueue, hospitalRadiologyQueue, hospitalUltrasoundQueue, myCounterList, patientsRegister, register, transactionSearch, transactionEdit, transactionEditSearch, counterExpenseVouchersList } from '@/routes';
 import { type NavItem } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LucideHome, BookAIcon, LucideShoppingBasket, Calendar1, LucideWaypoints, ListTree, ChartLine, Cog, ListPlus, LucideListPlus, LucideBlinds } from 'lucide-react';
@@ -153,13 +153,26 @@ export function AppSidebar() {
                                 routeName === 'counter-close' ||
                                 routeName === 'counter-select-patient' || 
                                 routeName === 'counter-patient-services' ||
-                                routeName === 'counter-select-department-service'
+                                routeName === 'counter-select-department-service' ||
+                                routeName === 'counter-expense'
                             )}
                             tooltip={{ children: 'Counter' }}
                         >
                             <Link href={counter().url} prefetch>
                                 <LucideShoppingBasket />
                                 <span>Counter</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                    <SidebarMenuItem>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={routeName === 'counter-expense-vouchers-list' || routeName === 'counter-expense-new-voucher'}
+                            tooltip={{ children: 'Expense Vouchers' }}
+                        >
+                            <Link href={counterExpenseVouchersList().url} prefetch>
+                                <LucideWaypoints />
+                                <span>Expense Vouchers</span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>

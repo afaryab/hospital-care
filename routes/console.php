@@ -11,7 +11,7 @@ Artisan::command('inspire', function () {
 Schedule::everyFiveSeconds()
     ->runInBackground()
     ->withoutOverlapping()
-    ->command('app:fetch-old --batch-size=3000');
+    ->command('app:fetch-old-x --batch-size=3000');
 
 // Schedule::command('app:close-old-service-orders')->everyFiveSeconds()->runInBackground()->withoutOverlapping();
 

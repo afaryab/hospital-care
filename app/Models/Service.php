@@ -18,7 +18,9 @@ class Service extends Model
         'have_service_provider',
         'service_provider_types',
         'is_composit_service',
-        'created_by'
+        'created_by',
+        "is_featured",
+        "generate_service_order"
     ];
 
     protected $casts = [
@@ -26,7 +28,9 @@ class Service extends Model
         'charges_include_tax' => 'boolean',
         'have_service_provider' => 'boolean',
         'service_provider_types' => 'json',
-        'is_composit_service' => 'boolean'
+        'is_composit_service' => 'boolean',
+        'generate_service_order' => 'boolean',
+        'is_featured' => 'boolean'
     ];
 
     // Auto-append computed attributes (accessors) when serializing

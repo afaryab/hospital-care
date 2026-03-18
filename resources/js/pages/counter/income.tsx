@@ -397,6 +397,29 @@ function CollectPayment({recesitation, existingServiceOrders, openCounter, patie
                             </SelectContent>
                         </Select>
                     </div>}
+                    <div className="grid gap-2 mb-2">
+                        <Label htmlFor="featured_services">Featured Services</Label>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {services.filter((service: any) => service.is_featured).map((service: any) => (
+                                <button
+                                    key={service.id}
+                                    onClick={() => setSelectedServices(prev => 
+                                        prev.includes(service.id) 
+                                            ? prev.filter(id => id !== service.id)
+                                            : [...prev, service.id]
+                                    )}
+                                    className={clsx(
+                                        'p-3 rounded-lg border-2 transition-all text-left',
+                                        selectedServices.includes(service.id)
+                                            ? 'border-green-500 bg-green-50 dark:bg-green-950'
+                                            : 'border-gray-200 dark:border-neutral-700 hover:border-gray-300'
+                                    )}
+                                >
+                                    <div className="font-semibold text-sm">{service.name}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                     <div className="grid gap-2">
                         <Label htmlFor="service">Service</Label>
                         <AdvancedTagSelect
@@ -955,7 +978,7 @@ function BillItemsEditableTableRow({
                         type="number" 
                         name={`charges_${serviceid}`} 
                         className='w-24 text-right inline-block' 
-                        value={c} 
+                        value={parseInt(c.toString()) == 0 ? '' : c} 
                         onChange={(e) => handleChargesChange(parseFloat(e.target.value) || 0)} 
                         min={0} 
                         step={0.01}
