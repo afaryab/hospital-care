@@ -58,7 +58,8 @@ export default function ReveaveablesList() {
                         <thead>
                             <tr>
                                 <th scope="col" className="px-6 py-3">Patient</th>
-                                <th scope="col" className="px-6 py-3">Amount</th>
+                                <th scope="col" className="px-6 py-3">Orignal</th>
+                                <th scope="col" className="px-6 py-3">Remaining</th>
                                 <th scope="col" className="px-6 py-3">Status</th>
                                 <th scope="col" className="px-6 py-3">Actions</th>
                             </tr>
@@ -76,6 +77,9 @@ export default function ReveaveablesList() {
                                                 month: explodedPsid[2] || '',
                                                 number: explodedPsid[3] || ''
                                             }).url} ><span className='text-blue-500'>{r.patient.name}</span></Link>
+                                        </td>
+                                        <td className="px-6 py-3">
+                                            {r.orignal_amount}
                                         </td>
                                         <td className="px-6 py-3">
                                             {r.amount}

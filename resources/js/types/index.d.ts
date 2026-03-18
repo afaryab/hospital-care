@@ -111,6 +111,7 @@ export interface Receaveable {
     id: number;
     patient: Patient;
     transaction: Transaction;
+    orignal_amount: number;
     amount: number;
     due_date: string;
     status: string;

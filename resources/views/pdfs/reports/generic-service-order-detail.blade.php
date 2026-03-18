@@ -117,6 +117,7 @@
                     @endphp
                     <span class="badge {{ $statusBadge }}">{{ strtoupper($rec->status) }}</span>
                 </td>
+                <td class="amount">{{ number_format($rec->orignal_amount ?? $rec->amount, 2) }}</td>
                 <td class="amount">{{ number_format($rec->amount, 2) }}</td>
             </tr>
             @endforeach
@@ -124,6 +125,7 @@
         <tfoot>
             <tr class="total-row">
                 <td colspan="7" class="text-right">Total Receivables</td>
+                <td class="amount">{{ number_format($receivables->sum(fn($r) => $r->orignal_amount ?? $r->amount), 2) }}</td>
                 <td class="amount">{{ number_format($receivables->sum('amount'), 2) }}</td>
             </tr>
         </tfoot>

@@ -20,7 +20,8 @@
                 <th>Panel</th>
                 <th style="width: 70px;">Due Date</th>
                 <th style="width: 56px;">Status</th>
-                <th class="amount" style="width: 75px;">Amount</th>
+                <th class="amount" style="width: 75px;">Orignal</th>
+                <th class="amount" style="width: 75px;">Remaining</th>
             </tr>
         </thead>
         <tbody>
@@ -42,6 +43,7 @@
                     @endphp
                     <span class="badge {{ $statusBadge }}">{{ $rec->status ?? 'PENDING' }}</span>
                 </td>
+                <td class="amount">{{ number_format($rec->orignal_amount ?? $rec->amount, 2) }}</td>
                 <td class="amount">{{ number_format($rec->amount, 2) }}</td>
             </tr>
             @endforeach
@@ -49,6 +51,7 @@
         <tfoot>
             <tr class="total-row">
                 <td colspan="7" class="text-right">Total Receivables ({{ $items->count() }} items)</td>
+                <td class="amount">{{ number_format($items->sum(fn($r) => $r->orignal_amount ?? $r->amount), 2) }}</td>
                 <td class="amount">{{ number_format($total, 2) }}</td>
             </tr>
         </tfoot>

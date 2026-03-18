@@ -100,10 +100,17 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
                     ->label('Panel')
                     ->searchable()
                     ->badge(),
-                TextColumn::make('amount')
+                TextColumn::make('orignal_amount')
+                    ->label('Orignal')
                     ->numeric(2)
                     ->sortable()
-                    ->summarize(Sum::make()->numeric(2)->label('Total')),
+                    ->placeholder('-')
+                    ->summarize(Sum::make()->numeric(2)->label('Total Orignal')),
+                TextColumn::make('amount')
+                    ->label('Remaining')
+                    ->numeric(2)
+                    ->sortable()
+                    ->summarize(Sum::make()->numeric(2)->label('Total Remaining')),
                 TextColumn::make('due_date')
                     ->label('Due Date')
                     ->date('d M Y')

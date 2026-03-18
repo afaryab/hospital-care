@@ -320,6 +320,7 @@ class ClosingStatementPdfPrintController extends Controller
                         'patient_name' => $transaction->receaveable->patient?->name ?? 'N/A',
                         'panel_name' => $transaction->receaveable->panel?->name ?? 'N/A',
                         'amount' => $transaction->receaveable->amount,
+                        'orignal_amount' => $transaction->receaveable->orignal_amount ?? $transaction->receaveable->amount,
                         'due_date' => $transaction->receaveable->due_date,
                         'status' => $transaction->receaveable->status ?? 'PENDING',
                         'created_at' => $transaction->created_at,

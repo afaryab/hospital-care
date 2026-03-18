@@ -69,7 +69,10 @@ export default function ReceaveAblesButton({
 										{receaveable.patient.name}
 									</div>
 									<div className="text-xs text-muted-foreground">
-										Total receivable: {receaveable.amount}
+										Orignal amount: {receaveable.orignal_amount}
+									</div>
+									<div className="text-xs text-muted-foreground">
+										Remaining: {receaveable.amount}
 									</div>
 								</div>
 

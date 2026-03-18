@@ -633,7 +633,8 @@ class WebController extends Controller
                     \App\Models\Receaveable::create([
                         'patient_id' => $validatedData['patient_id'],
                         'transaction_id' => $transaction->id,
-                        'amount' => $receaveableAmount, // Due in 30 days
+                        'amount' => $receaveableAmount,
+                        'orignal_amount' => $receaveableAmount,
                         'status' => 'unpaid',
                         'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_company'] : null,
                     ]);

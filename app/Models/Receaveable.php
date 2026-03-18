@@ -11,6 +11,7 @@ class Receaveable extends Model
         'panel_id',
         'transaction_id',
         'amount',
+        'orignal_amount',
         'due_date',
         'status',
     ];
