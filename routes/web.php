@@ -124,6 +124,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
      */
     Route::get('reports/income-cash-flow', [IncomeCashFlowReportController::class, 'generate'])
         ->name('reports.income-cash-flow');
+
+    Route::get('reports/generic/income', [\App\Http\Controllers\Reports\GenericReportPdfController::class, 'income'])
+        ->name('reports.generic.income');
+    Route::get('reports/generic/expense', [\App\Http\Controllers\Reports\GenericReportPdfController::class, 'expense'])
+        ->name('reports.generic.expense');
+    Route::get('reports/generic/receivables', [\App\Http\Controllers\Reports\GenericReportPdfController::class, 'receivables'])
+        ->name('reports.generic.receivables');
+    Route::get('reports/generic/services', [\App\Http\Controllers\Reports\GenericReportPdfController::class, 'services'])
+        ->name('reports.generic.services');
     
 });
 

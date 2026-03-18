@@ -438,7 +438,7 @@ class WebController extends Controller
 
                 if($isRefund && empty($expenseData['transaction_id'])){
                     $array = $request->validate([
-                        'transaction_id' => 'required|exists:transactions,id|or_exists:transactions,tr_number',
+                        'transaction_id' => 'required|exists:transactions,id',
                     ]);
 
                     $expenseData['transaction_id'] = $array['transaction_id'];
