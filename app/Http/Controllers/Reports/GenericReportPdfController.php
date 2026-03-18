@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Reports;
 use App\Http\Controllers\Controller;
 use App\Models\Closing;
 use App\Models\Receaveable;
+use App\Models\ServiceOrder;
+use App\Models\Transaction;
 use App\Models\TransactionElement;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -248,6 +250,85 @@ class GenericReportPdfController extends Controller
             'generated_at' => now(),
             'filters' => $this->describeFilters($request, ['reception_id', 'service_id', 'doctor_id']),
         ], 'services-report');
+    }
+
+    public function serviceOrders(Request $request): Response
+    {
+        $from = $request->date('from') ?? now()->startOfMonth();
+        $until = $request->date('until') ?? now();
+
+        $query = ServiceOrder::query()
+            ->whereDate('service_orders.created_at', '>=', $from)
+            ->whereDate('service_orders.created_at', '<=', $until)
+            ->with(['patient', 'service', 'doctor', 'expenseVouchers']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+        if ($request->filled('service_id')) {
+            $query->where('service_id', $request->input('service_id'));
+        }
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->input('doctor_id'));
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->get();
+
+        // Compute aggregated totals per order
+        foreach ($orders as $order) {
+            $order->income_total = $order->transactionElements()
+                ->where('income_or_expense', 'INCOME')->sum('amount');
+            $order->voucher_total = $order->expenseVouchers->sum('amount');
+            $order->paid_total = $order->expenseVouchers
+                ->filter(fn ($v) => $v->status === 'payed')->sum('amount');
+        }
+
+        return $this->renderPdf('pdfs.reports.generic-service-orders', [
+            'orders' => $orders,
+            'from' => Carbon::parse($from),
+            'until' => Carbon::parse($until),
+            'generated_at' => now(),
+        ], 'service-orders-report');
+    }
+
+    public function serviceOrder(Request $request, string $id): Response
+    {
+        $order = ServiceOrder::with(['patient', 'service', 'doctor', 'creator'])
+            ->findOrFail($id);
+
+        // Income transaction elements for this SO
+        $incomeElements = TransactionElement::where('service_order_id', $order->id)
+            ->where('income_or_expense', 'INCOME')
+            ->with(['transaction', 'patient'])
+            ->orderBy('created_at')
+            ->get();
+
+        // Receivables linked via transactions of this SO
+        $transactionIds = $incomeElements->pluck('transaction_id')->unique()->filter();
+        $receivables = Receaveable::whereIn('transaction_id', $transactionIds)
+            ->with(['patient', 'panel', 'transaction'])
+            ->get();
+
+        // Transactions paying those receivables
+        $receivableIds = $receivables->pluck('id')->filter();
+        $receivablePayments = Transaction::whereIn('receaveable_id', $receivableIds)
+            ->with(['receaveable.transaction'])
+            ->orderBy('created_at')
+            ->get();
+
+        // Expense vouchers for this SO
+        $expenseVouchers = $order->expenseVouchers()
+            ->with(['expCategory', 'payedTo'])
+            ->get();
+
+        return $this->renderPdf('pdfs.reports.generic-service-order-detail', [
+            'order' => $order,
+            'incomeElements' => $incomeElements,
+            'receivables' => $receivables,
+            'receivablePayments' => $receivablePayments,
+            'expenseVouchers' => $expenseVouchers,
+            'generated_at' => now(),
+        ], 'service-order-' . $order->so_short);
     }
 
     private function renderPdf(string $view, array $data, string $filename): Response

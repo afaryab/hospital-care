@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Filament\Accounts\Pages\Reports;
+namespace App\Filament\Admin\Pages\Reports;
 
 use App\Enum\TransactionElementType;
 use App\Models\Closing;
+use App\Models\ExpenseCategory;
 use App\Models\Reception;
-use App\Models\Service;
 use App\Models\TransactionElement;
-use App\Models\User;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Page;
@@ -20,14 +19,14 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
-class IncomeReport extends Page implements Tables\Contracts\HasTable
+class ExpenseReport extends Page implements Tables\Contracts\HasTable
 {
     use Tables\Concerns\InteractsWithTable;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-banknotes';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
     protected static string | UnitEnum | null $navigationGroup = 'Reports';
-    protected static ?int $navigationSort = 1;
-    protected static ?string $title = 'Income Report';
+    protected static ?int $navigationSort = 2;
+    protected static ?string $title = 'Expense Report';
     protected string $view = 'filament.accounts.pages.report-page';
 
     public ?array $filters = [];
@@ -40,8 +39,7 @@ class IncomeReport extends Page implements Tables\Contracts\HasTable
             'until' => now()->format('Y-m-d'),
             'reception_id' => null,
             'type' => null,
-            'service_id' => null,
-            'doctor_id' => null,
+            'expense_category_id' => null,
         ];
     }
 
@@ -60,16 +58,11 @@ class IncomeReport extends Page implements Tables\Contracts\HasTable
                     ->label('Type')
                     ->options(collect(TransactionElementType::cases())->mapWithKeys(fn ($t) => [$t->name => $t->name]))
                     ->placeholder('All Types'),
-                Select::make('service_id')
-                    ->label('Service')
-                    ->options(fn () => Service::pluck('name', 'id'))
+                Select::make('expense_category_id')
+                    ->label('Category')
+                    ->options(fn () => ExpenseCategory::pluck('name', 'id'))
                     ->searchable()
-                    ->placeholder('All Services'),
-                Select::make('doctor_id')
-                    ->label('Provider')
-                    ->options(fn () => User::whereHas('opdDoctorProfile')->pluck('name', 'id'))
-                    ->searchable()
-                    ->placeholder('All Providers'),
+                    ->placeholder('All Categories'),
             ])
             ->statePath('filters');
     }
@@ -83,7 +76,7 @@ class IncomeReport extends Page implements Tables\Contracts\HasTable
     {
         return $table
             ->query(function (): Builder {
-                $query = TransactionElement::query()->where('income_or_expense', 'INCOME');
+                $query = TransactionElement::query()->where('income_or_expense', 'EXPENSE');
 
                 if ($this->filters['from'] ?? null) {
                     $query->whereDate('transaction_elements.created_at', '>=', $this->filters['from']);
@@ -97,11 +90,8 @@ class IncomeReport extends Page implements Tables\Contracts\HasTable
                 if ($this->filters['type'] ?? null) {
                     $query->where('type', $this->filters['type']);
                 }
-                if ($this->filters['service_id'] ?? null) {
-                    $query->where('service_id', $this->filters['service_id']);
-                }
-                if ($this->filters['doctor_id'] ?? null) {
-                    $query->where('doctor_id', $this->filters['doctor_id']);
+                if ($this->filters['expense_category_id'] ?? null) {
+                    $query->where('expense_category_id', $this->filters['expense_category_id']);
                 }
 
                 return $query;
@@ -122,32 +112,30 @@ class IncomeReport extends Page implements Tables\Contracts\HasTable
                 TextColumn::make('type')
                     ->badge()
                     ->sortable(),
-                TextColumn::make('service.name')
-                    ->label('Service')
+                TextColumn::make('expenseCategory.name')
+                    ->label('Category')
                     ->searchable()
                     ->toggleable(),
-                TextColumn::make('doctor.name')
-                    ->label('Provider')
+                TextColumn::make('expVoucher.vc_number')
+                    ->label('Voucher#')
                     ->searchable()
                     ->toggleable(),
-                TextColumn::make('patient.name')
-                    ->label('Patient')
+                TextColumn::make('expVoucher.payedTo.name')
+                    ->label('Paid To')
                     ->searchable()
                     ->toggleable(),
+                TextColumn::make('notes')
+                    ->label('Notes')
+                    ->limit(30)
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('amount')
                     ->numeric(2)
                     ->sortable()
                     ->summarize(Sum::make()->numeric(2)->label('Total')),
-                TextColumn::make('orignal_amount')
-                    ->label('Original')
-                    ->numeric(2)
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->groups([
                 Group::make('type')->label('Type'),
-                Group::make('service.name')->label('Service'),
-                Group::make('doctor.name')->label('Provider'),
+                Group::make('expenseCategory.name')->label('Category'),
             ])
             ->striped()
             ->paginated([25, 50, 100])
@@ -156,6 +144,6 @@ class IncomeReport extends Page implements Tables\Contracts\HasTable
 
     public function getPdfUrl(): string
     {
-        return url('/reports/generic/income') . '?' . http_build_query(array_filter($this->filters));
+        return url('/reports/generic/expense') . '?' . http_build_query(array_filter($this->filters));
     }
 }

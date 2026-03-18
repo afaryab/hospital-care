@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Accounts\Pages\Reports;
+namespace App\Filament\Admin\Pages\Reports;
 
 use App\Models\Panel;
 use App\Models\Receaveable;

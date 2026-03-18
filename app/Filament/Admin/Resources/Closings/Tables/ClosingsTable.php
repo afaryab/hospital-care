@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Accounts\Resources\Closings\Tables;
+namespace App\Filament\Admin\Resources\Closings\Tables;
 
 use App\Enum\CounterStatus;
 use App\Models\Closing;

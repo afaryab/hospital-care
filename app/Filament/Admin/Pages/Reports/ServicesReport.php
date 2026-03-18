@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Filament\Accounts\Pages\Reports;
+namespace App\Filament\Admin\Pages\Reports;
 
-use App\Enum\TransactionElementType;
 use App\Models\Closing;
-use App\Models\ExpenseCategory;
 use App\Models\Reception;
+use App\Models\Service;
 use App\Models\TransactionElement;
+use App\Models\User;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Page;
@@ -19,14 +19,14 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
-class ExpenseReport extends Page implements Tables\Contracts\HasTable
+class ServicesReport extends Page implements Tables\Contracts\HasTable
 {
     use Tables\Concerns\InteractsWithTable;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-credit-card';
+    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static string | UnitEnum | null $navigationGroup = 'Reports';
-    protected static ?int $navigationSort = 2;
-    protected static ?string $title = 'Expense Report';
+    protected static ?int $navigationSort = 4;
+    protected static ?string $title = 'Services Report';
     protected string $view = 'filament.accounts.pages.report-page';
 
     public ?array $filters = [];
@@ -38,8 +38,9 @@ class ExpenseReport extends Page implements Tables\Contracts\HasTable
             'from' => now()->startOfMonth()->format('Y-m-d'),
             'until' => now()->format('Y-m-d'),
             'reception_id' => null,
-            'type' => null,
-            'expense_category_id' => null,
+            'income_or_expense' => null,
+            'service_id' => null,
+            'doctor_id' => null,
         ];
     }
 
@@ -54,15 +55,20 @@ class ExpenseReport extends Page implements Tables\Contracts\HasTable
                     ->options(fn () => Reception::pluck('name', 'id'))
                     ->searchable()
                     ->placeholder('All Receptions'),
-                Select::make('type')
-                    ->label('Type')
-                    ->options(collect(TransactionElementType::cases())->mapWithKeys(fn ($t) => [$t->name => $t->name]))
-                    ->placeholder('All Types'),
-                Select::make('expense_category_id')
-                    ->label('Category')
-                    ->options(fn () => ExpenseCategory::pluck('name', 'id'))
+                Select::make('income_or_expense')
+                    ->label('Flow')
+                    ->options(['INCOME' => 'Income', 'EXPENSE' => 'Expense'])
+                    ->placeholder('All'),
+                Select::make('service_id')
+                    ->label('Service')
+                    ->options(fn () => Service::pluck('name', 'id'))
                     ->searchable()
-                    ->placeholder('All Categories'),
+                    ->placeholder('All Services'),
+                Select::make('doctor_id')
+                    ->label('Provider')
+                    ->options(fn () => User::whereHas('opdDoctorProfiles')->pluck('name', 'id'))
+                    ->searchable()
+                    ->placeholder('All Providers'),
             ])
             ->statePath('filters');
     }
@@ -76,7 +82,14 @@ class ExpenseReport extends Page implements Tables\Contracts\HasTable
     {
         return $table
             ->query(function (): Builder {
-                $query = TransactionElement::query()->where('income_or_expense', 'EXPENSE');
+                $query = TransactionElement::query()
+                    ->where(function (Builder $q) {
+                        $q->whereNotNull('service_id')
+                          ->orWhere(function (Builder $q2) {
+                              $q2->where('income_or_expense', 'EXPENSE')
+                                 ->whereNotNull('exp_voucher_id');
+                          });
+                    });
 
                 if ($this->filters['from'] ?? null) {
                     $query->whereDate('transaction_elements.created_at', '>=', $this->filters['from']);
@@ -87,11 +100,14 @@ class ExpenseReport extends Page implements Tables\Contracts\HasTable
                 if ($this->filters['reception_id'] ?? null) {
                     $query->whereIn('closing_id', Closing::where('reception_id', $this->filters['reception_id'])->select('id'));
                 }
-                if ($this->filters['type'] ?? null) {
-                    $query->where('type', $this->filters['type']);
+                if ($this->filters['income_or_expense'] ?? null) {
+                    $query->where('income_or_expense', $this->filters['income_or_expense']);
                 }
-                if ($this->filters['expense_category_id'] ?? null) {
-                    $query->where('expense_category_id', $this->filters['expense_category_id']);
+                if ($this->filters['service_id'] ?? null) {
+                    $query->where('service_id', $this->filters['service_id']);
+                }
+                if ($this->filters['doctor_id'] ?? null) {
+                    $query->where('doctor_id', $this->filters['doctor_id']);
                 }
 
                 return $query;
@@ -102,40 +118,52 @@ class ExpenseReport extends Page implements Tables\Contracts\HasTable
                     ->label('Date')
                     ->dateTime('d M Y H:i')
                     ->sortable(),
-                TextColumn::make('transaction.closing.ct_number')
-                    ->label('Counter')
-                    ->searchable()
-                    ->toggleable(),
                 TextColumn::make('transaction.tr_number')
                     ->label('TR#')
-                    ->searchable(),
-                TextColumn::make('type')
-                    ->badge()
-                    ->sortable(),
-                TextColumn::make('expenseCategory.name')
-                    ->label('Category')
                     ->searchable()
                     ->toggleable(),
-                TextColumn::make('expVoucher.vc_number')
-                    ->label('Voucher#')
+                TextColumn::make('service.name')
+                    ->label('Service')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('service.department.name')
+                    ->label('Department')
+                    ->searchable()
+                    ->toggleable(),
+                TextColumn::make('doctor.name')
+                    ->label('Provider')
                     ->searchable()
                     ->toggleable(),
                 TextColumn::make('expVoucher.payedTo.name')
                     ->label('Paid To')
+                    ->toggleable()
+                    ->placeholder('-'),
+                TextColumn::make('type')
+                    ->badge()
+                    ->sortable(),
+                TextColumn::make('income_or_expense')
+                    ->label('Flow')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'INCOME' => 'success',
+                        'EXPENSE' => 'danger',
+                        default => 'gray',
+                    })
+                    ->sortable(),
+                TextColumn::make('patient.name')
+                    ->label('Patient')
                     ->searchable()
                     ->toggleable(),
-                TextColumn::make('notes')
-                    ->label('Notes')
-                    ->limit(30)
-                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('amount')
                     ->numeric(2)
                     ->sortable()
                     ->summarize(Sum::make()->numeric(2)->label('Total')),
             ])
             ->groups([
+                Group::make('service.name')->label('Service'),
+                Group::make('doctor.name')->label('Provider'),
+                Group::make('income_or_expense')->label('Income/Expense'),
                 Group::make('type')->label('Type'),
-                Group::make('expenseCategory.name')->label('Category'),
             ])
             ->striped()
             ->paginated([25, 50, 100])
@@ -144,6 +172,6 @@ class ExpenseReport extends Page implements Tables\Contracts\HasTable
 
     public function getPdfUrl(): string
     {
-        return url('/reports/generic/expense') . '?' . http_build_query(array_filter($this->filters));
+        return url('/reports/generic/services') . '?' . http_build_query(array_filter($this->filters));
     }
 }

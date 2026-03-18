@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Accounts\Resources\Closings;
+namespace App\Filament\Admin\Resources\Closings;
 
-use App\Filament\Accounts\Resources\Closings\Pages\CreateClosing;
-use App\Filament\Accounts\Resources\Closings\Pages\EditClosing;
-use App\Filament\Accounts\Resources\Closings\Pages\ListClosings;
-use App\Filament\Accounts\Resources\Closings\Pages\ViewClosing;
-use App\Filament\Accounts\Resources\Closings\Schemas\ClosingForm;
-use App\Filament\Accounts\Resources\Closings\Schemas\ClosingInfolist;
-use App\Filament\Accounts\Resources\Closings\Tables\ClosingsTable;
+use App\Filament\Admin\Resources\Closings\Pages\CreateClosing;
+use App\Filament\Admin\Resources\Closings\Pages\EditClosing;
+use App\Filament\Admin\Resources\Closings\Pages\ListClosings;
+use App\Filament\Admin\Resources\Closings\Pages\ViewClosing;
+use App\Filament\Admin\Resources\Closings\Schemas\ClosingForm;
+use App\Filament\Admin\Resources\Closings\Schemas\ClosingInfolist;
+use App\Filament\Admin\Resources\Closings\Tables\ClosingsTable;
 use App\Models\Closing;
 use BackedEnum;
 use Filament\Resources\Resource;

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Accounts\Resources\ExpenseVouchers\Pages;
+namespace App\Filament\Admin\Resources\ExpenseVouchers\Pages;
 
-use App\Filament\Accounts\Resources\ExpenseVouchers\ExpenseVoucherResource;
+use App\Filament\Admin\Resources\ExpenseVouchers\ExpenseVoucherResource;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateExpenseVoucher extends CreateRecord

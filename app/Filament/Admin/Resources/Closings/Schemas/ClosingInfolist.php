@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Accounts\Resources\Closings\Schemas;
+namespace App\Filament\Admin\Resources\Closings\Schemas;
 
 use App\Models\Closing;
 use Filament\Infolists\Components\ViewEntry;

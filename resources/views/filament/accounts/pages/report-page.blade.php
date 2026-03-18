@@ -3,7 +3,7 @@
         {{-- Left: Filter Form --}}
         <div class="w-72 shrink-0">
             <form wire:submit.prevent="applyFilters">
-                {{ $this->form }}
+                {{ $this->filtersForm }}
                 <div class="mt-4 flex gap-2">
                     <x-filament::button type="submit" size="sm" class="w-full">
                         Apply Filters

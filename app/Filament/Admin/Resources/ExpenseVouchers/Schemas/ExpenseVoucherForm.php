@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Accounts\Resources\ExpenseVouchers\Schemas;
+namespace App\Filament\Admin\Resources\ExpenseVouchers\Schemas;
 
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;

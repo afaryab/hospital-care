@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Accounts\Resources\Closings\Schemas;
+namespace App\Filament\Admin\Resources\Closings\Schemas;
 
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;

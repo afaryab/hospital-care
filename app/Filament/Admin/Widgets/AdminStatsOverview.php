@@ -6,7 +6,6 @@ use App\Enum\CounterStatus;
 use App\Enum\ExpenseVoucherStatus;
 use App\Helpers\NumberHelper;
 use App\Models\Closing;
-use App\Models\Expense;
 use App\Models\ExpenseVoucher;
 use App\Models\Patient;
 use App\Models\Reception;
@@ -39,7 +38,6 @@ class AdminStatsOverview extends StatsOverviewWidget
             $this->getPatientStats($startDate, $endDate),
             $this->getCounterStats($startDate, $endDate),
             $this->getExpenseVoucherStats($startDate, $endDate),
-            $this->getExpenseStats($startDate, $endDate),
             $this->getTransactionStats($startDate, $endDate),
         ];
     }
@@ -203,32 +201,6 @@ class AdminStatsOverview extends StatsOverviewWidget
                 value: NumberHelper::moneyfy($totalThisDuration) . " (" . NumberHelper::moneyfy($expenseThisDuration) . ")",
             )
             ->description("Total: " . NumberHelper::moneyfy($totalExpenses) . " (" . NumberHelper::moneyfy($total) . ")")
-            ->chart($expenseChartThisDuration->pluck('count')->toArray());
-    }
-
-    public function getExpenseStats($startDate = null, $endDate = null): StatsOverviewWidget\Stat
-    {
-
-        $totalExpenses = Expense::sum('amount');
-
-        $expenseThisDuration = Expense::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
-            ->sum('amount');
-
-        $expenseChartThisDuration = Expense::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
-            ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
-            ->groupBy('date')
-            ->orderBy('date')
-            ->get();
-
-        return StatsOverviewWidget\Stat::make(
-                label: 'Expenses',
-                value: NumberHelper::moneyfy($expenseThisDuration),
-            )
-            ->description("Total: " . NumberHelper::moneyfy($totalExpenses))
             ->chart($expenseChartThisDuration->pluck('count')->toArray());
     }
 

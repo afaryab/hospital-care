@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Accounts\Resources\ExpenseVouchers;
+namespace App\Filament\Admin\Resources\ExpenseVouchers;
 
-use App\Filament\Accounts\Resources\ExpenseVouchers\Pages\CreateExpenseVoucher;
-use App\Filament\Accounts\Resources\ExpenseVouchers\Pages\EditExpenseVoucher;
-use App\Filament\Accounts\Resources\ExpenseVouchers\Pages\ListExpenseVouchers;
-use App\Filament\Accounts\Resources\ExpenseVouchers\Pages\ViewExpenseVoucher;
-use App\Filament\Accounts\Resources\ExpenseVouchers\Schemas\ExpenseVoucherForm;
-use App\Filament\Accounts\Resources\ExpenseVouchers\Schemas\ExpenseVoucherInfolist;
-use App\Filament\Accounts\Resources\ExpenseVouchers\Tables\ExpenseVouchersTable;
+use App\Filament\Admin\Resources\ExpenseVouchers\Pages\CreateExpenseVoucher;
+use App\Filament\Admin\Resources\ExpenseVouchers\Pages\EditExpenseVoucher;
+use App\Filament\Admin\Resources\ExpenseVouchers\Pages\ListExpenseVouchers;
+use App\Filament\Admin\Resources\ExpenseVouchers\Pages\ViewExpenseVoucher;
+use App\Filament\Admin\Resources\ExpenseVouchers\Schemas\ExpenseVoucherForm;
+use App\Filament\Admin\Resources\ExpenseVouchers\Schemas\ExpenseVoucherInfolist;
+use App\Filament\Admin\Resources\ExpenseVouchers\Tables\ExpenseVouchersTable;
 use App\Models\ExpenseVoucher;
 use BackedEnum;
 use Filament\Resources\Resource;

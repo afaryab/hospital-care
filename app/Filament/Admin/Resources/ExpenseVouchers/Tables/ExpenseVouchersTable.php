@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Accounts\Resources\ExpenseVouchers\Tables;
+namespace App\Filament\Admin\Resources\ExpenseVouchers\Tables;
 
 use App\Models\ExpenseVoucher;
 use Filament\Actions\BulkActionGroup;
