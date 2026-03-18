@@ -64,7 +64,7 @@ class FetchOldHIMS extends Command
     public function info($string, $verbosity = null)
     {
         parent::info($string, $verbosity);
-        // Log::info($string);
+        Log::info($string);
     }
 
     /**
