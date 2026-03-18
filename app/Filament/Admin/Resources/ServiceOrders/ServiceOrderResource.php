@@ -1,80 +1,42 @@
 <?php
 
-namespace App\Filament\Admin\Pages\Reports;
+namespace App\Filament\Admin\Resources\ServiceOrders;
 
 use App\Models\Service;
 use App\Models\ServiceOrder;
 use App\Models\User;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
-use Filament\Pages\Page;
+use BackedEnum;
+use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Tables;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
-class ServiceOrderReport extends Page implements Tables\Contracts\HasTable
+class ServiceOrderResource extends Resource
 {
-    use Tables\Concerns\InteractsWithTable;
+    protected static ?string $model = ServiceOrder::class;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
+    protected static string | BackedEnum | null $navigationIcon = 'heroicon-o-document-text';
+
     protected static string | UnitEnum | null $navigationGroup = 'Reports';
+
     protected static ?int $navigationSort = 5;
-    protected static ?string $title = 'Service Order Report';
-    protected string $view = 'filament.accounts.pages.report-page';
 
-    public ?array $filters = [];
-    public string $activeTab = 'general';
+    protected static ?string $label = 'Service Order';
 
-    public function mount(): void
-    {
-        $this->filters = [
-            'from' => now()->startOfMonth()->format('Y-m-d'),
-            'until' => now()->format('Y-m-d'),
-            'status' => null,
-            'service_id' => null,
-            'doctor_id' => null,
-        ];
-    }
+    protected static ?string $pluralLabel = 'Service Orders';
 
-    public function filtersForm(Schema $schema): Schema
-    {
-        return $schema
-            ->schema([
-                DatePicker::make('from')->label('From'),
-                DatePicker::make('until')->label('Until'),
-                Select::make('status')
-                    ->label('Status')
-                    ->options(['open' => 'Open', 'closed' => 'Closed'])
-                    ->placeholder('All'),
-                Select::make('service_id')
-                    ->label('Service')
-                    ->options(fn () => Service::pluck('name', 'id'))
-                    ->searchable()
-                    ->placeholder('All Services'),
-                Select::make('doctor_id')
-                    ->label('Provider')
-                    ->options(fn () => User::whereHas('opdDoctorProfiles')->pluck('name', 'id'))
-                    ->searchable()
-                    ->placeholder('All Providers'),
-            ])
-            ->statePath('filters');
-    }
-
-    public function applyFilters(): void
-    {
-        $this->resetTable();
-    }
-
-    public function table(Table $table): Table
+    public static function table(Table $table): Table
     {
         return $table
-            ->query(function (): Builder {
-                $query = ServiceOrder::query()
+            ->query(
+                ServiceOrder::query()
                     ->withSum(['transactionElements as income_total' => function ($q) {
                         $q->where('income_or_expense', 'INCOME');
                     }], 'amount')
@@ -82,26 +44,8 @@ class ServiceOrderReport extends Page implements Tables\Contracts\HasTable
                         $q->where('income_or_expense', 'EXPENSE');
                     }], 'amount')
                     ->withCount('expenseVouchers')
-                    ->withSum('expenseVouchers', 'amount');
-
-                if ($this->filters['from'] ?? null) {
-                    $query->whereDate('service_orders.created_at', '>=', $this->filters['from']);
-                }
-                if ($this->filters['until'] ?? null) {
-                    $query->whereDate('service_orders.created_at', '<=', $this->filters['until']);
-                }
-                if ($this->filters['status'] ?? null) {
-                    $query->where('status', $this->filters['status']);
-                }
-                if ($this->filters['service_id'] ?? null) {
-                    $query->where('service_id', $this->filters['service_id']);
-                }
-                if ($this->filters['doctor_id'] ?? null) {
-                    $query->where('doctor_id', $this->filters['doctor_id']);
-                }
-
-                return $query;
-            })
+                    ->withSum('expenseVouchers', 'amount')
+            )
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('created_at')
@@ -151,6 +95,27 @@ class ServiceOrderReport extends Page implements Tables\Contracts\HasTable
                     ->sortable()
                     ->toggleable(),
             ])
+            ->filters([
+                Filter::make('date_range')
+                    ->form([
+                        DatePicker::make('from')->default(now()->startOfMonth()),
+                        DatePicker::make('until')->default(now()),
+                    ])
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['from'] ?? null, fn (Builder $q, $date) => $q->whereDate('service_orders.created_at', '>=', $date))
+                        ->when($data['until'] ?? null, fn (Builder $q, $date) => $q->whereDate('service_orders.created_at', '<=', $date))
+                    ),
+                SelectFilter::make('status')
+                    ->options(['open' => 'Open', 'closed' => 'Closed']),
+                SelectFilter::make('service_id')
+                    ->label('Service')
+                    ->options(fn () => Service::pluck('name', 'id'))
+                    ->searchable(),
+                SelectFilter::make('doctor_id')
+                    ->label('Provider')
+                    ->options(fn () => User::whereHas('opdDoctorProfiles')->pluck('name', 'id'))
+                    ->searchable(),
+            ])
             ->groups([
                 Group::make('service.name')->label('Service'),
                 Group::make('doctor.name')->label('Provider'),
@@ -159,12 +124,20 @@ class ServiceOrderReport extends Page implements Tables\Contracts\HasTable
             ->striped()
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(50)
-            ->recordUrl(fn (ServiceOrder $record): string => route('reports.generic.service-order', ['id' => $record->id]))
-            ->openRecordUrlInNewTab();
+            ->recordUrl(fn (ServiceOrder $record): string => static::getUrl('view', ['record' => $record]))
+            ->openRecordUrlInNewTab(false);
     }
 
-    public function getPdfUrl(): string
+    public static function infolist(Schema $schema): Schema
     {
-        return url('/reports/generic/service-orders') . '?' . http_build_query(array_filter($this->filters));
+        return $schema->schema([]);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => \App\Filament\Admin\Resources\ServiceOrders\Pages\ListServiceOrders::route('/'),
+            'view' => \App\Filament\Admin\Resources\ServiceOrders\Pages\ViewServiceOrder::route('/{record}'),
+        ];
     }
 }
