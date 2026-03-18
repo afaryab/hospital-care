@@ -108,271 +108,391 @@ export default function CounterView() {
 }
 
 
+type CounterTab = 'general' | 'print' | 'income-report' | 'expense-report' | 'receivables-report' | 'services-report';
+
+const tabConfig: { key: CounterTab; label: string; color: string }[] = [
+    { key: 'general', label: 'General', color: 'green' },
+    { key: 'print', label: 'Print', color: 'blue' },
+    { key: 'income-report', label: 'Income Report', color: 'emerald' },
+    { key: 'expense-report', label: 'Expense Report', color: 'red' },
+    { key: 'receivables-report', label: 'Receivables Report', color: 'purple' },
+    { key: 'services-report', label: 'Services Report', color: 'indigo' },
+];
+
 const CounterViewTabs = ({openCounter}: {openCounter: any}) => {
     
-    const [activeTab, setActiveTab] = useState<'overview' | 'services' | 'receaveables'>('overview');
+    const [activeTab, setActiveTab] = useState<CounterTab>('general');
+
+    const closingUrl = printClosingStatement({
+        year: openCounter.year,
+        month: openCounter.month,
+        number: openCounter.number,
+    }).url;
 
     return (
         <>
-        <div className='flex flex-row gap-4 border-b divide-y-0 divide-gray-300'>
-            <button onClick={() => setActiveTab('overview')} className={clsx('text-sm py-2 px-3 font-medium', activeTab === 'overview' ? 'border-b-2 border-green-500 text-green-600' : 'text-gray-500 hover:text-gray-700')}>
-                Overview
-            </button>
+        <div className='flex flex-row gap-2 border-b divide-y-0 divide-gray-300 overflow-x-auto'>
+            {tabConfig.map(tab => (
+                <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={clsx(
+                    'text-sm py-2 px-3 font-medium whitespace-nowrap',
+                    activeTab === tab.key
+                        ? `border-b-2 border-${tab.color}-500 text-${tab.color}-600`
+                        : 'text-gray-500 hover:text-gray-700'
+                )}>
+                    {tab.label}
+                </button>
+            ))}
         </div>
         <div>
-            {activeTab === 'overview' && <CounterTransactionsOverview openCounter={openCounter} />}
-            {activeTab === 'services' && <div>Services Content</div>}
-            {activeTab === 'receaveables' && <div>Receaveables Content</div>}
+            {activeTab === 'general' && <CounterTransactionsOverview openCounter={openCounter} />}
+            {activeTab === 'print' && <CounterReportIframe title='Closing Statement' src={closingUrl} showVariant />}
+            {activeTab === 'income-report' && <CounterReportIframe title='Income Report' src={closingUrl + '?report=income'} />}
+            {activeTab === 'expense-report' && <CounterReportIframe title='Expense Report' src={closingUrl + '?report=expense'} />}
+            {activeTab === 'receivables-report' && <CounterReportIframe title='Receivables Report' src={closingUrl + '?report=receivables'} />}
+            {activeTab === 'services-report' && <CounterReportIframe title='Services Report' src={closingUrl + '?report=services'} />}
         </div>
 
         </>
     );
 }
 
+const CounterReportIframe = ({title, src, showVariant}: {title: string; src: string; showVariant?: boolean}) => {
+    const [printVariant, setPrintVariant] = useState<'mini' | 'normal'>('normal');
+    const iframeSrc = showVariant ? src + `?variant=${printVariant}` : src;
+
+    return (
+        <div className='flex flex-col space-y-4 h-full my-4'>
+            {showVariant && (
+                <div className='w-full flex flex-row'>
+                    <div className='grid gap-2'>
+                        <Label htmlFor='print'>Print Version</Label>
+                        <Select value={printVariant} onValueChange={(value: string) => setPrintVariant(value as 'mini' | 'normal')}>
+                            <SelectTrigger id='print'>
+                                <SelectValue placeholder='Select Print Version' />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem key='normal' value='normal'>Full page</SelectItem>
+                                <SelectItem key='mini' value='mini'>Mini page</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            )}
+            <iframe
+                title={title}
+                src={iframeSrc}
+                className='w-full min-h-[500px] h-full border rounded'
+            />
+        </div>
+    );
+}
+
 const CounterTransactionsOverview = ({openCounter}: {openCounter: any}) => {
 
-    const [printVariant , setPrintVariant] = useState<'mini' | 'normal'>('normal');
+    const typeNorm = (t: string) => (t ?? '').toUpperCase();
+
+    const sumByFilter = (filter: (tr: any) => boolean) =>
+        openCounter?.transactions?.filter(filter).reduce((total: number, tr: any) => total + Number(tr.amount), 0) ?? 0;
+
+    const incomeByType = (type: string) =>
+        sumByFilter((tr: any) => tr.income_or_expense === 'INCOME' && typeNorm(tr.type) === type);
     
     return (<div className={clsx('grid h-full grid-cols-1 pr-4 gap-4 md:col-span-2')}>
-                {openCounter?.status !== 'OPEN' ? <div className='flex flex-col space-y-4 h-full'>
-                    <div className='w-full flex flex-row'>
-                        <div className="grid gap-2">
-                            <Label htmlFor="print">Print Version</Label>
-                            <Select value={printVariant} onValueChange={(value) => setPrintVariant(value)}>
-                                <SelectTrigger id="print">
-                                    <SelectValue placeholder="Select Print Version" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem key={'normal'} value={'normal'}>Full page</SelectItem>
-                                    <SelectItem key={'mini'} value={'mini'}>Mini page</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            {/* <InputError message={errors.email} /> */}
-                        </div>
-                    </div>
-                    <iframe
-                        title="Closing Statement"
-                        src={printClosingStatement({
-                            year: openCounter.year,
-                            month: openCounter.month,
-                            number: openCounter.number,
-                        }).url + `?variant=${printVariant}`}
-                        className='w-full min-h-[300px] h-full border'
-                    ></iframe>
-                </div> : <div className='my-4 w-full'>
-                    <table className='text-xs text-gray-700 uppercase bg-white dark:bg-neutral-950 dark:text-gray-400 text-left w-full'>
-                        <thead className='text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400'>
-                            <tr className='border border-b-2'>
-                                <th className='sticky top-0 px-4 py-2'>Transaction</th>
-                                <th className='sticky top-0 px-4 py-2'>Patient</th>
-                                <th className='sticky top-0 px-4 py-2'>Drives</th>
-                                <th className='sticky top-0 px-4 py-2 text-right'>Amount</th>
-                                <th className='sticky top-0 px-4 py-2'>Date</th>
-                                <th className='sticky top-0 px-4 py-2'>...</th>
+                <div className='my-4 w-full overflow-x-auto'>
+                    <table className='text-xs text-gray-700 bg-white dark:bg-neutral-950 dark:text-gray-400 text-left w-full border-collapse'>
+                        <thead className='text-[11px] text-gray-500 uppercase tracking-wider bg-gray-50 dark:bg-gray-700 dark:text-gray-400'>
+                            <tr>
+                                <th className='sticky top-0 px-3 py-2.5 font-semibold w-8'>#</th>
+                                <th className='sticky top-0 px-3 py-2.5 font-semibold'>Transaction</th>
+                                <th className='sticky top-0 px-3 py-2.5 font-semibold'>Type</th>
+                                <th className='sticky top-0 px-3 py-2.5 font-semibold'>Patient / Paid To</th>
+                                <th className='sticky top-0 px-3 py-2.5 font-semibold'>Details</th>
+                                <th className='sticky top-0 px-3 py-2.5 font-semibold text-right'>Amount</th>
+                                <th className='sticky top-0 px-3 py-2.5 font-semibold'>Method</th>
+                                <th className='sticky top-0 px-3 py-2.5 font-semibold'>Date</th>
+                                <th className='sticky top-0 px-3 py-2.5 font-semibold w-10'></th>
                             </tr>
                         </thead>
                         {openCounter?.transactions.length > 0 && <tbody>
-                            {openCounter?.transactions?.map((transaction:any, index:number) => (
-                                <tr key={index} className='border-b dark:border-gray-600 h-12'>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-l border-dotted border-gray-300'>
-                                        <div className='text-blue-600'>
-                                            <div className='inline text-gray-500 mb-1'>
-                                                {transaction.income_or_expense == 'INCOME' ? (
-                                                    <LucideChevronUp className='inline mr-1 h-3 w-3 text-green-500' />
-                                                ) : (
-                                                    <LucideChevronDown className='inline mr-1 h-3 w-3 text-red-500' />
-                                                )}
-                                                {transaction.tr_number}
-                                            </div>
-                                            <div className='flex flex-row'>
-                                                {transaction.income_or_expense == 'INCOME' && (
-                                                    <>
-                                                        {transaction.elements.map((element:any, idx:number) => (<>
-                                                            {element.service && <span key={idx} className='text-green-600 text-xs bg-green-100 px-1 rounded-l border border-green-300'>
-                                                                {element?.service?.name}
-                                                            </span>}
-                                                            {element.service_recestation && <span key={idx} className='text-lime-600 text-xs bg-lime-100 px-1 rounded border border-lime-300'>
-                                                                {element?.service_recestation?.name}
-                                                            </span>}
-                                                            </>
-                                                        ))}
-                                                    </>
-                                                )}
-                                                {transaction.income_or_expense == 'EXPENSE' && (
-                                                    <>
-                                                        {transaction.elements.map((element:any, idx:number) => (<>
-                                                                {element.exp_voucher && <span key={idx} className='text-orange-600 text-xs bg-orange-100 px-1 rounded-l border border-orange-300'>
-                                                                    {element.exp_voucher.type}: {element.exp_voucher.vc_number}
-                                                                </span>}
-                                                                {element.expense && <span className='text-red-600 text-xs bg-red-100 px-1 rounded-l border border-red-300'>
-                                                                    {element.expense.type}: {element.expense.id}
-                                                                </span>}
-                                                            </>
-                                                        ))}
-                                                    </>
-                                                )}
-                                                <Link href={'/CT-'+transaction.tr_number} target='_blank' className='text-gray-600 text-xs bg-gray-100 px-1 rounded-r border border-gray-300' >
-                                                    <LucideLink className='inline h-3 w-3 text-gray-500' />
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-dotted border-gray-300'>{
-                                        transaction.income_or_expense == 'INCOME' ? (
-                                            <div className='text-blue-600'>
-                                                <div className='inline text-gray-500 mb-1'>
-                                                    {transaction.patient.ps_number}
-                                                </div>
-                                                <div className='flex flex-row'>
-                                                    {transaction?.patient?.name && <span className='text-blue-600 text-xs bg-blue-100 rounded-l px-1 border border-blue-300'>
-                                                        {transaction?.patient?.name}
-                                                    </span>}
+                            {openCounter?.transactions?.map((transaction:any, index:number) => {
+                                const isIncome = transaction.income_or_expense === 'INCOME';
+                                const isExpense = transaction.income_or_expense === 'EXPENSE';
+                                const isVoucherPay = transaction.income_or_expense === 'VOUCHER-PAY';
+                                const isRefunded = transaction.is_refunded == 1;
 
-                                                    <Link href={'/'+transaction.patient.ps_number} target='_blank' className='text-gray-600 text-xs bg-gray-100 px-1 rounded-r border border-gray-300' >
-                                                        <LucideLink className='inline h-3 w-3 text-gray-500' />
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            transaction.income_or_expense
-                                        )
-                                    }</td>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-dotted border-gray-300'>
-                                        <div className='flex flex-row'>
-                                        {transaction.elements && transaction.elements.length > 0 ? (
-                                            <>
-                                                {transaction.elements.map((element:any, idx:number) => (<div key={idx} className='flex'>
-                                                    {element?.service_order && <span className='text-gray-600 text-xs bg-gray-100 px-1 rounded-l border border-gray-300'>
-                                                        {element.service?.name}
-                                                    </span>}
-                                                    {element?.service_order && <span className='text-indigo-600 text-xs bg-indigo-100 px-1 border border-indigo-300'>
-                                                        {element?.service_order?.so_number}
-                                                    </span>}
-                                                    {element?.service_order && <Link href={'/'+element?.service_order?.so_number} target='_blank' className='text-gray-600 text-xs bg-gray-100 px-1 rounded-r border border-gray-300' >
-                                                        <LucideLink className='inline h-3 w-3 text-gray-500' />
-                                                    </Link>}
-                                                </div>))}
-                                            </>
-                                        ) : (
-                                            <></>
+                                return (
+                                <tr key={index} className={clsx(
+                                    'border-b dark:border-gray-600 transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-800/50',
+                                    isRefunded && 'opacity-50 line-through',
+                                )}>
+                                    {/* Row number with colored left border */}
+                                    <td className={clsx(
+                                        'px-3 py-2.5 text-center text-gray-400 border-l-3',
+                                        isIncome && 'border-l-green-500',
+                                        isExpense && 'border-l-red-500',
+                                        isVoucherPay && 'border-l-orange-500',
+                                    )}>
+                                        {openCounter.transactions.length - index}
+                                    </td>
+
+                                    {/* Transaction number */}
+                                    <td className='px-3 py-2.5'>
+                                        <span className='font-mono text-blue-600 dark:text-blue-400 font-medium'>
+                                            {transaction.tr_number}
+                                        </span>
+                                        {isRefunded && (
+                                            <span className='ml-1 text-[10px] bg-red-100 text-red-600 px-1 rounded font-semibold'>REFUNDED</span>
                                         )}
-                                        {transaction.receaveable && (<>
-                                                <span className='text-purple-600 text-xs bg-purple-100 px-1 rounded-l border border-purple-300'>
-                                                    Rceaveable: {transaction.receaveable.id}
-                                                </span>
-                                                <Link href={'/'+transaction.receaveable.id} target='_blank' className='text-gray-600 text-xs bg-gray-100 px-1 rounded-r border border-gray-300' >
-                                                    <LucideLink className='inline h-3 w-3 text-gray-500' />
+                                    </td>
+
+                                    {/* Type badge */}
+                                    <td className='px-3 py-2.5'>
+                                        <span className={clsx(
+                                            'inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full',
+                                            isIncome && 'bg-green-100 text-green-700',
+                                            isExpense && 'bg-red-100 text-red-700',
+                                            isVoucherPay && 'bg-orange-100 text-orange-700',
+                                        )}>
+                                            {isIncome && <LucideChevronUp className='h-3 w-3' />}
+                                            {(isExpense || isVoucherPay) && <LucideChevronDown className='h-3 w-3' />}
+                                            {isIncome ? 'Income' : isVoucherPay ? 'Voucher' : 'Expense'}
+                                        </span>
+                                    </td>
+
+                                    {/* Patient / Paid To */}
+                                    <td className='px-3 py-2.5'>
+                                        {isIncome && transaction.patient ? (
+                                            <div className='flex flex-col gap-0.5'>
+                                                <Link href={'/'+transaction.patient.ps_number} target='_blank' className='text-blue-600 hover:underline font-medium'>
+                                                    {transaction.patient.name}
                                                 </Link>
-                                            </>
-                                        )}
-                                        </div>
-                                    </td>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-dotted border-gray-300'>
-                                        <div className='flex flex-col gap-1'>
-                                            <div className='flex flex-row justify-end'>
-                                                <span className='text-slate-600 text-xs bg-slate-100 px-1 rounded-l border border-slate-300'>
-                                                    {transaction.amount} PKR
-                                                </span>
-                                                <span className='text-slate-600 text-xs bg-slate-100 px-1 rounded-r border border-slate-300'>
-                                                    {transaction.type}
-                                                </span>
+                                                <span className='text-[10px] text-gray-400'>{transaction.patient.ps_number}</span>
                                             </div>
-                                            
+                                        ) : (isExpense || isVoucherPay) ? (
+                                            <div className='flex flex-col gap-0.5'>
+                                                {transaction.elements?.map((el: any, idx: number) => (
+                                                    el.exp_voucher?.payed_to_user?.name || el.exp_voucher?.payedTo?.name ? (
+                                                        <span key={idx} className='text-gray-700 dark:text-gray-300 font-medium'>
+                                                            {el.exp_voucher?.payed_to_user?.name ?? el.exp_voucher?.payedTo?.name}
+                                                        </span>
+                                                    ) : el.expense_category ? (
+                                                        <span key={idx} className='text-gray-500 text-[10px]'>{el.expense_category.name}</span>
+                                                    ) : null
+                                                ))}
+                                                {transaction.notes && <span className='text-[10px] text-gray-400 truncate max-w-[150px]'>{transaction.notes}</span>}
+                                            </div>
+                                        ) : (
+                                            <span className='text-gray-400'>-</span>
+                                        )}
+                                    </td>
+
+                                    {/* Details — services, SOs, vouchers, categories, doctors */}
+                                    <td className='px-3 py-2.5'>
+                                        <div className='flex flex-col gap-1'>
+                                            {isIncome && transaction.elements?.map((el: any, idx: number) => (
+                                                <div key={idx} className='flex flex-wrap items-center gap-1'>
+                                                    {el.service && (
+                                                        <span className='text-[10px] bg-green-50 text-green-700 px-1.5 py-0.5 rounded border border-green-200'>
+                                                            {el.service.name}
+                                                        </span>
+                                                    )}
+                                                    {el.service_recestation && (
+                                                        <span className='text-[10px] bg-lime-50 text-lime-700 px-1.5 py-0.5 rounded border border-lime-200'>
+                                                            {el.service_recestation.name}
+                                                        </span>
+                                                    )}
+                                                    {el.service_order && (
+                                                        <Link href={'/'+el.service_order.so_number} target='_blank' className='text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-200 hover:bg-indigo-100'>
+                                                            {el.service_order.so_number}
+                                                        </Link>
+                                                    )}
+                                                    {el.doctor && (
+                                                        <span className='text-[10px] bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200'>
+                                                            Dr. {el.doctor.name}
+                                                        </span>
+                                                    )}
+                                                    {el.amount && transaction.elements.length > 1 && (
+                                                        <span className='text-[10px] text-gray-400'>{Number(el.amount).toLocaleString()} PKR</span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            {(isExpense || isVoucherPay) && transaction.elements?.map((el: any, idx: number) => (
+                                                <div key={idx} className='flex flex-wrap items-center gap-1'>
+                                                    {el.expense_category && (
+                                                        <span className='text-[10px] bg-red-50 text-red-700 px-1.5 py-0.5 rounded border border-red-200'>
+                                                            {el.expense_category.name}
+                                                        </span>
+                                                    )}
+                                                    {el.exp_voucher && (
+                                                        <span className='text-[10px] bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded border border-orange-200'>
+                                                            {el.exp_voucher.vc_number}
+                                                        </span>
+                                                    )}
+                                                    {el.service_order && (
+                                                        <Link href={'/'+el.service_order.so_number} target='_blank' className='text-[10px] bg-indigo-50 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-200 hover:bg-indigo-100'>
+                                                            {el.service_order.so_number}
+                                                        </Link>
+                                                    )}
+                                                    {el.notes && (
+                                                        <span className='text-[10px] text-gray-400 italic truncate max-w-[120px]' title={el.notes}>{el.notes}</span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            {transaction.receaveable && (
+                                                <div className='flex flex-wrap items-center gap-1'>
+                                                    <span className='text-[10px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded border border-purple-200'>
+                                                        Receivable
+                                                    </span>
+                                                    {transaction.receaveable.panel && (
+                                                        <span className='text-[10px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200'>
+                                                            {transaction.receaveable.panel.name}
+                                                        </span>
+                                                    )}
+                                                    {transaction.receaveable.patient && (
+                                                        <span className='text-[10px] bg-gray-50 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200'>
+                                                            {transaction.receaveable.patient.name}
+                                                        </span>
+                                                    )}
+                                                    <span className={clsx(
+                                                        'text-[10px] px-1.5 py-0.5 rounded font-semibold',
+                                                        transaction.receaveable.status === 'PAID'
+                                                            ? 'bg-green-50 text-green-700 border border-green-200'
+                                                            : 'bg-amber-50 text-amber-700 border border-amber-200',
+                                                    )}>
+                                                        {transaction.receaveable.status ?? 'PENDING'}
+                                                    </span>
+                                                    {transaction.receaveable.due_date && (
+                                                        <span className='text-[10px] text-gray-400'>
+                                                            Due: {new Date(transaction.receaveable.due_date).toLocaleDateString()}
+                                                        </span>
+                                                    )}
+                                                    <span className='text-[10px] font-mono text-purple-600'>
+                                                        {Number(transaction.receaveable.amount).toLocaleString()} PKR
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </td>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-dotted border-gray-300'>
+
+                                    {/* Amount */}
+                                    <td className='px-3 py-2.5 text-right font-mono'>
+                                        <span className={clsx(
+                                            'font-semibold',
+                                            isIncome && 'text-green-700 dark:text-green-400',
+                                            (isExpense || isVoucherPay) && 'text-red-600 dark:text-red-400',
+                                        )}>
+                                            {isIncome ? '+' : '-'}{Number(transaction.amount).toLocaleString()}
+                                        </span>
+                                        <span className='text-[10px] text-gray-400 ml-0.5'>PKR</span>
+                                    </td>
+
+                                    {/* Payment method */}
+                                    <td className='px-3 py-2.5'>
+                                        <span className={clsx(
+                                            'text-[10px] font-medium px-1.5 py-0.5 rounded',
+                                            typeNorm(transaction.type) === 'CASH' && 'bg-emerald-100 text-emerald-700',
+                                            typeNorm(transaction.type) === 'CARD' && 'bg-sky-100 text-sky-700',
+                                            typeNorm(transaction.type) === 'CHEQUE' && 'bg-amber-100 text-amber-700',
+                                            typeNorm(transaction.type) === 'BANK_TRANSFER' && 'bg-violet-100 text-violet-700',
+                                            !['CASH','CARD','CHEQUE','BANK_TRANSFER'].includes(typeNorm(transaction.type)) && 'bg-gray-100 text-gray-600',
+                                        )}>
+                                            {typeNorm(transaction.type) === 'BANK_TRANSFER' ? 'Bank' : (transaction.type ?? '-')}
+                                        </span>
+                                    </td>
+
+                                    {/* Date */}
+                                    <td className='px-3 py-2.5 text-gray-500'>
                                         <span title={new Date(transaction.created_at).toLocaleString()}>
                                             {formatRelativeTime(transaction.created_at)}
                                         </span>
                                     </td>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-dotted border-gray-300'>
+
+                                    {/* Actions */}
+                                    <td className='px-3 py-2.5'>
                                         <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-9 w-9 rounded-md"
-                                                    >
-                                                        ...
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end">
-                                                    <div className='flex flex-col'>
-                                                        {transaction?.is_refunded == 0 && <Link href={'/CT-'+transaction.tr_number} target='_blank' >
-                                                            Print
-                                                        </Link>}
-                                                        {transaction?.is_refunded == 0 && <Link href={'/CT-'+transaction.tr_number+'/edit'} target='_blank' >
-                                                            Edit
-                                                        </Link>}
-                                                    </div>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md">
+                                                    ...
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                {transaction?.is_refunded == 0 && (
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href={'/CT-'+transaction.tr_number} target='_blank'>
+                                                            <LucidePrinter className='mr-2 h-3 w-3' /> Print
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                )}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </td>
                                 </tr>
-                            ))}
+                            );
+                            })}
                         </tbody>}
                         {openCounter?.transactions.length > 0 && openCounter?.transactions.length < 10 && <tbody>
                             {Array.from({ length: Math.ceil((10 - openCounter.transactions.length)/3) }).map((_, index) => (
-                                <tr key={`empty-${index}`} className='border-b border-dotted dark:border-gray-100 h-12 bg-gray-200/50'>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-l border-dotted border-gray-100'></td>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-dotted border-gray-100'></td>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-dotted border-gray-100'></td>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-dotted border-gray-100'></td>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-dotted border-gray-100'></td>
-                                    <td className='px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-dotted border-gray-100'></td>
+                                <tr key={`empty-${index}`} className='border-b border-dotted dark:border-gray-100 h-10 bg-gray-50/30'>
+                                    <td colSpan={9}></td>
                                 </tr>
                             ))}
                         </tbody>}
                         {openCounter?.transactions.length == 0 && <tbody>
-                            <tr className='border-b border-dotted dark:border-gray-600 bg-gray-100/50'>
-                                <td colSpan={4} className='px-4 py-2 font-medium text-gray-900 dark:text-white'>No transactions found.</td>
+                            <tr className='border-b border-dotted dark:border-gray-600 bg-gray-50/50'>
+                                <td colSpan={9} className='px-4 py-6 text-center text-gray-400'>No transactions found.</td>
                             </tr>
                         </tbody>}
-                        {openCounter?.transactions.length > 0 && <tfoot>
-                            <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'INCOME' && (transaction.type === 'CASH' || transaction.type === 'Cash' || transaction.type === 'cash')).reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Cash</th>
+                        {openCounter?.transactions.length > 0 && <tfoot className='text-xs'>
+                            <tr className='border-t-2 bg-gray-50/80 dark:bg-gray-700'>
+                                <td colSpan={5} className='px-3 py-2 text-right font-medium text-gray-500'>Cash Income</td>
+                                <td className='px-3 py-2 text-right font-mono font-semibold text-green-700'>{incomeByType('CASH').toLocaleString()} <span className='text-gray-400 font-normal'>PKR</span></td>
+                                <td colSpan={3}></td>
                             </tr>
-                            <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'INCOME' && (transaction.type === 'CHEQUE' || transaction.type === 'Cheque' || transaction.type === 'cheque')).reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Cheque</th>
+                            <tr className='bg-gray-50/80 dark:bg-gray-700'>
+                                <td colSpan={5} className='px-3 py-2 text-right font-medium text-gray-500'>Cheque Income</td>
+                                <td className='px-3 py-2 text-right font-mono font-semibold text-green-700'>{incomeByType('CHEQUE').toLocaleString()} <span className='text-gray-400 font-normal'>PKR</span></td>
+                                <td colSpan={3}></td>
                             </tr>
-                            <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'INCOME' && (transaction.type === 'BANK_TRANSFER' || transaction.type === 'Bank_Transfer' || transaction.type === 'bank_transfer')).reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Bank Transfer</th>
+                            <tr className='bg-gray-50/80 dark:bg-gray-700'>
+                                <td colSpan={5} className='px-3 py-2 text-right font-medium text-gray-500'>Bank Transfer Income</td>
+                                <td className='px-3 py-2 text-right font-mono font-semibold text-green-700'>{incomeByType('BANK_TRANSFER').toLocaleString()} <span className='text-gray-400 font-normal'>PKR</span></td>
+                                <td colSpan={3}></td>
                             </tr>
-                            <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'INCOME' && (transaction.type === 'CARD' || transaction.type === 'Card' || transaction.type === 'card')).reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Card</th>
+                            <tr className='bg-gray-50/80 dark:bg-gray-700'>
+                                <td colSpan={5} className='px-3 py-2 text-right font-medium text-gray-500'>Card Income</td>
+                                <td className='px-3 py-2 text-right font-mono font-semibold text-green-700'>{incomeByType('CARD').toLocaleString()} <span className='text-gray-400 font-normal'>PKR</span></td>
+                                <td colSpan={3}></td>
                             </tr>
-                            <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'EXPENSE').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Expense Paid</th>
+                            <tr className='bg-red-50/50 dark:bg-gray-700'>
+                                <td colSpan={5} className='px-3 py-2 text-right font-medium text-gray-500'>Expense Paid</td>
+                                <td className='px-3 py-2 text-right font-mono font-semibold text-red-600'>{sumByFilter((tr: any) => tr.income_or_expense === 'EXPENSE').toLocaleString()} <span className='text-gray-400 font-normal'>PKR</span></td>
+                                <td colSpan={3}></td>
                             </tr>
-                            <tr className='border-t-2 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-700'>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.income_or_expense === 'VOUCHER-PAY').reduce((total:number, transaction:any) => total + Number(transaction.amount), 0)} PKR</th>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Voucher Payments</th>
+                            <tr className='bg-orange-50/50 dark:bg-gray-700'>
+                                <td colSpan={5} className='px-3 py-2 text-right font-medium text-gray-500'>Voucher Payments</td>
+                                <td className='px-3 py-2 text-right font-mono font-semibold text-orange-600'>{sumByFilter((tr: any) => tr.income_or_expense === 'VOUCHER-PAY').toLocaleString()} <span className='text-gray-400 font-normal'>PKR</span></td>
+                                <td colSpan={3}></td>
                             </tr>
-                            <tr className='border-t-2 dark:border-gray-600 bg-gray-50 dark:bg-gray-700'>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                <th className='text-right'>{openCounter?.transactions.reduce((total:number, transaction:any) => (transaction.income_or_expense === 'EXPENSE' || transaction.income_or_expense === 'VOUCHER-PAY') ? total - Number(transaction.amount) : total + Number(transaction.amount), 0)} PKR</th>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Total</th>
+                            <tr className='border-t-2 border-gray-300 bg-white dark:bg-gray-800'>
+                                <td colSpan={5} className='px-3 py-2.5 text-right font-bold text-gray-800 dark:text-white'>Net Total</td>
+                                <td className='px-3 py-2.5 text-right font-mono font-bold text-gray-900 dark:text-white'>
+                                    {openCounter?.transactions.reduce((total:number, tr:any) => (tr.income_or_expense === 'EXPENSE' || tr.income_or_expense === 'VOUCHER-PAY') ? total - Number(tr.amount) : total + Number(tr.amount), 0).toLocaleString()} <span className='text-gray-400 font-normal'>PKR</span>
+                                </td>
+                                <td colSpan={3}></td>
                             </tr>
-                            <tr className='border-t-2 dark:border-gray-600 bg-gray-50 dark:bg-gray-700'>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={3}></th>
-                                <th className='text-right'>{openCounter?.transactions.filter((transaction:any) => transaction.receaveable && transaction.receaveable.length > 0).reduce((total:number, transaction:any) => total + Number(transaction.receaveable.id), 0)} PKR</th>
-                                <th className='px-4 py-2 text-gray-900 text-md dark:text-white' colSpan={2}>Reveaveables</th>
+                            <tr className='bg-purple-50/50 dark:bg-gray-700'>
+                                <td colSpan={5} className='px-3 py-2 text-right font-medium text-gray-500'>Receivables</td>
+                                <td className='px-3 py-2 text-right font-mono font-semibold text-purple-600'>
+                                    {openCounter?.transactions.filter((tr:any) => tr.receaveable).reduce((sum:number, tr:any) => sum + Number(tr.receaveable.amount), 0).toLocaleString()} <span className='text-gray-400 font-normal'>PKR</span>
+                                </td>
+                                <td colSpan={2} className='px-3 py-2 text-purple-500 text-[11px]'>{openCounter?.transactions.filter((tr:any) => tr.receaveable).length} items</td>
+                                <td></td>
                             </tr>
                         </tfoot>}
                     </table>
-                </div>}
+                </div>
 
 
             </div>)
 }
+

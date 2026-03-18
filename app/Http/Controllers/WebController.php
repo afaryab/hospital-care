@@ -229,7 +229,7 @@ class WebController extends Controller
 
         $ctNumber = 'CT/'.$ctYear.'/'.$ctMonth.'/'.$ctNumber;
 
-        $openCounter = Closing::with('transactions', 'transactions.receaveable', 'transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceRecestation', 'transactions.elements.serviceOrder', 'transactions.elements.expenseCategory', 'transactions.elements.expVoucher')->where('ct_number',$ctNumber)->first();
+        $openCounter = Closing::with('transactions', 'transactions.receaveable', 'transactions.receaveable.patient', 'transactions.receaveable.panel', 'transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceRecestation', 'transactions.elements.serviceOrder', 'transactions.elements.expenseCategory', 'transactions.elements.expVoucher', 'transactions.elements.doctor')->where('ct_number',$ctNumber)->first();
 
         //->where('receptionist_id', $request->user()->id)
 
@@ -377,18 +377,9 @@ class WebController extends Controller
                         'amount' => $voucher->amount
                     ]);
 
-                    $expense = Expense::create([
-                        'voucher_id' => $voucher->id,
-                        'type' => 'CASH',
-                        'payed_to' => $request->get('payed_to', 'Other') !== 'Other' ? $expenseVData['payed_to'] : null,
-                        'payed_to_other' => $request->get('payed_to', 'Other') === 'Other' ? $expenseVData['payed_to_other'] : null,
-                        'amount' => $voucher->amount,
-                    ]);
-
                     $transactionElement = TransactionElement::create([
                         'closing_id' => $openCounter->id,
                         'transaction_id' => $transaction->id,
-                        'expense_id' => $expense->id,
                         'exp_voucher_id' => $voucher->id,
                         'created_by' => $request->user()->id,
                         'type' => 'VOUCHER_PAY',

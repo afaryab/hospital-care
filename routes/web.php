@@ -68,7 +68,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('CT-EXP-VOUCHER/NEW', [WebController::class, 'storeVoucher'])->name('counter-expense-store-voucher');
 
     Route::post('TR-CREATE', [WebController::class, 'transactionStore'])->name('transaction-store');
-    Route::post('TR-UPDATE', [WebController::class, 'transactionUpdate'])->name('transaction-update');
 
     Route::post('RECEAVEABLES-PAYMENT', [WebController::class, 'receaveablesPayment'])->name('receaveables-payment');
 

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enum\CounterStatus;
 use App\Enum\ServiceOrderStatus;
+use App\Enum\TransactionElementType;
 use App\Models\Closing;
 use App\Models\UpgradeProcess;
 use Illuminate\Console\Command;
@@ -35,9 +36,9 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\MigrationLog;
 
-class FetchOldHIMS extends Command
+class FetchOldHIMSOld extends Command
 {
-    public static $TOTAL_STEPS = 77;
+    public static $TOTAL_STEPS = 163;
 
     /**
      * The name and signature of the console command.
@@ -64,7 +65,7 @@ class FetchOldHIMS extends Command
     public function info($string, $verbosity = null)
     {
         parent::info($string, $verbosity);
-        // Log::info($string);
+        Log::info($string);
     }
 
     /**
@@ -304,7 +305,109 @@ class FetchOldHIMS extends Command
                 $this->expenseCategoriesOptimized($batchSize);
                 break;
             case 80:
-                $this->counterClosingTransactionsOptimized($batchSize);
+            case 81:
+            case 82:
+            case 83:
+            case 84:
+            case 85:
+            case 86:
+            case 87:
+            case 88:
+            case 89:
+            case 90:
+            case 91:
+                $month = $currentStep - 80;
+                $this->counterClosingTransactionsOptimized(2020, $month, $batchSize);
+                break;
+            case 92:
+            case 93:
+            case 94:
+            case 95:
+            case 96:
+            case 97:
+            case 98:
+            case 99:
+            case 100:
+            case 101:
+            case 102:
+            case 103:
+                $month = $currentStep - 92;
+                $this->counterClosingTransactionsOptimized(2021, $month, $batchSize);
+                break;
+            case 104:
+            case 105:
+            case 106:
+            case 107:
+            case 108:
+            case 109:
+            case 110:
+            case 111:
+            case 112:
+            case 113:
+            case 114:
+            case 115:
+                $month = $currentStep - 104;
+                $this->counterClosingTransactionsOptimized(2022, $month, $batchSize);
+                break;
+            case 116:
+            case 117:
+            case 118:
+            case 119:
+            case 120:
+            case 121:
+            case 122:
+            case 123:
+            case 124:
+            case 125:
+            case 126:
+            case 127:
+                $month = $currentStep - 116;
+                $this->counterClosingTransactionsOptimized(2023, $month, $batchSize);
+                break;
+            case 128:
+            case 129:
+            case 130:
+            case 131:
+            case 132:
+            case 133:
+            case 134:
+            case 135:
+            case 136:
+            case 137:
+            case 138:
+            case 139:
+                $month = $currentStep - 128;
+                $this->counterClosingTransactionsOptimized(2024, $month, $batchSize);
+                break;
+            case 140:
+            case 141:
+            case 142:
+            case 143:
+            case 144:
+            case 145:
+            case 146:
+            case 147:
+            case 148:
+            case 149:
+            case 150:
+            case 151:
+                $month = $currentStep - 140;
+                $this->counterClosingTransactionsOptimized(2025, $month, $batchSize);
+                break;
+            case 152:
+            case 153:
+            case 154:
+            case 155:
+            case 156:
+            case 157:
+            case 158:
+            case 159:
+            case 160:
+            case 161:
+            case 162:
+            case 163:
+                $month = $currentStep - 152;
+                $this->counterClosingTransactionsOptimized(2026, $month, $batchSize);
                 break;
             default:
                 break;
@@ -738,17 +841,16 @@ class FetchOldHIMS extends Command
         }
         return false;
     }
-    // Expected formats: +92-XXX-XXXXXXX
+    // Expected formats: +92-XXXXXXXXXX
     protected function formatePhoneNumber($number)
     {
         $number = preg_replace('/\D/', '', $number);
         if (Str::startsWith($number, '92')) {
-            return '+92-' . substr($number, 2, 3) . '-' . substr($number, 5);
-
+            return '+92-' . substr($number, 2);
         } elseif (Str::startsWith($number, '0')) {
-            return '+92-' . substr($number, 1, 3) . '-' . substr($number, 4);
+            return '+92-' . substr($number, 1);
         } elseif (Str::startsWith($number, '3') && strlen($number) == 10) {
-            return '+92-' . substr($number, 0, 3) . '-' . substr($number, 3);
+            return '+92-' . $number;
         }
         return $number; // Return as is if it doesn't match expected patterns
     }
@@ -859,10 +961,212 @@ class FetchOldHIMS extends Command
             });
     }
 
+    protected function counterClosingTransactionsOptimized($year, $month, $batchSize){
+
+        $this->info('Migrating counter closing transactions...');
+
+        $year = 2025;
+
+        // Get transactions with their elements in one query using JOIN
+        $transactions = DB::connection('secondary')
+            ->table('reception_counters_closings_transactions as t')
+            ->leftJoin('reception_counters_closings_transaction_elements as e', 't.id', '=', 'e.closing_transaction_id')
+            ->leftJoin('patients as p', 't.patient_id', '=', 'p.id')
+            // ->whereYear('t.created_on', $year)
+            // ->whereMonth('t.created_on', $month)
+            ->where('t.id', 3334) // INPT-EXP
+            // ->where('t.id', 84) // INP
+            // ->where('t.id', 30686) // PETTY CASH
+            // ->where('t.id', 413868) // VOUCHER PAYMENT
+            ->orderBy('t.id')
+            ->select([
+                't.*',
+                'e.id as element_id',
+                'e.type as element_type',
+                'e.amount as element_amount',
+                'e.original_amount as element_original_amount',
+                'e.doctor_id as element_doctor_id',
+                'e.service_id as element_service_id',
+                'e.department_transaction_id as element_department_transaction_id',
+                'e.created_on as element_created_on',
+                'e.modified_on as element_modified_on',
+                'p.id as patient_id',
+                'p.pateint_name as patient_name',
+                'p.gender as patient_gender',
+                'p.age_group as patient_age_group',
+                'p.age_days as patient_age_days',
+                'p.age_dob as patient_age_dob',
+                'p.patient_address as patient_address',
+                'p.guardian as patient_guardian',
+                'p.relation as patient_relation',
+                'p.patient_contact_mobile as patient_contact',
+                'p.patient_cnic as patient_cnic',
+                'p.patient_email as patient_email',
+                'p.patient_profession as patient_profession',
+                'p.created_on as patient_created_on',
+                'p.modified_on as patient_modified_on',
+            ])->get();
+
+            $groupedTransactions = $transactions->groupBy('id');
+
+            foreach ($groupedTransactions as $transactionId => $transactionGroup) {
+
+                $transaction = $transactionGroup->first();
+
+                $patientData = [
+                    'old_id' => $transaction->patient_id,
+                    'name' => $transaction->patient_name,
+                    'gender' => $transaction->patient_gender,
+                    'age_group' => $transaction->patient_age_group,
+                    'age_days' => $transaction->patient_age_days,
+                    'age_dob' => $transaction->patient_age_dob,
+                    'address' => $transaction->patient_address,
+                    'guardian' => $transaction->patient_guardian,
+                    'relation' => $transaction->patient_relation,
+                    'contact' => $this->validatePhoneNumber($transaction->patient_contact) ? $this->formatePhoneNumber($transaction->patient_contact) : null,
+                    'cnic' => $this->validateCnic($transaction->patient_cnic) ? $this->formateCnic($transaction->patient_cnic) : null,
+                    'email' => $transaction->patient_email,
+                    'profession' => $transaction->patient_profession,
+                    'created_at' => $transaction->patient_created_on,
+                    'updated_at' => $transaction->patient_modified_on,
+                ];
+
+                $isExpense = $transaction->income_or_expence !== 'INCOME';
+            
+                // Generate transaction number based on old transaction's creation date
+                $createdAt = Carbon::parse($transaction->created_on);
+                $year = $createdAt->format('Y');
+                $month = $createdAt->format('m');
+                $day = $createdAt->format('d');
+                
+                // Get count for that specific date to maintain unique numbering
+                $existingCount = Transaction::where('tr_number', 'like', "TR/{$year}/{$month}/{$day}%")->count();
+                $trNumber = "TR/{$year}/{$month}/{$day}/" . str_pad($existingCount + 1, 4, '0', STR_PAD_LEFT);
+
+                $transactionData = [
+                    'old_id' => $transaction->id,
+                    'tr_number' => $trNumber,
+                    'closing_id' => $this->getCachedClosing($transaction->counter_id)?->id ?? null,
+                    'created_by' => $this->getCachedUser($transaction->user_id)?->id ?? null,
+                    'amount' => $this->sanitizeTransactionAmount($transaction->amount, $isExpense),
+                    'orignal_amount' => $this->sanitizeTransactionAmount($transaction->orignal_amount, $isExpense),
+                    'customer_payed' => $isExpense ? 0 : $this->sanitizeNumericValue($transaction->customer_payed),
+                    'change' => $isExpense ? 0 : $this->sanitizeNumericValue($transaction->change),
+                    'edited_amount' => $this->sanitizeTransactionAmount($transaction->edited_amount, $isExpense),
+                    'created_at' => $transaction->created_on,
+                    'updated_at' => $transaction->modified_on,
+                ];
+
+                $transactionData['type'] = $transaction->income_or_expence === 'INCOME' ? $this->mapTransactionType($transaction->type) : 'CASH';
+                $transactionData['income_or_expense'] = $transaction->income_or_expence === 'INCOME' ? 'INCOME' : 'EXPENSE';
+                $transactionData['department'] = $transaction->element_type;
+
+                $transactionData['patient'] = $patientData;
+
+                foreach ($transactionGroup as $element) {
+                    $this->info("Processing transaction ID: {$transaction->id} with element ID: {$element->element_id} and type {$transactionData['type']} and amount {$transactionData['amount']} and INC/EXP: {$transactionData['income_or_expense']}");
+                    
+                    $transactionData['elements'][$element->element_id] = $this->prepareElementData($element, $transaction);
+
+                    
+                }
+
+                dd($transactionData);
+
+                $patientProcessed = Patient::firstOrCreate(
+                    ['old_id' => $transactionData['patient']['old_id']],
+                    [
+                        'name' => $transactionData['patient']['name'],
+                        'gender' => $transactionData['patient']['gender'],
+                        'age_group' => $transactionData['patient']['age_group'],
+                        'age_days' => $transactionData['patient']['age_days'],
+                        'age_dob' => $transactionData['patient']['age_dob'],
+                        'address' => $transactionData['patient']['address'],
+                        'guardian' => $transactionData['patient']['guardian'],
+                        'relation' => $transactionData['patient']['relation'],
+                        'contact' => $transactionData['patient']['contact'],
+                        'cnic' => $transactionData['patient']['cnic'],
+                        'email' => $transactionData['patient']['email'],
+                        'profession' => $transactionData['patient']['profession'],
+                        'created_at' => $transactionData['patient']['created_at'],
+                        'updated_at' => $transactionData['patient']['updated_at'],
+                    ]
+                );
+
+
+                $transactionProcessed = Transaction::firstOrCreate(
+                    ['old_id' => $transactionData['old_id']],
+                    [
+                        'tr_number' => $transactionData['tr_number'],
+                        'closing_id' => $transactionData['closing_id'],
+                        'created_by' => $transactionData['created_by'],
+                        'amount' => $transactionData['amount'],
+                        'orignal_amount' => $transactionData['orignal_amount'],
+                        'customer_payed' => $transactionData['customer_payed'],
+                        'change' => $transactionData['change'],
+                        'edited_amount' => $transactionData['edited_amount'],
+                        'type' => $transactionData['type'],
+                        'income_or_expense' => $transactionData['income_or_expense'],
+                        'department_id' => $transactionData['department'],
+                        'created_at' => $transactionData['created_at'],
+                        'updated_at' => $transactionData['updated_at'],
+                    ]
+                );
+
+                foreach($transactionData['elements'] as $elementId => $elementData){
+                    $this->info("Processing element ID: {$elementId} for transaction ID: {$transaction->id} with service ID: {$elementData['service_id']} and doctor ID: {$elementData['doctor_id']}");
+
+                    if(array_key_exists('service_order_id', $elementData)){
+                        $this->info("Element ID: {$elementId} has service_order_id: {$elementData['service_order_id']}");
+
+                        ServiceOrder::firstOrCreate(
+                            ['old_id' => $elementData['service_order_id']],
+                            [
+                                'transaction_id' => $transactionProcessed->id,
+                                'service_id' => $elementData['service_id'],
+                                'doctor_id' => $elementData['doctor_id'],
+                                'department_transaction_id' => $elementData['department_transaction_id'],
+                                'created_at' => $elementData['created_at'],
+                                'updated_at' => $elementData['updated_at'],
+                            ]
+                        );
+
+
+                    } else {
+                        $this->info("Element ID: {$elementId} does NOT have a service_order_id");
+                    }
+
+
+
+                    $transactionElement = TransactionElement::firstOrCreate(
+                        ['old_id' => $elementId],
+                        [
+                            'transaction_id' => $transactionProcessed->id,
+                            'type' => $elementData['type'],
+                            'amount' => $elementData['amount'],
+                            'original_amount' => $elementData['original_amount'],
+                            'doctor_id' => $elementData['doctor_id'],
+                            'service_id' => $elementData['service_id'],
+                            'department_transaction_id' => $elementData['department_transaction_id'],
+                            'created_at' => $elementData['created_at'],
+                            'updated_at' => $elementData['updated_at'],
+                        ]
+                    );
+                }
+                
+            }
+
+        
+
+
+
+
+    }
+
     /**
      * Optimized counter closing transactions migration
      */
-    protected function counterClosingTransactionsOptimized($batchSize)
+    protected function counterClosingTransactionsOptimizedx($batchSize)
     {
         $this->info('Migrating counter closing transactions...');
         
@@ -960,8 +1264,8 @@ class FetchOldHIMS extends Command
                 'patient_id' => $this->getCachedPatient($transaction->patient_id)?->id ?? null,
                 'type' => $transaction->income_or_expence === 'INCOME' ? $this->mapTransactionType($transaction->type) : 'CASH',
                 'income_or_expense' => $transaction->income_or_expence === 'INCOME' ? 'INCOME' : 'EXPENSE',
-                // 'department_id' => $this->mapDepartmentId($transaction->department_id),
-                
+                'department_id' => $this->mapDepartmentId($transaction->department_id),
+
                 'amount' => $this->sanitizeTransactionAmount($transaction->amount, $isExpense),
                 'orignal_amount' => $this->sanitizeTransactionAmount($transaction->orignal_amount, $isExpense),
                 'customer_payed' => $isExpense ? 0 : $this->sanitizeNumericValue($transaction->customer_payed),
@@ -995,7 +1299,7 @@ class FetchOldHIMS extends Command
                 $transactionData['expense_category_id'] = $expense ? ($this->getCachedExpenseCategory($expense->category_id)?->id ?? null) : null;
                 $transactionData['notes'] = $expense ? $expense->payment_reference : null;
 
-                $isVoucherPay = $expense?->voucher_id ? true : false;
+                $isVoucherPay = $expense->voucher_id ? true : false;
 
                 // If Voucher Pay get voucher record from seconday database and create it here.
                 if ($isVoucherPay) {
@@ -1121,45 +1425,114 @@ class FetchOldHIMS extends Command
         $isExpenseElement = in_array($element->element_type, ['EXP', 'VOUCHER-PAY', 'INPT-EXP']);
         
         $baseData = [
-            'old_id' => $element->id,
+            'old_id' => $element->element_id,
             'closing_id' => $this->getCachedClosing($transaction->counter_id)?->id,
-            'transaction_id' => null, // Will be set after transaction is created
             'created_by' => $this->getCachedUser($transaction->user_id)?->id,
             'amount' => $this->sanitizeTransactionAmount($element->element_amount, $isExpenseElement),
             'orignal_amount' => $this->sanitizeTransactionAmount($element->element_original_amount, $isExpenseElement),
-            'customer_payed' => 0, // Always 0 for elements
-            'change' => 0, // Always 0 for elements
-            'edited_amount' => null,
-            'service_order_id' => null,
             'created_at' => $element->element_created_on,
             'updated_at' => $element->element_modified_on,
         ];
 
         switch ($element->element_type) {
-            case 'INPT':
+            case 'EMER':
                 return array_merge($baseData, [
                     'income_or_expense' => 'INCOME',
                     'doctor_id' => $this->getCachedUser($element->doctor_id)?->id,
                     'patient_id' => $this->getCachedPatient($element->patient_id)?->id,
                     'service_id' => $this->getCachedService($element->service_id, $this->mapServiceType($element->element_type))?->id,
-                    'service_recestation_id' => null,
-                    'expense_id' => null,
-                    'exp_voucher_id' => null,
                     'type' => $this->mapServiceType($element->element_type),
                 ]);
             case 'OPD':
-            case 'EMER':
+                return array_merge($baseData, [
+                    'income_or_expense' => 'INCOME',
+                    'doctor_id' => $this->getCachedUser($element->doctor_id)?->id,
+                    'patient_id' => $this->getCachedPatient($element->patient_id)?->id,
+                    'service_id' => $this->getCachedService($element->service_id, $this->mapServiceType($element->element_type))?->id,
+                    'type' => $this->mapServiceType($element->element_type),
+                ]);
             case 'DENTAL':
+                return array_merge($baseData, [
+                    'income_or_expense' => 'INCOME',
+                    'doctor_id' => $this->getCachedUser($element->doctor_id)?->id,
+                    'patient_id' => $this->getCachedPatient($element->patient_id)?->id,
+                    'service_id' => $this->getCachedService($element->service_id, $this->mapServiceType($element->element_type))?->id,
+                    'type' => $this->mapServiceType($element->element_type),
+                ]);
             case 'ULTRA':
                 return array_merge($baseData, [
                     'income_or_expense' => 'INCOME',
                     'doctor_id' => $this->getCachedUser($element->doctor_id)?->id,
                     'patient_id' => $this->getCachedPatient($element->patient_id)?->id,
                     'service_id' => $this->getCachedService($element->service_id, $this->mapServiceType($element->element_type))?->id,
+                    'type' => $this->mapServiceType($element->element_type),
+                ]);
+            case 'INPT':
+                $inpatient = DB::connection('secondary')
+                    ->table('inpatient_transactions as inpatient_transactions')
+                    ->where('inpatient_transactions.id', $element->element_department_transaction_id)
+                    ->leftJoin('inpatient_file', 'inpatient_transactions.file_id', '=', 'inpatient_file.id')
+                    ->select([
+                        'inpatient_transactions.*',
+                        'inpatient_file.id as inpatient_file_old_id',
+                        'inpatient_file.panel_id as inpatient_file_panel_id',
+                        'inpatient_file.treatment_by as inpatient_file_treatment_by',
+                        'inpatient_file.patient_id as inpatient_file_patient_id',
+                        'inpatient_file.inpatient_patient_id as inpatient_file_inpatient_patient_id',
+                        'inpatient_file.status as inpatient_file_status',
+                        'inpatient_file.patient_discomfort as inpatient_file_patient_discomfort',
+                        'inpatient_file.patient_bleed_excess as inpatient_file_patient_bleed_excess',
+                        'inpatient_file.already_medication as inpatient_file_already_medication',
+                        'inpatient_file.patient_smoker as inpatient_file_patient_smoker',
+                        'inpatient_file.patient_smoking_frequency as inpatient_file_patient_smoking_frequency',
+                        'inpatient_file.is_diabetic as inpatient_file_is_diabetic',
+                        'inpatient_file.tuberculosis as inpatient_file_tuberculosis',
+                        'inpatient_file.hepatitis as inpatient_file_hepatitis',
+                        'inpatient_file.epilepsy as inpatient_file_epilepsy',
+                        'inpatient_file.rheumatic as inpatient_file_rheumatic',
+                        'inpatient_file.hiv as inpatient_file_hiv',
+                        'inpatient_file.is_heart_patient as inpatient_file_is_heart_patient',
+                        'inpatient_file.is_allergietic as inpatient_file_is_allergietic',
+                        'inpatient_file.prefer_anesthetic as inpatient_file_prefer_anesthetic',
+                        'inpatient_file.is_pregnant as inpatient_file_is_pregnant',
+                        'inpatient_file.patient_discomfirt_start as inpatient_file_patient_discomfirt_start',
+                        'inpatient_file.patient_is_first_visit as inpatient_file_patient_is_first_visit',
+                        'inpatient_file.patient_last_visit as inpatient_file_patient_last_visit',
+                        'inpatient_file.patient_last_visit_process as inpatient_file_patient_last_visit_process',
+                        'inpatient_file.patient_physician as inpatient_file_patient_physician',
+                        'inpatient_file.patient_physician_phone as inpatient_file_patient_physician_phone',
+                        'inpatient_file.patient_last_examination as inpatient_file_patient_last_examination',
+                        'inpatient_file.patient_under_medical as inpatient_file_patient_under_medical',
+                        'inpatient_file.service_id as inpatient_file_service_id',
+                        'inpatient_file.service_name as inpatient_file_service_name',
+                        'inpatient_file.room_id as inpatient_file_room_id',
+                        'inpatient_file.room_name as inpatient_file_room_name',
+                        'inpatient_file.panel_name as inpatient_file_panel_name',
+                        'inpatient_file.file_orignal_charges as inpatient_file_file_orignal_charges',
+                        'inpatient_file.file_charges as inpatient_file_file_charges',
+                        'inpatient_file.declared_loss as inpatient_file_declared_loss',
+                        'inpatient_file.declared_loss_by as inpatient_file_declared_loss_by',
+                        'inpatient_file.file_charges_paid as inpatient_file_file_charges_paid',
+                        'inpatient_file.open_on as inpatient_file_open_on',
+                        'inpatient_file.closed_on as inpatient_file_closed_on',
+                        'inpatient_file.will_occure_on as inpatient_file_will_occure_on',
+                        'inpatient_file.is_visiting as inpatient_file_is_visiting',
+                        'inpatient_file.modified_on as inpatient_file_modified_on',
+                        'inpatient_file.created_on as inpatient_file_created_on',
+
+                    ])
+                    ->first();
+                    
+                return array_merge($baseData, [
+                    'income_or_expense' => 'INCOME',
+                    'doctor_id' => $this->getCachedUser($inpatient->inpatient_file_treatment_by)?->id,
+                    'patient_id' => $this->getCachedPatient($inpatient->inpatient_file_patient_id)?->id,
+                    'service_id' => $this->getCachedService($inpatient->inpatient_file_service_id, $this->mapServiceType($element->element_type))?->id,
                     'service_recestation_id' => null,
                     'expense_id' => null,
                     'exp_voucher_id' => null,
                     'type' => $this->mapServiceType($element->element_type),
+                    'service_order' => $this->prepareSericeInpatientOrder($inpatient),
                 ]);
 
             case 'RECES':
@@ -1175,9 +1548,188 @@ class FetchOldHIMS extends Command
                     'exp_voucher_id' => null,
                     'type' => 'RECES-IND',
                 ]);
+            case 'INPT-EXP':
+                $inpatientExpense = DB::connection('secondary')
+                                        ->table('inpatient_expense_transactions as inpatient_expense_transactions')
+                                        ->where('inpatient_expense_transactions.id', $element->element_department_transaction_id)
+                                        ->leftJoin('inpatient_file', 'inpatient_expense_transactions.file_id', '=', 'inpatient_file.id')
+                                        ->select([
+                                            'inpatient_expense_transactions.*',
+                                            'inpatient_file.id as inpatient_file_old_id',
+                                            'inpatient_file.panel_id as inpatient_file_panel_id',
+                                            'inpatient_file.treatment_by as inpatient_file_treatment_by',
+                                            'inpatient_file.patient_id as inpatient_file_patient_id',
+                                            'inpatient_file.inpatient_patient_id as inpatient_file_inpatient_patient_id',
+                                            'inpatient_file.status as inpatient_file_status',
+                                            'inpatient_file.patient_discomfort as inpatient_file_patient_discomfort',
+                                            'inpatient_file.patient_bleed_excess as inpatient_file_patient_bleed_excess',
+                                            'inpatient_file.already_medication as inpatient_file_already_medication',
+                                            'inpatient_file.patient_smoker as inpatient_file_patient_smoker',
+                                            'inpatient_file.patient_smoking_frequency as inpatient_file_patient_smoking_frequency',
+                                            'inpatient_file.is_diabetic as inpatient_file_is_diabetic',
+                                            'inpatient_file.tuberculosis as inpatient_file_tuberculosis',
+                                            'inpatient_file.hepatitis as inpatient_file_hepatitis',
+                                            'inpatient_file.epilepsy as inpatient_file_epilepsy',
+                                            'inpatient_file.rheumatic as inpatient_file_rheumatic',
+                                            'inpatient_file.hiv as inpatient_file_hiv',
+                                            'inpatient_file.is_heart_patient as inpatient_file_is_heart_patient',
+                                            'inpatient_file.is_allergietic as inpatient_file_is_allergietic',
+                                            'inpatient_file.prefer_anesthetic as inpatient_file_prefer_anesthetic',
+                                            'inpatient_file.is_pregnant as inpatient_file_is_pregnant',
+                                            'inpatient_file.patient_discomfirt_start as inpatient_file_patient_discomfirt_start',
+                                            'inpatient_file.patient_is_first_visit as inpatient_file_patient_is_first_visit',
+                                            'inpatient_file.patient_last_visit as inpatient_file_patient_last_visit',
+                                            'inpatient_file.patient_last_visit_process as inpatient_file_patient_last_visit_process',
+                                            'inpatient_file.patient_physician as inpatient_file_patient_physician',
+                                            'inpatient_file.patient_physician_phone as inpatient_file_patient_physician_phone',
+                                            'inpatient_file.patient_last_examination as inpatient_file_patient_last_examination',
+                                            'inpatient_file.patient_under_medical as inpatient_file_patient_under_medical',
+                                            'inpatient_file.service_id as inpatient_file_service_id',
+                                            'inpatient_file.service_name as inpatient_file_service_name',
+                                            'inpatient_file.room_id as inpatient_file_room_id',
+                                            'inpatient_file.room_name as inpatient_file_room_name',
+                                            'inpatient_file.panel_name as inpatient_file_panel_name',
+                                            'inpatient_file.file_orignal_charges as inpatient_file_file_orignal_charges',
+                                            'inpatient_file.file_charges as inpatient_file_file_charges',
+                                            'inpatient_file.declared_loss as inpatient_file_declared_loss',
+                                            'inpatient_file.declared_loss_by as inpatient_file_declared_loss_by',
+                                            'inpatient_file.file_charges_paid as inpatient_file_file_charges_paid',
+                                            'inpatient_file.open_on as inpatient_file_open_on',
+                                            'inpatient_file.closed_on as inpatient_file_closed_on',
+                                            'inpatient_file.will_occure_on as inpatient_file_will_occure_on',
+                                            'inpatient_file.is_visiting as inpatient_file_is_visiting',
+                                            'inpatient_file.modified_on as inpatient_file_modified_on',
+                                            'inpatient_file.created_on as inpatient_file_created_on',
+
+                                        ])
+                                        ->first();
+                
+                return array_merge($baseData, [
+                    'income_or_expense' => 'EXPENSE',
+                    'doctor_id' => $inpatientExpense ? $this->getCachedUser($inpatientExpense->inpatient_file_treatment_by)?->id : null,
+                    'patient_id' => $inpatientExpense ? $this->getCachedPatient($inpatientExpense->inpatient_file_patient_id)?->id : null,
+                    'service_id' => $this->getCachedService($inpatientExpense->inpatient_file_service_id, 'IND')?->id,
+                    'type' => 'INPT-EXP',
+                    'service_order' => $this->prepareSericeInpatientOrder($inpatientExpense),
+                ]);
+            case 'EXP':
+                
+                $expense = DB::connection('secondary')->table('expenses')->where('id', $element->element_department_transaction_id)->first();
+                return array_merge($baseData, [
+                    'income_or_expense' => 'EXPENSE',
+                    'type' => $this->mapServiceType($element->element_type),
+                    'expense' => $expense ? $this->parseExpense($expense) : null,
+                ]);
+            case 'VOUCHER-PAY':
+                $expense = DB::connection('secondary')
+                    ->table('expenses')
+                    ->where('expenses.id', $element->element_department_transaction_id)
+                    ->leftJoin('expense_vouchers', 'expenses.voucher_id', '=', 'expense_vouchers.id')
+                    ->select([
+                        'expenses.*',
+                        'expense_vouchers.id as voucher_id',
+                        'expense_vouchers.exp_category_id as voucher_exp_category_id',
+                        'expense_vouchers.inpatient_file_id as voucher_inpatient_file_id',
+                        'expense_vouchers.exp_amount_numbers as voucher_exp_amount_numbers',
+                        'expense_vouchers.exp_amount_words as voucher_exp_amount_words',
+                        'expense_vouchers.payed_to_employee as voucher_payed_to_employee',
+                        'expense_vouchers.payed_to_others as voucher_payed_to_others',
+                        'expense_vouchers.employee_id as voucher_employee_id',
+                        'expense_vouchers.expense_notes as voucher_expense_notes',
+                        'expense_vouchers.created_on as voucher_created_on',
+                        'expense_vouchers.modified_on as voucher_modified_on',
+                    ])
+                    ->first();
+                return array_merge($baseData, [
+                    'income_or_expense' => 'EXPENSE',
+                    'type' => $this->mapServiceType($element->element_type),
+                    'expense' => $expense ? $this->parseExpense($expense) : null,
+                    'voucher' => $expense ? $this->parseExpenseElementVoucher($expense) : null,
+                ]);
+
         }
 
         return null;
+    }
+
+    protected function parseExpense($expense){
+        return [
+            'old_id' => $expense->id,
+            'category_id' => $expense->category_id,
+            'voucher_id' => $expense->voucher_id,
+            'payment_reference' => $expense->payment_reference,
+            'created_on' => $expense->created_on,
+            'modified_on' => $expense->modified_on
+        ];
+    }
+
+    protected function parseExpenseElementVoucher($expense){
+        return [
+            'old_id' => $expense->voucher_id,
+            'exp_category_id' => $expense->voucher_exp_category_id,
+            'inpatient_file_id' => $expense->voucher_inpatient_file_id,
+            'exp_amount_numbers' => $expense->voucher_exp_amount_numbers,
+            'exp_amount_words' => $expense->voucher_exp_amount_words,
+            'payed_to_employee' => $expense->voucher_payed_to_employee,
+            'payed_to_others' => $expense->voucher_payed_to_others,
+            'employee_id' => $expense->voucher_employee_id,
+            'expense_notes' => $expense->voucher_expense_notes,
+            'created_on' => $expense->voucher_created_on,
+            'modified_on' => $expense->voucher_modified_on
+        ];
+    }
+
+
+    protected function prepareSericeInpatientOrder($element)
+    {
+        return [
+            'old_id' => $element->inpatient_file_old_id,
+            'inpatient_file_panel_id' => $element->inpatient_file_panel_id,
+            'inpatient_file_treatment_by' => $element->inpatient_file_treatment_by,
+            'inpatient_file_patient_id' => $element->inpatient_file_patient_id,
+            'inpatient_file_inpatient_patient_id' => $element->inpatient_file_inpatient_patient_id,
+            'inpatient_file_status' => $element->inpatient_file_status,
+            'inpatient_file_patient_discomfort' => $element->inpatient_file_patient_discomfort,
+            'inpatient_file_patient_bleed_excess' => $element->inpatient_file_patient_bleed_excess,
+            'inpatient_file_already_medication' => $element->inpatient_file_already_medication,
+            'inpatient_file_patient_smoker' => $element->inpatient_file_patient_smoker,
+            'inpatient_file_patient_smoking_frequency' => $element->inpatient_file_patient_smoking_frequency,
+            'inpatient_file_is_diabetic' => $element->inpatient_file_is_diabetic,
+            'inpatient_file_tuberculosis' => $element->inpatient_file_tuberculosis,
+            'inpatient_file_hepatitis' => $element->inpatient_file_hepatitis,
+            'inpatient_file_epilepsy' => $element->inpatient_file_epilepsy,
+            'inpatient_file_rheumatic' => $element->inpatient_file_rheumatic,
+            'inpatient_file_hiv' => $element->inpatient_file_hiv,
+            'inpatient_file_is_heart_patient' => $element->inpatient_file_is_heart_patient,
+            'inpatient_file_is_allergietic' => $element->inpatient_file_is_allergietic,
+            'inpatient_file_prefer_anesthetic' => $element->inpatient_file_prefer_anesthetic,
+            'inpatient_file_is_pregnant' => $element->inpatient_file_is_pregnant,
+            'inpatient_file_patient_discomfirt_start' => $element->inpatient_file_patient_discomfirt_start,
+            'inpatient_file_patient_is_first_visit' => $element->inpatient_file_patient_is_first_visit,
+            'inpatient_file_patient_last_visit' => $element->inpatient_file_patient_last_visit,
+            'inpatient_file_patient_last_visit_process' => $element->inpatient_file_patient_last_visit_process,
+            'inpatient_file_patient_physician' => $element->inpatient_file_patient_physician,
+            'inpatient_file_patient_physician_phone' => $element->inpatient_file_patient_physician_phone,
+            'inpatient_file_patient_last_examination' => $element->inpatient_file_patient_last_examination,
+            'inpatient_file_patient_under_medical' => $element->inpatient_file_patient_under_medical,
+            'inpatient_file_service_id' => $element->inpatient_file_service_id,
+            'inpatient_file_service_name' => $element->inpatient_file_service_name,
+            'inpatient_file_room_id' => $element->inpatient_file_room_id,
+            'inpatient_file_room_name' => $element->inpatient_file_room_name,
+            'inpatient_file_panel_name' => $element->inpatient_file_panel_name,
+            'inpatient_file_file_orignal_charges' => $element->inpatient_file_file_orignal_charges,
+            'inpatient_file_file_charges' => $element->inpatient_file_file_charges,
+            'inpatient_file_declared_loss' => $element->inpatient_file_declared_loss,
+            'inpatient_file_declared_loss_by' => $element->inpatient_file_declared_loss_by,
+            'inpatient_file_file_charges_paid' => $element->inpatient_file_file_charges_paid,
+            'inpatient_file_open_on' => $element->inpatient_file_open_on,
+            'inpatient_file_closed_on' => $element->inpatient_file_closed_on,
+            'inpatient_file_will_occure_on' => $element->inpatient_file_will_occure_on,
+            'inpatient_file_is_visiting' => $element->inpatient_file_is_visiting,
+            'inpatient_file_modified_on' => $element->inpatient_file_modified_on,
+            'inpatient_file_created_on' => $element->inpatient_file_created_on,
+        ];
+
     }
 
     /**
@@ -1186,11 +1738,14 @@ class FetchOldHIMS extends Command
     protected function mapServiceType($type)
     {
         return match($type) {
-            'OPD' => 'OPD',
-            'INPT' => 'IND',
-            'EMER' => 'EMG',
-            'DENTAL' => 'DNT',
-            'ULTRA' => 'ULT',
+            'OPD' => TransactionElementType::OPD,
+            'INPT' => TransactionElementType::IND,
+            'EMER' => TransactionElementType::EMG,
+            'DENTAL' => TransactionElementType::DNT,
+            'ULTRA' => TransactionElementType::ULT,
+            'EXP' => TransactionElementType::PETTY_CASH,
+            'VOUCHER-PAY' => TransactionElementType::VOUCHER_PAY,
+            'INPT-EXP' => TransactionElementType::IND_EXP,
             default => $type
         };
     }
@@ -1287,6 +1842,9 @@ class FetchOldHIMS extends Command
 
     protected function getCachedService($id, $type)
     {
+        // Enum for service type to ensure consistent keys
+        $type = $type instanceof TransactionElementType ? $type->name : $type;
+        
         $key = "{$type}_{$id}";
         
         if (!isset($this->serviceCache[$key])) {

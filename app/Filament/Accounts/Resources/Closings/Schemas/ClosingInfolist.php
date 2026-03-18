@@ -42,27 +42,51 @@ class ClosingInfolist
                             ]),
                         Tabs\Tab::make('Services Report')
                             ->schema([
-                                ViewEntry::make('closing_overview')
+                                ViewEntry::make('services_report')
                                     ->label(false)
                                     ->view('filament.accounts.closings.infolists.closing-overview')
                                     ->viewData(fn (Closing $record) => [
                                         'closing' => $record,
                                         'transactions' => $record->transactions(),
-                                        'printUrl' => self::buildPrintUrl($record),
+                                        'printUrl' => self::buildReportUrl($record, 'services'),
                                     ])
                                     ->columnSpanFull(),  
                             ]),
                         Tabs\Tab::make('Income Report')
                             ->schema([
-                                // ...
+                                ViewEntry::make('income_report')
+                                    ->label(false)
+                                    ->view('filament.accounts.closings.infolists.closing-overview')
+                                    ->viewData(fn (Closing $record) => [
+                                        'closing' => $record,
+                                        'transactions' => $record->transactions(),
+                                        'printUrl' => self::buildReportUrl($record, 'income'),
+                                    ])
+                                    ->columnSpanFull(),  
                             ]),
                         Tabs\Tab::make('Expense Report')
                             ->schema([
-                                // ...
+                                ViewEntry::make('expense_report')
+                                    ->label(false)
+                                    ->view('filament.accounts.closings.infolists.closing-overview')
+                                    ->viewData(fn (Closing $record) => [
+                                        'closing' => $record,
+                                        'transactions' => $record->transactions(),
+                                        'printUrl' => self::buildReportUrl($record, 'expense'),
+                                    ])
+                                    ->columnSpanFull(),  
                             ]),
                         Tabs\Tab::make('Receivables Report')
                             ->schema([
-                                // ...
+                                ViewEntry::make('receivables_report')
+                                    ->label(false)
+                                    ->view('filament.accounts.closings.infolists.closing-overview')
+                                    ->viewData(fn (Closing $record) => [
+                                        'closing' => $record,
+                                        'transactions' => $record->transactions(),
+                                        'printUrl' => self::buildReportUrl($record, 'receivables'),
+                                    ])
+                                    ->columnSpanFull(),  
                             ]),
                     ])
                     ->columnSpanFull(),
@@ -99,6 +123,22 @@ class ClosingInfolist
             'month' => $parts['month'],
             'number' => $parts['number'],
             'variant' => 'normal',
+        ]);
+    }
+
+    protected static function buildReportUrl(Closing $record, string $report): ?string
+    {
+        $parts = $record->ct_number_parts ?? [];
+
+        if (empty($parts['year']) || empty($parts['month']) || empty($parts['number'])) {
+            return null;
+        }
+
+        return route('print-closing-statement', [
+            'year' => $parts['year'],
+            'month' => $parts['month'],
+            'number' => $parts['number'],
+            'report' => $report,
         ]);
     }
 }

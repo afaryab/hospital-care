@@ -31,20 +31,50 @@ class ClosingStatementPdfPrintController extends Controller
     {
         // Generate CT number from URL parameters
         $ctNumber = "CT/{$year}/{$month}/{$number}";
-        
-        // Find the closing record
+
+        // Determine report type
+        $report = $request->query('report');
+        $allowedReports = ['income', 'expense', 'receivables', 'services'];
+
+        // Find the closing record with appropriate eager loading
+        $eagerLoads = [
+            'reception',
+            'receptionist',
+            'transactions.elements.patient',
+            'transactions.elements.service',
+            'transactions.elements.doctor',
+        ];
+
+        if ($report === 'receivables' || $report === 'income') {
+            $eagerLoads[] = 'transactions.receaveable.patient';
+            $eagerLoads[] = 'transactions.receaveable.panel';
+        }
+
+        if ($report === 'services') {
+            $eagerLoads[] = 'transactions.elements.serviceOrder';
+            $eagerLoads[] = 'transactions.elements.serviceRecestation';
+            $eagerLoads[] = 'transactions.elements.expenseCategory';
+            $eagerLoads[] = 'transactions.elements.expVoucher.payedTo';
+        }
+
+        if ($report === 'expense') {
+            $eagerLoads[] = 'transactions.elements.expenseCategory';
+            $eagerLoads[] = 'transactions.elements.expVoucher.payedTo';
+            $eagerLoads[] = 'transactions.elements.expVoucher.expCategory';
+        }
+
         $closing = Closing::where('ct_number', $ctNumber)
-            ->with([
-                'reception',
-                'receptionist',
-                'transactions.elements.patient',
-                'transactions.elements.service',
-                'transactions.elements.doctor'
-            ])
+            ->with($eagerLoads)
             ->first();
 
         if (!$closing) {
             abort(404, "Closing statement {$ctNumber} not found");
+        }
+
+        // If a specific report type is requested, generate that report
+        if ($report && in_array($report, $allowedReports)) {
+            $data = $this->prepareClosingData($closing);
+            return $this->generateReportPdf($data, $report, $closing);
         }
 
         // Get version (mini for thermal printer, normal for A4/legal)
@@ -94,6 +124,12 @@ class ClosingStatementPdfPrintController extends Controller
                 'change' => $transaction->change,
                 'edited_amount' => $transaction->edited_amount,
                 'created_at' => $transaction->created_at,
+                'is_refunded' => $transaction->is_refunded,
+                'has_receaveable' => $transaction->receaveable !== null,
+                'receaveable_amount' => $transaction->receaveable?->amount,
+                'receaveable_patient' => $transaction->receaveable?->patient?->name,
+                'receaveable_panel' => $transaction->receaveable?->panel?->name,
+                'receaveable_status' => $transaction->receaveable?->status ?? 'PENDING',
                 'elements' => []
             ];
 
@@ -261,6 +297,184 @@ class ClosingStatementPdfPrintController extends Controller
             ]);
 
             abort(500, 'PDF generation failed');
+        }
+    }
+
+    /**
+     * Generate a specific report PDF (income, expense, receivables, services)
+     */
+    private function generateReportPdf(array $data, string $report, Closing $closing): Response
+    {
+        $reportData = array_merge($data, [
+            'closing_model' => $closing,
+        ]);
+
+        // Build receivables data for the receivables report
+        if ($report === 'receivables') {
+            $receivables = [];
+            $totalReceivables = 0;
+            foreach ($closing->transactions as $transaction) {
+                if ($transaction->receaveable) {
+                    $receivables[] = [
+                        'transaction_number' => $transaction->tr_number,
+                        'patient_name' => $transaction->receaveable->patient?->name ?? 'N/A',
+                        'panel_name' => $transaction->receaveable->panel?->name ?? 'N/A',
+                        'amount' => $transaction->receaveable->amount,
+                        'due_date' => $transaction->receaveable->due_date,
+                        'status' => $transaction->receaveable->status ?? 'PENDING',
+                        'created_at' => $transaction->created_at,
+                    ];
+                    $totalReceivables += $transaction->receaveable->amount;
+                }
+            }
+            $reportData['receivables'] = $receivables;
+            $reportData['total_receivables'] = $totalReceivables;
+        }
+
+        // Build services data grouped by Service → Service Provider, with expenses paid
+        if ($report === 'services') {
+            // Group income by service → doctor
+            $serviceGroups = [];
+            $totalServiceIncome = 0;
+            foreach ($closing->transactions as $transaction) {
+                if ($transaction->income_or_expense !== 'INCOME') continue;
+                foreach ($transaction->elements as $element) {
+                    if (!$element->service) continue;
+                    $serviceName = $element->service->name ?? 'Unknown Service';
+                    $doctorName = $element->doctor?->name ?? 'No Provider';
+                    $doctorId = $element->doctor_id ?? 0;
+
+                    if (!isset($serviceGroups[$serviceName])) {
+                        $serviceGroups[$serviceName] = [
+                            'service_name' => $serviceName,
+                            'providers' => [],
+                            'total_income' => 0,
+                        ];
+                    }
+                    if (!isset($serviceGroups[$serviceName]['providers'][$doctorId])) {
+                        $serviceGroups[$serviceName]['providers'][$doctorId] = [
+                            'doctor_name' => $doctorName,
+                            'doctor_id' => $doctorId,
+                            'items' => [],
+                            'total_income' => 0,
+                            'total_expense' => 0,
+                        ];
+                    }
+                    $serviceGroups[$serviceName]['providers'][$doctorId]['items'][] = [
+                        'transaction_number' => $transaction->tr_number,
+                        'patient_name' => $element->patient?->name ?? 'N/A',
+                        'service_recestation' => $element->serviceRecestation?->name,
+                        'amount' => $element->amount,
+                        'type' => $transaction->type,
+                        'created_at' => $transaction->created_at,
+                    ];
+                    $serviceGroups[$serviceName]['providers'][$doctorId]['total_income'] += $element->amount;
+                    $serviceGroups[$serviceName]['total_income'] += $element->amount;
+                    $totalServiceIncome += $element->amount;
+                }
+            }
+
+            // Collect expenses paid to each doctor from this closing
+            $expensesByDoctor = [];
+            $totalExpensePaid = 0;
+            foreach ($closing->transactions as $transaction) {
+                if (!in_array($transaction->income_or_expense, ['EXPENSE', 'VOUCHER-PAY'])) continue;
+                foreach ($transaction->elements as $element) {
+                    $payedToId = $element->expVoucher?->payed_to ?? 0;
+                    $payedToName = $element->expVoucher?->payedTo?->name ?? $element->expVoucher?->payed_to_name ?? null;
+                    if (!$payedToId && !$payedToName) continue;
+
+                    $key = $payedToId ?: ('name:' . $payedToName);
+                    if (!isset($expensesByDoctor[$key])) {
+                        $expensesByDoctor[$key] = [
+                            'doctor_name' => $payedToName ?? 'Unknown',
+                            'total' => 0,
+                            'items' => [],
+                        ];
+                    }
+                    $expensesByDoctor[$key]['total'] += $element->amount;
+                    $expensesByDoctor[$key]['items'][] = [
+                        'category' => $element->expenseCategory?->name ?? 'N/A',
+                        'voucher' => $element->expVoucher?->vc_number,
+                        'amount' => $element->amount,
+                    ];
+                    $totalExpensePaid += $element->amount;
+
+                    // Also attach to the provider in service groups
+                    foreach ($serviceGroups as &$sg) {
+                        if (isset($sg['providers'][$payedToId])) {
+                            $sg['providers'][$payedToId]['total_expense'] += $element->amount;
+                        }
+                    }
+                    unset($sg);
+                }
+            }
+
+            // Convert providers arrays from keyed to indexed
+            foreach ($serviceGroups as &$sg) {
+                $sg['providers'] = array_values($sg['providers']);
+            }
+            unset($sg);
+
+            $reportData['service_groups'] = array_values($serviceGroups);
+            $reportData['expenses_by_doctor'] = array_values($expensesByDoctor);
+            $reportData['total_service_income'] = $totalServiceIncome;
+            $reportData['total_expense_paid'] = $totalExpensePaid;
+        }
+
+        // Build expense details for expense report
+        if ($report === 'expense') {
+            $expenses = [];
+            $totalExpenses = 0;
+            foreach ($closing->transactions as $transaction) {
+                if (!in_array($transaction->income_or_expense, ['EXPENSE', 'VOUCHER-PAY'])) continue;
+                foreach ($transaction->elements as $element) {
+                    // For voucher payments, get category from the voucher itself
+                    $categoryName = $element->expenseCategory?->name ?? 'N/A';
+                    if ($transaction->income_or_expense === 'VOUCHER-PAY' && $element->expVoucher?->expCategory) {
+                        $categoryName = $element->expVoucher->expCategory->name;
+                    }
+
+                    $expenses[] = [
+                        'transaction_number' => $transaction->tr_number,
+                        'category_name' => $categoryName,
+                        'voucher_number' => $element->expVoucher?->vc_number,
+                        'paid_to' => $element->expVoucher?->payedTo?->name,
+                        'amount' => $element->amount,
+                        'type' => $transaction->type,
+                        'income_or_expense' => $transaction->income_or_expense,
+                        'notes' => $transaction->notes,
+                        'created_at' => $transaction->created_at,
+                    ];
+                    $totalExpenses += $element->amount;
+                }
+            }
+            $reportData['expenses'] = $expenses;
+            $reportData['total_expenses_detail'] = $totalExpenses;
+        }
+
+        $viewName = 'pdfs.closing-statement.report-' . $report;
+
+        try {
+            $pdf = Pdf::setOption(['defaultFont' => 'Helvetica'])
+                ->loadView($viewName, $reportData);
+            $pdf->setPaper('A4', 'portrait');
+
+            $filename = sprintf('%s-report-%s.pdf', $report, $data['closing']['ct_number']);
+
+            return response($pdf->output(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                'Cache-Control' => 'private, max-age=0, must-revalidate',
+                'Pragma' => 'public',
+            ]);
+        } catch (Throwable $e) {
+            Log::error("Closing {$report} report PDF generation failed", [
+                'ct_number' => $data['closing']['ct_number'] ?? null,
+                'report' => $report,
+                'message' => $e->getMessage(),
+            ]);
+            abort(500, 'Report PDF generation failed');
         }
     }
 

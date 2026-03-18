@@ -97,7 +97,7 @@ class Transaction extends Model
 
     public function receaveable()
     {
-        return $this->belongsTo(Receaveable::class, 'receaveable_id');
+        return $this->hasOne(Receaveable::class, 'transaction_id');
     }
 
     public function closing()
