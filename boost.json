@@ -18,6 +18,7 @@
         "pest-testing",
         "inertia-react-development",
         "tailwindcss-development",
-        "laravel-specialist"
+        "laravel-specialist",
+        "php-pro"
     ]
 }
