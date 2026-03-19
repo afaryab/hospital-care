@@ -295,8 +295,10 @@ php artisan test --compact tests/Feature/Auth/        # Specific directory
 **Code Quality:**
 ```bash
 vendor/bin/pint --dirty   # Format only modified PHP files
-pnpm run lint             # Fix JS/TS lint issues
-pnpm run format           # Fix formatting issues
+pnpm run build:ssr        # SSR build (must pass before PR)
+pnpm run format:check     # Verify formatting (no auto-fix)
+pnpm run lint             # ESLint check
+pnpm run types            # TypeScript type check
 ```
 
 ### Branching & PR Rules
@@ -324,7 +326,10 @@ git checkout -b feature/my-feature
 
 # Run tests before requesting review
 php artisan test --compact
-pnpm run build
+pnpm run build:ssr
+pnpm run format:check
+pnpm run lint
+pnpm run types
 vendor/bin/pint --dirty
 
 # Push only after approval
@@ -335,9 +340,11 @@ git push origin feature/my-feature
 - [ ] Branch created from latest `main`
 - [ ] Changes are scoped to the requested task
 - [ ] All tests pass (`php artisan test --compact`)
-- [ ] Frontend builds without errors (`pnpm run build`)
+- [ ] SSR build passes (`pnpm run build:ssr`)
+- [ ] Code formatting verified (`pnpm run format:check`)
+- [ ] No lint errors (`pnpm run lint`)
+- [ ] No TypeScript errors (`pnpm run types`)
 - [ ] PHP code formatted (`vendor/bin/pint --dirty`)
-- [ ] JS/TS code formatted (`pnpm run format`)
 - [ ] Summary of changes provided
 - [ ] No direct commits to `main`
 

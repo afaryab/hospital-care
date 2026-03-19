@@ -99,3 +99,29 @@ livewire(EditUser::class, ['record' => $user->id])
 - Most tests should be feature tests (not unit)
 - Run minimum tests needed: filter by file or name for speed
 - Do NOT delete existing tests without approval
+
+---
+
+## Pre-PR Verification (Mandatory)
+
+Before marking any task complete or requesting commit approval, **all** of these checks must pass:
+
+```bash
+# Backend
+php artisan test --compact
+vendor/bin/pint --dirty
+
+# Frontend (all four must pass)
+pnpm run build:ssr
+pnpm run format:check
+pnpm run lint
+pnpm run types
+```
+
+**Rules:**
+- Do not skip any of these checks — a failing check means the task is not complete.
+- Fix all errors before summarizing changes to the user.
+- If `pnpm run types` reports TypeScript errors, fix them in the source files.
+- If `pnpm run lint` reports ESLint errors, fix them (do not use `--fix` silently — review each change).
+- If `pnpm run format:check` fails, run `pnpm run format` to fix, then re-run `format:check` to confirm.
+- Use `pnpm run build:ssr` (not `build`) to ensure SSR compatibility.
