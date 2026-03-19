@@ -12,6 +12,7 @@ export default {
         "./app/Filament/**/*.php",
         "./resources/views/filament/**/*.blade.php",
         "./vendor/filament/**/*.blade.php",
+        "./vendor/andreia/filament-ui-switcher/resources/views/livewire/ui-switcher.blade.php",
     ],
     corePlugins: { preflight: true },
     safelist: [
@@ -19,7 +20,7 @@ export default {
         // other patterns as required...
     ],
     theme: {
-        screen: {
+        screens: {
             'xs': '480px',
             'sm': '640px',
             'md': '768px',

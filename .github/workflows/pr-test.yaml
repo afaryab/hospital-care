@@ -88,6 +88,22 @@ jobs:
       - name: Run migrations
         run: docker exec test-runner php artisan migrate --force
 
+      # --- Filament checks ---
+      - name: Filament resource validation
+        run: |
+          # Verify all Filament panels boot without errors
+          docker exec test-runner php artisan filament:about --no-interaction
+
+          # Verify all routes (including Filament resource routes) register successfully
+          docker exec test-runner php artisan route:list --no-interaction > /dev/null
+
+          # Check Filament translation integrity (non-blocking warning)
+          docker exec test-runner php artisan filament:check-translations --no-interaction || true
+
+          # Verify Filament components can be cached (catches broken resource configs)
+          docker exec test-runner php artisan filament:cache-components --no-interaction
+          docker exec test-runner php artisan filament:clear-cached-components --no-interaction
+
       # --- Backend checks ---
       - name: Run Pest tests with coverage
         run: docker exec test-runner php artisan test --compact --coverage --min=5

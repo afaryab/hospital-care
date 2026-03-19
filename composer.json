@@ -7,8 +7,10 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "andreia/filament-ui-switcher": "^1.0",
         "barryvdh/laravel-dompdf": "^3.1",
-        "blade-ui-kit/blade-heroicons": "^2.6",
+        "bezhansalleh/filament-panel-switch": "^3.0",
+        "blade-ui-kit/blade-heroicons": "^2.7",
         "filament/filament": "^4.0",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/fortify": "^1.30",

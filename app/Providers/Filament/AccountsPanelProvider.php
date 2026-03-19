@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use Andreia\FilamentUiSwitcher\FilamentUiSwitcherPlugin;
 use App\Filament\Pages\Dashboard;
 use App\Services\Filament\FilamentThemeService;
 use Filament\Http\Middleware\Authenticate;
@@ -10,7 +11,6 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
@@ -35,8 +35,6 @@ class AccountsPanelProvider extends PanelProvider
             ->login()
             ->authGuard('web')
             ->viteTheme('resources/css/filament/theme.css')
-            ->colors(FilamentThemeService::getBrandColors())
-            ->font('Inter')
             ->discoverResources(in: app_path('Filament/Accounts/Resources'), for: 'App\\Filament\\Accounts\\Resources')
             ->discoverPages(in: app_path('Filament/Accounts/Pages'), for: 'App\\Filament\\Accounts\\Pages')
             // ->pages([
@@ -63,6 +61,7 @@ class AccountsPanelProvider extends PanelProvider
             ])
             ->plugins([
                 AbacusPlugin::make(),
+                FilamentUiSwitcherPlugin::make()->withModeSwitcher(),
             ]);
     }
 

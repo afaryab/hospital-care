@@ -2,3 +2,4 @@
 
 @source '../../../app/Filament/Accounts/**/*';
 @source '../../../resources/views/filament/accounts/**/*';
+@source '../../../vendor/andreia/filament-ui-switcher';

@@ -11,6 +11,7 @@ use App\Observers\ExpenseVoucherObserver;
 use App\Observers\PatientObserver;
 use App\Observers\TransactionElementObserver;
 use App\Observers\TransactionObserver;
+use BezhanSalleh\PanelSwitch\PanelSwitch;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -40,6 +41,21 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('viewPulse', function (User $user) {
             return $user->adminProfiles()->count() > 0;
+        });
+
+        PanelSwitch::configureUsing(function (PanelSwitch $panelSwitch): void {
+            $panelSwitch
+                // ->visible(fn (): bool => (bool) auth()->user()?->adminProfiles()?->count())
+                ->panels(['admin', 'accounts'])
+                ->modalHeading('Switch Panel')
+                ->labels([
+                    'admin' => 'Admin',
+                    'accounts' => 'Accounts',
+                ])
+                ->icons([
+                    'admin' => 'heroicon-o-chart-pie',
+                    'accounts' => 'heroicon-o-calculator',
+                ]);
         });
     }
 }
