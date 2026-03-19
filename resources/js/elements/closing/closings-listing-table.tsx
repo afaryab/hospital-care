@@ -38,12 +38,12 @@ const ClosingsListingTable: React.FC<ClosingsListingTableProps> = ({
                             onClick={() => onSelect?.(closing)}
                         >
                             <td className="px-4 py-2 font-mono text-xs">{closing.ct_number}</td>
-                            <td className="px-4 py-2">{closing.reception?.name ?? '—'}</td>
+                            <td className="px-4 py-2">{closing.reception?.name ?? '-'}</td>
                             <td className="px-4 py-2 text-right font-semibold">
                                 <Currency value={closing.opening_amount} />
                             </td>
                             <td className="px-4 py-2 text-right">
-                                {closing.closing_amount != null ? <Currency value={closing.closing_amount} /> : '—'}
+                                {closing.closing_amount != null ? <Currency value={closing.closing_amount} /> : '-'}
                             </td>
                             <td className="px-4 py-2">
                                 <Badge

@@ -40,8 +40,8 @@ const PatientsListingTable: React.FC<PatientsListingTableProps> = ({
                         >
                             <td className="px-4 py-2 font-medium">{patient.name}</td>
                             <td className="px-4 py-2 font-mono text-xs">{patient.ps_number}</td>
-                            <td className="px-4 py-2">{patient.age ?? '—'} yrs</td>
-                            <td className="px-4 py-2 font-mono text-xs">{patient.contact || '—'}</td>
+                            <td className="px-4 py-2">{patient.age ?? '-'} yrs</td>
+                            <td className="px-4 py-2 font-mono text-xs">{patient.contact || '-'}</td>
                             <td className="px-4 py-2">
                                 <Badge variant={genderBadgeVariant(patient.gender)} className="text-xs">
                                     {patient.gender?.toUpperCase()}

@@ -38,7 +38,7 @@ const TransactionsListingTable: React.FC<TransactionsListingTableProps> = ({
                             onClick={() => onSelect?.(tr)}
                         >
                             <td className="px-4 py-2 font-mono text-xs">{tr.tr_number}</td>
-                            <td className="px-4 py-2">{tr.type || '—'}</td>
+                            <td className="px-4 py-2">{tr.type || '-'}</td>
                             <td className="px-4 py-2 text-right font-semibold">
                                 <Currency value={tr.amount} />
                             </td>

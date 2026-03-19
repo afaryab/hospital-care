@@ -1,0 +1,9 @@
+import{c as f,a as _,j as c}from"./utils-q4EKThuO.js";import{B as E}from"./badge-DghL8o_I.js";import{C as g}from"./currency-CQP0FS4i.js";import{q as T,p as j}from"./index-CSrV_1Wb.js";import"./iframe-DOYQQv_f.js";import"./preload-helper-PPVm8Dsz.js";import"./index-BZoqsebz.js";const x=u=>{const e=f.c(16),{transaction:s,className:p}=u;let t;e[0]!==p?(t=_("flex items-center gap-2 min-w-0",p),e[0]=p,e[1]=t):t=e[1];let n;e[2]!==s.tr_number?(n=c.jsx("p",{className:"text-xs font-mono text-muted-foreground",children:s.tr_number}),e[2]=s.tr_number,e[3]=n):n=e[3];let a;e[4]!==s.amount?(a=c.jsx("p",{className:"text-sm font-semibold",children:c.jsx(g,{value:s.amount})}),e[4]=s.amount,e[5]=a):a=e[5];let r;e[6]!==n||e[7]!==a?(r=c.jsxs("div",{className:"min-w-0",children:[n,a]}),e[6]=n,e[7]=a,e[8]=r):r=e[8];const d=s.income_or_expense==="INCOME"?"default":"destructive";let o;e[9]!==d||e[10]!==s.income_or_expense?(o=c.jsx(E,{variant:d,className:"text-xs shrink-0",children:s.income_or_expense}),e[9]=d,e[10]=s.income_or_expense,e[11]=o):o=e[11];let m;return e[12]!==t||e[13]!==r||e[14]!==o?(m=c.jsxs("div",{className:t,children:[r,o]}),e[12]=t,e[13]=r,e[14]=o,e[15]=m):m=e[15],m};x.__docgenInfo={description:"",methods:[],displayName:"TransactionTableElement"};const C={title:"Elements/Transaction/TransactionTableElement",component:x,tags:["autodocs"],parameters:{layout:"padded"}},i={args:{transaction:j}},l={args:{transaction:T}};i.parameters={...i.parameters,docs:{...i.parameters?.docs,source:{originalSource:`{
+  args: {
+    transaction: mockTransaction
+  }
+}`,...i.parameters?.docs?.source}}};l.parameters={...l.parameters,docs:{...l.parameters?.docs,source:{originalSource:`{
+  args: {
+    transaction: mockTransactionExpense
+  }
+}`,...l.parameters?.docs?.source}}};const w=["Income","Expense"];export{l as Expense,i as Income,w as __namedExportsOrder,C as default};

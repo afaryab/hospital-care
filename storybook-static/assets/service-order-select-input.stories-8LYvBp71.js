@@ -1,0 +1,10 @@
+import{c as x,j as l}from"./utils-q4EKThuO.js";import{S as j,a as O,b as _,c as V,d as I}from"./select-CeMtXFSD.js";import{o as D}from"./index-CSrV_1Wb.js";import"./iframe-DOYQQv_f.js";import"./preload-helper-PPVm8Dsz.js";import"./index-DZFZ2dbR.js";import"./index-BjvnQY5g.js";const h=r=>{const e=x.c(13),{options:i,value:n,placeholder:v,onValueChange:u,disabled:S,searchable:b}=r,p=v===void 0?"Select service order":v,m=S===void 0?!1:S,f=b===void 0?!0:b;let a;e[0]!==p?(a=l.jsx(O,{children:l.jsx(_,{placeholder:p})}),e[0]=p,e[1]=a):a=e[1];let t;e[2]!==i?(t=i.map(E),e[2]=i,e[3]=t):t=e[3];let s;e[4]!==f||e[5]!==t?(s=l.jsx(V,{searchable:f,searchPlaceholder:"Search service orders...",children:t}),e[4]=f,e[5]=t,e[6]=s):s=e[6];let c;return e[7]!==m||e[8]!==u||e[9]!==a||e[10]!==s||e[11]!==n?(c=l.jsxs(I,{value:n,onValueChange:u,disabled:m,children:[a,s]}),e[7]=m,e[8]=u,e[9]=a,e[10]=s,e[11]=n,e[12]=c):c=e[12],c};h.__docgenInfo={description:"",methods:[],displayName:"ServiceOrderSelectInput",props:{placeholder:{defaultValue:{value:"'Select service order'",computed:!1},required:!1},disabled:{defaultValue:{value:"false",computed:!1},required:!1},searchable:{defaultValue:{value:"true",computed:!1},required:!1}}};function E(r){return l.jsx(j,{value:r.value,textValue:r.label,children:r.label},r.value)}const g=D.map(r=>({value:r.id?.toString()??r.so_number,label:`${r.so_number} — ${r.type}`,serviceOrder:r})),P={title:"Elements/ServiceOrder/ServiceOrderSelectInput",component:h,tags:["autodocs"],parameters:{layout:"centered"}},o={args:{options:g}},d={args:{options:g,disabled:!0}};o.parameters={...o.parameters,docs:{...o.parameters?.docs,source:{originalSource:`{
+  args: {
+    options
+  }
+}`,...o.parameters?.docs?.source}}};d.parameters={...d.parameters,docs:{...d.parameters?.docs,source:{originalSource:`{
+  args: {
+    options,
+    disabled: true
+  }
+}`,...d.parameters?.docs?.source}}};const T=["Default","Disabled"];export{o as Default,d as Disabled,T as __namedExportsOrder,P as default};

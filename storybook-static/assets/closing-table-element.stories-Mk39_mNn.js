@@ -1,0 +1,9 @@
+import{c as x,a as f,j as l}from"./utils-q4EKThuO.js";import{B as C}from"./badge-DghL8o_I.js";import{C as _}from"./currency-CQP0FS4i.js";import{a as j,m as E}from"./index-CSrV_1Wb.js";import"./iframe-DOYQQv_f.js";import"./preload-helper-PPVm8Dsz.js";import"./index-BZoqsebz.js";const g=u=>{const e=x.c(16),{closing:s,className:d}=u;let t;e[0]!==d?(t=f("flex items-center gap-2 min-w-0",d),e[0]=d,e[1]=t):t=e[1];let o;e[2]!==s.ct_number?(o=l.jsx("p",{className:"text-xs font-mono text-muted-foreground",children:s.ct_number}),e[2]=s.ct_number,e[3]=o):o=e[3];let n;e[4]!==s.opening_amount?(n=l.jsx("p",{className:"text-sm font-semibold",children:l.jsx(_,{value:s.opening_amount})}),e[4]=s.opening_amount,e[5]=n):n=e[5];let a;e[6]!==o||e[7]!==n?(a=l.jsxs("div",{className:"min-w-0",children:[o,n]}),e[6]=o,e[7]=n,e[8]=a):a=e[8];const p=s.status==="OPEN"?"default":"secondary";let r;e[9]!==s.status||e[10]!==p?(r=l.jsx(C,{variant:p,className:"text-xs shrink-0",children:s.status}),e[9]=s.status,e[10]=p,e[11]=r):r=e[11];let m;return e[12]!==t||e[13]!==a||e[14]!==r?(m=l.jsxs("div",{className:t,children:[a,r]}),e[12]=t,e[13]=a,e[14]=r,e[15]=m):m=e[15],m};g.__docgenInfo={description:"",methods:[],displayName:"ClosingTableElement"};const T={title:"Elements/Closing/ClosingTableElement",component:g,tags:["autodocs"],parameters:{layout:"padded"}},c={args:{closing:E}},i={args:{closing:j}};c.parameters={...c.parameters,docs:{...c.parameters?.docs,source:{originalSource:`{
+  args: {
+    closing: mockClosing
+  }
+}`,...c.parameters?.docs?.source}}};i.parameters={...i.parameters,docs:{...i.parameters?.docs,source:{originalSource:`{
+  args: {
+    closing: mockClosingClosed
+  }
+}`,...i.parameters?.docs?.source}}};const w=["Open","Closed"];export{i as Closed,c as Open,w as __namedExportsOrder,T as default};

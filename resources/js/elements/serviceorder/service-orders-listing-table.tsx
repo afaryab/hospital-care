@@ -38,7 +38,7 @@ const ServiceOrdersListingTable: React.FC<ServiceOrdersListingTableProps> = ({
                             <td className="px-4 py-2">{so.type}</td>
                             <td className="px-4 py-2">
                                 <Badge variant="outline" className="text-xs">
-                                    {so.so_short ?? so.departmentKey ?? '—'}
+                                    {so.so_short ?? so.departmentKey ?? '-'}
                                 </Badge>
                             </td>
                             <td className="px-4 py-2 text-xs">{so.created_at?.split('T')[0]}</td>

@@ -1,0 +1,154 @@
+import { Closing, ExpenseVoucher, Patient, Receaveable, ServiceOrder, Transaction } from '@/types';
+
+export const mockPatient: Patient = {
+    id: '1',
+    ps_number: 'PS/2026/01/0042',
+    year: 2026,
+    month: 1,
+    name: 'Ahmed Khan',
+    gender: 'm',
+    contact: '0300-1234567',
+    cnic: '35202-1234567-1',
+    age: 35,
+    treatments: [],
+};
+
+export const mockPatientFemale: Patient = {
+    id: '2',
+    ps_number: 'PS/2026/01/0043',
+    year: 2026,
+    month: 1,
+    name: 'Fatima Bibi',
+    gender: 'f',
+    contact: '0301-7654321',
+    cnic: '35202-7654321-2',
+    age: 28,
+    treatments: [],
+};
+
+export const mockTransaction: Transaction = {
+    id: 1,
+    tr_number: 'TR/2026/01/15/0001',
+    old_id: '',
+    closing_id: 1,
+    created_by: 1,
+    type: 'CASH',
+    income_or_expense: 'INCOME',
+    amount: 2500,
+    amount_alphabetical: 'Two Thousand Five Hundred',
+    orignal_amount: 2500,
+    customer_payed: 3000,
+    change: 500,
+    edited_amount: 0,
+    created_at: '2026-01-15T10:30:00Z',
+    updated_at: '2026-01-15T10:30:00Z',
+    patient: mockPatient,
+};
+
+export const mockTransactionExpense: Transaction = {
+    ...mockTransaction,
+    id: 2,
+    tr_number: 'TR/2026/01/15/0002',
+    income_or_expense: 'EXPENSE',
+    amount: 800,
+    orignal_amount: 800,
+    customer_payed: 800,
+    change: 0,
+};
+
+export const mockClosing: Closing = {
+    id: 1,
+    ct_number: 'CT/2026/01/0001',
+    status: 'OPEN',
+    opening_amount: 5000,
+    closing_amount: undefined,
+    created_at: '2026-01-15T08:00:00Z',
+    updated_at: '2026-01-15T08:00:00Z',
+    reception: { id: 1, name: 'Main Reception' },
+};
+
+export const mockClosingClosed: Closing = {
+    ...mockClosing,
+    id: 2,
+    ct_number: 'CT/2026/01/0002',
+    status: 'CLOSED',
+    closing_amount: 8500,
+    closing_amount_cash: 6000,
+    closing_amount_card: 2500,
+    expense_payed: 1200,
+    amount_received: 8500,
+    closed_at: '2026-01-15T17:00:00Z',
+};
+
+export const mockExpenseVoucher: ExpenseVoucher = {
+    id: 1,
+    vc_number: 'VC/2026/01/0001',
+    amount: 1500,
+    payed_to_name: 'Pharmacy Supplies Ltd',
+    payed_to: 'vendor',
+    status: 'payed',
+    created_at: '2026-01-15T09:00:00Z',
+    updated_at: '2026-01-15T09:00:00Z',
+    expenseCategory: { id: 1, name: 'Medical Supplies' },
+};
+
+export const mockExpenseVoucherPending: ExpenseVoucher = {
+    ...mockExpenseVoucher,
+    id: 2,
+    vc_number: 'VC/2026/01/0002',
+    status: 'pending',
+    amount: 3200,
+    payed_to_name: 'Office Stationery',
+    expenseCategory: { id: 2, name: 'Office Expenses' },
+};
+
+export const mockServiceOrder: ServiceOrder = {
+    id: 1,
+    so_number: 'PS/2026/01/0042/OPD/01',
+    so_short: 'OPD',
+    type: 'OPD Consultation',
+    created_by: 1,
+    patient_id: 1,
+    doctor_id: 1,
+    is_composit: false,
+    notes: '',
+    notes_json: null,
+    departmentKey: 'OPD',
+    created_at: '2026-01-15T10:00:00Z',
+    updated_at: '2026-01-15T10:00:00Z',
+};
+
+export const mockServiceOrderLab: ServiceOrder = {
+    ...mockServiceOrder,
+    id: 2,
+    so_number: 'PS/2026/01/0042/LAB/01',
+    so_short: 'LAB',
+    type: 'Blood Test (CBC)',
+    departmentKey: 'LAB',
+};
+
+export const mockReceaveable: Receaveable = {
+    id: 1,
+    patient: mockPatient,
+    transaction: mockTransaction,
+    orignal_amount: 2500,
+    amount: 1000,
+    due_date: '2026-02-15',
+    status: 'pending',
+    created_at: '2026-01-15T10:30:00Z',
+};
+
+export const mockReceaveablePaid: Receaveable = {
+    ...mockReceaveable,
+    id: 2,
+    amount: 1500,
+    status: 'paid',
+    closed_at: '2026-01-20T14:00:00Z',
+};
+
+export const mockPatients: Patient[] = [mockPatient, mockPatientFemale];
+export const mockTransactions: Transaction[] = [mockTransaction, mockTransactionExpense];
+export const mockClosings: Closing[] = [mockClosing, mockClosingClosed];
+export const mockExpenseVouchers: ExpenseVoucher[] = [mockExpenseVoucher, mockExpenseVoucherPending];
+export const mockServiceOrders: ServiceOrder[] = [mockServiceOrder, mockServiceOrderLab];
+export const mockReceaveables: Receaveable[] = [mockReceaveable, mockReceaveablePaid];

@@ -175,3 +175,5 @@ export interface ExpenseVoucher {
     expenseCategory?: { id: number; name: string };
     [key: string]: unknown;
 }
+
+export type Receivable = Receaveable;
