@@ -23,6 +23,7 @@
         "laravel-enums",
         "laravel-inertia-react",
         "laravel-models",
+        "laravel-policies",
         "laravel-quality",
         "laravel-security-audit",
         "laravel-specialist",
