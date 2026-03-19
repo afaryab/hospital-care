@@ -29,7 +29,7 @@ const ExpenseVoucherListItem: React.FC<ExpenseVoucherListItemProps> = ({ voucher
             <div className="flex items-baseline gap-1.5">
                 <span className="text-sm font-semibold"><Currency value={voucher.amount} /></span>
                 {voucher.payed_to_name && (
-                    <span className="text-xs text-muted-foreground truncate">-> {voucher.payed_to_name}</span>
+                    <span className="text-xs text-muted-foreground truncate">{'-> '}{voucher.payed_to_name}</span>
                 )}
             </div>
         </div>

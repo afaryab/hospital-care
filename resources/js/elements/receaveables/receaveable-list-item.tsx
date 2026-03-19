@@ -29,7 +29,7 @@ const ReceaveableListItem: React.FC<ReceaveableListItemProps> = ({ receaveable, 
             <div className="flex items-baseline gap-1.5">
                 <span className="text-sm font-semibold"><Currency value={receaveable.amount} /></span>
                 {receaveable.patient?.name && (
-                    <span className="text-xs text-muted-foreground truncate">-> {receaveable.patient.name}</span>
+                    <span className="text-xs text-muted-foreground truncate">{'-> '}{receaveable.patient.name}</span>
                 )}
             </div>
         </div>

@@ -5,12 +5,15 @@ export const mockPatient: Patient = {
     ps_number: 'PS/2026/01/0042',
     year: 2026,
     month: 1,
+    number: 42,
     name: 'Ahmed Khan',
     gender: 'm',
     contact: '0300-1234567',
     cnic: '35202-1234567-1',
     age: 35,
     treatments: [],
+    transactions: [],
+    receaveables: [],
 };
 
 export const mockPatientFemale: Patient = {
@@ -18,12 +21,15 @@ export const mockPatientFemale: Patient = {
     ps_number: 'PS/2026/01/0043',
     year: 2026,
     month: 1,
+    number: 43,
     name: 'Fatima Bibi',
     gender: 'f',
     contact: '0301-7654321',
     cnic: '35202-7654321-2',
     age: 28,
     treatments: [],
+    transactions: [],
+    receaveables: [],
 };
 
 export const mockTransaction: Transaction = {
