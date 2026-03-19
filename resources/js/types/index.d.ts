@@ -63,6 +63,7 @@ export interface ServiceDepartment {
     id: number;
     name: string;
     slug: string;
+    image?: string;
 }
 
 export interface Service {
@@ -91,9 +92,18 @@ export interface Transaction {
     edited_amount: number;
     created_at: string;
     updated_at: string;
+    elements?: any[];
+    patient?: Patient;
+    closing?: any;
+    year?: number | string;
+    month?: number | string;
+    day?: number | string;
+    number?: number | string;
+    [key: string]: unknown;
 }
 
 export interface ServiceOrder {
+    id?: number;
     type: string
     so_number: string
     so_short: string
@@ -105,6 +115,11 @@ export interface ServiceOrder {
     is_composit: boolean
     notes: string
     notes_json: any
+    created_at?: string
+    updated_at?: string
+    departmentKey?: string
+    serviceNumber?: string
+    [key: string]: unknown;
 }
 
 export interface Receaveable {

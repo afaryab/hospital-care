@@ -16,9 +16,9 @@ import clsx from 'clsx';
 
 export default function CounterOpen({ status }: { status?: string }) {
 
-    const { recptions } = usePage().props;
+    const { recptions } = usePage().props as any;
 
-    const [openingBalance, setOpeningBalance] = useState(0);
+    const [openingBalance, setOpeningBalance] = useState<number | string>(0);
     const [receptionId, setReceptionId] = useState<number | null>(null);
 
     return (

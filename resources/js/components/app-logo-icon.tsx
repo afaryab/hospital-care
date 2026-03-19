@@ -4,6 +4,11 @@ import clsx from "clsx";
 export default function AppLogoIcon({
     size = 24,
     direction = 'vertical',
+    className,
+}: {
+    size?: number;
+    direction?: string;
+    className?: string;
 }) {
     return (
         <img src={
