@@ -190,7 +190,7 @@ docker-compose exec app php artisan migrate
 docker-compose exec app php artisan db:seed
 
 # Build frontend assets
-docker-compose exec app npm run build
+docker-compose exec app pnpm run build
 ```
 
 ### Access Points
@@ -230,7 +230,7 @@ docker pull ahmadfaryabkokab/hospital-care:{version}-cli
 
 - PHP 8.4+
 - Composer
-- Node.js (or Bun)
+- Node.js + pnpm
 - MySQL 8.0
 - Git
 
@@ -241,7 +241,7 @@ docker pull ahmadfaryabkokab/hospital-care:{version}-cli
 git clone https://github.com/afaryab/hospital-care.git
 cd hospital-care
 composer install
-npm install
+pnpm install
 
 # Environment setup
 cp .env.example .env
@@ -262,7 +262,7 @@ The `composer run dev` command starts all development services simultaneously:
 | **server** | Blue | `php artisan serve` — Laravel dev server |
 | **queue** | Purple | `php artisan queue:listen` — Job processor |
 | **logs** | Pink | `php artisan pail` — Real-time log viewer |
-| **vite** | Orange | `npm run dev` — Frontend HMR server |
+| **vite** | Orange | `pnpm run dev` — Frontend HMR server |
 
 ### Available Scripts
 
@@ -276,13 +276,13 @@ composer run setup        # Fresh install (install, migrate, build)
 
 **JavaScript / Frontend:**
 ```bash
-npm run dev               # Vite dev server with HMR
-npm run build             # Production build
-npm run build:ssr         # Build with SSR support
-npm run lint              # ESLint auto-fix
-npm run format            # Prettier formatting
-npm run format:check      # Check formatting without fixing
-npm run types             # TypeScript type checking
+pnpm run dev              # Vite dev server with HMR
+pnpm run build            # Production build
+pnpm run build:ssr        # Build with SSR support
+pnpm run lint             # ESLint auto-fix
+pnpm run format           # Prettier formatting
+pnpm run format:check     # Check formatting without fixing
+pnpm run types            # TypeScript type checking
 ```
 
 **Testing:**
@@ -295,8 +295,8 @@ php artisan test --compact tests/Feature/Auth/        # Specific directory
 **Code Quality:**
 ```bash
 vendor/bin/pint --dirty   # Format only modified PHP files
-npm run lint              # Fix JS/TS lint issues
-npm run format            # Fix formatting issues
+pnpm run lint             # Fix JS/TS lint issues
+pnpm run format           # Fix formatting issues
 ```
 
 ### Branching & PR Rules
@@ -324,7 +324,7 @@ git checkout -b feature/my-feature
 
 # Run tests before requesting review
 php artisan test --compact
-npm run build
+pnpm run build
 vendor/bin/pint --dirty
 
 # Push only after approval
@@ -335,9 +335,9 @@ git push origin feature/my-feature
 - [ ] Branch created from latest `main`
 - [ ] Changes are scoped to the requested task
 - [ ] All tests pass (`php artisan test --compact`)
-- [ ] Frontend builds without errors (`npm run build`)
+- [ ] Frontend builds without errors (`pnpm run build`)
 - [ ] PHP code formatted (`vendor/bin/pint --dirty`)
-- [ ] JS/TS code formatted (`npm run format`)
+- [ ] JS/TS code formatted (`pnpm run format`)
 - [ ] Summary of changes provided
 - [ ] No direct commits to `main`
 

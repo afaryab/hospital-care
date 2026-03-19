@@ -94,11 +94,9 @@ RUN composer install --no-dev --optimize-autoloader || true
 # Generate Laravel application key if .env exists
 RUN if [ -f .env ]; then php artisan key:generate --force; fi
 
-RUN curl -fsSL https://bun.sh/install | bash && \
-    mv /root/.bun/bin/bun /usr/local/bin/bun
-RUN bun install --frozen-lockfile
-RUN bun install
-RUN bun run build
+RUN npm install -g pnpm
+RUN pnpm install --frozen-lockfile
+RUN pnpm run build
 
 # Clear and cache Laravel configuration (if .env exists)
 RUN if [ -f .env ]; then php artisan config:cache; fi
