@@ -21,6 +21,7 @@
         "eloquent-best-practices",
         "laravel-inertia-react",
         "laravel-specialist",
+        "laravel-tdd",
         "php-best-practices",
         "php-pro"
     ]
