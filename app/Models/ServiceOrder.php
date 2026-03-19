@@ -25,12 +25,12 @@ class ServiceOrder extends Model
         'notes',
         'notes_json',
         'payee_type',
-        'payee_id'
+        'payee_id',
     ];
 
     protected $casts = [
         'notes_json' => 'json',
-        'is_composit' => 'boolean'
+        'is_composit' => 'boolean',
     ];
 
     protected $appends = [
@@ -45,18 +45,22 @@ class ServiceOrder extends Model
     {
         return $this->so_number_parts['year'] ?? null;
     }
+
     public function getMonthAttribute()
     {
         return $this->so_number_parts['month'] ?? null;
     }
+
     public function getNumberAttribute()
     {
         return $this->so_number_parts['number'] ?? null;
     }
+
     public function getDepartmentKeyAttribute()
     {
         return $this->so_number_parts['departmentKey'] ?? null;
     }
+
     public function getServiceNumberAttribute()
     {
         return $this->so_number_parts['serviceNumber'] ?? null;
@@ -113,7 +117,8 @@ class ServiceOrder extends Model
 
     /**
      * Get the payee of the service order (could be a patient, insurance company, etc.)
-     */ public function payee()
+     */
+    public function payee()
     {
         return $this->morphTo();
     }
@@ -133,7 +138,8 @@ class ServiceOrder extends Model
 
         // STRPAD the count to be 8 digits
         $count = str_pad($count, 8, '0', STR_PAD_LEFT);
-        return  $count;
+
+        return $count;
     }
 
     public static function generateShortServiceOrderNumber($type): string
@@ -147,7 +153,8 @@ class ServiceOrder extends Model
 
         // STRPAD the count to be 8 digits
         $count = str_pad($count, 8, '0', STR_PAD_LEFT);
-        return  $count;
+
+        return $count;
     }
 
     public function expenseVouchers(): BelongsToMany

@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\ExpenseCategory;
 use App\Models\ExpenseVoucher;
 
 test('expense vouchers search returns json with data structure', function () {

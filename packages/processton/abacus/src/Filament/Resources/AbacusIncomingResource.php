@@ -3,15 +3,14 @@
 namespace Processton\Abacus\Filament\Resources;
 
 use BackedEnum;
-use Processton\Abacus\Filament\Resources\AbacusIncomingResource\Pages;
-use Processton\Abacus\Models\AbacusIncoming;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Processton\Abacus\Filament\Resources\AbacusIncomingResource\Pages;
+use Processton\Abacus\Models\AbacusIncoming;
 use Processton\Abacus\Models\Currency;
 
 class AbacusIncomingResource extends Resource
@@ -31,6 +30,7 @@ class AbacusIncomingResource extends Resource
     public static function form(Schema $form): Schema
     {
         $currency = Currency::find(config('org.primary_currency'));
+
         return $form
             ->schema([
                 Forms\Components\TextInput::make('amount')
@@ -53,13 +53,14 @@ class AbacusIncomingResource extends Resource
                     ->maxLength(500)
                     ->columnSpanFull()
                     ->nullable(),
-                
+
             ]);
     }
 
     public static function infolist(Schema $schema): Schema
     {
         $currency = Currency::find(config('org.primary_currency')) ?? Currency::where('code', 'PKR')->first();
+
         return $schema
             ->schema([
                 \Filament\Infolists\Components\TextEntry::make('amount')
@@ -87,7 +88,7 @@ class AbacusIncomingResource extends Resource
                         \Filament\Infolists\Components\TextEntry::make('entry_type')
                             ->label('Type'),
                         \Filament\Infolists\Components\TextEntry::make('account.name')
-                            ->label('Account')
+                            ->label('Account'),
                     ])->columns(4)->columnSpanFull(),
             ])->columns(3);
     }
@@ -95,6 +96,7 @@ class AbacusIncomingResource extends Resource
     public static function table(Table $table): Table
     {
         $currency = Currency::find(config('org.primary_currency'));
+
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('amount')

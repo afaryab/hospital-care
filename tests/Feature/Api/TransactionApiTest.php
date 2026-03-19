@@ -64,7 +64,7 @@ test('transactions search validates income_or_expense value', function () {
     $this->postJson(route('api-transactions-search'), [
         'income_or_expense' => 'INVALID',
     ])->assertStatus(422)
-      ->assertJsonValidationErrors(['income_or_expense']);
+        ->assertJsonValidationErrors(['income_or_expense']);
 });
 
 test('transactions search filters by amount range', function () {

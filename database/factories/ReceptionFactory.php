@@ -17,7 +17,7 @@ class ReceptionFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->company() . ' Reception',
+            'name' => fake()->company().' Reception',
             'allowed_departments' => json_encode(['OPD']),
             'is_allowed_to_pay_voucher' => false,
             'is_allowed_to_pay_from_petty_cash' => false,

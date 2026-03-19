@@ -21,15 +21,15 @@ class UserController extends Controller
 
         $query = User::query()->latest('id');
 
-        if (!empty($filters['name'])) {
+        if (! empty($filters['name'])) {
             $query->where('name', 'like', "%{$filters['name']}%");
         }
 
-        if (!empty($filters['username'])) {
+        if (! empty($filters['username'])) {
             $query->where('username', 'like', "%{$filters['username']}%");
         }
 
-        if (!empty($filters['email'])) {
+        if (! empty($filters['email'])) {
             $query->where('email', 'like', "%{$filters['email']}%");
         }
 
@@ -37,7 +37,7 @@ class UserController extends Controller
             $query->where('is_active', $filters['is_active']);
         }
 
-        if (!empty($filters['doctor_only'])) {
+        if (! empty($filters['doctor_only'])) {
             $query->where(function ($doctorQuery) {
                 $doctorQuery
                     ->whereHas('opdDoctorProfiles')
@@ -50,12 +50,12 @@ class UserController extends Controller
 
         $exact = collect();
 
-        if (!empty($filters['name'])) {
+        if (! empty($filters['name'])) {
             $exact = User::query()
                 ->where('name', $filters['name'])
                 ->get();
 
-            if (!empty($filters['doctor_only'])) {
+            if (! empty($filters['doctor_only'])) {
                 $exact = $exact->filter(function (User $user) {
                     return $user->opdDoctorProfiles()->exists()
                         || $user->indDoctorProfiles()->exists()

@@ -21,7 +21,7 @@ class ClosingFactory extends Factory
         $now = now();
 
         return [
-            'ct_number' => 'CT/' . $now->format('Y') . '/' . $now->format('m') . '/' . fake()->unique()->numerify('####'),
+            'ct_number' => 'CT/'.$now->format('Y').'/'.$now->format('m').'/'.fake()->unique()->numerify('####'),
             'reception_id' => Reception::factory(),
             'receptionist_id' => User::factory(),
             'status' => 'OPEN',

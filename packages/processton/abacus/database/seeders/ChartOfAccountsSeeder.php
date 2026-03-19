@@ -1,16 +1,15 @@
 <?php
+
 namespace Processton\AbacusDatabase\Seeders;
 
-use Processton\Abacus\Models\AbacusChartOfAccount;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use Processton\Abacus\Models\AbacusChartOfAccount;
 
 class ChartOfAccountsSeeder extends Seeder
 {
     public function run(): void
     {
-        
-    
+
         // $year = AbacusYear::create([
         //     'start_date' => Carbon::create(2026, 1, 1),
         //     'end_date' => Carbon::create(2026, 12, 31),
@@ -71,15 +70,15 @@ class ChartOfAccountsSeeder extends Seeder
 
         // First pass: create group accounts
         foreach ($accounts as $acc) {
-            if (!empty($acc['is_group'])) {
+            if (! empty($acc['is_group'])) {
                 $map[$acc['code']] = AbacusChartOfAccount::firstOrCreate([
-                    'code'       => $acc['code'],
-                ],[
-                    'name'       => $acc['name'],
-                    'base_type'  => $acc['base_type'],
-                    'type'       => $acc['type'] ?? null,
-                    'parent_id'  => isset($acc['parent']) ? ($map[$acc['parent']]->id ?? null) : null,
-                    'is_group'   => true,
+                    'code' => $acc['code'],
+                ], [
+                    'name' => $acc['name'],
+                    'base_type' => $acc['base_type'],
+                    'type' => $acc['type'] ?? null,
+                    'parent_id' => isset($acc['parent']) ? ($map[$acc['parent']]->id ?? null) : null,
+                    'is_group' => true,
                 ]);
             }
         }
@@ -88,13 +87,13 @@ class ChartOfAccountsSeeder extends Seeder
         foreach ($accounts as $acc) {
             if (empty($acc['is_group'])) {
                 AbacusChartOfAccount::firstOrCreate([
-                    'code'       => $acc['code'],
-                ],[
-                    'name'       => $acc['name'],
-                    'base_type'  => $acc['base_type'],
-                    'type'       => $acc['type'] ?? null,
-                    'parent_id'  => isset($acc['parent']) ? ($map[$acc['parent']]->id ?? null) : null,
-                    'is_group'   => false,
+                    'code' => $acc['code'],
+                ], [
+                    'name' => $acc['name'],
+                    'base_type' => $acc['base_type'],
+                    'type' => $acc['type'] ?? null,
+                    'parent_id' => isset($acc['parent']) ? ($map[$acc['parent']]->id ?? null) : null,
+                    'is_group' => false,
                 ]);
             }
         }

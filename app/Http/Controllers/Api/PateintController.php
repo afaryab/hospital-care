@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Patient;
-use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -15,37 +14,35 @@ class PateintController extends Controller
      */
     public function index(Request $request)
     {
-        try{
-            $query = Patient::query()->orderBy('created_at','DESC')->where('id','!=', null);
+        try {
+            $query = Patient::query()->orderBy('created_at', 'DESC')->where('id', '!=', null);
 
             $exactMatches = [];
 
             // Check if the request have MR Number
             $mrNumber = $request->get('mr_number', false);
 
-            if($mrNumber){
-                if(Str::length($mrNumber) === 17){
+            if ($mrNumber) {
+                if (Str::length($mrNumber) === 17) {
                     $exactMatches[] = Patient::where(['ps_number' => $mrNumber])->first();
                 }
-                
+
                 $query->where('ps_number', 'LIKE', "{$mrNumber}%");
             }
 
-
-            
             $cnicNumber = $request->get('cnic_number', false);
 
-            if($cnicNumber){
-                if(Str::length($mrNumber) === 17){
+            if ($cnicNumber) {
+                if (Str::length($mrNumber) === 17) {
                     $exactMatches[] = Patient::where(['cnic' => $mrNumber])->first();
                 }
-                
+
                 $query->where('cnic', 'LIKE', "{$mrNumber}%");
             }
 
             $patientName = $request->get('patient_name', false);
 
-            if($patientName){
+            if ($patientName) {
                 $query->where(function ($query) use ($patientName) {
                     $query->where('name', 'LIKE', "{$patientName}%")
                         ->orWhere('name', 'LIKE', "%{$patientName}%")
@@ -55,33 +52,32 @@ class PateintController extends Controller
 
             $patientContact = $request->get('patient_contact', false);
 
-            if($patientContact){
+            if ($patientContact) {
                 $query->orWhere('contact', 'LIKE', "{$patientContact}%");
             }
 
             $patientGender = $request->get('patient_gender', false);
 
-            if($patientGender){
+            if ($patientGender) {
                 $query->orWhere('gender', $patientGender);
             }
 
-            if(count($exactMatches) > 0){
-                $query->whereNotIn('id', array_map(function($item){
+            if (count($exactMatches) > 0) {
+                $query->whereNotIn('id', array_map(function ($item) {
                     return $item;
                 }, collect($exactMatches)->pluck('id')->toArray()));
             }
 
-
             return response()->json([
-                "data" => [
-                    "exact" => $exactMatches,
-                    "possible" => $query->limit(7)->get()
-                ]
+                'data' => [
+                    'exact' => $exactMatches,
+                    'possible' => $query->limit(7)->get(),
+                ],
             ]);
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             return response()->json([
-                "message" => "An error occurred while fetching patients.",
-                "error" => $e->getMessage()
+                'message' => 'An error occurred while fetching patients.',
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -103,32 +99,30 @@ class PateintController extends Controller
                 'blood_group' => 'nullable|string|max:5',
             ]);
 
-            if($request->get('age', false)){
+            if ($request->get('age', false)) {
                 // Calculate age in days from age in years
                 $birthDate = now()->subYears(intval($request->get('age')));
                 $validated['age_days'] = $birthDate->diffInDays(now());
             }
 
-
-
             $patient = Patient::create([
-                ...$validated
+                ...$validated,
             ]);
 
             return response()->json([
                 'message' => 'Patient created successfully',
-                'data' => $patient
+                'data' => $patient,
             ], 201);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'message' => 'Validation failed',
-                'errors' => $e->errors()
+                'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while creating the patient',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -166,24 +160,23 @@ class PateintController extends Controller
 
         $patient->age_days = $birthDate->diffInDays(now());
 
-
-        if($request->get('cnic', false)){
+        if ($request->get('cnic', false)) {
             $patient->cnic = $request->get('cnic');
         }
 
-        if($request->get('address', false)){
+        if ($request->get('address', false)) {
             $patient->address = $request->get('address');
         }
 
-        if($request->get('emergency_contact', false)){
+        if ($request->get('emergency_contact', false)) {
             $patient->emergency_contact = $request->get('emergency_contact');
         }
 
-        if($request->get('blood_group', false)){
+        if ($request->get('blood_group', false)) {
             $patient->blood_group = $request->get('blood_group');
         }
 
-        if($request->get('gender', false)){
+        if ($request->get('gender', false)) {
             $patient->gender = $request->get('gender');
         }
 
@@ -191,7 +184,7 @@ class PateintController extends Controller
 
         return response()->json([
             'message' => 'Patient updated successfully',
-            'data' => $patient
+            'data' => $patient,
         ], 200);
     }
 

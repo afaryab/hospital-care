@@ -22,7 +22,7 @@ class TransactionFactory extends Factory
         $now = now();
 
         return [
-            'tr_number' => 'TR/' . $now->format('Y') . '/' . $now->format('m') . '/' . $now->format('d') . '/' . fake()->unique()->numerify('####'),
+            'tr_number' => 'TR/'.$now->format('Y').'/'.$now->format('m').'/'.$now->format('d').'/'.fake()->unique()->numerify('####'),
             'closing_id' => Closing::factory(),
             'patient_id' => Patient::factory(),
             'created_by' => User::factory(),

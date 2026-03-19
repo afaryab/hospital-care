@@ -27,7 +27,7 @@ class CaptivePortalRegisterResponse implements RegisterResponseContract
     {
         $mac = $request->session()->pull('captive.clientMac');
 
-        if (!$mac) {
+        if (! $mac) {
             return;
         }
 

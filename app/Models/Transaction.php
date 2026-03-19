@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 class Transaction extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'id',
         'tr_number',
@@ -46,10 +47,12 @@ class Transaction extends Model
     {
         return $this->tr_number_parts['year'] ?? null;
     }
+
     public function getMonthAttribute()
     {
         return $this->tr_number_parts['month'] ?? null;
     }
+
     public function getDayAttribute()
     {
         return $this->tr_number_parts['day'] ?? null;
@@ -59,6 +62,7 @@ class Transaction extends Model
     {
         return $this->tr_number_parts['number'] ?? null;
     }
+
     public function getTrNumberPartsAttribute()
     {
         if (empty($this->tr_number)) {
@@ -71,7 +75,7 @@ class Transaction extends Model
             'year' => $parts[1] ?? null,
             'month' => $parts[2] ?? null,
             'day' => $parts[3] ?? null,
-            'number' => $parts[4] ?? null
+            'number' => $parts[4] ?? null,
         ];
     }
 
@@ -79,8 +83,8 @@ class Transaction extends Model
     {
         $closing = $this->closing;
         if ($closing) {
-            $totalIncAmount = $closing->transactions()->where('income_or_expense','INCOME')->sum('amount');
-            $totalExpAmount = $closing->transactions()->where('income_or_expense','EXPENSE')->sum('amount');
+            $totalIncAmount = $closing->transactions()->where('income_or_expense', 'INCOME')->sum('amount');
+            $totalExpAmount = $closing->transactions()->where('income_or_expense', 'EXPENSE')->sum('amount');
             $closing->closing_amount = $totalIncAmount - $totalExpAmount;
             $closing->expense_payed = $totalExpAmount;
             $closing->saveQuietly();
@@ -112,9 +116,6 @@ class Transaction extends Model
         return $this->belongsTo(Panel::class, 'panel_id');
     }
 
-
-
-
     public static function generateTransactionNumber(): string
     {
         return DB::transaction(function () {
@@ -126,8 +127,8 @@ class Transaction extends Model
             // Count how many patients have been created this month with PS numbers
             // Use FOR UPDATE to lock the table and prevent race conditions
             $count = self::where('tr_number', 'like', "TR/{$year}/{$month}/{$day}%")
-                        ->lockForUpdate()
-                        ->count();
+                ->lockForUpdate()
+                ->count();
             $count += 1; // Increment for the new patient
 
             // Pad the count to be 4 digits

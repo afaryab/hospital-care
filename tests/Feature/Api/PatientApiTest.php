@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Patient;
-use App\Models\User;
 
 test('patient search returns json with data structure', function () {
     Patient::factory()->count(3)->create();
@@ -43,7 +42,7 @@ test('patient create stores a new patient in database', function () {
         'contact' => '03001234567',
         'gender' => 'm',
     ])->assertStatus(201)
-      ->assertJsonPath('message', 'Patient created successfully');
+        ->assertJsonPath('message', 'Patient created successfully');
 
     $this->assertDatabaseHas('patients', ['name' => 'Test Patient', 'contact' => '03001234567']);
 });
@@ -60,7 +59,7 @@ test('patient create validates gender is in allowed values', function () {
         'contact' => '03001234567',
         'gender' => 'x',
     ])->assertStatus(422)
-      ->assertJsonValidationErrors(['gender']);
+        ->assertJsonValidationErrors(['gender']);
 });
 
 test('patient create validates cnic uniqueness', function () {
@@ -72,7 +71,7 @@ test('patient create validates cnic uniqueness', function () {
         'gender' => 'f',
         'cnic' => '12345-1234567-1',
     ])->assertStatus(422)
-      ->assertJsonValidationErrors(['cnic']);
+        ->assertJsonValidationErrors(['cnic']);
 });
 
 test('patient update modifies patient record', function () {
@@ -83,7 +82,7 @@ test('patient update modifies patient record', function () {
         'age' => 35,
         'gender' => 'm',
     ])->assertOk()
-      ->assertJsonPath('message', 'Patient updated successfully');
+        ->assertJsonPath('message', 'Patient updated successfully');
 
     $this->assertDatabaseHas('patients', [
         'id' => $patient->id,

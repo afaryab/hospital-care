@@ -48,6 +48,7 @@ class AbacusYear extends Model
     {
         return $this->transactions()->where('entry_type', 'credit')->sum('amount');
     }
+
     public function getBalanceAttribute()
     {
         return $this->credit - $this->debit;

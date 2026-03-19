@@ -2,17 +2,16 @@
 
 namespace Processton\Abacus\Filament\Pages;
 
+use Filament\Actions\Action;
+use Filament\Forms;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Pages\Page;
+use Filament\Schemas\Schema;
+use Illuminate\Support\Collection;
 use Processton\Abacus\Models\AbacusChartOfAccount;
 use Processton\Abacus\Models\AbacusTransaction;
 use Processton\Abacus\Models\AbacusYear;
-use Filament\Forms;
-use Filament\Actions\Action;
-use Filament\Pages\Page;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Schemas\Schema;
-use Illuminate\Support\Collection;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Symfony\Component\HttpFoundation\Response;
 use UnitEnum;
 
@@ -22,26 +21,32 @@ class GeneralLedger extends Page implements HasForms
 
     // protected static ?string $navigationIcon = 'heroicon-o-document-report';
     protected string $view = 'abacus::general-ledger';
+
     protected static ?string $title = 'General Ledger';
 
     protected static UnitEnum|string|null $navigationGroup = 'Reporting';
+
     protected static ?int $navigationSort = 10;
 
-    
-
     public ?int $accountId = null;
+
     public Collection $accounts;
+
     public ?int $yearId = null;
+
     public ?string $startDate = null;
+
     public ?string $endDate = null;
 
     public Collection $entries;
+
     public bool $showPdf = false;
 
     public function mount(): void
     {
         $this->entries = collect();
     }
+
     public function form(Schema $form): Schema
     {
         return $form
@@ -58,7 +63,7 @@ class GeneralLedger extends Page implements HasForms
                         ->options(
                             AbacusYear::orderByDesc('start_date')->get()->map(
                                 fn (AbacusYear $year) => [
-                                    'label' => $year->start_date->format('Y') . ' - ' . $year->end_date->format('Y'),
+                                    'label' => $year->start_date->format('Y').' - '.$year->end_date->format('Y'),
                                     'value' => $year->id,
                                 ]
                             )->pluck('label', 'value')
@@ -69,7 +74,7 @@ class GeneralLedger extends Page implements HasForms
                 ]
             )
             ->columns(1);
-    
+
     }
 
     /**
@@ -95,27 +100,28 @@ class GeneralLedger extends Page implements HasForms
         $this->showPdf = true;
     }
 
-    public function getChildrenIds($accountIds){
+    public function getChildrenIds($accountIds)
+    {
         $accounts = AbacusChartOfAccount::whereIn('id', $accountIds)->get();
         foreach ($accounts as $account) {
             $accountIds[] = $account->id;
-            if($account->children->count() > 0) {
+            if ($account->children->count() > 0) {
                 $accountIds = [...$accountIds, ...$this->getChildrenIds($account->children->pluck('id')->toArray())];
             }
         }
+
         return $accountIds;
     }
-    
 
     public function viewReport(): void
     {
 
-        //Fetch all children accounts of the selected account nestedly
+        // Fetch all children accounts of the selected account nestedly
         $account = AbacusChartOfAccount::find($this->accountId);
 
         $accountIds = [$this->accountId];
 
-        if($account->children->count() > 0) {
+        if ($account->children->count() > 0) {
             $accountIds = [...$accountIds, ...$this->getChildrenIds($accountIds)];
         }
 
@@ -124,7 +130,7 @@ class GeneralLedger extends Page implements HasForms
         $this->accounts = AbacusChartOfAccount::whereIn('id', $accountIds)
             ->orderBy('code')
             ->get();
-        
+
         $query = AbacusTransaction::query()
             ->whereIn('abacus_chart_of_account_id', $accountIds)
             ->orderBy('date');
@@ -149,10 +155,10 @@ class GeneralLedger extends Page implements HasForms
         // Get the account name for the filename
         $account = AbacusChartOfAccount::find($this->accountId);
         $accountName = $account ? $account->name : 'Unknown';
-        
+
         // Get year information
         $year = $this->yearId ? AbacusYear::find($this->yearId) : null;
-        
+
         // Calculate totals and running balance
         $entries = $this->entries;
         $runningBalance = 0;
@@ -163,6 +169,7 @@ class GeneralLedger extends Page implements HasForms
             } else {
                 $runningBalance -= $amount;
             }
+
             return (object) [
                 'date' => $entry->date,
                 'year_id' => $entry->abacus_year_id,
@@ -188,11 +195,11 @@ class GeneralLedger extends Page implements HasForms
         ];
 
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->getDomPDF()->set_option("enable_php", true);
+        $pdf->getDomPDF()->set_option('enable_php', true);
         $pdf->loadView('abacus::general-ledger-pdf', $data);
-        
-        $filename = 'general-ledger-' . str_replace(' ', '-', strtolower($accountName)) . '-' . now()->format('Y-m-d') . '.pdf';
-        
+
+        $filename = 'general-ledger-'.str_replace(' ', '-', strtolower($accountName)).'-'.now()->format('Y-m-d').'.pdf';
+
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
         }, $filename, ['Content-Type' => 'application/pdf']);
@@ -225,6 +232,7 @@ class GeneralLedger extends Page implements HasForms
             } else {
                 $runningBalance -= $amount;
             }
+
             return (object) [
                 'date' => $entry->date,
                 'year_id' => $entry->abacus_year_id,
@@ -241,7 +249,7 @@ class GeneralLedger extends Page implements HasForms
 
         $totalDebit = $entries->where('entry_type', 'debit')->sum('amount');
         $totalCredit = $entries->where('entry_type', 'credit')->sum('amount');
-        
+
         $data = [
             'entries' => $processedEntries,
             'account' => $account,
@@ -254,13 +262,13 @@ class GeneralLedger extends Page implements HasForms
             'generatedAt' => now()->format('Y-m-d H:i:s'),
         ];
 
-
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->getDomPDF()->set_option("enable_php", true);
+        $pdf->getDomPDF()->set_option('enable_php', true);
         $pdf->loadView('abacus::general-ledger-pdf', $data);
+
         return response($pdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="general-ledger-' . str_replace(' ', '-', strtolower($accountName)) . '-' . now()->format('Y-m-d') . '.pdf"',
+            'Content-Disposition' => 'inline; filename="general-ledger-'.str_replace(' ', '-', strtolower($accountName)).'-'.now()->format('Y-m-d').'.pdf"',
         ]);
     }
 }

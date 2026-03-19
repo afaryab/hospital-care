@@ -5,8 +5,8 @@ namespace App\Filament\Admin\Resources\Users\Schemas;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Schema;
 
@@ -38,11 +38,11 @@ class UserForm
                     ->default(0),
                 // TextInput::make('profile_img_path'),
                 // TextInput::make('profile_img_id')
-                    // ->numeric(),
+                // ->numeric(),
                 Toggle::make('is_active')
                     ->required(),
                 TextInput::make('banned_message'),
-                
+
                 Repeater::make('adminProfiles')
                     ->label('Administrator Profiles')
                     ->relationship()
@@ -51,16 +51,16 @@ class UserForm
                             ->options([
                                 'assistant' => 'Assistant',
                                 'administrator' => 'Administrator',
-                                'superadmin' => 'Super Admin'
+                                'superadmin' => 'Super Admin',
                             ])
                             ->default('assistant')
-                            ->required()
+                            ->required(),
                     ])
                     ->addActionLabel('Add Administrator Profile')
                     ->collapsible()
                     ->collapsed()
                     ->columnSpanFull(),
-                
+
                 Repeater::make('accountantProfiles')
                     ->label('Accountant Profiles')
                     ->relationship()
@@ -68,16 +68,16 @@ class UserForm
                         Select::make('authority')
                             ->options([
                                 'assistant' => 'Assistant',
-                                'manager' => 'Manager'
+                                'manager' => 'Manager',
                             ])
                             ->default('assistant')
-                            ->required()
+                            ->required(),
                     ])
                     ->addActionLabel('Add Accountant Profile')
                     ->collapsible()
                     ->collapsed()
                     ->columnSpanFull(),
-                
+
                 Repeater::make('receptionistProfiles')
                     ->label('Receptionist Profiles')
                     ->relationship()
@@ -85,16 +85,16 @@ class UserForm
                         Select::make('authority')
                             ->options([
                                 'assistant' => 'Assistant',
-                                'manager' => 'Manager'
+                                'manager' => 'Manager',
                             ])
                             ->default('assistant')
-                            ->required()
+                            ->required(),
                     ])
                     ->addActionLabel('Add Receptionist Profile')
                     ->collapsible()
                     ->collapsed()
                     ->columnSpanFull(),
-                
+
                 Repeater::make('patientManagerProfiles')
                     ->label('Patient Manager Profiles')
                     ->relationship()
@@ -104,13 +104,13 @@ class UserForm
                             ->relationship('patient', 'name')
                             ->searchable()
                             ->preload()
-                            ->required()
+                            ->required(),
                     ])
                     ->addActionLabel('Add Patient Manager Profile')
                     ->collapsible()
                     ->collapsed()
                     ->columnSpanFull(),
-                
+
                 Repeater::make('opdDoctorProfiles')
                     ->label('OPD Doctor Profiles')
                     ->relationship()
@@ -119,16 +119,16 @@ class UserForm
                             ->options([
                                 'assistant' => 'Assistant',
                                 'senior' => 'Senior Doctor',
-                                'consultant' => 'Consultant'
+                                'consultant' => 'Consultant',
                             ])
                             ->default('assistant')
-                            ->required()
+                            ->required(),
                     ])
                     ->addActionLabel('Add OPD Doctor Profile')
                     ->collapsible()
                     ->collapsed()
                     ->columnSpanFull(),
-                
+
                 Repeater::make('indDoctorProfiles')
                     ->label('Inpatient Doctor Profiles')
                     ->relationship()
@@ -137,16 +137,16 @@ class UserForm
                             ->options([
                                 'assistant' => 'Assistant',
                                 'senior' => 'Senior Doctor',
-                                'consultant' => 'Consultant'
+                                'consultant' => 'Consultant',
                             ])
                             ->default('assistant')
-                            ->required()
+                            ->required(),
                     ])
                     ->addActionLabel('Add Inpatient Doctor Profile')
                     ->collapsible()
                     ->collapsed()
                     ->columnSpanFull(),
-                
+
                 Repeater::make('emergencyDoctorProfiles')
                     ->label('Emergency Doctor Profiles')
                     ->relationship()
@@ -155,16 +155,16 @@ class UserForm
                             ->options([
                                 'assistant' => 'Assistant',
                                 'senior' => 'Senior Doctor',
-                                'consultant' => 'Consultant'
+                                'consultant' => 'Consultant',
                             ])
                             ->default('assistant')
-                            ->required()
+                            ->required(),
                     ])
                     ->addActionLabel('Add Emergency Doctor Profile')
                     ->collapsible()
                     ->collapsed()
                     ->columnSpanFull(),
-                
+
                 Repeater::make('dentistProfiles')
                     ->label('Dentist Profiles')
                     ->relationship()
@@ -173,16 +173,16 @@ class UserForm
                             ->options([
                                 'assistant' => 'Assistant',
                                 'senior' => 'Senior Dentist',
-                                'consultant' => 'Consultant Dentist'
+                                'consultant' => 'Consultant Dentist',
                             ])
                             ->default('assistant')
-                            ->required()
+                            ->required(),
                     ])
                     ->addActionLabel('Add Dentist Profile')
                     ->collapsible()
                     ->collapsed()
                     ->columnSpanFull(),
-                
+
                 Repeater::make('ultrasoundDoctorProfiles')
                     ->label('Ultrasound Doctor Profiles')
                     ->relationship()
@@ -191,16 +191,16 @@ class UserForm
                             ->options([
                                 'assistant' => 'Assistant',
                                 'specialist' => 'Specialist',
-                                'consultant' => 'Consultant'
+                                'consultant' => 'Consultant',
                             ])
                             ->default('assistant')
-                            ->required()
+                            ->required(),
                     ])
                     ->addActionLabel('Add Ultrasound Doctor Profile')
                     ->collapsible()
                     ->collapsed()
                     ->columnSpanFull(),
-                
+
                 Repeater::make('xrayTechnicianProfiles')
                     ->label('X-Ray Technician Profiles')
                     ->relationship()
@@ -209,16 +209,16 @@ class UserForm
                             ->options([
                                 'assistant' => 'Assistant',
                                 'senior_technician' => 'Senior Technician',
-                                'supervisor' => 'Supervisor'
+                                'supervisor' => 'Supervisor',
                             ])
                             ->default('assistant')
-                            ->required()
+                            ->required(),
                     ])
                     ->addActionLabel('Add X-Ray Technician Profile')
                     ->collapsible()
                     ->collapsed()
                     ->columnSpanFull(),
-                
+
                 Repeater::make('nursingStaffProfiles')
                     ->label('Nursing Staff Profiles')
                     ->relationship()
@@ -228,10 +228,10 @@ class UserForm
                                 'assistant' => 'Assistant',
                                 'senior_nurse' => 'Senior Nurse',
                                 'charge_nurse' => 'Charge Nurse',
-                                'head_nurse' => 'Head Nurse'
+                                'head_nurse' => 'Head Nurse',
                             ])
                             ->default('assistant')
-                            ->required()
+                            ->required(),
                     ])
                     ->addActionLabel('Add Nursing Staff Profile')
                     ->collapsible()

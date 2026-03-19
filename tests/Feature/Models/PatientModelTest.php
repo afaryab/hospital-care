@@ -58,7 +58,7 @@ test('patient generateCounterNumber returns correctly formatted ps number', func
     $psNumber = Patient::generateCounterNumber();
     $now = now();
 
-    expect($psNumber)->toStartWith('PS/' . $now->format('Y') . '/' . $now->format('m') . '/');
+    expect($psNumber)->toStartWith('PS/'.$now->format('Y').'/'.$now->format('m').'/');
     expect(explode('/', $psNumber))->toHaveCount(4);
     expect(strlen(explode('/', $psNumber)[3]))->toBe(4);
 });

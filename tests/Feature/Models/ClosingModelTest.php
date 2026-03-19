@@ -30,7 +30,7 @@ test('closing generateCounterNumber returns correctly formatted ct number', func
     $ctNumber = Closing::generateCounterNumber();
     $now = now();
 
-    expect($ctNumber)->toStartWith('CT/' . $now->format('Y') . '/' . $now->format('m') . '/');
+    expect($ctNumber)->toStartWith('CT/'.$now->format('Y').'/'.$now->format('m').'/');
     expect(explode('/', $ctNumber))->toHaveCount(4);
     expect(strlen(explode('/', $ctNumber)[3]))->toBe(4);
 });

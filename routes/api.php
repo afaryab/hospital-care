@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\ExpenseCategoryController;
 use App\Http\Controllers\Api\LookUpController;
 use App\Http\Controllers\Api\PateintController;
-use App\Http\Controllers\Api\ExpenseCategoryController;
 use App\Http\Controllers\Api\ServiceOrderController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\UserController;

@@ -26,37 +26,37 @@ class ServiceOrderController extends Controller
             ->with(['patient', 'doctor', 'service'])
             ->latest('id');
 
-        if (!empty($filters['so_number'])) {
+        if (! empty($filters['so_number'])) {
             $query->where('so_number', 'like', "%{$filters['so_number']}%");
         }
 
-        if (!empty($filters['patient_id'])) {
+        if (! empty($filters['patient_id'])) {
             $query->where('patient_id', $filters['patient_id']);
         }
 
-        if (!empty($filters['doctor_id'])) {
+        if (! empty($filters['doctor_id'])) {
             $query->where('doctor_id', $filters['doctor_id']);
         }
 
-        if (!empty($filters['service_id'])) {
+        if (! empty($filters['service_id'])) {
             $query->where('service_id', $filters['service_id']);
         }
 
-        if (!empty($filters['type'])) {
+        if (! empty($filters['type'])) {
             $query->where('type', $filters['type']);
         }
 
-        if (!empty($filters['created_from'])) {
+        if (! empty($filters['created_from'])) {
             $query->whereDate('created_at', '>=', $filters['created_from']);
         }
 
-        if (!empty($filters['created_to'])) {
+        if (! empty($filters['created_to'])) {
             $query->whereDate('created_at', '<=', $filters['created_to']);
         }
 
         $exact = collect();
 
-        if (!empty($filters['so_number'])) {
+        if (! empty($filters['so_number'])) {
             $exact = ServiceOrder::query()
                 ->with(['patient', 'doctor', 'service'])
                 ->where('so_number', $filters['so_number'])
@@ -160,26 +160,26 @@ class ServiceOrderController extends Controller
             ->where('status', 'CLOSED')
             ->latest('id');
 
-        if (!empty($filters['payed_to'])) {
+        if (! empty($filters['payed_to'])) {
             $query->whereDoesntHave('expenseVouchers', fn ($q) => $q->where('payed_to', $filters['payed_to']));
         } else {
             $query->whereDoesntHave('expenseVouchers');
         }
 
-        if (!empty($filters['doctor_only']) && !empty($filters['payed_to'])) {
+        if (! empty($filters['doctor_only']) && ! empty($filters['payed_to'])) {
             $query->where('doctor_id', $filters['payed_to']);
         }
 
-        if (!empty($filters['closing_id'])) {
+        if (! empty($filters['closing_id'])) {
             $closingId = $filters['closing_id'];
             $query->whereHas('transactionElements', fn ($q) => $q->where('closing_id', $closingId));
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('so_number', 'like', "%{$search}%")
-                  ->orWhereHas('patient', fn ($pq) => $pq->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('patient', fn ($pq) => $pq->where('name', 'like', "%{$search}%"));
             });
         }
 

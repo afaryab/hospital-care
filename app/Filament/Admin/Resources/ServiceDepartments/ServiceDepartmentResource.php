@@ -5,7 +5,6 @@ namespace App\Filament\Admin\Resources\ServiceDepartments;
 use App\Filament\Admin\Resources\ServiceDepartments\Pages\ManageServiceDepartments;
 use App\Models\ServiceDepartment;
 use BackedEnum;
-use UnitEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -14,12 +13,11 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use UnitEnum;
 
 class ServiceDepartmentResource extends Resource
 {
@@ -61,12 +59,13 @@ class ServiceDepartmentResource extends Resource
                     ->disk('public')
                     ->state(function ($record) {
                         // Edit the state before rendering
-                        if(Str::startsWith($record->image, 'http://') || Str::startsWith($record->image, 'https://')) {
+                        if (Str::startsWith($record->image, 'http://') || Str::startsWith($record->image, 'https://')) {
                             return $record->image;
-                        }else if(Str::startsWith($record->image, '/img/')) {
+                        } elseif (Str::startsWith($record->image, '/img/')) {
                             return asset($record->image);
                         }
-                        return asset('storage/' . $record->image);
+
+                        return asset('storage/'.$record->image);
                     }),
                 TextColumn::make('have_composit_services')
                     ->numeric()

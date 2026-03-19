@@ -3,37 +3,36 @@
 namespace App\Console\Commands;
 
 use App\Enum\CounterStatus;
-use App\Enum\ServiceOrderStatus;
+use App\Models\Administrator;
 use App\Models\Closing;
-use App\Models\UpgradeProcess;
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Cache;
 use App\Models\Dentist;
+use App\Models\EmergencyDoctor;
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseVoucher;
 use App\Models\Image;
 use App\Models\IndDoctor;
+use App\Models\MigrationLog;
 use App\Models\OpdDoctor;
 use App\Models\Patient;
 use App\Models\Reception;
+use App\Models\Receptionist;
 use App\Models\Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceOrder;
 use App\Models\ServiceRecestation;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
-use App\Models\User;
-use App\Models\Administrator;
-use App\Models\Receptionist;
-use App\Models\EmergencyDoctor;
 use App\Models\UltrasoundDoctor;
+use App\Models\UpgradeProcess;
+use App\Models\User;
 use App\Models\XrayTechnician;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Models\MigrationLog;
 
 class FetchOldHIMS extends Command
 {
@@ -51,14 +50,23 @@ class FetchOldHIMS extends Command
 
     // Cache collections for frequently accessed data
     protected $userCache = [];
+
     protected $patientCache = [];
+
     protected $serviceCache = [];
+
     protected $serviceRecesitationCache = [];
+
     protected $serviceOrderCache = [];
+
     protected $serviceDeptCache = [];
+
     protected $receptionCache = [];
+
     protected $closingCache = [];
+
     protected $expenseCache = [];
+
     protected $expenseCategoryCache = [];
 
     public function info($string, $verbosity = null)
@@ -73,7 +81,7 @@ class FetchOldHIMS extends Command
     public function handle()
     {
 
-        if(env('ENABLE_OLD_SYNC', false) !== 'hims') {
+        if (env('ENABLE_OLD_SYNC', false) !== 'hims') {
             return 1;
         }
 
@@ -92,28 +100,29 @@ class FetchOldHIMS extends Command
         $batchSize = $this->option('batch-size');
 
         // Initialize migration batch for logging
-        $batchId = 'batch_' . now()->format('Y_m_d_H_i_s') . '_' . uniqid();
+        $batchId = 'batch_'.now()->format('Y_m_d_H_i_s').'_'.uniqid();
         Cache::put('migration_batch_id', $batchId, 3600); // Store for 1 hour
-        
+
         $this->info("🔄 Starting migration batch: {$batchId}");
 
         try {
             DB::connection('secondary')->getPdo();
             MigrationLog::logAction('system', MigrationLog::ACTION_SUCCESS, [
                 'reason' => 'Secondary database connection established',
-                'batch_id' => $batchId
+                'batch_id' => $batchId,
             ]);
         } catch (\Exception $e) {
-            Log::error('Secondary database connection failed: ' . $e->getMessage());
+            Log::error('Secondary database connection failed: '.$e->getMessage());
             MigrationLog::logError('system', null, null, $e->getMessage());
-            $this->error('Secondary database connection failed: ' . $e->getMessage());
+            $this->error('Secondary database connection failed: '.$e->getMessage());
+
             return 1;
         }
 
         $statusObj = UpgradeProcess::firstOrCreate([
-            'name' => 'currentStep'
+            'name' => 'currentStep',
         ], [
-            'value' => 0
+            'value' => 0,
         ]);
 
         if ($this->option('reset')) {
@@ -121,7 +130,7 @@ class FetchOldHIMS extends Command
             $statusObj->save();
             MigrationLog::logAction('system', MigrationLog::ACTION_SUCCESS, [
                 'reason' => 'Migration step reset to 0',
-                'batch_id' => $batchId
+                'batch_id' => $batchId,
             ]);
             $this->info('Migration step reset to 0');
         }
@@ -131,9 +140,9 @@ class FetchOldHIMS extends Command
             $statusObj->save();
             MigrationLog::logAction('system', MigrationLog::ACTION_SUCCESS, [
                 'reason' => "Migration step manually set to {$this->option('step')}",
-                'batch_id' => $batchId
+                'batch_id' => $batchId,
             ]);
-            $this->info('Migration step set to ' . $this->option('step'));
+            $this->info('Migration step set to '.$this->option('step'));
         }
 
         $currentStep = $statusObj->value;
@@ -146,13 +155,15 @@ class FetchOldHIMS extends Command
 
         if ($currentStep >= self::$TOTAL_STEPS) {
             $this->info('Migration completed successfully!');
+
             return 0;
         }
 
         $statusObj->value = $currentStep + 1;
         $statusObj->save();
 
-        $this->info("Completed step {$currentStep}, next step: " . ($currentStep + 1));
+        $this->info("Completed step {$currentStep}, next step: ".($currentStep + 1));
+
         return 0;
     }
 
@@ -190,7 +201,7 @@ class FetchOldHIMS extends Command
     protected function executeStep($currentStep, $batchSize)
     {
         Log::info("Stage: Executing migration step {$currentStep}.");
-        
+
         switch ($currentStep) {
             case 1:
                 $this->imagesOptimized($batchSize);
@@ -309,11 +320,11 @@ class FetchOldHIMS extends Command
             default:
                 break;
 
-            // if($currentStep < 200) {
-            //     $this->info('Step ' . $currentStep . ' completed. Please run the command again to execute the next step.');
-            // } else if($currentStep > self::$TOTAL_STEPS) {
-            //     $this->info('No more steps to execute.');
-            // }
+                // if($currentStep < 200) {
+                //     $this->info('Step ' . $currentStep . ' completed. Please run the command again to execute the next step.');
+                // } else if($currentStep > self::$TOTAL_STEPS) {
+                //     $this->info('No more steps to execute.');
+                // }
         }
     }
 
@@ -323,13 +334,13 @@ class FetchOldHIMS extends Command
     protected function imagesOptimized($batchSize)
     {
         $this->info('Migrating images...');
-        
+
         DB::connection('secondary')
             ->table('images')
             ->orderBy('id')
             ->chunk($batchSize, function ($images) {
                 $insertData = [];
-                
+
                 foreach ($images as $image) {
                     $insertData[] = [
                         'path' => $image->path,
@@ -338,11 +349,11 @@ class FetchOldHIMS extends Command
                         'updated_at' => now(),
                     ];
                 }
-                
+
                 // Bulk insert with ignore to handle duplicates
-                if (!empty($insertData)) {
+                if (! empty($insertData)) {
                     Image::insertOrIgnore($insertData);
-                    $this->info('Processed ' . count($insertData) . ' images');
+                    $this->info('Processed '.count($insertData).' images');
                 }
             });
     }
@@ -357,26 +368,28 @@ class FetchOldHIMS extends Command
         $totalProcessed = 0;
         $totalSkipped = 0;
         $totalErrors = 0;
-        
+
         DB::connection('secondary')
             ->table('aauth_users')
             ->orderBy('id')
             ->chunk($batchSize, function ($users) use (&$totalProcessed, &$totalSkipped, &$totalErrors, $batchId) {
                 $insertData = [];
                 $profileData = [];
-                
+
                 foreach ($users as $user) {
                     try {
                         // Validate user data
-                        if (empty($user->email) || !filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
-                            MigrationLog::logSkipped('users', 'aauth_users', $user->id, 'Invalid email address', (array)$user);
+                        if (empty($user->email) || ! filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+                            MigrationLog::logSkipped('users', 'aauth_users', $user->id, 'Invalid email address', (array) $user);
                             $totalSkipped++;
+
                             continue;
                         }
 
                         if (empty($user->name)) {
-                            MigrationLog::logSkipped('users', 'aauth_users', $user->id, 'Empty name field', (array)$user);
+                            MigrationLog::logSkipped('users', 'aauth_users', $user->id, 'Empty name field', (array) $user);
                             $totalSkipped++;
+
                             continue;
                         }
 
@@ -402,53 +415,70 @@ class FetchOldHIMS extends Command
                         $insertData[] = $userData;
 
                         // Cache user for later use
-                        $userObj = (object)[
+                        $userObj = (object) [
                             'id' => $user->id,
                             'email' => $user->email,
-                            'name' => $user->name
+                            'name' => $user->name,
                         ];
                         $this->userCache[$user->id] = $userObj;
 
                         // Collect profile data for bulk insert later
-                        if ($user->is_super_admin) $profileData['admin'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
-                        if ($user->is_receptionist) $profileData['receptionist'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
-                        if ($user->is_opd_doctor) $profileData['opd_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
-                        if ($user->is_inpatient_doctor) $profileData['ind_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
-                        if ($user->is_emergency_doctor) $profileData['emergency_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
-                        if ($user->is_dentist) $profileData['dentist'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
-                        if ($user->is_ultrasound_doc) $profileData['ultrasound_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
-                        if ($user->is_xray_tech) $profileData['xray_technician'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        if ($user->is_super_admin) {
+                            $profileData['admin'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        }
+                        if ($user->is_receptionist) {
+                            $profileData['receptionist'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        }
+                        if ($user->is_opd_doctor) {
+                            $profileData['opd_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        }
+                        if ($user->is_inpatient_doctor) {
+                            $profileData['ind_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        }
+                        if ($user->is_emergency_doctor) {
+                            $profileData['emergency_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        }
+                        if ($user->is_dentist) {
+                            $profileData['dentist'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        }
+                        if ($user->is_ultrasound_doc) {
+                            $profileData['ultrasound_doctor'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        }
+                        if ($user->is_xray_tech) {
+                            $profileData['xray_technician'][] = ['user_id' => $user->id, 'created_at' => $user->created_on, 'updated_at' => $user->modified_on];
+                        }
 
                         $totalProcessed++;
 
                     } catch (\Exception $e) {
-                        MigrationLog::logError('users', 'aauth_users', $user->id, $e->getMessage(), (array)$user);
+                        MigrationLog::logError('users', 'aauth_users', $user->id, $e->getMessage(), (array) $user);
                         $totalErrors++;
+
                         continue;
                     }
                 }
-                
+
                 // Bulk insert users
-                if (!empty($insertData)) {
+                if (! empty($insertData)) {
                     try {
                         $inserted = User::insertOrIgnore($insertData);
-                        $this->info('Processed ' . count($insertData) . ' users in this batch');
-                        
+                        $this->info('Processed '.count($insertData).' users in this batch');
+
                         // Log successful batch
                         MigrationLog::logAction('users', MigrationLog::ACTION_SUCCESS, [
                             'reason' => 'Bulk insert completed',
                             'old_table' => 'aauth_users',
                             'new_table' => 'users',
                             'batch_id' => $batchId,
-                            'old_data' => ['batch_count' => count($insertData)]
+                            'old_data' => ['batch_count' => count($insertData)],
                         ]);
 
                     } catch (\Exception $e) {
                         MigrationLog::logError('users', 'aauth_users', null, $e->getMessage(), [
                             'batch_size' => count($insertData),
-                            'batch_id' => $batchId
+                            'batch_id' => $batchId,
                         ]);
-                        $this->error('Failed to insert users batch: ' . $e->getMessage());
+                        $this->error('Failed to insert users batch: '.$e->getMessage());
                     }
                 }
 
@@ -459,14 +489,14 @@ class FetchOldHIMS extends Command
         // Log final summary
         MigrationLog::logAction('users', MigrationLog::ACTION_SUCCESS, [
             'reason' => 'Users migration completed',
-            'old_table' => 'aauth_users', 
+            'old_table' => 'aauth_users',
             'new_table' => 'users',
             'batch_id' => $batchId,
             'old_data' => [
                 'total_processed' => $totalProcessed,
                 'total_skipped' => $totalSkipped,
-                'total_errors' => $totalErrors
-            ]
+                'total_errors' => $totalErrors,
+            ],
         ]);
 
         $this->info("✅ Users migration completed: {$totalProcessed} processed, {$totalSkipped} skipped, {$totalErrors} errors");
@@ -489,7 +519,7 @@ class FetchOldHIMS extends Command
         ];
 
         foreach ($profileData as $type => $profiles) {
-            if (!empty($profiles) && isset($profileModels[$type])) {
+            if (! empty($profiles) && isset($profileModels[$type])) {
                 try {
                     $profileModels[$type]::insertOrIgnore($profiles);
                     MigrationLog::logAction("user_profiles_{$type}", MigrationLog::ACTION_SUCCESS, [
@@ -497,13 +527,13 @@ class FetchOldHIMS extends Command
                         'old_table' => 'aauth_users',
                         'new_table' => $type,
                         'batch_id' => $batchId,
-                        'old_data' => ['profile_count' => count($profiles)]
+                        'old_data' => ['profile_count' => count($profiles)],
                     ]);
                 } catch (\Exception $e) {
                     MigrationLog::logError("user_profiles_{$type}", 'aauth_users', null, $e->getMessage(), [
                         'profile_type' => $type,
                         'profile_count' => count($profiles),
-                        'batch_id' => $batchId
+                        'batch_id' => $batchId,
                     ]);
                 }
             }
@@ -516,15 +546,15 @@ class FetchOldHIMS extends Command
     protected function servicesOptimized($batchSize)
     {
         $this->info('Migrating services...');
-        
+
         $serviceTypes = [
-            ['key' => 'OPD', 'name' => "Outdoor", 'image' => "/img/opd.png", 'table' => 'opd_services'],
-            ['key' => 'IND', 'name' => "Indoor", 'image' => "/img/ind.png", 'table' => 'inpd_services', 'recesitation_table' => 'recestation_services'],
-            ['key' => 'EMG', 'name' => "Emergency", 'image' => "/img/emergency.png", 'table' => 'emergency_services'],
-            ['key' => 'DNT', 'name' => "Dental Department", 'image' => "/img/dental.png", 'table' => 'dental_services'],
-            ['key' => 'PTH', 'name' => "Laboratory", 'image' => "/img/laboratory.png", 'table' => 'test_services'],
-            ['key' => 'ULT', 'name' => "Ultrasound", 'image' => "/img/ultrasound.png", 'table' => 'ultrasound_services'],
-            ['key' => 'XRY', 'name' => "Radiology", 'image' => "/img/xray.png", 'table' => 'xray_services']
+            ['key' => 'OPD', 'name' => 'Outdoor', 'image' => '/img/opd.png', 'table' => 'opd_services'],
+            ['key' => 'IND', 'name' => 'Indoor', 'image' => '/img/ind.png', 'table' => 'inpd_services', 'recesitation_table' => 'recestation_services'],
+            ['key' => 'EMG', 'name' => 'Emergency', 'image' => '/img/emergency.png', 'table' => 'emergency_services'],
+            ['key' => 'DNT', 'name' => 'Dental Department', 'image' => '/img/dental.png', 'table' => 'dental_services'],
+            ['key' => 'PTH', 'name' => 'Laboratory', 'image' => '/img/laboratory.png', 'table' => 'test_services'],
+            ['key' => 'ULT', 'name' => 'Ultrasound', 'image' => '/img/ultrasound.png', 'table' => 'ultrasound_services'],
+            ['key' => 'XRY', 'name' => 'Radiology', 'image' => '/img/xray.png', 'table' => 'xray_services'],
         ];
 
         foreach ($serviceTypes as $serviceType) {
@@ -533,7 +563,7 @@ class FetchOldHIMS extends Command
                 [
                     'name' => $serviceType['name'],
                     'image' => $serviceType['image'],
-                    'have_composit_services' => $serviceType['key'] === 'IND'
+                    'have_composit_services' => $serviceType['key'] === 'IND',
                 ]
             );
 
@@ -543,10 +573,10 @@ class FetchOldHIMS extends Command
                 ->orderBy('id')
                 ->chunk($batchSize, function ($services) use ($department, $serviceType) {
                     $insertData = [];
-                    
+
                     foreach ($services as $service) {
                         $serviceProviderTypes = [];
-                        
+
                         if ($service->is_doctor_selectable) {
                             switch ($serviceType['key']) {
                                 case 'OPD':
@@ -574,13 +604,13 @@ class FetchOldHIMS extends Command
                             'created_by' => $service->entered_by,
                             'created_at' => $service->created_on,
                             'updated_at' => now(),
-                            'old_id' => $service->id
+                            'old_id' => $service->id,
                         ];
                     }
-                    
-                    if (!empty($insertData)) {
+
+                    if (! empty($insertData)) {
                         Service::insert($insertData);
-                        $this->info("Processed " . count($insertData) . " {$serviceType['key']} services");
+                        $this->info('Processed '.count($insertData)." {$serviceType['key']} services");
                     }
                 });
 
@@ -591,7 +621,7 @@ class FetchOldHIMS extends Command
                     ->orderBy('id')
                     ->chunk($batchSize, function ($services) use ($department) {
                         $insertData = [];
-                        
+
                         foreach ($services as $service) {
                             $insertData[] = [
                                 'name' => $service->name,
@@ -603,13 +633,13 @@ class FetchOldHIMS extends Command
                                 'created_by' => $service->entered_by,
                                 'created_at' => $service->created_on,
                                 'updated_at' => now(),
-                                'old_id' => $service->id
+                                'old_id' => $service->id,
                             ];
                         }
-                        
-                        if (!empty($insertData)) {
+
+                        if (! empty($insertData)) {
                             ServiceRecestation::insert($insertData);
-                            $this->info("Processed " . count($insertData) . " recestation services");
+                            $this->info('Processed '.count($insertData).' recestation services');
                         }
                     });
             }
@@ -622,19 +652,25 @@ class FetchOldHIMS extends Command
     protected function receptionsOptimized($batchSize)
     {
         $this->info('Migrating receptions...');
-        
+
         DB::connection('secondary')
             ->table('reception_counters')
             ->orderBy('id')
             ->chunk($batchSize, function ($receptions) {
                 $insertData = [];
-                
+
                 foreach ($receptions as $reception) {
                     $allowedDepartments = [];
-                    if ($reception->is_opd_allowed) $allowedDepartments[] = 'OPD';
-                    if ($reception->is_inpatient_allowed) $allowedDepartments[] = 'IND';
-                    if ($reception->is_emergency_allowed) $allowedDepartments[] = 'EMG';
-                    
+                    if ($reception->is_opd_allowed) {
+                        $allowedDepartments[] = 'OPD';
+                    }
+                    if ($reception->is_inpatient_allowed) {
+                        $allowedDepartments[] = 'IND';
+                    }
+                    if ($reception->is_emergency_allowed) {
+                        $allowedDepartments[] = 'EMG';
+                    }
+
                     // Always add these departments
                     $allowedDepartments = array_merge($allowedDepartments, ['DNT', 'PTH', 'ULT', 'XRY']);
 
@@ -652,15 +688,15 @@ class FetchOldHIMS extends Command
                     ];
 
                     // Cache reception
-                    $this->receptionCache[$reception->id] = (object)[
+                    $this->receptionCache[$reception->id] = (object) [
                         'id' => $reception->id,
-                        'name' => $reception->counter_name
+                        'name' => $reception->counter_name,
                     ];
                 }
-                
-                if (!empty($insertData)) {
+
+                if (! empty($insertData)) {
                     Reception::insertOrIgnore($insertData);
-                    $this->info('Processed ' . count($insertData) . ' receptions');
+                    $this->info('Processed '.count($insertData).' receptions');
                 }
             });
     }
@@ -668,32 +704,32 @@ class FetchOldHIMS extends Command
     /**
      * Optimized patients migration with better chunking
      */
-    protected function patientsOptimized($year, $month = null, $batchSize)
+    protected function patientsOptimized($year, $month, $batchSize)
     {
-        $this->info("Migrating patients for year {$year}" . ($month ? " month {$month}" : ""));
-        
+        $this->info("Migrating patients for year {$year}".($month ? " month {$month}" : ''));
+
         $query = DB::connection('secondary')->table('patients');
-        
+
         if ($month) {
             $query->whereMonth('created_on', $month);
         }
-        
+
         $query->whereYear('created_on', $year);
 
         // Get existing patient count for PS number generation
         $existingCount = Patient::whereYear('created_at', $year)
-            ->when($month, fn($q) => $q->whereMonth('created_at', $month))
+            ->when($month, fn ($q) => $q->whereMonth('created_at', $month))
             ->count();
 
         $counter = $existingCount;
 
-        $query->orderBy('id')->chunk($batchSize, function ($patients) use ($year, $month, &$counter) {
+        $query->orderBy('id')->chunk($batchSize, function ($patients) use (&$counter) {
             $insertData = [];
-            
+
             foreach ($patients as $patient) {
                 $counter++;
                 $createdInTheMonth = Carbon::parse($patient->created_on);
-                $psNumber = 'PS/' . $createdInTheMonth->format('Y/m') . '/' . str_pad($counter, 6, '0', STR_PAD_LEFT);
+                $psNumber = 'PS/'.$createdInTheMonth->format('Y/m').'/'.str_pad($counter, 6, '0', STR_PAD_LEFT);
 
                 $insertData[] = [
                     'id' => $patient->id,
@@ -713,19 +749,19 @@ class FetchOldHIMS extends Command
                 ];
 
                 // Cache patient
-                $this->patientCache[$patient->id] = (object)[
+                $this->patientCache[$patient->id] = (object) [
                     'id' => $patient->id,
-                    'name' => $patient->pateint_name
+                    'name' => $patient->pateint_name,
                 ];
             }
-            
-            if (!empty($insertData)) {
+
+            if (! empty($insertData)) {
                 Patient::insertOrIgnore($insertData);
-                $this->info('Processed ' . count($insertData) . ' patients');
+                $this->info('Processed '.count($insertData).' patients');
             }
         });
     }
-                    
+
     protected function validatePhoneNumber($number)
     {
         $number = preg_replace('/\D/', '', $number);
@@ -736,35 +772,41 @@ class FetchOldHIMS extends Command
         } elseif (Str::startsWith($number, '3') && strlen($number) == 10) {
             return true;
         }
+
         return false;
     }
+
     // Expected formats: +92-XXX-XXXXXXX
     protected function formatePhoneNumber($number)
     {
         $number = preg_replace('/\D/', '', $number);
         if (Str::startsWith($number, '92')) {
-            return '+92-' . substr($number, 2, 3) . '-' . substr($number, 5);
+            return '+92-'.substr($number, 2, 3).'-'.substr($number, 5);
 
         } elseif (Str::startsWith($number, '0')) {
-            return '+92-' . substr($number, 1, 3) . '-' . substr($number, 4);
+            return '+92-'.substr($number, 1, 3).'-'.substr($number, 4);
         } elseif (Str::startsWith($number, '3') && strlen($number) == 10) {
-            return '+92-' . substr($number, 0, 3) . '-' . substr($number, 3);
+            return '+92-'.substr($number, 0, 3).'-'.substr($number, 3);
         }
+
         return $number; // Return as is if it doesn't match expected patterns
     }
 
     protected function validateCnic($cnic)
     {
         $cnic = preg_replace('/\D/', '', $cnic);
+
         return strlen($cnic) == 13;
     }
+
     // Expected format: XXXXX-XXXXXXX-X
     protected function formateCnic($cnic)
     {
         $cnic = preg_replace('/\D/', '', $cnic);
         if (strlen($cnic) == 13) {
-            return substr($cnic, 0, 5) . '-' . substr($cnic, 5, 7) . '-' . substr($cnic, 12);
+            return substr($cnic, 0, 5).'-'.substr($cnic, 5, 7).'-'.substr($cnic, 12);
         }
+
         return $cnic; // Return as is if it doesn't match expected patterns
     }
 
@@ -774,22 +816,22 @@ class FetchOldHIMS extends Command
     protected function counterClosingsOptimized($batchSize)
     {
         $this->info('Migrating counter closings...');
-        
+
         DB::connection('secondary')
             ->table('reception_counters_closings')
             ->orderBy('id')
             ->chunk($batchSize, function ($closings) {
                 $insertData = [];
-                
+
                 foreach ($closings as $closing) {
                     $createdDate = Carbon::parse($closing->created_on);
-                    
+
                     // Get existing count for CT number generation
                     $countInMonth = Closing::whereYear('created_at', $createdDate->year)
                         ->whereMonth('created_at', $createdDate->month)
                         ->count();
 
-                    $ctNumber = 'CT/' . $createdDate->format('Y/m/') . str_pad($countInMonth + 1, 4, '0', STR_PAD_LEFT);
+                    $ctNumber = 'CT/'.$createdDate->format('Y/m/').str_pad($countInMonth + 1, 4, '0', STR_PAD_LEFT);
 
                     $insertData[] = [
                         'id' => $closing->id,
@@ -813,14 +855,14 @@ class FetchOldHIMS extends Command
                     ];
 
                     // Cache closing
-                    $this->closingCache[$closing->id] = (object)[
-                        'id' => $closing->id
+                    $this->closingCache[$closing->id] = (object) [
+                        'id' => $closing->id,
                     ];
                 }
-                
-                if (!empty($insertData)) {
+
+                if (! empty($insertData)) {
                     Closing::insertOrIgnore($insertData);
-                    $this->info('Processed ' . count($insertData) . ' closings');
+                    $this->info('Processed '.count($insertData).' closings');
                 }
             });
     }
@@ -831,13 +873,13 @@ class FetchOldHIMS extends Command
     protected function expenseCategoriesOptimized($batchSize)
     {
         $this->info('Migrating expense categories...');
-        
+
         DB::connection('secondary')
             ->table('expenses_categories')
             ->orderBy('id')
             ->chunk($batchSize, function ($categories) {
                 $insertData = [];
-                
+
                 foreach ($categories as $category) {
                     $insertData[] = [
                         'old_id' => $category->id,
@@ -850,11 +892,11 @@ class FetchOldHIMS extends Command
                         'updated_at' => now(),
                     ];
                 }
-                
-                if (!empty($insertData)) {
+
+                if (! empty($insertData)) {
                     $cat = ExpenseCategory::insertOrIgnore($insertData);
                     $this->expenseCategoryCache[$category->id] = $cat;
-                    $this->info('Processed ' . count($insertData) . ' expense categories');
+                    $this->info('Processed '.count($insertData).' expense categories');
                 }
             });
     }
@@ -865,7 +907,7 @@ class FetchOldHIMS extends Command
     protected function counterClosingTransactionsOptimized($batchSize)
     {
         $this->info('Migrating counter closing transactions...');
-        
+
         $statusObj = UpgradeProcess::firstOrCreate(
             ['name' => 'transaction_id'],
             ['value' => 0]
@@ -884,7 +926,7 @@ class FetchOldHIMS extends Command
 
         $newTransactionCount = Transaction::count();
 
-        $percentage = $oldTransactionCount > 0 ? 
+        $percentage = $oldTransactionCount > 0 ?
             round(($newTransactionCount / $oldTransactionCount) * 100, 2) : 0;
 
         // Save progress percentage to UpgradeProcess
@@ -923,13 +965,14 @@ class FetchOldHIMS extends Command
                 'e.service_id',
                 'e.department_transaction_id',
                 'e.created_on as element_created_on',
-                'e.modified_on as element_modified_on'
+                'e.modified_on as element_modified_on',
             ]);
 
         if ($transactions->isEmpty()) {
             $statusObj->value = -1; // -1 represents "finished"
             $statusObj->save();
             $this->info('Transaction migration completed');
+
             return;
         }
 
@@ -941,16 +984,16 @@ class FetchOldHIMS extends Command
 
             // Create transaction first
             $isExpense = $transaction->income_or_expence !== 'INCOME';
-            
+
             // Generate transaction number based on old transaction's creation date
             $createdAt = Carbon::parse($transaction->created_on);
             $year = $createdAt->format('Y');
             $month = $createdAt->format('m');
             $day = $createdAt->format('d');
-            
+
             // Get count for that specific date to maintain unique numbering
             $existingCount = Transaction::where('tr_number', 'like', "TR/{$year}/{$month}/{$day}%")->count();
-            $trNumber = "TR/{$year}/{$month}/{$day}/" . str_pad($existingCount + 1, 4, '0', STR_PAD_LEFT);
+            $trNumber = "TR/{$year}/{$month}/{$day}/".str_pad($existingCount + 1, 4, '0', STR_PAD_LEFT);
 
             $transactionData = [
                 'old_id' => $transaction->id,
@@ -961,7 +1004,7 @@ class FetchOldHIMS extends Command
                 'type' => $transaction->income_or_expence === 'INCOME' ? $this->mapTransactionType($transaction->type) : 'CASH',
                 'income_or_expense' => $transaction->income_or_expence === 'INCOME' ? 'INCOME' : 'EXPENSE',
                 // 'department_id' => $this->mapDepartmentId($transaction->department_id),
-                
+
                 'amount' => $this->sanitizeTransactionAmount($transaction->amount, $isExpense),
                 'orignal_amount' => $this->sanitizeTransactionAmount($transaction->orignal_amount, $isExpense),
                 'customer_payed' => $isExpense ? 0 : $this->sanitizeNumericValue($transaction->customer_payed),
@@ -971,7 +1014,7 @@ class FetchOldHIMS extends Command
                 'updated_at' => $transaction->modified_on,
             ];
 
-            $this->info("Processing transaction ID: {$transaction->id} with " . count($transactionGroup) . " elements and type {$transactionData['type']} and amount {$transactionData['amount']} and INC/EXP: {$transactionData['income_or_expense']}");
+            $this->info("Processing transaction ID: {$transaction->id} with ".count($transactionGroup)." elements and type {$transactionData['type']} and amount {$transactionData['amount']} and INC/EXP: {$transactionData['income_or_expense']}");
 
             // If is expense get expense record from secondary database and check if category is voucher pay or not, if voucher pay then set type as VOUCHER-PAY otherwise EXP
             if ($isExpense) {
@@ -979,19 +1022,18 @@ class FetchOldHIMS extends Command
                 // Expense transactions have only one element which contains the expense details, so we can directly use the first element for this.
                 $trE = $transactionGroup->first();
 
-                if($trE->type === 'INPT-EXP') {
+                if ($trE->type === 'INPT-EXP') {
                     $this->info("Processing INPT-EXP transaction ID: {$transaction->id}");
 
                     $inPatientFileExpense = DB::connection('secondary')->table('inpatient_file_expenses')->where('id', $trE->department_transaction_id)->first();
                     if ($inPatientFileExpense) {
                         $transactionData['notes'] = $inPatientFileExpense->payment_reference;
                     }
-                    
 
                 }
 
                 $expense = DB::connection('secondary')->table('expenses')->where('id', $trE->department_transaction_id)->first();
-                
+
                 $transactionData['expense_category_id'] = $expense ? ($this->getCachedExpenseCategory($expense->category_id)?->id ?? null) : null;
                 $transactionData['notes'] = $expense ? $expense->payment_reference : null;
 
@@ -1012,7 +1054,7 @@ class FetchOldHIMS extends Command
                             'notes' => $voucher->expense_notes,
                             'created_at' => $voucher->created_on,
                             'updated_at' => $voucher->modified_on,
-                            'vc_number' => ExpenseVoucher::generateExpenseVoucherNumber()
+                            'vc_number' => ExpenseVoucher::generateExpenseVoucherNumber(),
                         ];
 
                         $newVoucherId = ExpenseVoucher::insertGetId($voucherData);
@@ -1022,26 +1064,28 @@ class FetchOldHIMS extends Command
                 } else {
                     $transactionData['type'] = 'EXP';
                 }
-                
+
             }
 
             // Use insertGetId to get the new transaction ID
             $newTransactionId = Transaction::insertGetId($transactionData);
 
-            $this->info("Processing transaction ID: {$transaction->id} => New ID: {$newTransactionId} with " . count($transactionGroup) . " elements");
+            $this->info("Processing transaction ID: {$transaction->id} => New ID: {$newTransactionId} with ".count($transactionGroup).' elements');
 
             // Prepare elements for this transaction
             $elementInserts = [];
             foreach ($transactionGroup as $element) {
-                if (!$element->element_type || !$element->element_id) continue;
+                if (! $element->element_type || ! $element->element_id) {
+                    continue;
+                }
 
                 $elementData = $this->prepareElementData($element, $transaction);
-                
+
                 if ($elementData) {
                     $elementData['transaction_id'] = $newTransactionId;
                     $elementData['closing_id'] = $transactionData['closing_id'];
 
-                    if($isExpense) {
+                    if ($isExpense) {
                         $elementData['expense_category_id'] = $transactionData['expense_category_id'];
                         $elementData['notes'] = $transactionData['notes'];
                         $elementData['exp_voucher_id'] = $transactionData['exp_voucher_id'] ?? null;
@@ -1049,13 +1093,12 @@ class FetchOldHIMS extends Command
 
                     $elementData['income_or_expense'] = $transaction->income_or_expence;
 
-
                     $elementInserts[] = $te = TransactionElement::createQuietly($elementData);
 
                     // If Income and department is inpatient and $element->department_transaction_id is present, link it to the service order
 
                     if ($transaction->type === 'INCOME' && $element->department_transaction_id && in_array($element->element_type, ['INPT'])) {
-                    
+
                         $this->info("Processing service order for transaction element ID: {$element->element_id}, department transaction ID: {$element->department_transaction_id}");
 
                         $InpFile = DB::connection('secondary')->table('inpatient_file')
@@ -1072,8 +1115,8 @@ class FetchOldHIMS extends Command
                             $s = $s + 1;
 
                             $serviceOrder = ServiceOrder::create([
-                                'so_number' => 'SO/' . Carbon::parse($element->element_created_on)->format('Ymd') . '/' . str_pad($s, 4, '0', STR_PAD_LEFT),
-                                'so_short' => 'INPT/' . $te->id,
+                                'so_number' => 'SO/'.Carbon::parse($element->element_created_on)->format('Ymd').'/'.str_pad($s, 4, '0', STR_PAD_LEFT),
+                                'so_short' => 'INPT/'.$te->id,
                                 'transaction_element_id' => $te->id,
                                 'patient_id' => $this->getCachedPatient($transaction->patient_id)?->id,
                                 'service_id' => $this->getCachedService($element->service_id, $this->mapServiceType($element->element_type))?->id,
@@ -1082,22 +1125,21 @@ class FetchOldHIMS extends Command
                                 'created_at' => $element->element_created_on,
                                 'updated_at' => $element->element_modified_on,
                             ]);
+                        }
+
                     }
-
-
                 }
+
+                // Bulk insert elements for this transaction
+                // if (!empty($elementInserts)) {
+                //     TransactionElement::create($elementInserts);
+                // }
+
+                $statusObj->value = $transactionId;
             }
 
-            // Bulk insert elements for this transaction
-            // if (!empty($elementInserts)) {
-            //     TransactionElement::create($elementInserts);
-            // }
-
-            $statusObj->value = $transactionId;
-        }
-
-        $statusObj->save();
-        $this->info('Processed ' . count($groupedTransactions) . ' transactions');
+            $statusObj->save();
+            $this->info('Processed '.count($groupedTransactions).' transactions');
         }
     }
 
@@ -1106,7 +1148,7 @@ class FetchOldHIMS extends Command
      */
     protected function mapTransactionType($type)
     {
-        return match($type) {
+        return match ($type) {
             'CARD', 'CREDITCARD' => 'CARD',
             'CHEQUE' => 'CHEQUE',
             default => 'CASH'
@@ -1119,7 +1161,7 @@ class FetchOldHIMS extends Command
     protected function prepareElementData($element, $transaction)
     {
         $isExpenseElement = in_array($element->element_type, ['EXP', 'VOUCHER-PAY', 'INPT-EXP']);
-        
+
         $baseData = [
             'old_id' => $element->id,
             'closing_id' => $this->getCachedClosing($transaction->counter_id)?->id,
@@ -1164,7 +1206,7 @@ class FetchOldHIMS extends Command
 
             case 'RECES':
                 $service = $this->getCachedRecestationService($element->service_id, $element->element_type);
-                
+
                 return array_merge($baseData, [
                     'income_or_expense' => 'INCOME',
                     'doctor_id' => null,
@@ -1185,7 +1227,7 @@ class FetchOldHIMS extends Command
      */
     protected function mapServiceType($type)
     {
-        return match($type) {
+        return match ($type) {
             'OPD' => 'OPD',
             'INPT' => 'IND',
             'EMER' => 'EMG',
@@ -1203,15 +1245,17 @@ class FetchOldHIMS extends Command
 
     protected function getCachedPatient($id)
     {
-        if (!$id) return null;
-        
-        if (!isset($this->patientCache[$id])) {
+        if (! $id) {
+            return null;
+        }
+
+        if (! isset($this->patientCache[$id])) {
             $patient = Patient::find($id);
             if ($patient) {
                 $this->patientCache[$id] = $patient;
             }
         }
-        
+
         return $this->patientCache[$id] ?? null;
     }
 
@@ -1222,29 +1266,30 @@ class FetchOldHIMS extends Command
 
     protected function getCachedClosing($id)
     {
-        if (!$id || $id == 0) {
+        if (! $id || $id == 0) {
             return null;
         }
-        
-        if (!isset($this->closingCache[$id])) {
+
+        if (! isset($this->closingCache[$id])) {
             // First check if already exists in new database
             $closingObj = Closing::where('id', $id)->first();
-            
+
             if ($closingObj) {
                 $this->closingCache[$id] = $closingObj;
+
                 return $closingObj;
             }
 
             // If not found in new DB, get from old DB and create
             $closing = DB::connection('secondary')->table('reception_counters_closings')->find($id);
-            
+
             if ($closing) {
                 // Create the closing record in new database
                 $countInMonth = Closing::whereYear('created_at', Carbon::parse($closing->created_on)->year)
                     ->whereMonth('created_at', Carbon::parse($closing->created_on)->month)
                     ->count();
 
-                $ctNumber = 'CT/' . Carbon::parse($closing->created_on)->format('Y/m/') . str_pad($countInMonth + 1, 4, '0', STR_PAD_LEFT);
+                $ctNumber = 'CT/'.Carbon::parse($closing->created_on)->format('Y/m/').str_pad($countInMonth + 1, 4, '0', STR_PAD_LEFT);
 
                 $newClosing = Closing::create([
                     'id' => $closing->id,
@@ -1262,12 +1307,13 @@ class FetchOldHIMS extends Command
                     'created_at' => $closing->created_on,
                     'updated_at' => $closing->modified_on,
                 ]);
-                
+
                 $this->closingCache[$id] = $newClosing;
+
                 return $newClosing;
             }
         }
-        
+
         return $this->closingCache[$id] ?? null;
     }
 
@@ -1275,7 +1321,7 @@ class FetchOldHIMS extends Command
     {
 
         // Cache if not already cached
-        if (!isset($this->expenseCategoryCache[$id])) {
+        if (! isset($this->expenseCategoryCache[$id])) {
             $category = ExpenseCategory::where('old_id', $id)->first();
             if ($category) {
                 $this->expenseCategoryCache[$id] = $category;
@@ -1288,8 +1334,8 @@ class FetchOldHIMS extends Command
     protected function getCachedService($id, $type)
     {
         $key = "{$type}_{$id}";
-        
-        if (!isset($this->serviceCache[$key])) {
+
+        if (! isset($this->serviceCache[$key])) {
             // Get ServiceDepartment based on type
             $serviceDepartment = ServiceDepartment::where('slug', $type)->first();
 
@@ -1301,15 +1347,15 @@ class FetchOldHIMS extends Command
                 $this->serviceCache[$key] = $service;
             }
         }
-        
+
         return $this->serviceCache[$key] ?? null;
     }
 
     protected function getCachedRecestationService($id, $type)
     {
         $key = "{$type}_{$id}";
-        
-        if (!isset($this->serviceRecesitationCache[$key])) {
+
+        if (! isset($this->serviceRecesitationCache[$key])) {
             // Get ServiceDepartment based on type
             $serviceDepartment = ServiceDepartment::where('slug', 'IND')->first();
 
@@ -1321,7 +1367,7 @@ class FetchOldHIMS extends Command
                 $this->serviceRecesitationCache[$key] = $service;
             }
         }
-        
+
         return $this->serviceRecesitationCache[$key] ?? null;
     }
 
@@ -1335,7 +1381,7 @@ class FetchOldHIMS extends Command
         }
 
         // Convert to numeric
-        $numericValue = is_numeric($value) ? (float)$value : 0;
+        $numericValue = is_numeric($value) ? (float) $value : 0;
 
         // Define reasonable business limits for a hospital system
         // Most transactions shouldn't exceed 1 million in any currency
@@ -1345,17 +1391,20 @@ class FetchOldHIMS extends Command
         // Check for obviously corrupt data (2147483647 is max 32-bit int, likely corrupt)
         if ($numericValue >= 2147483647 || $numericValue <= -2147483648) {
             $this->warn("Detected corrupt max/min int value: {$numericValue}, setting to 0");
+
             return 0;
         }
 
         // Check for unreasonably large values that might be data corruption
         if ($numericValue > $maxReasonableValue) {
             $this->warn("Value {$numericValue} seems unreasonably large for hospital transaction, clamping to {$maxReasonableValue}");
+
             return $maxReasonableValue;
         }
 
         if ($numericValue < $minReasonableValue) {
             $this->warn("Value {$numericValue} seems unreasonably negative for hospital transaction, clamping to {$minReasonableValue}");
+
             return $minReasonableValue;
         }
 
@@ -1365,11 +1414,13 @@ class FetchOldHIMS extends Command
 
         if ($numericValue >= $mysqlIntMax) {
             $this->warn("Value {$numericValue} at MySQL int limit, setting to safe value");
+
             return $maxReasonableValue;
         }
 
         if ($numericValue <= $mysqlIntMin) {
             $this->warn("Value {$numericValue} at MySQL int limit, setting to safe value");
+
             return $minReasonableValue;
         }
 
@@ -1386,11 +1437,12 @@ class FetchOldHIMS extends Command
         }
 
         // Convert to numeric
-        $numericValue = is_numeric($value) ? (float)$value : 0;
+        $numericValue = is_numeric($value) ? (float) $value : 0;
 
         // Handle corrupt data first
         if ($numericValue >= 2147483647 || $numericValue <= -2147483648) {
             $this->warn("Detected corrupt max/min int value: {$numericValue}, setting to 0");
+
             return 0;
         }
 
@@ -1403,6 +1455,7 @@ class FetchOldHIMS extends Command
         // For expenses, ensure positive values
         if ($isExpense && $numericValue < 0) {
             $this->warn("Expense transaction has negative amount {$numericValue}, converting to positive");
+
             return abs($numericValue);
         }
 
@@ -1411,7 +1464,7 @@ class FetchOldHIMS extends Command
 
     protected function mapInpatientFileToServiceOrder($departmentTransactionId)
     {
-        if (!$departmentTransactionId) {
+        if (! $departmentTransactionId) {
             return null;
         }
 
@@ -1442,6 +1495,4 @@ class FetchOldHIMS extends Command
 
         return null;
     }
-
-
 }

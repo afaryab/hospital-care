@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Closing extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'old_id',
         'reception_id',
@@ -26,7 +27,7 @@ class Closing extends Model
         'cash_recieving_time',
         'reported_by',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     protected $appends = [
@@ -42,10 +43,12 @@ class Closing extends Model
     {
         return $this->ct_number_parts['year'] ?? null;
     }
+
     public function getMonthAttribute()
     {
         return $this->ct_number_parts['month'] ?? null;
     }
+
     public function getNumberAttribute()
     {
         return $this->ct_number_parts['number'] ?? null;
@@ -56,16 +59,15 @@ class Closing extends Model
         if (empty($this->ct_number)) {
             return null;
         }
-        
+
         $parts = explode('/', $this->ct_number);
-        
+
         return [
             'year' => $parts[1] ?? null,
             'month' => $parts[2] ?? null,
-            'number' => $parts[3] ?? null
+            'number' => $parts[3] ?? null,
         ];
     }
-
 
     public static function generateCounterNumber(): string
     {
@@ -82,7 +84,6 @@ class Closing extends Model
 
         return "CT/{$year}/{$month}/{$count}";
     }
-
 
     public function reception()
     {
@@ -103,5 +104,4 @@ class Closing extends Model
     {
         return $this->belongsTo(User::class, 'reported_by');
     }
-
 }

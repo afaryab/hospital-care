@@ -9,9 +9,6 @@ class ClosingObserver
     /**
      * Handle the Closing "creating" event.
      * This runs before the closing is saved to the database
-     *
-     * @param  \App\Models\Closing  $closing
-     * @return void
      */
     public function creating(Closing $closing): void
     {
@@ -37,11 +34,10 @@ class ClosingObserver
     public function updated(Closing $closing): void
     {
         // Prevent CT number from being manually changed after creation
-        if ($closing->isDirty('ct_number') && !empty($closing->getOriginal('ct_number'))) {
+        if ($closing->isDirty('ct_number') && ! empty($closing->getOriginal('ct_number'))) {
             // If CT number was already set and someone is trying to change it, revert it
             $closing->ct_number = $closing->getOriginal('ct_number');
         }
-
 
     }
 

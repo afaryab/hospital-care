@@ -9,9 +9,6 @@ class ExpenseVoucherObserver
     /**
      * Handle the ExpenseVoucher "creating" event.
      * This runs before the expenseVoucher is saved to the database
-     *
-     * @param  \App\Models\ExpenseVoucher  $expenseVoucher
-     * @return void
      */
     public function creating(ExpenseVoucher $expenseVoucher): void
     {
@@ -37,7 +34,7 @@ class ExpenseVoucherObserver
     public function updated(ExpenseVoucher $expenseVoucher): void
     {
         // Prevent TR number from being manually changed after creation
-        if ($expenseVoucher->isDirty('vc_number') && !empty($expenseVoucher->getOriginal('vc_number'))) {
+        if ($expenseVoucher->isDirty('vc_number') && ! empty($expenseVoucher->getOriginal('vc_number'))) {
             // If TR number was already set and someone is trying to change it, revert it
             $expenseVoucher->vc_number = $expenseVoucher->getOriginal('vc_number');
         }
@@ -47,7 +44,6 @@ class ExpenseVoucherObserver
             $expenseVoucher->edited_amount = $expenseVoucher->getOriginal('amount');
             $expenseVoucher->saveQuietly(); // Save without triggering observer again
         }
-
 
     }
 

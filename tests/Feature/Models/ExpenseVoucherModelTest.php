@@ -31,7 +31,7 @@ test('expense voucher vc_number format is correct', function () {
     $voucher = ExpenseVoucher::factory()->create(['vc_number' => null]);
     $now = now();
 
-    expect($voucher->vc_number)->toStartWith('VC/' . $now->format('Y') . '/' . $now->format('m') . '/');
+    expect($voucher->vc_number)->toStartWith('VC/'.$now->format('Y').'/'.$now->format('m').'/');
     expect(explode('/', $voucher->vc_number))->toHaveCount(4);
 });
 

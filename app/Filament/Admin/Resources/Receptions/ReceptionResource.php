@@ -5,8 +5,6 @@ namespace App\Filament\Admin\Resources\Receptions;
 use App\Filament\Admin\Resources\Receptions\Pages\ManageReceptions;
 use App\Models\Reception;
 use BackedEnum;
-use Illuminate\Support\Facades\DB;
-use UnitEnum;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -18,9 +16,10 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\DB;
+use UnitEnum;
 
 class ReceptionResource extends Resource
 {
@@ -106,43 +105,45 @@ class ReceptionResource extends Resource
                                     if ($selectedIds->isEmpty()) {
                                         return [];
                                     }
+
                                     return Reception::whereIn('id', $selectedIds)
                                         ->pluck('name', 'id')
                                         ->toArray();
                                 })
                                 ->required()
-                                ->helperText('This reception will be kept and all others will be merged into it.')
+                                ->helperText('This reception will be kept and all others will be merged into it.'),
                         ])
                         ->action(function (array $data, $records) {
                             $primaryReceptionId = $data['primary_reception_id'];
                             $primaryReception = Reception::find($primaryReceptionId);
-                            
-                            if (!$primaryReception) {
+
+                            if (! $primaryReception) {
                                 Notification::make()
                                     ->title('Error')
                                     ->body('Primary reception not found.')
                                     ->danger()
                                     ->send();
+
                                 return;
                             }
-                            
+
                             $recordsToMerge = $records->where('id', '!=', $primaryReceptionId);
                             $mergeCount = 0;
-                            
+
                             foreach ($recordsToMerge as $reception) {
                                 // Update all related closings to point to the primary reception
                                 DB::table('closings')
                                     ->where('reception_id', $reception->id)
                                     ->update(['reception_id' => $primaryReceptionId]);
-                                
+
                                 // Update any other related tables that reference reception_id
                                 // You may need to add more table updates here based on your schema
-                                
+
                                 // Delete the duplicate reception
                                 $reception->delete();
                                 $mergeCount++;
                             }
-                            
+
                             Notification::make()
                                 ->title('Receptions Merged Successfully')
                                 ->body("Merged {$mergeCount} receptions into '{$primaryReception->name}'. All related closings have been updated.")

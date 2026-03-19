@@ -36,7 +36,7 @@ test('transaction generateTransactionNumber returns correctly formatted tr numbe
     $trNumber = Transaction::generateTransactionNumber();
     $now = now();
 
-    expect($trNumber)->toStartWith('TR/' . $now->format('Y') . '/' . $now->format('m') . '/' . $now->format('d') . '/');
+    expect($trNumber)->toStartWith('TR/'.$now->format('Y').'/'.$now->format('m').'/'.$now->format('d').'/');
     expect(explode('/', $trNumber))->toHaveCount(5);
     expect(strlen(explode('/', $trNumber)[4]))->toBe(4);
 });
