@@ -29,6 +29,7 @@
         "laravel-security-audit",
         "laravel-specialist",
         "laravel-tdd",
+        "laravel-validation",
         "php-best-practices",
         "php-pro",
         "sentry-php-sdk"
