@@ -1,4 +1,1893 @@
 <laravel-boost-guidelines>
+=== .ai/database rules ===
+
+# Database Conventions
+
+Project-specific database patterns extracted from the codebase. Follow these for migrations, factories, seeders, enums, and query patterns.
+
+---
+
+## Migrations
+
+- **Location:** `database/migrations/`
+- **Naming:** Timestamp prefix + descriptive name
+- Both `up()` and `down()` return `void`
+- Use `constrained()` for foreign key constraints
+- When modifying a column, include **all** previously defined attributes (they'll be dropped otherwise)
+
+```php
+public function up(): void
+{
+    Schema::create('users', function (Blueprint $table) {
+        $table->id();
+        $table->string('name');
+        $table->string('email')->unique();
+        $table->timestamp('email_verified_at')->nullable();
+        $table->string('password');
+        $table->foreignId('profile_img_id')->nullable()->constrained('images');
+        $table->timestamps();
+    });
+}
+
+public function down(): void
+{
+    Schema::dropIfExists('users');
+}
+```
+
+---
+
+## Factories
+
+- **Location:** `database/factories/`
+- **Naming:** `{Model}Factory`
+- Return array from `definition()` method
+- Use `fake()` for data generation (not `$this->faker`)
+- Include helper states: `->unverified()`, `->withoutTwoFactor()`, etc.
+- Cache expensive defaults: `static::$password ??= 'password'`
+
+```php
+class UserFactory extends Factory
+{
+    public function definition(): array
+    {
+        return [
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'email_verified_at' => now(),
+            'password' => static::$password ??= 'password',
+        ];
+    }
+
+    public function unverified(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'email_verified_at' => null,
+        ]);
+    }
+}
+```
+
+**Usage:**
+- Single: `User::factory()->create()`
+- Multiple: `User::factory(5)->create()`
+- With state: `User::factory()->unverified()->create()`
+
+---
+
+## Enums
+
+- **Location:** `app/Enum/`
+- **Naming:** TitleCase (e.g., `CounterStatus`, `ExpenseVoucherStatus`, `PaymentMethods`)
+- Use pure enums when no backing value is needed, string-backed for stored values
+
+```php
+// Pure enum
+enum CounterStatus
+{
+    case OPEN;
+    case CLOSED;
+    case REPORTED;
+}
+
+// Backed enum
+enum ExpenseVoucherStatus: string
+{
+    case PENDING = 'pending';
+    case PAYED = 'payed';
+}
+```
+
+**Usage in Filament/selects:**
+```php
+collect(CounterStatus::cases())
+    ->mapWithKeys(fn (CounterStatus $s) => [$s->name => ucfirst(strtolower($s->name))])
+    ->toArray()
+```
+
+---
+
+## Model Casts
+
+- Prefer `casts()` method over `$casts` property (follow existing model conventions)
+- Common cast types: `'json'`, `'boolean'`, `'datetime'`, `'hashed'`, enum classes
+
+```php
+protected function casts(): array
+{
+    return [
+        'allowed_departments' => 'json',
+        'is_allowed_to_pay_voucher' => 'boolean',
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'status' => CounterStatus::class,
+    ];
+}
+```
+
+---
+
+## Query Patterns
+
+### Progressive Query Building
+
+```php
+$query = Transaction::query()->with(['patient'])->latest('id');
+
+if (!empty($filters['tr_number'])) {
+    $query->where('tr_number', 'like', "%{$filters['tr_number']}%");
+}
+
+if (!empty($filters['patient_id'])) {
+    $query->where('patient_id', $filters['patient_id']);
+}
+
+return $query->limit($filters['limit'] ?? 10)->get();
+```
+
+### Concurrency-Safe Number Generation
+
+```php
+public static function generateCounterNumber(): string
+{
+    return DB::transaction(function () {
+        $count = self::where('ps_number', 'like', "PS/{$year}/{$month}/%")
+            ->lockForUpdate()
+            ->count();
+
+        return "PS/{$year}/{$month}/" . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+    });
+}
+```
+
+### Computed Attributes with Appends
+
+```php
+protected $appends = ['ps_number_parts', 'age', 'year', 'month'];
+
+public function getPsNumberPartsAttribute()
+{
+    if (empty($this->ps_number)) {
+        return null;
+    }
+
+    $parts = explode('/', $this->ps_number);
+
+    return [
+        'year' => $parts[1] ?? null,
+        'month' => $parts[2] ?? null,
+        'number' => $parts[3] ?? null,
+    ];
+}
+```
+
+---
+
+## Key Reminders
+
+- Prefer `Model::query()` over `DB::` facade
+- Always eager load relationships to prevent N+1 (`->with([...])`)
+- Use `lockForUpdate()` inside `DB::transaction()` for sequential number generation
+- Use `saveQuietly()` in observers to prevent recursion
+- Numbering format: `PS/YYYY/MM/NNNN`, `CT/YYYY/MM/NNNN`, `TR/YYYY/MM/NNNN`
+
+=== .ai/filament rules ===
+
+# Filament Conventions
+
+Project-specific Filament v4 patterns extracted from the codebase. Follow these when creating or editing Filament resources.
+
+---
+
+## Resource Structure
+
+- **Location:** `app/Filament/{PanelName}/Resources/{ResourceName}/`
+- Two panels exist: **Admin** (`/admin`) and **Accounts** (`/accounts`)
+- Separate schema classes in `Schemas/` subdirectory: `{Resource}Form.php`, `{Resource}Infolist.php`
+- Separate table config in `Tables/` subdirectory: `{Resource}sTable.php` (pluralized)
+- Page classes in `Pages/` subdirectory: `Create{Resource}`, `Edit{Resource}`, `List{Resources}`, `View{Resource}`
+
+```
+app/Filament/Admin/Resources/ClosingResource/
+├── ClosingResource.php
+├── Pages/
+│   ├── CreateClosing.php
+│   ├── EditClosing.php
+│   ├── ListClosings.php
+│   └── ViewClosing.php
+├── Schemas/
+│   ├── ClosingForm.php
+│   └── ClosingInfolist.php
+└── Tables/
+    └── ClosingsTable.php
+```
+
+---
+
+## Resource Class
+
+- Extends `Resource`
+- Use `Heroicon` enum for navigation icons (not string icon names)
+- Delegate form/table/infolist to separate schema classes via static `configure()` method
+
+```php
+class ClosingResource extends Resource
+{
+    protected static ?string $model = Closing::class;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static ?string $recordTitleAttribute = 'ct_number';
+
+    public static function form(Schema $schema): Schema
+    {
+        return ClosingForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return ClosingInfolist::configure($schema);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return ClosingsTable::configure($table);
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => ListClosings::route('/'),
+            'create' => CreateClosing::route('/create'),
+            'view' => ViewClosing::route('/{record}'),
+            'edit' => EditClosing::route('/{record}/edit'),
+        ];
+    }
+}
+```
+
+---
+
+## Form Schemas
+
+- **Pattern:** Static method `configure(Schema $schema): Schema`
+- Components: `TextInput`, `Select`, `DateTimePicker`, `Toggle`, etc.
+- Use `->live()` for reactive fields, `fn ($get)` for conditional rendering
+- Use `->relationship()` for model relationships
+
+```php
+class ClosingForm
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema->components([
+            TextInput::make('ct_number')->required(),
+            TextInput::make('opening_amount')->required()->numeric()->default(0.0),
+            DateTimePicker::make('closed_at'),
+        ]);
+    }
+}
+```
+
+---
+
+## Table Schemas
+
+- **Pattern:** Static method `configure(Table $table): Table`
+- Use `->formatStateUsing()` with `->html()` for custom rendering
+- Use `->sortable()`, `->searchable()`, `->toggleable()` for interactions
+- Use `->description()` for sub-text
+- Filters: `SelectFilter::make()`, `Filter::make()` with closures
+- Groups: `Group::make()` for grouping records, `->defaultGroup()`
+- Enum options via `collect(Enum::cases())->mapWithKeys(fn ($s) => [$s->name => ucfirst(strtolower($s->name))])->toArray()`
+
+```php
+class ClosingsTable
+{
+    public static function configure(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('ct_number')
+                    ->label('CT Information')
+                    ->formatStateUsing(fn ($record) => "CT: {$record->ct_number}<br>Reception: {$record->reception?->name}")
+                    ->html()
+                    ->searchable()
+                    ->sortable(),
+            ])
+            ->filters([
+                SelectFilter::make('status')
+                    ->options(collect(CounterStatus::cases())
+                        ->mapWithKeys(fn (CounterStatus $s) => [$s->name => ucfirst(strtolower($s->name))])
+                        ->toArray()),
+            ])
+            ->groups([
+                Group::make('status')->label('Status'),
+            ])
+            ->defaultGroup('status');
+    }
+}
+```
+
+---
+
+## Infolists (Read-only Views)
+
+- **Pattern:** Static method `configure(Schema $schema): Schema`
+- Use `Tabs::make()` with `Tab::make()` for tabbed layouts
+- Use `ViewEntry::make()` with `->view()` and `->viewData()` for custom Blade views
+
+```php
+class ClosingInfolist
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema->components([
+            Tabs::make('Tabs')->tabs([
+                Tab::make('Summary')->schema([
+                    ViewEntry::make('closing_overview')
+                        ->label(false)
+                        ->view('filament.closings.summary')
+                        ->viewData(fn (Closing $record) => ['closing' => $record])
+                        ->columnSpanFull(),
+                ]),
+            ])->columnSpanFull(),
+        ]);
+    }
+}
+```
+
+---
+
+## Page Classes
+
+- Extend `CreateRecord`, `EditRecord`, `ListRecords`, `ViewRecord`
+- Minimal code — inherit from parent, override only when needed
+
+```php
+class CreateUser extends CreateRecord
+{
+    protected static string $resource = UserResource::class;
+}
+```
+
+---
+
+## Namespace Reference
+
+| Component | Correct Namespace |
+|---|---|
+| Form fields (TextInput, Select, etc.) | `Filament\Forms\Components\` |
+| Infolist entries (TextEntry, IconEntry, etc.) | `Filament\Infolists\Components\` |
+| Layout (Grid, Section, Tabs, Wizard, etc.) | `Filament\Schemas\Components\` |
+| Schema utilities (Get, Set) | `Filament\Schemas\Components\Utilities\` |
+| Actions | `Filament\Actions\` |
+| Icons | `Filament\Support\Icons\Heroicon` enum |
+
+---
+
+## Icons
+
+- Use `Heroicon` enum: `Heroicon::OutlinedRectangleStack`, `Heroicon::PencilSquare`
+- Set on resource via `protected static string|BackedEnum|null $navigationIcon`
+
+---
+
+## Key Reminders
+
+- File visibility is `private` by default — use `->visibility('public')` for public access
+- `Grid`, `Section`, and `Fieldset` no longer span all columns by default in v4
+- Always authenticate before testing panel functionality
+- Use `livewire()` or `Livewire::test()` for testing (Filament is built on Livewire)
+
+=== .ai/frontend rules ===
+
+# Frontend Conventions (React + Inertia + TypeScript)
+
+Project-specific frontend patterns extracted from the codebase. Follow these when creating or editing React/TypeScript files.
+
+---
+
+## Page Components
+
+- **Location:** `resources/js/pages/`
+- **Naming:** kebab-case filenames (e.g., `counter/income.tsx`, `patient.tsx`)
+- Default export React component
+- Props via `usePage<PropsType>().props`
+- Wrap in `AppLayout` with breadcrumbs
+- Use `<Head>` for page title
+
+```tsx
+import { usePage } from '@inertiajs/react';
+import AppLayout from '@/layouts/app-layout';
+import { Head } from '@inertiajs/react';
+
+type CounterIncomeProps = {
+    selectedPatient?: Patient;
+    departments: Department[];
+    openCounter?: Closing;
+};
+
+export default function CounterIncome() {
+    const { selectedPatient, departments, openCounter } = usePage<CounterIncomeProps>().props;
+
+    return (
+        <AppLayout breadcrumbs={breadcrumbs}>
+            <Head title="Counter Income" />
+            {/* content */}
+        </AppLayout>
+    );
+}
+```
+
+---
+
+## Components
+
+- **Location:** `resources/js/components/`
+- **Naming:** kebab-case (e.g., `currency.tsx`, `input-error.tsx`)
+- Typed props interface
+- Named export or default export
+- Use 30+ shadcn/ui Radix components from `@/components/ui/`
+
+```tsx
+type CurrencyProps = {
+    value: number;
+    currency?: string;
+    className?: string;
+};
+
+const Currency: React.FC<CurrencyProps> = ({ value, currency = 'PKR', className }) => {
+    const formatted = React.useMemo(() => formatCurrency(value, currency), [value, currency]);
+    return <span className={className}>{formatted}</span>;
+};
+
+export default Currency;
+```
+
+---
+
+## Elements (Domain Components)
+
+- **Location:** `resources/js/elements/`
+- **Organization:** By domain (`patient/`, `counter/`, `department/`, `expense-voucher/`, `serviceorder/`)
+- Reusable UI pieces for specific business domains
+- Can be compound components
+
+---
+
+## Layouts
+
+- **Location:** `resources/js/layouts/`
+- `app-layout.tsx` — Main layout with sidebar/header
+- Accept `children` and `breadcrumbs` props
+
+```tsx
+interface AppLayoutProps {
+    children: ReactNode;
+    breadcrumbs?: BreadcrumbItem[];
+}
+
+export default ({ children, breadcrumbs, ...props }: AppLayoutProps) => (
+    <AppLayoutTemplate breadcrumbs={breadcrumbs} {...props}>
+        {children}
+    </AppLayoutTemplate>
+);
+```
+
+---
+
+## Hooks
+
+- **Location:** `resources/js/hooks/`
+- **Naming:** `use-{name}.ts` or `.tsx`
+- Existing hooks: `use-appearance`, `use-clipboard`, `use-mobile`, `use-mobile-navigation`, `use-two-factor-auth`, `use-initials`
+
+---
+
+## Types
+
+- **Location:** `resources/js/types/index.d.ts`
+- Interface-based type system
+- Include `[key: string]: unknown` for extensibility on shared interfaces
+- Domain-specific types: `Patient`, `Transaction`, `ServiceOrder`, `Department`, etc.
+
+```typescript
+export interface SharedData {
+    name: string;
+    quote: { message: string; author: string };
+    auth: Auth;
+    sidebarOpen: boolean;
+    [key: string]: unknown;
+}
+
+export interface Patient {
+    id: string;
+    ps_number: string;
+    year: number;
+    month: number;
+    name: string;
+    gender: 'm' | 'f' | 't' | 'o';
+    contact: string;
+    cnic: string;
+    age: number;
+    treatments: ServiceOrder[];
+}
+```
+
+---
+
+## Routing (Wayfinder)
+
+- Import from `@/routes` for named routes, `@/actions` for controller invocables
+- Usage: `routeFunction({...}).url` to get URL string
+
+```tsx
+import { home, counter, counterSelectDepartment } from '@/routes';
+
+const url = counterSelectDepartment({
+    pYear: selectedPatient.year,
+    pMonth: selectedPatient.month,
+    number: selectedPatient.number,
+}).url;
+```
+
+---
+
+## Styling
+
+- Tailwind CSS v4 utility classes
+- Use `clsx` for conditional classes (not `classnames`)
+- Use `cn()` utility from `@/lib/utils` (shadcn pattern)
+
+```tsx
+import { clsx } from 'clsx';
+
+<div className={clsx('flex gap-4', isActive && 'bg-blue-500')} />
+```
+
+---
+
+## Common Patterns
+
+- **Props destructuring:** Always destructure with types via `usePage<T>().props`
+- **Conditional rendering:** Ternary or logical operators, not if/else blocks
+- **Breadcrumbs:** Import `BreadcrumbItem` from `@/types`, pass array to `AppLayout`
+- **Currency formatting:** Use `Currency` component or `formatCurrency()` utility
+
+=== .ai/github-operating-guideline rules ===
+
+# Git Workflow and Change Control Guideline for AI Agent
+
+## Branching Rule
+
+- Before starting any task, always check out the latest `main` branch.
+- Pull the newest changes from `main`.
+- Create a new branch for the task.
+- Never work directly on `main`.
+
+### Branch Naming
+
+Use a clear and descriptive branch name, such as:
+- `feature/add-user-notifications`
+- `fix/login-validation-error`
+- `refactor/order-service-cleanup`
+
+Suggested format:
+- `feature/<short-description>`
+- `fix/<short-description>`
+- `chore/<short-description>`
+- `refactor/<short-description>`
+
+---
+
+## Required Flow Before Making Changes
+
+1. Switch to `main`.
+2. Pull latest `main`.
+3. Create a fresh task branch from `main`.
+4. Confirm current branch is not `main`.
+5. Start implementation only after branch creation.
+
+Example flow:
+
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/<task-name>
+```
+
+---
+
+## Development Rule
+
+- Make changes only inside the newly created branch.
+- Keep changes scoped to the requested task.
+- Avoid unrelated edits.
+- Preserve existing functionality unless the task explicitly requires a change.
+
+---
+
+## Testing Rule
+
+After completing code changes:
+- Run all relevant tests.
+- Run linting/formatting checks if available.
+- Fix failing tests before requesting review.
+- Do not mark the task complete if tests are failing, unless explicitly reported to the user.
+
+Examples:
+
+```bash
+php artisan test
+composer test
+npm test
+npm run build
+```
+
+Use the commands relevant to the project.
+
+---
+
+## Commit Rule
+
+- Do not commit automatically without permission.
+- Prepare changes in small, logical, procedural steps.
+- Share a summary of completed work with the admin/user.
+- Ask for admin permission before creating commits.
+
+### Commit Procedure
+
+When permission is granted:
+1. Review changed files.
+2. Group related changes logically.
+3. Create clear and focused commits.
+4. Use meaningful commit messages.
+
+Example commit message styles:
+- `fix: correct login validation flow`
+- `feat: add patient search filters`
+- `refactor: simplify invoice calculation service`
+
+---
+
+## Completion Rule
+
+When implementation is finished:
+1. Provide a summary of what was changed.
+2. Report test results clearly.
+3. Ask the user/admin to test the changes.
+4. Wait for user confirmation before committing and pushing.
+
+---
+
+## Push Rule
+
+- Do not push code automatically after implementation.
+- Do not push code automatically after commit.
+- Push only after explicit user consent.
+
+### Final Sequence
+
+1. Implementation completed
+2. Tests passed
+3. User/admin reviews and tests
+4. User gives consent
+5. Commit changes
+6. Push branch to remote
+
+---
+
+## Safety Rules
+
+- Never commit directly to `main`.
+- Never push directly to `main`.
+- Never skip branch creation.
+- Never skip tests unless the user explicitly approves.
+- Never push without user consent.
+- Never assume permission; wait for explicit approval.
+
+---
+
+## Expected AI Agent Behavior
+
+For every task, the AI agent must:
+- start from updated `main`
+- create a new branch
+- perform only task-related changes
+- run relevant tests
+- summarize results
+- wait for admin permission before commit
+- wait for user consent before push
+
+---
+
+## Example Operational Checklist
+
+- [ ] Checkout `main`
+- [ ] Pull latest changes
+- [ ] Create new task branch
+- [ ] Implement requested changes
+- [ ] Run relevant tests
+- [ ] Summarize changes for user/admin
+- [ ] Request permission to commit
+- [ ] Wait for user testing
+- [ ] Request consent to push
+- [ ] Push only after approval
+
+=== .ai/hippa-compliance rules ===
+
+# HIPAA Compliance Guidelines (Production Grade)
+
+## For Healthcare Software Systems (HMS / EMR / SaaS)
+
+---
+
+## 1. Overview
+
+This document defines compliance requirements based on the **Health Insurance Portability and Accountability Act (HIPAA)**.
+
+Applicable to:
+
+- Electronic Medical Records (EMR)
+- Hospital Management Systems (HMS)
+- Telemedicine Platforms
+- Cloud-hosted healthcare SaaS
+
+---
+
+## 2. Core HIPAA Rules
+
+HIPAA consists of three primary rules:
+
+### 2.1 Privacy Rule
+
+- Protects **Protected Health Information (PHI)**
+- Defines how PHI can be used and disclosed
+
+### 2.2 Security Rule
+
+- Defines safeguards for **electronic PHI (ePHI)**
+
+### 2.3 Breach Notification Rule
+
+- Requires notification in case of data breaches
+
+---
+
+## 3. Protected Health Information (PHI)
+
+### 3.1 What is PHI?
+
+Any information that identifies a patient and relates to:
+
+- Health condition
+- Treatment
+- Payment
+
+Examples:
+
+- Name
+- CNIC / SSN
+- Phone number
+- Medical records
+- Lab results
+
+---
+
+## 4. Administrative Safeguards
+
+### 4.1 Risk Analysis
+
+- Perform periodic risk assessments
+- Identify vulnerabilities
+
+### 4.2 Workforce Training
+
+- Staff must be trained on:
+  - Data privacy
+  - System usage
+  - Incident reporting
+
+### 4.3 Access Management
+
+- Role-Based Access Control (RBAC)
+- Least privilege enforcement
+
+### 4.4 Business Associate Agreements (BAA)
+
+- Required with:
+  - Cloud providers
+  - SaaS vendors
+  - Third-party services
+
+---
+
+## 5. Physical Safeguards
+
+### 5.1 Facility Access Control
+
+- Restricted server room access
+- Visitor logs
+
+### 5.2 Workstation Security
+
+- Auto-lock systems
+- Screen privacy
+
+### 5.3 Device Management
+
+- Secure disposal of devices
+- Encryption on laptops
+
+---
+
+## 6. Technical Safeguards
+
+### 6.1 Access Control
+
+- Unique user IDs
+- Multi-factor authentication (MFA)
+- Automatic session timeout
+
+### 6.2 Audit Controls
+
+- Log all system activity:
+  - Logins
+  - Data access
+  - Data modification
+
+### 6.3 Integrity Controls
+
+- Ensure data is not altered improperly
+- Use:
+  - Hashing
+  - Version control
+
+### 6.4 Transmission Security
+
+- TLS encryption (HTTPS)
+- Secure APIs
+
+---
+
+## 7. Data Encryption
+
+### 7.1 At Rest
+
+- AES-256 recommended
+
+### 7.2 In Transit
+
+- TLS 1.2+
+
+---
+
+## 8. Audit Logging
+
+### 8.1 Required Logs
+
+- User authentication
+- PHI access
+- Record changes
+- System errors
+
+### 8.2 Log Requirements
+
+- Immutable (append-only)
+- Timestamped
+- User-linked
+
+---
+
+## 9. Breach Notification
+
+### 9.1 Definition
+
+A breach = unauthorized access/disclosure of PHI
+
+### 9.2 Notification Timeline
+
+- Within **60 days** of discovery
+
+### 9.3 Required Notifications
+
+- Affected individuals
+- Regulatory authority
+- Media (if large breach)
+
+---
+
+## 10. Data Minimization
+
+- Collect only necessary data
+- Avoid storing unnecessary PHI
+
+---
+
+## 11. Patient Rights
+
+Patients have the right to:
+
+- Access their data
+- Request corrections
+- Get activity logs
+- Request data restrictions
+
+---
+
+## 12. Data Retention
+
+- Retain records for **6 years minimum**
+- Logs must also be retained
+
+---
+
+## 13. System Design Requirements (For Your Architecture)
+
+### 13.1 Multi-Tenant Isolation
+
+- Separate data per hospital/organization
+- Prevent cross-tenant access
+
+### 13.2 Central Logging System
+
+- Collect logs from all nodes
+- Ensure:
+  - Secure transmission
+  - PHI masking where required
+
+### 13.3 Incident Monitoring
+
+- Real-time alerts
+- SIEM integration (optional)
+
+---
+
+## 14. API Security
+
+- Token-based authentication
+- Rate limiting
+- Input validation
+- Audit all API access
+
+---
+
+## 15. Backup & Disaster Recovery
+
+- Regular backups
+- Encrypted backups
+- Tested recovery procedures
+
+---
+
+## 16. Compliance Checklist
+
+- [ ] Risk assessment completed
+- [ ] RBAC implemented
+- [ ] MFA enabled
+- [ ] Audit logs active
+- [ ] Encryption enabled
+- [ ] Backup system in place
+- [ ] Breach response plan defined
+- [ ] BAA agreements signed
+
+---
+
+## 17. Common Violations (Avoid These)
+
+- Shared user accounts
+- Unencrypted databases
+- No audit logs
+- No breach response plan
+- Storing excessive PHI
+
+---
+
+## 18. Penalties
+
+Non-compliance may result in:
+
+- Heavy fines (up to millions USD)
+- Legal action
+- Business shutdown
+
+---
+
+## 19. Legal Disclaimer
+
+This document is a **technical guideline**, not legal advice.
+
+Consult:
+
+- HIPAA compliance experts
+- Legal advisors
+
+---
+
+## 20. Version Info
+
+**Version:** v1.0
+**Prepared for:** Healthcare SaaS / Host-Swarm Systems
+**Last Updated:** {{DATE}}
+
+=== .ai/laravel rules ===
+
+# Laravel Conventions
+
+Project-specific Laravel patterns extracted from the codebase. Follow these when creating or editing PHP files.
+
+---
+
+## Controllers
+
+- **Location:** `app/Http/Controllers/` with subdirectories by domain (`Api/`, `Prints/`, `Settings/`)
+- Type hints on all parameters and return types (`Response`, `RedirectResponse`, etc.)
+- Use `Inertia::render()` for frontend rendering with kebab-case page names
+- API controllers return `response()->json(['data' => [...]])` structure
+- Build queries progressively with conditionals for filters
+- Use `with()` for eager loading
+
+```php
+// Web controller pattern
+public function patient($year, $month, $number, $departmentKey = false, $serviceNumber = false)
+{
+    $psNumber = 'PS/' . $year . '/' . $month . '/' . $number;
+    return Inertia::render('patient', [
+        'departmentKey' => $departmentKey,
+        'patientData' => $patientData,
+        'serviceDepartments' => $serviceDepartments,
+    ]);
+}
+
+// API controller pattern
+$query = Transaction::query()->with(['patient'])->latest('id');
+if (!empty($filters['tr_number'])) {
+    $query->where('tr_number', 'like', "%{$filters['tr_number']}%");
+}
+return response()->json(['data' => $query->limit($filters['limit'] ?? 10)->get()]);
+```
+
+---
+
+## Form Requests
+
+- **Location:** `app/Http/Requests/Settings/` (by feature/domain)
+- Use **array-based** validation rules (not pipe-delimited strings)
+- Include PHPDoc `@return array<string, ValidationRule|array<mixed>|string>`
+- Use `Rule::unique()` for model-specific constraints
+
+```php
+public function rules(): array
+{
+    return [
+        'name' => ['required', 'string', 'max:255'],
+        'email' => [
+            'required', 'string', 'lowercase', 'email', 'max:255',
+            Rule::unique(User::class)->ignore($this->user()->id),
+        ],
+    ];
+}
+```
+
+---
+
+## Models
+
+- **Location:** `app/Models/`
+- Use `protected $fillable` (not `$guarded`)
+- Use `protected $appends` for computed attributes
+- Use `protected function casts(): array` method (not `$casts` property) — follow whichever convention existing sibling models use
+- Explicit return types on all relationship methods
+- Static helper methods for number generation with `lockForUpdate()` for concurrency
+
+```php
+protected $fillable = ['id', 'name', 'email'];
+protected $hidden = ['password', 'two_factor_secret', 'remember_token'];
+protected $appends = ['profiles', 'age', 'ps_number_parts'];
+
+protected function casts(): array
+{
+    return [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+    ];
+}
+
+// Relationships — always use return type hints
+public function patient(): BelongsTo
+{
+    return $this->belongsTo(Patient::class);
+}
+
+public function elements(): HasMany
+{
+    return $this->hasMany(TransactionElement::class);
+}
+
+// Computed accessors (appended attributes)
+public function getAgeAttribute()
+{
+    if ($this->age_dob !== null) {
+        return (int) Carbon::parse($this->age_dob)->diffInYears(Carbon::now());
+    }
+}
+```
+
+---
+
+## Observers
+
+- **Location:** `app/Observers/`
+- **Naming:** `{Model}Observer`
+- Registered in `AppServiceProvider::boot()` via `Model::observe(Observer::class)`
+- All lifecycle hooks return `void`
+- Use `saveQuietly()` to prevent observer recursion
+- Use `isDirty()` to detect field changes, `getOriginal()` for previous values
+
+```php
+public function creating(Transaction $transaction): void
+{
+    if (empty($transaction->tr_number)) {
+        $transaction->tr_number = $transaction->generateTransactionNumber();
+    }
+}
+
+public function updated(Transaction $transaction): void
+{
+    if ($transaction->isDirty('amount')) {
+        $transaction->edited_amount = $transaction->getOriginal('amount');
+        $transaction->saveQuietly();
+    }
+}
+```
+
+---
+
+## Services
+
+- **Location:** `app/Services/`
+- Single responsibility per service class
+- Constructor injection with optional dependencies
+- Use `config()` helper for configuration, never `env()`
+
+---
+
+## Helpers
+
+- **Location:** `app/Helpers/`
+- Static utility methods grouped by domain (`NumberHelper`, etc.)
+- Example: `NumberHelper::moneyfy($number): string` for K/M/B/T formatting
+
+---
+
+## Routes
+
+### Web Routes (`routes/web.php`)
+
+- Middleware: `['auth', 'verified']` for protected routes
+- Naming: kebab-case (e.g., `patients-register`, `counter-view`, `counter-open`)
+- Composite URL keys: `{year}/{month}/{number}` instead of `{model}`
+- Use descriptive route names
+
+```php
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/', [WebController::class, 'index'])->name('home');
+    Route::get('PS/{year}/{month}/{number}', [WebController::class, 'patient'])->name('patients-register-ps-number');
+    Route::get('CT/{ctYear}/{ctMonth}/{ctNumber}', [WebController::class, 'counterView'])->name('counter-view');
+});
+```
+
+### API Routes (`routes/api.php`)
+
+- POST endpoints for search operations
+- Consistent response structure: `['data' => ['exact' => ..., 'possible' => ...]]`
+
+---
+
+## Middleware & Shared Data
+
+### HandleInertiaRequests
+
+- Share default data for all pages (app name, auth user, sidebar state)
+- Access config via `config()`, cookies via `$request->cookie()`
+
+```php
+public function share(Request $request): array
+{
+    return [
+        ...parent::share($request),
+        'name' => config('app.name'),
+        'auth' => ['user' => $request->user()],
+        'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+    ];
+}
+```
+
+=== .ai/product rules ===
+
+# Product Guidelines — Hospital All In One Operations Software
+
+> Principles and standards that govern product decisions, feature design, and implementation priorities.
+
+---
+
+## 1. Product Vision
+
+A self-hosted, dockerized hospital management system that handles every operational aspect — patient registration, financial transactions, clinical treatments, inventory, asset management, and payroll — compliant with Punjab Healthcare Commission (PHC) guidelines and HIPAA-inspired practices. Deployable by any hospital with `docker-compose up`.
+
+---
+
+## 2. Design Principles
+
+### 2.1 Progressive URL Resolution
+
+Every URL in the system is hierarchical and independently resolvable. Truncating the URL always yields a valid page (listing at broad level, detail at deep level). Pattern: `/{Panel}/{RecordType}/{Year}/{Month}/{Sequence}`.
+
+### 2.2 Record Identity in URLs
+
+Records are identified in URLs by their human-readable numbers (`CT/2026/03/0001`), not database IDs. This makes URLs bookmarkable, shareable, and meaningful without database access.
+
+### 2.3 Panel-Scoped Navigation
+
+The first URL segment determines the panel context (COUNTER, PS, QUE, ACCOUNTS, etc.), governing sidebar, available actions, and role-based access. Filament panels (/admin, /accounts) follow the same scoping principle.
+
+### 2.4 Offline-First Mindset
+
+Design for unreliable network conditions common in Pakistani hospitals. Minimize round-trips, use optimistic UI updates, and ensure critical operations (transaction creation, patient registration) complete atomically.
+
+### 2.5 Compliance by Default
+
+Every feature that touches patient data, financial records, or clinical information must inherently satisfy PHC and audit requirements — not as an afterthought. Records are immutable (append-only), actions are logged, and access is role-gated.
+
+---
+
+## 3. Feature Prioritization Framework
+
+### Priority Tiers
+
+| Tier | Criteria | Examples |
+|------|----------|---------|
+| **P0 — Critical** | Revenue-blocking, compliance-mandatory, or data-integrity features | Transaction recording, patient registration, audit trail, data encryption |
+| **P1 — High** | Core workflow features that staff use daily | Counter operations, service order treatments, stock tracking, payroll |
+| **P2 — Medium** | Quality-of-life improvements and secondary workflows | Dashboards, reports, task management, asset tracking |
+| **P3 — Low** | Nice-to-have features and future-proofing | Patient portal, FHIR API, QR code labels, command palette |
+
+### Implementation Order
+
+When multiple features are planned, implement in this order:
+1. **Data model & migrations** — Schema first, always
+2. **Observers & business rules** — Auto-numbering, status transitions, validation
+3. **Filament admin CRUD** — Admin can manage records immediately
+4. **Frontend (Inertia) pages** — Receptionist/doctor facing workflows
+5. **Reports & exports** — PDF, Excel output
+6. **Tests** — Feature tests alongside every change
+
+---
+
+## 4. Record Numbering Standards
+
+All records follow a consistent auto-numbering pattern with these rules:
+
+| Record | Format | Observer |
+|--------|--------|----------|
+| Patient | `PS/{YYYY}/{MM}/{NNNN}` | PatientObserver |
+| Closing | `CT/{YYYY}/{MM}/{NNNN}` | ClosingObserver |
+| Transaction | `TR/{YYYY}/{MM}/{DD}/{NNNN}` | TransactionObserver |
+| Expense Voucher | `VC/{YYYY}/{MM}/{NNNN}` | ExpenseVoucherObserver (boot) |
+| Service Order | `{PS_NUMBER}/{dept}/{NN}` | — |
+| Purchase Order | `PO/{YYYY}/{MM}/{NNNN}` | PurchaseOrderObserver (planned) |
+| Asset | `AST/{YYYY}/{NNNN}` | AssetObserver (planned) |
+| Task | `TSK/{YYYY}/{MM}/{NNNN}` | TaskObserver (planned) |
+| Payroll Period | `PAY/{YYYY}/{MM}` | — |
+
+**Rules:**
+- Sequence resets per year/month context (except Transaction which includes day)
+- Leading zeros in sequence: `0001`, `0002`, etc.
+- Generated via `lockForUpdate()` inside `DB::transaction()` to prevent race conditions
+- Number is assigned in the `creating` observer hook and is immutable once set
+
+---
+
+## 5. Data Integrity Rules
+
+### 5.1 Immutable Records
+
+Once created, the following records can never have their identity or core data silently changed:
+- Patient (ps_number, name, CNIC)
+- Transaction (tr_number, amount after finalization)
+- Service Order (so_number)
+- Treatment Record (diagnosis, treatment plan after finalization)
+
+Changes create amendment records or new versions. Original data is preserved.
+
+### 5.2 Soft Deletes Only
+
+No model dealing with patient data, financial records, or clinical records may use hard deletes. Use `SoftDeletes` trait with audit trail logging.
+
+### 5.3 Cascade Protection
+
+Deleting a parent record (e.g., Patient) must not cascade-delete children (Transactions, ServiceOrders). The system must prevent deletion if related records exist.
+
+### 5.4 Financial Consistency
+
+- Transaction amounts must match the sum of their TransactionElements
+- Closing amounts must match the sum of associated Transactions
+- Receivable amounts must track partial payments accurately
+- Stock movements must balance (current level = SUM(IN) - SUM(OUT))
+
+---
+
+## 6. Department & Service Architecture
+
+### Department Types (TransactionElementType mapping)
+
+| Department | Code | Service Provider Types | Treatment Scope |
+|-----------|------|----------------------|-----------------|
+| OPD | OPD | OPD Doctors | Consultation, prescription, referral |
+| Indoor/Inpatient | IND | Inpatient Doctors | Admission, daily rounds, discharge |
+| Emergency | EMG | Emergency Doctors | Triage, stabilization, intervention |
+| Dental | DNT | Dentists | Procedures, extractions, fillings |
+| Laboratory | LAB | — (no provider) | Sample collection, test results |
+| Ultrasound | ULT | Ultrasound Doctors | Imaging, findings, impression |
+| Radiology | RAD | X-Ray Technicians | Imaging, findings, impression |
+
+### Service Configuration
+
+- Each Service belongs to a ServiceDepartment
+- Services have: charges, tax_rate, service_provider_types (JSON array), generate_service_order flag
+- Composite services bundle multiple services into one
+- Services can link to stock items for auto-consumption (planned)
+
+---
+
+## 7. User Role Matrix
+
+| Profile | Panel Access | Key Permissions |
+|---------|-------------|-----------------|
+| Administrator | Admin, Accounts | Full CRUD on all resources; user management; settings |
+| Accountant | Accounts | Financial reports; payroll processing; ledger access |
+| Receptionist | Counter (Frontend) | Patient registration; transaction creation; counter operations |
+| OPD Doctor | Queue (Frontend) | OPD queue; treatment records; prescriptions |
+| Inpatient Doctor | Queue (Frontend) | Indoor queue; admission/discharge; daily notes |
+| Emergency Doctor | Queue (Frontend) | Emergency queue; triage; interventions |
+| Dentist | Queue (Frontend) | Dental queue; dental procedures |
+| Ultrasound Doctor | Queue (Frontend) | Ultrasound queue; imaging reports |
+| X-Ray Technician | Queue (Frontend) | Radiology queue; imaging |
+| Nursing Staff | Queue (Frontend) | Vital signs; treatment assistance |
+| Patient Manager | Patient Portal | Patient registration; record linking |
+
+---
+
+## 8. PHC Compliance Checklist for New Features
+
+Before shipping any feature that touches patient or clinical data, verify:
+
+- [ ] **Audit trail** — All create/update/delete actions are logged with user, timestamp, old/new values
+- [ ] **Immutability** — Records cannot be silently edited; changes create versions/amendments
+- [ ] **Access control** — Feature is gated by user profile and permissions
+- [ ] **Data encryption** — Sensitive fields (CNIC, contact, medical notes) are encrypted at rest
+- [ ] **Consent** — If treatment-related, consent record is captured before proceeding
+- [ ] **Standardized codes** — ICD-10 for diagnoses, generic drug names for prescriptions
+- [ ] **Timestamps** — All clinical events have accurate timestamps (arrival, treatment, discharge)
+- [ ] **Doctor attribution** — Every clinical action identifies the responsible doctor
+- [ ] **Soft deletes** — No hard deletes on any patient-facing record
+- [ ] **Test coverage** — Feature has Pest tests covering happy path and error cases
+
+---
+
+## 9. Integration Standards
+
+### API Design
+
+- REST endpoints following FHIR resource naming conventions
+- Versioned: `/api/v1/patients`, `/api/v1/encounters`
+- Token-based auth via Sanctum
+- Rate limiting on all public endpoints
+- Consistent response structure: `{ "data": {...}, "meta": {...} }`
+
+### External Systems (Future)
+
+- Lab information systems (LIS) — HL7/FHIR messages for results
+- Pharmacy systems — Prescription routing
+- Insurance/Panel APIs — Claim submission
+- FBR e-invoicing — Tax reporting
+- Government health portals — PHC reporting
+
+---
+
+## 10. Known Issues & Technical Debt
+
+| Issue | Location | Impact |
+|-------|----------|--------|
+| `laboratoryQueue()` uses `type='DNT'` instead of `'LAB'` | WebController ~L1115 | Lab queue shows dental orders instead of lab orders |
+| Legacy route naming inconsistency | routes/web.php | Mix of `CT-NEW`, `CT-CLOSE`, `MY-CT-LIST` patterns; need migration to hierarchical URLs |
+| Only `UserFactory` exists | database/factories/ | 12+ models need factories for proper testing |
+| `Receaveable` spelling | Throughout codebase | Model name has typo; migration needed to rename (low priority) |
+| Transaction day in number format | Transaction model | TR number includes day (`TR/{Y}/{M}/{D}/{N}`) unlike other records — intentional but inconsistent |
+| Mixed `$casts` property vs `casts()` method | Various models | Some models use property, others use method; should standardize per Laravel 12 convention |
+
+=== .ai/punjab-health-care-commission-guideline-compliance rules ===
+
+# Punjab Health Care Commission (PHC) Compliance Guidelines — v2 (Production Grade)
+
+## For Hospital / Clinic Software Systems (HMS / EMR / Telemedicine)
+
+---
+
+## 1. Purpose
+
+This document defines a **comprehensive compliance framework** aligned with:
+
+- Punjab Health Care Commission (PHC) expectations
+- Minimum Service Delivery Standards (MSDS)
+- Medico-legal record requirements in Pakistan
+
+This is designed for:
+- Hospital Management Systems (HMS)
+- Electronic Medical Records (EMR)
+- SaaS healthcare platforms (e.g., Host-Swarm deployments)
+
+---
+
+## 2. Compliance Philosophy
+
+PHC compliance is not just technical — it is:
+
+- **Clinical**
+- **Operational**
+- **Legal**
+- **Audit-driven**
+
+👉 The system must **produce defensible evidence** during inspections.
+
+---
+
+## 3. System Architecture Requirements
+
+### 3.1 Deployment Models
+
+- On-Premise (preferred for sensitive hospitals)
+- Private Cloud (Pakistan region recommended)
+- Hybrid (central reporting + local data)
+
+### 3.2 Mandatory Components
+
+- Application Server (HMS/EMR)
+- Database Server (secured)
+- Central Logging System
+- Incident Reporting Service
+- Backup System
+
+---
+
+## 4. Patient Data Protection
+
+### 4.1 Confidentiality
+
+- Strict RBAC (Role-Based Access Control)
+- No shared accounts
+- Session tracking required
+
+### 4.2 Encryption
+
+- At rest: AES-256 (recommended)
+- In transit: TLS 1.2+
+
+### 4.3 Data Access Logging
+
+Every access must log:
+- user_id
+- patient_id
+- action
+- timestamp
+- IP/device (if available)
+
+---
+
+## 5. Medico-Legal Record Integrity (CRITICAL)
+
+### 5.1 Record Finalization
+
+- Once finalized:
+  - Record becomes **immutable**
+  - Edits require:
+    - New version entry
+    - Reason for change
+    - User identity
+
+### 5.2 Digital Signatures
+
+- Doctor must “sign”:
+  - Prescriptions
+  - Diagnoses
+  - Discharge summaries
+
+### 5.3 Version Control
+
+- Maintain full history:
+  - Original entry
+  - Modified entry
+  - Who changed it
+  - Why
+
+---
+
+## 6. Clinical Workflow Compliance
+
+### 6.1 Mandatory Structured Data
+
+System must enforce structured entries:
+
+- Patient demographics
+- Vitals
+- Diagnosis (ICD-ready if possible)
+- Prescriptions (drug + dosage + duration)
+- Notes (timestamped)
+
+### 6.2 Workflow Enforcement
+
+System must NOT allow:
+
+- Prescription without patient record
+- Discharge without doctor approval
+- Billing without recorded service
+
+---
+
+## 7. Consent Management
+
+### 7.1 Consent Types
+
+- Treatment consent
+- Procedure/surgery consent
+- Data sharing consent
+
+### 7.2 System Requirements
+
+- Store:
+  - Consent type
+  - Timestamp
+  - Captured method (digital/manual)
+- Link consent to patient record
+
+---
+
+## 8. Audit Trail System
+
+### 8.1 Mandatory Events
+
+- Login / logout
+- Patient record access
+- Record edits
+- Prescription issuance
+- Billing changes
+- Incident reports
+
+### 8.2 Requirements
+
+- Append-only logs
+- Tamper-proof storage
+- Central aggregation (recommended)
+
+---
+
+## 9. Incident Management System
+
+### 9.1 Incident Types
+
+- Clinical error
+- System failure
+- Data breach
+- Delay in treatment
+
+### 9.2 Incident Lifecycle
+
+1. Reported
+2. Classified (severity)
+3. Assigned
+4. Investigated
+5. Resolved
+6. Closed (with audit log)
+
+### 9.3 Required Fields
+
+- incident_type
+- department
+- timestamp
+- patient_reference (optional/anonymized)
+- severity_level
+- status
+
+---
+
+## 10. Central Incident & Log Reporting (Host-Swarm Ready)
+
+### 10.1 Architecture
+
+Each hospital instance → sends to → Central Compliance Server
+
+### 10.2 Data Sent
+
+- Incident metadata
+- Aggregated logs
+- Metrics (no raw PII unless required)
+
+### 10.3 API Requirements
+
+- Token-based authentication
+- Rate limiting
+- Validation layer
+
+---
+
+## 11. Role-Based Access Control (RBAC)
+
+### 11.1 Roles
+
+- Doctor
+- Nurse
+- Receptionist
+- Admin
+- Auditor
+
+### 11.2 Enforcement
+
+- Least privilege principle
+- Sensitive actions logged
+- Optional approval flows
+
+---
+
+## 12. Inspection Readiness Module (HIGH VALUE FEATURE)
+
+### 12.1 PHC Audit Dashboard
+
+Provide one-click access to:
+
+- Patient records
+- Audit logs
+- Incident reports
+- Staff activity
+- Compliance checklist
+
+### 12.2 Export Options
+
+- PDF reports
+- CSV logs
+- Patient summaries
+
+---
+
+## 13. Data Retention & Backup
+
+### 13.1 Retention
+
+- Patient records: long-term (as per policy)
+- Logs: minimum 1–3 years
+
+### 13.2 Backup Strategy
+
+- Daily backups
+- Offsite storage
+- Disaster recovery plan
+
+---
+
+## 14. System Reliability
+
+- High availability recommended
+- Failover support
+- Monitoring (uptime + errors)
+
+---
+
+## 15. Downtime & Fallback Procedures
+
+### 15.1 Mandatory Capability
+
+- Printable forms
+- Manual entry fallback
+
+### 15.2 Post-Recovery
+
+- Sync manual entries into system
+- Maintain audit of delayed entries
+
+---
+
+## 16. Interoperability
+
+- Lab systems
+- Pharmacy systems
+- Future PHC/Gov APIs
+
+Standards:
+- HL7 / FHIR (recommended)
+
+---
+
+## 17. Security Best Practices
+
+- MFA for admins
+- Strong password policy
+- Regular patching
+- API security (rate limiting + tokens)
+
+---
+
+## 18. User Accountability
+
+- Every action tied to a unique user
+- Session tracking
+- Optional device tracking
+
+---
+
+## 19. Compliance Checklist
+
+- [ ] RBAC enforced
+- [ ] Audit logs enabled
+- [ ] Incident lifecycle implemented
+- [ ] Record locking enabled
+- [ ] Consent tracking implemented
+- [ ] Backup system active
+- [ ] Central reporting connected
+- [ ] Audit dashboard available
+
+---
+
+## 20. Future Enhancements
+
+- AI-based anomaly detection
+- Predictive incident alerts
+- Multi-hospital analytics
+- Government integration APIs
+
+---
+
+## 21. Legal Disclaimer
+
+This document provides a **technical compliance framework**.
+
+Final compliance must be validated with:
+- Legal advisors
+- PHC inspection teams
+
+---
+
+## 22. Version Info
+
+**Version:** v2.0  
+**Prepared for:** Host-Swarm Healthcare Platform  
+**Last Updated:** {{DATE}}
+
+=== .ai/testing rules ===
+
+# Testing Conventions
+
+Project-specific Pest testing patterns extracted from the codebase. Follow these when writing or editing tests.
+
+---
+
+## Setup
+
+- **Config:** `tests/Pest.php`
+- Uses `RefreshDatabase` trait automatically for Feature tests
+- Extends `Tests\TestCase`
+
+```php
+pest()->extend(Tests\TestCase::class)
+    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    ->in('Feature');
+```
+
+---
+
+## Test Style
+
+- Use `test()` function (not `it()`) with descriptive strings
+- Use factories for all model creation
+- Check existing factory states before manually setting attributes
+- Feature tests in `tests/Feature/`, unit tests in `tests/Unit/`
+- Create with: `php artisan make:test --pest {name}` (add `--unit` for unit tests)
+
+```php
+test('guests are redirected to the login page', function () {
+    $this->get(route('dashboard'))->assertRedirect(route('login'));
+});
+
+test('authenticated users can visit the dashboard', function () {
+    $this->actingAs($user = User::factory()->create());
+    $this->get(route('dashboard'))->assertOk();
+});
+```
+
+---
+
+## Running Tests
+
+```bash
+
+# All tests (compact output)
+
+php artisan test --compact
+
+# Filter by name
+
+php artisan test --compact --filter=testName
+
+# Specific file
+
+php artisan test --compact tests/Feature/Auth/AuthenticationTest.php
+```
+
+---
+
+## Filament Testing
+
+- Authenticate before testing panel functionality
+- Use `livewire()` helper (or `Livewire::test()`)
+
+```php
+// Table test
+livewire(ListUsers::class)
+    ->assertCanSeeTableRecords($users)
+    ->searchTable($users->first()->name)
+    ->assertCanSeeTableRecords($users->take(1))
+    ->assertCanNotSeeTableRecords($users->skip(1));
+
+// Create resource test
+livewire(CreateUser::class)
+    ->fillForm(['name' => 'Test', 'email' => 'test@example.com'])
+    ->call('create')
+    ->assertNotified()
+    ->assertRedirect();
+
+assertDatabaseHas(User::class, ['name' => 'Test', 'email' => 'test@example.com']);
+
+// Validation test
+livewire(CreateUser::class)
+    ->fillForm(['name' => null, 'email' => 'invalid-email'])
+    ->call('create')
+    ->assertHasFormErrors(['name' => 'required', 'email' => 'email'])
+    ->assertNotNotified();
+
+// Action test
+livewire(EditUser::class, ['record' => $user->id])
+    ->callAction(DeleteAction::class)
+    ->assertNotified()
+    ->assertRedirect();
+```
+
+---
+
+## Key Reminders
+
+- Every code change must include a new or updated test
+- Use `fake()` for data generation (project convention over `$this->faker`)
+- Most tests should be feature tests (not unit)
+- Run minimum tests needed: filter by file or name for speed
+- Do NOT delete existing tests without approval
+
 === foundation rules ===
 
 # Laravel Boost Guidelines
@@ -452,68 +2341,5 @@ Fortify is a headless authentication backend that provides authentication routes
 - `Features::updateProfileInformation()` to let users update their profile.
 - `Features::updatePasswords()` to let users change their passwords.
 - `Features::resetPasswords()` for password reset via email.
-
-=== copilot workflow rules ===
-
-# Copilot Development Workflow
-
-These rules are mandatory for every code change session. See `docs/user-stories.md` Epic 16 for the full story definitions.
-
-## Branch Management
-
-- **Always** start from the latest `main` branch: `git checkout main && git pull origin main`.
-- Create a feature branch: `git checkout -b feature/{short-description}` (or `fix/`, `docs/`, `chore/`).
-- **Never** commit directly to `main`.
-
-## Sequential Atomic Commits
-
-- Make one commit per logical change. Do not mix features with test fixes.
-- Commit message format: `type(scope): description`
-  - Types: `feat`, `fix`, `docs`, `test`, `refactor`, `style`, `chore`
-  - Example: `feat(patient): add duplicate CNIC prevention`
-- Before each PHP commit: `vendor/bin/pint --dirty`
-- Before each JS/TS commit: `npm run format && npm run lint`
-
-## Tests Alongside Changes
-
-- Every feature or fix **must** include new or updated Pest tests.
-- Run `php artisan test --compact` (or `--filter=testName`) and confirm all tests pass before committing.
-- Test commits can be separate: `test(patient): add duplicate prevention test`.
-
-## Documentation Updates
-
-- When a feature changes behavior or adds functionality, update:
-  - `docs/project-description.md` — relevant section
-  - `docs/user-stories.md` — flip 🔲 to ✅ for completed stories
-  - `README.md` — if setup steps, commands, or architecture change
-- Documentation commit: `docs: update project description for {feature}`
-
-## User Consent for Git Operations
-
-- **MANDATORY**: Ask for explicit user confirmation before running:
-  - `git add` / `git commit`
-  - `git push`
-  - `git checkout` / `git branch` (creating or switching)
-  - `git merge` / `git rebase`
-- Show the user: commit message, changed files list, and target branch/remote before proceeding.
-- **Never** use `--force`, `--no-verify`, or destructive operations without explicit approval.
-- If the user says "go ahead" or "push it", that counts as consent for the immediate operation only.
-
-## Release Notes
-
-- Maintain `CHANGELOG.md` at the project root.
-- Format: grouped by `Added`, `Changed`, `Fixed`, `Removed` per version.
-- Update CHANGELOG.md before the final push.
-
-## Pre-Push Checklist
-
-Before pushing, verify all of the following:
-1. All tests pass: `php artisan test --compact`
-2. PHP formatted: `vendor/bin/pint --dirty`
-3. JS/TS linted: `npm run lint && npm run format:check`
-4. TypeScript compiles: `npm run types`
-5. Documentation updated (if applicable)
-6. CHANGELOG.md updated
-7. User has reviewed and approved
 
 </laravel-boost-guidelines>
