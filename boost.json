@@ -19,6 +19,7 @@
         "inertia-react-development",
         "tailwindcss-development",
         "eloquent-best-practices",
+        "laravel-enums",
         "laravel-inertia-react",
         "laravel-quality",
         "laravel-security-audit",
