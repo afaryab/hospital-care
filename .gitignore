@@ -28,3 +28,4 @@ yarn-error.log
 /.zed
 supervisord.log
 supervisord.log
+.pnpm-store
