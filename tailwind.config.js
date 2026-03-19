@@ -29,6 +29,14 @@ export default {
         },
         extend: {
             colors: {
+                medical: {
+                    primary: "#122056",
+                    accent: "#5B65DC",
+                    bg: "#FAFAFD",
+                    surface: "#FFFFFF",
+                    soft: "#EEEFFD",
+                    border: "#E0E3F5",
+                },
                 primary: {
                     50: '#f0fdf4',
                     100: '#dcfce7', 
