@@ -348,6 +348,18 @@ git push origin feature/my-feature
 - [ ] Summary of changes provided
 - [ ] No direct commits to `main`
 
+### CI Pipeline (Automated)
+
+When a PR is opened against `main`, GitHub Actions automatically runs three jobs:
+
+| Job | What it checks |
+|-----|---------------|
+| **Backend Tests** | Pest tests with coverage (min 30%), Pint code style |
+| **Frontend Checks** | TypeScript types, ESLint, Prettier format, SSR build |
+| **Docker Build & Test** | Builds both app and CLI images, starts containers with MySQL, runs migrations, performs HTTP health check |
+
+All three jobs must pass before the PR can be merged. The Docker build job runs after backend and frontend checks pass, ensuring images are valid before code reaches `main`.
+
 ---
 
 ## Publishing to Docker
