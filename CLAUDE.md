@@ -453,4 +453,67 @@ Fortify is a headless authentication backend that provides authentication routes
 - `Features::updatePasswords()` to let users change their passwords.
 - `Features::resetPasswords()` for password reset via email.
 
+=== copilot workflow rules ===
+
+# Copilot Development Workflow
+
+These rules are mandatory for every code change session. See `docs/user-stories.md` Epic 16 for the full story definitions.
+
+## Branch Management
+
+- **Always** start from the latest `main` branch: `git checkout main && git pull origin main`.
+- Create a feature branch: `git checkout -b feature/{short-description}` (or `fix/`, `docs/`, `chore/`).
+- **Never** commit directly to `main`.
+
+## Sequential Atomic Commits
+
+- Make one commit per logical change. Do not mix features with test fixes.
+- Commit message format: `type(scope): description`
+  - Types: `feat`, `fix`, `docs`, `test`, `refactor`, `style`, `chore`
+  - Example: `feat(patient): add duplicate CNIC prevention`
+- Before each PHP commit: `vendor/bin/pint --dirty`
+- Before each JS/TS commit: `npm run format && npm run lint`
+
+## Tests Alongside Changes
+
+- Every feature or fix **must** include new or updated Pest tests.
+- Run `php artisan test --compact` (or `--filter=testName`) and confirm all tests pass before committing.
+- Test commits can be separate: `test(patient): add duplicate prevention test`.
+
+## Documentation Updates
+
+- When a feature changes behavior or adds functionality, update:
+  - `docs/project-description.md` — relevant section
+  - `docs/user-stories.md` — flip 🔲 to ✅ for completed stories
+  - `README.md` — if setup steps, commands, or architecture change
+- Documentation commit: `docs: update project description for {feature}`
+
+## User Consent for Git Operations
+
+- **MANDATORY**: Ask for explicit user confirmation before running:
+  - `git add` / `git commit`
+  - `git push`
+  - `git checkout` / `git branch` (creating or switching)
+  - `git merge` / `git rebase`
+- Show the user: commit message, changed files list, and target branch/remote before proceeding.
+- **Never** use `--force`, `--no-verify`, or destructive operations without explicit approval.
+- If the user says "go ahead" or "push it", that counts as consent for the immediate operation only.
+
+## Release Notes
+
+- Maintain `CHANGELOG.md` at the project root.
+- Format: grouped by `Added`, `Changed`, `Fixed`, `Removed` per version.
+- Update CHANGELOG.md before the final push.
+
+## Pre-Push Checklist
+
+Before pushing, verify all of the following:
+1. All tests pass: `php artisan test --compact`
+2. PHP formatted: `vendor/bin/pint --dirty`
+3. JS/TS linted: `npm run lint && npm run format:check`
+4. TypeScript compiles: `npm run types`
+5. Documentation updated (if applicable)
+6. CHANGELOG.md updated
+7. User has reviewed and approved
+
 </laravel-boost-guidelines>
