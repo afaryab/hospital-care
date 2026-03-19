@@ -17,6 +17,7 @@
         "livewire-development",
         "pest-testing",
         "inertia-react-development",
-        "tailwindcss-development"
+        "tailwindcss-development",
+        "laravel-specialist"
     ]
 }
