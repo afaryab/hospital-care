@@ -22,6 +22,7 @@
         "laravel-controllers",
         "laravel-enums",
         "laravel-inertia-react",
+        "laravel-jobs",
         "laravel-models",
         "laravel-policies",
         "laravel-quality",
