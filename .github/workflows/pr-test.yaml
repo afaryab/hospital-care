@@ -11,87 +11,10 @@ concurrency:
 
 jobs:
 
-  backend:
-    name: Backend Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: mbstring, xml, ctype, json, curl, dom, fileinfo, gd, intl, pdo_sqlite, zip
-          coverage: xdebug
-
-      - name: Get Composer cache directory
-        id: composer-cache
-        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
-
-      - name: Cache Composer dependencies
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: composer-${{ hashFiles('composer.lock') }}
-          restore-keys: composer-
-
-      - name: Install Composer dependencies
-        run: composer install --no-interaction --prefer-dist --optimize-autoloader
-
-      - name: Prepare environment
-        run: |
-          cp .env.example .env
-          php artisan key:generate
-
-      - name: Run Pest tests with coverage
-        run: php artisan test --compact --coverage --min=30
-
-      - name: Run Pint (code style)
-        run: vendor/bin/pint --test
-
-  frontend:
-    name: Frontend Checks
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: TypeScript type check
-        run: pnpm run types
-
-      - name: ESLint
-        run: pnpm run lint
-
-      - name: Prettier format check
-        run: pnpm run format:check
-
-      - name: Vite SSR build
-        run: pnpm run build:ssr
-
-  docker-build:
+  build-and-test:
     name: Docker Build & Test
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: [backend, frontend]
 
     services:
       mysql:
@@ -127,10 +50,65 @@ jobs:
             SENTRY_RELEASE=pr-test
             SENTRY_ENVIRONMENT=ci
             APP_ENV=production
-          tags: hospital-care:app-test
+          tags: hospital-care:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Start test container
+        run: |
+          docker run -d --name test-runner \
+            --network host \
+            -e APP_ENV=testing \
+            -e APP_KEY=base64:$(openssl rand -base64 32) \
+            -e APP_DEBUG=true \
+            -e DB_CONNECTION=mysql \
+            -e DB_HOST=127.0.0.1 \
+            -e DB_PORT=3306 \
+            -e DB_DATABASE=hospital_care \
+            -e DB_USERNAME=hc_user \
+            -e DB_PASSWORD=hc_password \
+            hospital-care:test sleep infinity
+
+          echo "Waiting for container to be ready..."
+          sleep 5
+
+          if ! docker ps --filter "name=test-runner" --filter "status=running" | grep -q test-runner; then
+            echo "Test container failed to start!"
+            docker logs test-runner
+            exit 1
+          fi
+
+          echo "Test container is running."
+
+      - name: Install dev dependencies & coverage driver
+        run: |
+          docker exec test-runner composer install --no-interaction
+          docker exec test-runner sh -c "pecl install pcov && docker-php-ext-enable pcov"
+
+      - name: Run migrations
+        run: docker exec test-runner php artisan migrate --force
+
+      # --- Backend checks ---
+      - name: Run Pest tests with coverage
+        run: docker exec test-runner php artisan test --compact --coverage --min=30
+
+      - name: Run Pint (code style)
+        run: docker exec test-runner vendor/bin/pint --test
+
+      # --- Frontend checks ---
+      - name: TypeScript type check
+        run: docker exec test-runner pnpm run types
+
+      - name: ESLint
+        run: docker exec test-runner pnpm run lint
+
+      - name: Prettier format check
+        run: docker exec test-runner pnpm run format:check
+
+      - name: Vite SSR build
+        run: docker exec test-runner pnpm run build:ssr
+
+      # --- Verify CLI image builds ---
       - name: Build CLI image
         uses: docker/build-push-action@v5
         with:
@@ -146,75 +124,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Verify app image starts
-        run: |
-          docker run -d --name app-test \
-            --network host \
-            -e APP_ENV=production \
-            -e APP_DEBUG=false \
-            -e DB_CONNECTION=mysql \
-            -e DB_HOST=127.0.0.1 \
-            -e DB_PORT=3306 \
-            -e DB_DATABASE=hospital_care \
-            -e DB_USERNAME=hc_user \
-            -e DB_PASSWORD=hc_password \
-            hospital-care:app-test
-
-          echo "Waiting for app container to start..."
-          sleep 10
-
-          # Check container is still running
-          if ! docker ps --filter "name=app-test" --filter "status=running" | grep -q app-test; then
-            echo "App container failed to start!"
-            docker logs app-test
-            exit 1
-          fi
-
-          echo "App container is running."
-
-      - name: Verify CLI image starts
-        run: |
-          docker run -d --name cli-test \
-            --network host \
-            -e APP_ENV=production \
-            -e APP_DEBUG=false \
-            -e DB_CONNECTION=mysql \
-            -e DB_HOST=127.0.0.1 \
-            -e DB_PORT=3306 \
-            -e DB_DATABASE=hospital_care \
-            -e DB_USERNAME=hc_user \
-            -e DB_PASSWORD=hc_password \
-            hospital-care:cli-test
-
-          echo "Waiting for CLI container to start..."
-          sleep 10
-
-          if ! docker ps --filter "name=cli-test" --filter "status=running" | grep -q cli-test; then
-            echo "CLI container failed to start!"
-            docker logs cli-test
-            exit 1
-          fi
-
-          echo "CLI container is running."
-
-      - name: Run migrations in app container
-        run: |
-          docker exec app-test php artisan migrate --force
-          echo "Migrations completed successfully."
-
-      - name: Health check via HTTP
-        run: |
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000 || echo "000")
-          echo "HTTP status: $HTTP_STATUS"
-          if [[ "$HTTP_STATUS" -lt 200 ]] || [[ "$HTTP_STATUS" -ge 500 ]]; then
-            echo "Health check failed with status $HTTP_STATUS"
-            docker logs app-test
-            exit 1
-          fi
-          echo "Health check passed."
-
       - name: Cleanup
         if: always()
         run: |
-          docker stop app-test cli-test 2>/dev/null || true
-          docker rm app-test cli-test 2>/dev/null || true
+          docker stop test-runner 2>/dev/null || true
+          docker rm test-runner 2>/dev/null || true

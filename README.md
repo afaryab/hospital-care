@@ -350,15 +350,20 @@ git push origin feature/my-feature
 
 ### CI Pipeline (Automated)
 
-When a PR is opened against `main`, GitHub Actions automatically runs three jobs:
+When a PR is opened against `main`, GitHub Actions builds the Docker app image and runs all checks inside it:
 
-| Job | What it checks |
-|-----|---------------|
-| **Backend Tests** | Pest tests with coverage (min 30%), Pint code style |
-| **Frontend Checks** | TypeScript types, ESLint, Prettier format, SSR build |
-| **Docker Build & Test** | Builds both app and CLI images, starts containers with MySQL, runs migrations, performs HTTP health check |
+| Step | What it checks |
+|------|---------------|
+| **Docker Build** | Builds app image (PHP 8.4, Node.js, pnpm, all extensions) |
+| **Pest Tests** | Runs test suite with coverage (min 30%) against MySQL |
+| **Pint** | PHP code style validation |
+| **TypeScript** | Type check (`pnpm run types`) |
+| **ESLint** | Lint check (`pnpm run lint`) |
+| **Prettier** | Format check (`pnpm run format:check`) |
+| **SSR Build** | Vite SSR build (`pnpm run build:ssr`) |
+| **CLI Image** | Verifies CLI Docker image builds successfully |
 
-All three jobs must pass before the PR can be merged. The Docker build job runs after backend and frontend checks pass, ensuring images are valid before code reaches `main`.
+All checks run inside the Docker container to ensure the CI environment matches production. Both Docker images must build successfully before the PR can be merged.
 
 ---
 
