@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Closing extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'old_id',
         'reception_id',
