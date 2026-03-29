@@ -90,20 +90,68 @@ class PateintController extends Controller
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'cnic' => 'nullable|string|size:15|unique:patients,cnic',
+                'cnic' => 'nullable|string|size:15',
                 'contact' => 'required|string|max:20',
                 'gender' => 'required|in:m,f,t',
                 'date_of_birth' => 'nullable|date',
                 'address' => 'nullable|string|max:500',
                 'emergency_contact' => 'nullable|string|max:20',
                 'blood_group' => 'nullable|string|max:5',
+                'force_create' => 'nullable|boolean',
+                'selected_patient_id' => 'nullable|integer|exists:patients,id',
             ]);
+
+            $cnicHash = null;
+            if (! empty($validated['cnic'])) {
+                $cnicHash = hash('sha256', strtoupper(trim((string) $validated['cnic'])));
+            }
+
+            $contactHash = hash('sha256', preg_replace('/\D+/', '', (string) $validated['contact']) ?: '');
+
+            $duplicatesQuery = Patient::query()->where(function ($query) use ($cnicHash, $contactHash) {
+                if (! empty($cnicHash)) {
+                    $query->orWhere('cnic_hash', $cnicHash);
+                }
+
+                $query->orWhere('contact_hash', $contactHash);
+            });
+
+            $duplicates = $duplicatesQuery->limit(10)->get();
+
+            if ($duplicates->isNotEmpty() && ! $request->boolean('force_create')) {
+                $selectedPatientId = $request->integer('selected_patient_id');
+
+                if ($selectedPatientId) {
+                    $selectedPatient = $duplicates->firstWhere('id', $selectedPatientId);
+
+                    if ($selectedPatient) {
+                        return response()->json([
+                            'message' => 'Existing patient selected',
+                            'warning' => true,
+                            'used_existing' => true,
+                            'data' => $selectedPatient,
+                        ]);
+                    }
+                }
+
+                return response()->json([
+                    'message' => 'Possible duplicate patient found',
+                    'warning' => true,
+                    'can_proceed' => true,
+                    'data' => [
+                        'exact' => $duplicates->take(3)->values(),
+                        'possible' => $duplicates->values(),
+                    ],
+                ], 409);
+            }
 
             if ($request->get('age', false)) {
                 // Calculate age in days from age in years
                 $birthDate = now()->subYears(intval($request->get('age')));
                 $validated['age_days'] = $birthDate->diffInDays(now());
             }
+
+            unset($validated['force_create'], $validated['selected_patient_id']);
 
             $patient = Patient::create([
                 ...$validated,

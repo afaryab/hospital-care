@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Validation\ValidationException;
 
 class TreatmentRecord extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'service_order_id',
@@ -47,6 +49,33 @@ class TreatmentRecord extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::updating(function (TreatmentRecord $treatmentRecord): void {
+            $dirtyAttributes = array_diff(array_keys($treatmentRecord->getDirty()), ['updated_at']);
+
+            if ($treatmentRecord->getOriginal('is_finalized') && count($dirtyAttributes) > 0) {
+                throw ValidationException::withMessages([
+                    'treatment_record' => 'Finalized treatment records cannot be modified.',
+                ]);
+            }
+
+            TreatmentRecordVersion::query()->create([
+                'treatment_record_id' => $treatmentRecord->id,
+                'snapshot' => $treatmentRecord->getOriginal(),
+                'change_reason' => 'record_update',
+                'changed_by' => auth()->id(),
+                'changed_at' => now(),
+            ]);
+        });
+
+        static::deleting(function (TreatmentRecord $treatmentRecord): void {
+            if ($treatmentRecord->isForceDeleting()) {
+                throw new \RuntimeException('Hard delete is not allowed for treatment records.');
+            }
+        });
+    }
+
     public function serviceOrder(): BelongsTo
     {
         return $this->belongsTo(ServiceOrder::class);
@@ -70,5 +99,10 @@ class TreatmentRecord extends Model
     public function vitalSigns(): HasMany
     {
         return $this->hasMany(VitalSign::class);
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(TreatmentRecordVersion::class)->latest('changed_at');
     }
 }

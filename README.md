@@ -61,6 +61,7 @@
 - Full CRUD for Users, Patients, Closings, Transactions, Service Orders, Departments, Services
 - Role-based access with multi-profile user system
 - Report pages: Daily Report, Closing Report, Receivables Report, Settings
+- Audit Log resource with user/model/date filtering for compliance review
 - Dashboard widgets with key metrics
 
 ### Accounts Panel
@@ -100,6 +101,7 @@ Every URL is hierarchical and independently resolvable:
 | **Authentication** | Laravel Fortify (2FA, email verification) |
 | **Route Generation** | Laravel Wayfinder (type-safe routes in TypeScript) |
 | **PDF Generation** | DomPDF, mPDF |
+| **Compliance Packages** | Spatie Activitylog, Spatie Permission, Spatie Medialibrary, Spatie Backup |
 | **Error Tracking** | Sentry |
 | **Monitoring** | Laravel Pulse, Telescope |
 | **Testing** | Pest PHP v4 |

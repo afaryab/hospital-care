@@ -18,6 +18,7 @@ use App\Models\ServiceRecestation;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
 use App\Models\User;
+use App\Services\BreachDetectionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -66,7 +67,7 @@ class WebController extends Controller
 
     }
 
-    public function patient($year, $month, $number, $departmentKey = false, $serviceNumber = false)
+    public function patient(Request $request, $year, $month, $number, $departmentKey = false, $serviceNumber = false)
     {
 
         $psNumber = 'PS/'.$year.'/'.$month.'/'.$number;
@@ -83,6 +84,8 @@ class WebController extends Controller
             $serviceOrder = ServiceOrder::where('so_number', $soNumber)->firstOrFail();
 
         }
+
+        app(BreachDetectionService::class)->recordPatientAccess($request->user(), $patientData, $request);
 
         return Inertia::render('patient', [
             'departmentKey' => $departmentKey,

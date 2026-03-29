@@ -5,11 +5,23 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class Patient extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity, SoftDeletes;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
 
     protected $fillable = [
         'id',
@@ -23,10 +35,21 @@ class Patient extends Model
         'guardian',
         'relation',
         'contact',
+        'contact_hash',
         'cnic',
+        'cnic_hash',
         'created_at',
         'updated_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'cnic' => 'encrypted',
+            'contact' => 'encrypted',
+            'address' => 'encrypted',
+        ];
+    }
 
     protected $appends = [
         'age',
@@ -35,6 +58,25 @@ class Patient extends Model
         'number',
         'outstandings',
     ];
+
+    protected static function booted(): void
+    {
+        static::updating(function (Patient $patient): void {
+            PatientVersion::query()->create([
+                'patient_id' => $patient->id,
+                'snapshot' => $patient->getOriginal(),
+                'change_reason' => 'record_update',
+                'changed_by' => auth()->id(),
+                'changed_at' => now(),
+            ]);
+        });
+
+        static::deleting(function (Patient $patient): void {
+            if ($patient->isForceDeleting()) {
+                throw new \RuntimeException('Hard delete is not allowed for patient records.');
+            }
+        });
+    }
 
     public function getAgeAttribute()
     {
@@ -122,6 +164,11 @@ class Patient extends Model
     public function receaveables()
     {
         return $this->hasMany(Receaveable::class, 'patient_id', 'id')->where('status', 'unpaid')->whereNull('panel_id');
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(PatientVersion::class)->latest('changed_at');
     }
 
     public function getOutstandingsAttribute()

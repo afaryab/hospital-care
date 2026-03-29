@@ -6,12 +6,24 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 class ServiceOrder extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity, SoftDeletes;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logAll()
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges();
+    }
 
     protected $table = 'service_orders';
 
@@ -33,7 +45,7 @@ class ServiceOrder extends Model
     ];
 
     protected $casts = [
-        'notes_json' => 'json',
+        'notes_json' => 'encrypted:json',
         'is_composit' => 'boolean',
     ];
 
@@ -44,6 +56,25 @@ class ServiceOrder extends Model
         'departmentKey',
         'serviceNumber',
     ];
+
+    protected static function booted(): void
+    {
+        static::updating(function (ServiceOrder $serviceOrder): void {
+            ServiceOrderVersion::query()->create([
+                'service_order_id' => $serviceOrder->id,
+                'snapshot' => $serviceOrder->getOriginal(),
+                'change_reason' => 'record_update',
+                'changed_by' => auth()->id(),
+                'changed_at' => now(),
+            ]);
+        });
+
+        static::deleting(function (ServiceOrder $serviceOrder): void {
+            if ($serviceOrder->isForceDeleting()) {
+                throw new \RuntimeException('Hard delete is not allowed for service order records.');
+            }
+        });
+    }
 
     public function getYearAttribute()
     {
@@ -171,5 +202,10 @@ class ServiceOrder extends Model
     public function transactionElements(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(TransactionElement::class, 'service_order_id');
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(ServiceOrderVersion::class)->latest('changed_at');
     }
 }
