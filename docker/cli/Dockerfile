@@ -31,7 +31,9 @@ RUN apk add --no-cache \
     make \
     dcron \
     nodejs \
-    npm
+    npm \
+    sqlite \
+    sqlite-dev
 
 # Clear cache
 RUN rm -rf /var/lib/apt/lists/*
@@ -71,13 +73,15 @@ COPY . /var/www/html
 COPY docker/cli/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/cli/start.sh /start.sh
 
-# Make start script executable
 RUN chmod +x /start.sh
 
 # Create required directories and set permissions before composer install
 RUN mkdir -p /var/www/html/bootstrap/cache /var/www/html/storage/app /var/www/html/storage/framework/cache /var/www/html/storage/framework/sessions /var/www/html/storage/framework/views /var/www/html/storage/logs
 RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Set CI=true for pnpm install
+ENV CI=true
 
 RUN cp .env.example .env || true
 # Install PHP dependencies using Composer

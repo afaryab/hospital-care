@@ -47,7 +47,7 @@ return [
     | If you want to use a custom icons directory, set the path here.
     | This will override the default package SVG path.
     */
-    'path' => resource_path('icons/health-icons'),
+    'path' => resource_path('icons/health-icons-subset'),
 
     /*
     |-----------------------------------------------------------------

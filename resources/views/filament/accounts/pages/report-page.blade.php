@@ -34,7 +34,7 @@
 
             <div class="mt-4">
                 @if($activeTab === 'general')
-                    {{ $this->table }}
+                    {{ ($accounts ?? $this->table) }}
                 @else
                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden" style="height: 80vh;">
                         <iframe

@@ -34,6 +34,7 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
 
     public string $activeTab = 'general';
 
+
     public function mount(): void
     {
         $this->filters = [
@@ -42,7 +43,12 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
             'status' => null,
             'panel_id' => null,
         ];
+        // Always provide accounts key for view safety
+        $this->accounts = [];
     }
+
+    // Always provide accounts property for view safety
+    public array $accounts = [];
 
     public function filtersForm(Schema $schema): Schema
     {

@@ -37,6 +37,7 @@ class ServicesReport extends Page implements Tables\Contracts\HasTable
 
     public string $activeTab = 'general';
 
+
     public function mount(): void
     {
         $this->filters = [
@@ -47,7 +48,12 @@ class ServicesReport extends Page implements Tables\Contracts\HasTable
             'service_id' => null,
             'doctor_id' => null,
         ];
+        // Always provide accounts key for view safety
+        $this->accounts = [];
     }
+
+    // Always provide accounts property for view safety
+    public array $accounts = [];
 
     public function filtersForm(Schema $schema): Schema
     {

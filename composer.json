@@ -107,7 +107,9 @@
     ],
     "extra": {
         "laravel": {
-            "dont-discover": ["laravel/telescope"]
+            "dont-discover": [
+                "troccoli/blade-health-icons"
+            ]
         }
     },
     "config": {

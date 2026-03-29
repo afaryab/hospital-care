@@ -55,13 +55,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Register Blade Health Icons with custom path for Blade Icons/Filament
-        $this->app->afterResolving(\BladeUI\Icons\Factory::class, function ($factory) {
-            $factory->add('healthicons', [
-                'path' => resource_path('icons/health-icons'),
-                'prefix' => config('blade-health-icons.prefix', 'healthicons'),
-            ]);
-        });
         // Register observers
         Patient::observe(PatientObserver::class);
         Closing::observe(ClosingObserver::class);
