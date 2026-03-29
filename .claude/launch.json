@@ -1,0 +1,32 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Hospital Care — Full Stack (Docker)",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "docker stop $(docker ps -q) 2>/dev/null; docker compose up --build"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "Hospital Care — Quick Start (Docker)",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "docker stop $(docker ps -q) 2>/dev/null; docker compose up"
+      ],
+      "port": 8000
+    },
+    {
+      "name": "phpMyAdmin",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "docker compose up pma db"
+      ],
+      "port": 8080
+    }
+  ]
+}
