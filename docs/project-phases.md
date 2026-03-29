@@ -673,7 +673,7 @@ tests/Feature/Models/SalaryAdvanceTest.php
 
 ---
 
-### Phase 1.10 — Package Installation for New Features 🔲
+### Phase 1.10 — Package Installation for New Features ✅
 
 > Install required packages before the models that depend on them.
 
@@ -702,7 +702,7 @@ tests/Feature/PackageInstallationTest.php
 
 ---
 
-### Phase 2.1 — Audit Trail (spatie/laravel-activitylog) 🔲
+### Phase 2.1 — Audit Trail (spatie/laravel-activitylog) ✅
 
 > Ref: US-15.1
 
@@ -725,7 +725,7 @@ tests/Feature/Compliance/AuditTrailTest.php
 
 ---
 
-### Phase 2.2 — Data Encryption at Rest 🔲
+### Phase 2.2 — Data Encryption at Rest ✅
 
 > Ref: US-15.2
 
@@ -747,7 +747,7 @@ tests/Feature/Compliance/DataEncryptionTest.php
 
 ---
 
-### Phase 2.3 — Role-Based Access Control (spatie/laravel-permission) 🔲
+### Phase 2.3 — Role-Based Access Control (spatie/laravel-permission) ✅
 
 > Ref: US-15.10
 
@@ -772,7 +772,7 @@ tests/Feature/Compliance/RBACTest.php
 
 ---
 
-### Phase 2.4 — Immutable Medical Records 🔲
+### Phase 2.4 — Immutable Medical Records ✅
 
 > Ref: US-15.3
 
@@ -794,7 +794,7 @@ tests/Feature/Compliance/ImmutableRecordsTest.php
 
 ---
 
-### Phase 2.5 — Duplicate Patient Prevention 🔲
+### Phase 2.5 — Duplicate Patient Prevention ✅
 
 > Ref: US-15.5
 
@@ -814,7 +814,7 @@ tests/Feature/Compliance/DuplicatePatientTest.php
 
 ---
 
-### Phase 2.6 — Automated Backups 🔲
+### Phase 2.6 — Automated Backups ✅
 
 > Ref: US-15.6
 
@@ -835,7 +835,7 @@ tests/Feature/Compliance/BackupTest.php
 
 ---
 
-### Phase 2.7 — Breach Notification 🔲
+### Phase 2.7 — Breach Notification ✅
 
 > Ref: US-15.7
 
@@ -861,34 +861,40 @@ tests/Feature/Compliance/BreachNotificationTest.php
 
 ---
 
-### Phase 3.1 — X-Ray Technician Profile Enhancement 🔲
+### Phase 3.1 — There are some issues need fix lets do them 🔲
 
-> Ref: US-2.5
+1. Admin Filament Resourse remove add edit closing.
+2. I have added healthicons.org setup them properly for filament, React and blade.
+3. Add Front End React table for service orders. on click show service order profile. Related Treatments and Expense paid against it. We need to observe income from service order and expense paid against it.
+3. Update Expense Category ensure two types allowed boolean for payment in petty cash, via voucher.
+4. Update Services table add icons column let the user select from health icons added do some majic list them all.
 
-- Add `authority` column to `xray_technicians` table (currently missing, unlike other profile tables)
-- Update `UserResource` Filament form to include X-Ray Technician authority levels
+
 
 **Feature Tests:**
 ```
-tests/Feature/Admin/UserProfileTest.php
-- test X-Ray Technician profile can be assigned to a user with authority levels
-- test X-Ray Technician appears in user profiles list
+
 ```
 
 ---
 
-### Phase 3.2 — Nursing Staff Profile Enhancement 🔲
+### Phase 3.2 — X-Ray Technician and Nursing Staff Profile Enhancement 🔲
 
-> Ref: US-2.6
+> Ref: US-2.6 , US-2.5
 
 - Nursing Staff model and table already exist with `authority` column
 - Ensure `UserResource` Filament form includes Nursing Staff profile repeater
+- Add `authority` column to `xray_technicians` table (currently missing, unlike other profile tables)
+- Update `UserResource` Filament form to include X-Ray Technician authority levels
 
 **Feature Tests:**
 ```
 tests/Feature/Admin/NursingStaffProfileTest.php
 - test Nursing Staff profile can be assigned to a user
 - test Nursing Staff authority levels are configurable
+tests/Feature/Admin/UserProfileTest.php
+- test X-Ray Technician profile can be assigned to a user with authority levels
+- test X-Ray Technician appears in user profiles list
 ```
 
 ---

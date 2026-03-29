@@ -7,47 +7,38 @@ use App\Models\User;
 
 class TransactionPolicy
 {
-    /**
-     * Admins bypass all policy checks.
-     */
     public function before(User $user): ?bool
     {
-        if ($user->isAdmin()) {
+        if ($user->isAdmin() || $user->hasRole('administrator')) {
             return true;
         }
 
         return null;
     }
 
-    /**
-     * All authenticated staff can view transactions.
-     */
+    public function viewAny(User $user): bool
+    {
+        return $user->can('transaction.view') || $user->hasAnyProfile();
+    }
+
     public function view(User $user, Transaction $transaction): bool
     {
-        return $user->hasAnyProfile();
+        return $user->can('transaction.view') || $user->hasAnyProfile();
     }
 
-    /**
-     * Receptionists can create transactions.
-     */
     public function create(User $user): bool
     {
-        return $user->isReceptionist();
+        return $user->can('transaction.create') || $user->isReceptionist();
     }
 
-    /**
-     * Only the user who created the transaction can edit it.
-     */
     public function update(User $user, Transaction $transaction): bool
     {
-        return $user->isReceptionist() && $transaction->created_by === $user->id;
+        return $user->can('transaction.edit')
+            || ($user->isReceptionist() && $transaction->created_by === $user->id);
     }
 
-    /**
-     * Deletion is restricted to admins (handled by before()).
-     */
     public function delete(User $user, Transaction $transaction): bool
     {
-        return false;
+        return $user->can('transaction.delete');
     }
 }

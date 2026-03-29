@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             HospitalSettingSeeder::class,
             StockCategorySeeder::class,
             AssetCategorySeeder::class,
+            RolesAndPermissionsSeeder::class,
         ]);
     }
 }

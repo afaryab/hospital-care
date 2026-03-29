@@ -24,6 +24,10 @@
         "owenvoke/blade-fontawesome": "^3.0",
         "processton/abacus": "*",
         "sentry/sentry-laravel": "^4.20",
+        "spatie/laravel-activitylog": "^5.0",
+        "spatie/laravel-backup": "^10.2",
+        "spatie/laravel-medialibrary": "^11.21",
+        "spatie/laravel-permission": "^7.2",
         "troccoli/blade-health-icons": "^5.0"
     },
     "require-dev": {

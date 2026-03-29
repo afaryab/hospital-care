@@ -7,6 +7,8 @@ use App\Models\Closing;
 use App\Models\ExpenseVoucher;
 use App\Models\Patient;
 use App\Models\PurchaseOrder;
+use App\Models\Receaveable;
+use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
@@ -20,11 +22,20 @@ use App\Observers\TaskObserver;
 use App\Observers\TransactionElementObserver;
 use App\Observers\TransactionObserver;
 use App\Policies\ClosingPolicy;
+use App\Policies\ExpenseVoucherPolicy;
 use App\Policies\PatientPolicy;
+use App\Policies\ReceaveablePolicy;
+use App\Policies\ServiceOrderPolicy;
 use App\Policies\TransactionPolicy;
+use App\Policies\UserPolicy;
+use App\Services\BreachDetectionService;
 use BezhanSalleh\PanelSwitch\PanelSwitch;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Activitylog\Models\Activity;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -61,6 +72,24 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Closing::class, ClosingPolicy::class);
         Gate::policy(Transaction::class, TransactionPolicy::class);
         Gate::policy(Patient::class, PatientPolicy::class);
+        Gate::policy(ServiceOrder::class, ServiceOrderPolicy::class);
+        Gate::policy(ExpenseVoucher::class, ExpenseVoucherPolicy::class);
+        Gate::policy(Receaveable::class, ReceaveablePolicy::class);
+        Gate::policy(User::class, UserPolicy::class);
+
+        Activity::created(function (Activity $activity): void {
+            $properties = (array) ($activity->properties ?? []);
+
+            if (array_key_exists('ip_address', $properties) && array_key_exists('user_agent', $properties)) {
+                return;
+            }
+
+            $properties['ip_address'] = request()->ip();
+            $properties['user_agent'] = request()->userAgent();
+
+            $activity->properties = $properties;
+            $activity->saveQuietly();
+        });
 
         PanelSwitch::configureUsing(function (PanelSwitch $panelSwitch): void {
             $panelSwitch
@@ -75,6 +104,18 @@ class AppServiceProvider extends ServiceProvider
                     'admin' => 'heroicon-o-chart-pie',
                     'accounts' => 'heroicon-o-calculator',
                 ]);
+        });
+
+        Event::listen(Failed::class, function (Failed $event): void {
+            app(BreachDetectionService::class)->recordFailedLogin(
+                request(),
+                $event->user,
+                (string) request()->input('email')
+            );
+        });
+
+        Event::listen(Login::class, function (Login $event): void {
+            app(BreachDetectionService::class)->recordSuccessfulLogin($event->user, request());
         });
     }
 }
