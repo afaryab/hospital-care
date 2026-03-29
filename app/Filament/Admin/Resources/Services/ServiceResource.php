@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\Services;
 
 use App\Filament\Admin\Resources\Services\Pages\ManageServices;
+use App\Helpers\HealthIconHelper;
 use App\Models\Dentist;
 use App\Models\EmergencyDoctor;
 use App\Models\IndDoctor;
@@ -15,12 +16,15 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 class ServiceResource extends Resource
@@ -41,6 +45,22 @@ class ServiceResource extends Resource
             ->components([
                 TextInput::make('name')
                     ->required(),
+                Select::make('icon')
+                    ->label('Health Icon')
+                    ->options(HealthIconHelper::options())
+                    ->searchable()
+                    ->helperText('Choose a Health Icons identifier for this service.'),
+                Placeholder::make('icon_preview')
+                    ->label('Icon Preview')
+                    ->content(function (Get $get): HtmlString {
+                        $icon = $get('icon');
+
+                        if (blank($icon)) {
+                            return new HtmlString('<span class="text-sm text-gray-500">No icon selected.</span>');
+                        }
+
+                        return new HtmlString(HealthIconHelper::img($icon).' <span class="ml-2 text-sm">'.$icon.'</span>');
+                    }),
                 Select::make('service_department_id')
                     ->relationship('department', 'name')
                     ->required(),
@@ -82,6 +102,17 @@ class ServiceResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('icon')
+                    ->label('Icon')
+                    ->formatStateUsing(function (?string $state) {
+                        if (blank($state)) {
+                            return 'N/A';
+                        }
+
+                        return HealthIconHelper::img($state, 'w-6 h-6').' <span class="ml-1 text-xs">'.$state.'</span>';
+                    })
+                    ->html()
+                    ->toggleable(),
                 TextColumn::make('name')
                     ->searchable()
                     ->description(fn ($record) => $record->slug),

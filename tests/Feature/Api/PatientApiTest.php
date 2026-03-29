@@ -16,7 +16,7 @@ test('patient search returns json with data structure', function () {
 });
 
 test('patient search filters by patient name', function () {
-    $patient = Patient::factory()->create(['name' => 'Ahmad Farooq']);
+    Patient::factory()->create(['name' => 'Ahmad Farooq']);
     Patient::factory()->create(['name' => 'Zulfiqar Khan']);
 
     $response = $this->postJson(route('api-patients-search'), [
@@ -49,7 +49,11 @@ test('patient create stores a new patient in database', function () {
     ])->assertStatus(201)
         ->assertJsonPath('message', 'Patient created successfully');
 
-    $this->assertDatabaseHas('patients', ['name' => 'Test Patient', 'contact' => '03001234567']);
+    $patient = Patient::query()->latest('id')->first();
+
+    expect($patient)->not->toBeNull()
+        ->and($patient?->name)->toBe('Test Patient')
+        ->and($patient?->contact)->toBe('03001234567');
 });
 
 test('patient create validates required fields', function () {
@@ -75,8 +79,9 @@ test('patient create validates cnic uniqueness', function () {
         'contact' => '03001111111',
         'gender' => 'f',
         'cnic' => '12345-1234567-1',
-    ])->assertStatus(422)
-        ->assertJsonValidationErrors(['cnic']);
+    ])->assertStatus(409)
+        ->assertJsonPath('warning', true)
+        ->assertJsonPath('can_proceed', true);
 });
 
 test('patient update modifies patient record', function () {
@@ -89,10 +94,9 @@ test('patient update modifies patient record', function () {
     ])->assertOk()
         ->assertJsonPath('message', 'Patient updated successfully');
 
-    $this->assertDatabaseHas('patients', [
-        'id' => $patient->id,
-        'contact' => '03009999999',
-    ]);
+    $patient->refresh();
+
+    expect($patient->contact)->toBe('03009999999');
 });
 
 test('patient update validates required fields', function () {
@@ -120,7 +124,7 @@ test('patient search filters by cnic prefix', function () {
 });
 
 test('patient search returns exact match for full 15-char cnic', function () {
-    $target = Patient::factory()->create(['cnic' => '35202-1234567-1']);
+    Patient::factory()->create(['cnic' => '35202-1234567-1']);
     Patient::factory()->create(['cnic' => '35202-9999999-9']);
 
     $response = $this->postJson(route('api-patients-search'), [

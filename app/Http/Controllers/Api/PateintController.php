@@ -17,14 +17,18 @@ class PateintController extends Controller
         try {
             $query = Patient::query()->orderBy('created_at', 'DESC')->where('id', '!=', null);
 
-            $exactMatches = [];
+            $exactMatches = collect();
 
             // Check if the request have MR Number
             $mrNumber = $request->get('mr_number', false);
 
             if ($mrNumber) {
                 if (Str::length($mrNumber) === 17) {
-                    $exactMatches[] = Patient::where(['ps_number' => $mrNumber])->first();
+                    $exactPatient = Patient::where(['ps_number' => $mrNumber])->first();
+
+                    if ($exactPatient) {
+                        $exactMatches->push($exactPatient);
+                    }
                 }
 
                 $query->where('ps_number', 'LIKE', "{$mrNumber}%");
@@ -33,11 +37,25 @@ class PateintController extends Controller
             $cnicNumber = $request->get('cnic_number', false);
 
             if ($cnicNumber) {
+                $normalizedCnic = strtoupper(trim((string) $cnicNumber));
+
                 if (Str::length($cnicNumber) === 15) {
-                    $exactMatches[] = Patient::where(['cnic' => $cnicNumber])->first();
+                    $exactPatient = Patient::where('cnic_hash', hash('sha256', $normalizedCnic))->first();
+
+                    if ($exactPatient) {
+                        $exactMatches->push($exactPatient);
+                    }
                 }
 
-                $query->where('cnic', 'LIKE', "{$cnicNumber}%");
+                $cnicMatchIds = Patient::query()->select(['id', 'cnic'])->get()
+                    ->filter(function (Patient $patient) use ($normalizedCnic): bool {
+                        $patientCnic = strtoupper(trim((string) $patient->cnic));
+
+                        return $patientCnic !== '' && str_starts_with($patientCnic, $normalizedCnic);
+                    })
+                    ->pluck('id');
+
+                $query->whereIn('id', $cnicMatchIds->isNotEmpty() ? $cnicMatchIds->all() : [0]);
             }
 
             $patientName = $request->get('patient_name', false);
@@ -53,24 +71,34 @@ class PateintController extends Controller
             $patientContact = $request->get('patient_contact', false);
 
             if ($patientContact) {
-                $query->orWhere('contact', 'LIKE', "{$patientContact}%");
+                $normalizedContact = preg_replace('/\D+/', '', (string) $patientContact) ?: '';
+
+                $contactMatchIds = Patient::query()->select(['id', 'contact'])->get()
+                    ->filter(function (Patient $patient) use ($patientContact, $normalizedContact): bool {
+                        $contact = (string) $patient->contact;
+                        $contactDigits = preg_replace('/\D+/', '', $contact) ?: '';
+
+                        return str_starts_with($contact, (string) $patientContact)
+                            || ($normalizedContact !== '' && str_starts_with($contactDigits, $normalizedContact));
+                    })
+                    ->pluck('id');
+
+                $query->whereIn('id', $contactMatchIds->isNotEmpty() ? $contactMatchIds->all() : [0]);
             }
 
             $patientGender = $request->get('patient_gender', false);
 
             if ($patientGender) {
-                $query->orWhere('gender', $patientGender);
+                $query->where('gender', $patientGender);
             }
 
-            if (count($exactMatches) > 0) {
-                $query->whereNotIn('id', array_map(function ($item) {
-                    return $item;
-                }, collect($exactMatches)->pluck('id')->toArray()));
+            if ($exactMatches->isNotEmpty()) {
+                $query->whereNotIn('id', $exactMatches->pluck('id')->all());
             }
 
             return response()->json([
                 'data' => [
-                    'exact' => $exactMatches,
+                    'exact' => $exactMatches->values(),
                     'possible' => $query->limit(7)->get(),
                 ],
             ]);

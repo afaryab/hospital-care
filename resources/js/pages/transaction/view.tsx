@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import {
     Select,
     SelectContent,
@@ -19,12 +20,19 @@ import {
 } from '@/routes';
 
 import { type BreadcrumbItem } from '@/types';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import clsx from 'clsx';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 export default function TransactionView() {
-    const { transaction } = usePage().props;
+    const { transaction, auth } = usePage().props as {
+        transaction: any;
+        auth?: { user?: { profiles?: { admin?: unknown[] } } };
+    };
+
+    const isAdminUser = (auth?.user?.profiles?.admin?.length ?? 0) > 0;
+    const [isRefunding, setIsRefunding] = useState(false);
 
     const { closing: openCounter } = transaction;
 
@@ -88,6 +96,41 @@ export default function TransactionView() {
     const [printVariant, setPrintVariant] = useState<
         'thermal' | 'dot-printer' | 'full'
     >('thermal');
+
+    const handleRefund = async () => {
+        const confirmed = window.confirm(
+            `Refund ${transaction.tr_number}? This cannot be undone.`,
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        setIsRefunding(true);
+
+        try {
+            const response = await fetch(
+                `/api/transactions/${transaction.id}/refund`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                },
+            );
+
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                toast.error(payload?.message ?? 'Unable to refund transaction.');
+                return;
+            }
+
+            router.reload();
+        } finally {
+            setIsRefunding(false);
+        }
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -269,6 +312,22 @@ export default function TransactionView() {
                                     )}
                                 >
                                     <div className="flex h-full flex-col space-y-4">
+                                        {isAdminUser &&
+                                            transaction?.income_or_expense ===
+                                                'INCOME' &&
+                                            !transaction?.is_refunded && (
+                                                <div className="flex justify-end">
+                                                    <Button
+                                                        variant="destructive"
+                                                        disabled={isRefunding}
+                                                        onClick={handleRefund}
+                                                    >
+                                                        {isRefunding
+                                                            ? 'Refunding...'
+                                                            : 'Refund Transaction'}
+                                                    </Button>
+                                                </div>
+                                            )}
                                         <div className="flex w-full flex-row">
                                             <div className="grid gap-2">
                                                 <Label htmlFor="print">

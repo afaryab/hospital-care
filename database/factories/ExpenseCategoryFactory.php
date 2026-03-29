@@ -17,6 +17,9 @@ class ExpenseCategoryFactory extends Factory
             'pay_doc' => false,
             'pay_others' => false,
             'pay_users' => false,
+            'pay_patient' => false,
+            'allow_petty_cash' => true,
+            'allow_voucher' => true,
         ];
     }
 }

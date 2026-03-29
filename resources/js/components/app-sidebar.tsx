@@ -229,6 +229,21 @@ export function AppSidebar() {
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
+                                isActive={
+                                    routeName === 'service-orders-overview' ||
+                                    page.url.startsWith('/service-orders')
+                                }
+                                tooltip={{ children: 'Service Orders' }}
+                            >
+                                <Link href="/service-orders" prefetch>
+                                    <ListTree />
+                                    <span>Service Orders</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
                                 isActive={routeName === 'receaveables'}
                                 tooltip={{ children: 'Receaveables' }}
                             >

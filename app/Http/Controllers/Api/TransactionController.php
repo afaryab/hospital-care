@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TransactionController extends Controller
 {
@@ -151,6 +152,29 @@ class TransactionController extends Controller
 
         return response()->json([
             'message' => 'Transaction deleted successfully.',
+        ]);
+    }
+
+    public function refund(Request $request, Transaction $transaction)
+    {
+        $user = $request->user();
+
+        if (! $user || (! $user->isAdmin() && ! $user->hasRole('administrator'))) {
+            abort(403);
+        }
+
+        try {
+            $transaction->refundBy($user);
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+                'errors' => $exception->errors(),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => 'Transaction refunded successfully.',
+            'data' => $transaction->fresh(['elements', 'receaveable']),
         ]);
     }
 }

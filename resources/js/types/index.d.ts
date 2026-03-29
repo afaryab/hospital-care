@@ -69,6 +69,7 @@ export interface ServiceDepartment {
 export interface Service {
     id: number;
     name: string;
+    icon?: string | null;
     service_department_id: number;
     charge: number;
     charges_include_tax: boolean;

@@ -16,6 +16,9 @@ export interface ExpenseCategoryOption {
     pay_doc?: boolean;
     pay_others?: boolean;
     pay_users?: boolean;
+    pay_patient?: boolean;
+    allow_petty_cash?: boolean;
+    allow_voucher?: boolean;
 }
 
 interface SearchResult {

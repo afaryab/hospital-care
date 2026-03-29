@@ -17,6 +17,9 @@ class ExpenseCategoryController extends Controller
             'pay_doc' => ['nullable', 'boolean'],
             'pay_others' => ['nullable', 'boolean'],
             'pay_users' => ['nullable', 'boolean'],
+            'pay_patient' => ['nullable', 'boolean'],
+            'allow_petty_cash' => ['nullable', 'boolean'],
+            'allow_voucher' => ['nullable', 'boolean'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
@@ -43,6 +46,18 @@ class ExpenseCategoryController extends Controller
 
         if (array_key_exists('pay_users', $filters)) {
             $query->where('pay_users', $filters['pay_users']);
+        }
+
+        if (array_key_exists('pay_patient', $filters)) {
+            $query->where('pay_patient', $filters['pay_patient']);
+        }
+
+        if (array_key_exists('allow_petty_cash', $filters)) {
+            $query->where('allow_petty_cash', $filters['allow_petty_cash']);
+        }
+
+        if (array_key_exists('allow_voucher', $filters)) {
+            $query->where('allow_voucher', $filters['allow_voucher']);
         }
 
         $exact = collect();
@@ -74,6 +89,9 @@ class ExpenseCategoryController extends Controller
             'pay_doc' => ['nullable', 'boolean'],
             'pay_others' => ['nullable', 'boolean'],
             'pay_users' => ['nullable', 'boolean'],
+            'pay_patient' => ['nullable', 'boolean'],
+            'allow_petty_cash' => ['nullable', 'boolean'],
+            'allow_voucher' => ['nullable', 'boolean'],
         ]);
 
         $category = ExpenseCategory::create($data);
@@ -100,6 +118,9 @@ class ExpenseCategoryController extends Controller
             'pay_doc' => ['nullable', 'boolean'],
             'pay_others' => ['nullable', 'boolean'],
             'pay_users' => ['nullable', 'boolean'],
+            'pay_patient' => ['nullable', 'boolean'],
+            'allow_petty_cash' => ['nullable', 'boolean'],
+            'allow_voucher' => ['nullable', 'boolean'],
         ]);
 
         $expenseCategory->update($data);

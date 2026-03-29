@@ -33,6 +33,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { clsx } from 'clsx';
 import { LoaderCircle } from 'lucide-react';
 import { lazy, Suspense, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 const CreatePatientPolicy = lazy(
     () => import('@/policy/create-patient-policy'),
 );
@@ -257,7 +258,7 @@ function CollectPayment({
         setProcessing(true);
 
         if (recesitation && selectedServiceOrder === '') {
-            alert('Please enter MRI number for recesitation services.');
+            toast.error('Please enter MRI number for recesitation services.');
             setProcessing(false);
             return;
         }
@@ -287,9 +288,7 @@ function CollectPayment({
             };
 
             if (!validatedInput(billData)) {
-                alert(
-                    'Please fix the validation errors before generating the bill.',
-                );
+                toast.error('Please fix the validation errors before generating the bill.');
                 setProcessing(false);
                 return;
             }
@@ -327,7 +326,7 @@ function CollectPayment({
             });
         } catch (error) {
             console.error('Error generating bill:', error);
-            alert('Error generating bill. Please try again.');
+            toast.error('Error generating bill. Please try again.');
         }
     };
 

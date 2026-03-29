@@ -2,11 +2,8 @@
 
 namespace App\Filament\Admin\Resources\Closings;
 
-use App\Filament\Admin\Resources\Closings\Pages\CreateClosing;
-use App\Filament\Admin\Resources\Closings\Pages\EditClosing;
 use App\Filament\Admin\Resources\Closings\Pages\ListClosings;
 use App\Filament\Admin\Resources\Closings\Pages\ViewClosing;
-use App\Filament\Admin\Resources\Closings\Schemas\ClosingForm;
 use App\Filament\Admin\Resources\Closings\Schemas\ClosingInfolist;
 use App\Filament\Admin\Resources\Closings\Tables\ClosingsTable;
 use App\Models\Closing;
@@ -23,11 +20,6 @@ class ClosingResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
     protected static ?string $recordTitleAttribute = 'ct_number';
-
-    public static function form(Schema $schema): Schema
-    {
-        return ClosingForm::configure($schema);
-    }
 
     public static function infolist(Schema $schema): Schema
     {
@@ -50,9 +42,7 @@ class ClosingResource extends Resource
     {
         return [
             'index' => ListClosings::route('/'),
-            'create' => CreateClosing::route('/create'),
             'view' => ViewClosing::route('/{record}'),
-            'edit' => EditClosing::route('/{record}/edit'),
         ];
     }
 }

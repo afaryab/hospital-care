@@ -30,3 +30,5 @@ supervisord.log
 supervisord.log
 .pnpm-store
 /storybook-static
+public/vendor/blade-health-icons/
+

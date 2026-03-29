@@ -9,7 +9,10 @@ test('expense category can be created with factory', function () {
         ->and($category->name)->not->toBeNull()
         ->and($category->pay_doc)->toBeFalse()
         ->and($category->pay_others)->toBeFalse()
-        ->and($category->pay_users)->toBeFalse();
+        ->and($category->pay_users)->toBeFalse()
+        ->and($category->pay_patient)->toBeFalse()
+        ->and($category->allow_petty_cash)->toBeTrue()
+        ->and($category->allow_voucher)->toBeTrue();
 });
 
 test('expense category boolean fields are cast correctly', function () {
@@ -17,11 +20,17 @@ test('expense category boolean fields are cast correctly', function () {
         'pay_doc' => true,
         'pay_others' => true,
         'pay_users' => true,
+        'pay_patient' => true,
+        'allow_petty_cash' => false,
+        'allow_voucher' => false,
     ]);
 
     expect($category->pay_doc)->toBeBool()->toBeTrue()
         ->and($category->pay_others)->toBeBool()->toBeTrue()
-        ->and($category->pay_users)->toBeBool()->toBeTrue();
+        ->and($category->pay_users)->toBeBool()->toBeTrue()
+        ->and($category->pay_patient)->toBeBool()->toBeTrue()
+        ->and($category->allow_petty_cash)->toBeBool()->toBeFalse()
+        ->and($category->allow_voucher)->toBeBool()->toBeFalse();
 });
 
 test('expense category boolean fields default to false', function () {
@@ -43,11 +52,16 @@ test('expense category can be created with all fillable attributes', function ()
         'pay_doc' => true,
         'pay_others' => false,
         'pay_users' => false,
+        'pay_patient' => false,
+        'allow_petty_cash' => true,
+        'allow_voucher' => true,
     ]);
 
     expect($category->name)->toBe('Medical Supplies')
         ->and($category->type)->toBe('OPD')
-        ->and($category->pay_doc)->toBeTrue();
+        ->and($category->pay_doc)->toBeTrue()
+        ->and($category->allow_petty_cash)->toBeTrue()
+        ->and($category->allow_voucher)->toBeTrue();
 });
 
 test('expense category can be updated', function () {

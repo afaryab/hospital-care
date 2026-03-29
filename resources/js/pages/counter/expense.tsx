@@ -33,6 +33,7 @@ import { Head, router, usePage } from '@inertiajs/react';
 import clsx from 'clsx';
 import { LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 // Types for voucher data
 interface ExpenseVoucher {
@@ -115,7 +116,7 @@ export default function CounterExpense() {
     const handleVoucherPayment = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedVoucher) {
-            alert('Please search and select a voucher first');
+            toast.error('Please search and select a voucher first');
             return;
         }
         // TODO: Implement voucher payment logic
@@ -149,8 +150,8 @@ export default function CounterExpense() {
                 console.error('Validation errors:', errors);
 
                 // Display errors to user
-                const errorMessages = Object.values(errors).flat().join('\n');
-                alert(`Payment failed:\n${errorMessages}`);
+                const errorMessages = Object.values(errors).flat().join('; ');
+                toast.error(`Payment failed: ${errorMessages}`);
                 setProcessingVoucherPayment(false);
             },
         });
@@ -161,7 +162,7 @@ export default function CounterExpense() {
         e.preventDefault();
 
         if (!pettyCashAmount || parseFloat(pettyCashAmount) <= 0) {
-            alert('Please enter a valid amount');
+            toast.error('Please enter a valid amount');
             return;
         }
         // TODO: Implement petty cash payment logic

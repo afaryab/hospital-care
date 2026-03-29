@@ -57,6 +57,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('TR', [WebController::class, 'transactionView'])->name('transaction-search');
     Route::get('TR/{tYear}/{tMonth}/{tDay}/{tNumber}', [WebController::class, 'transactionView'])->name('transaction-view');
 
+    Route::get('service-orders', [WebController::class, 'serviceOrdersOverview'])->name('service-orders-overview');
+
     Route::get('RECEAVEABLES', [WebController::class, 'receaveables'])->name('receaveables');
 
     Route::get('CT-EXP', [WebController::class, 'counterExpense'])->name('counter-expense');
