@@ -32,6 +32,9 @@
         "laravel-validation",
         "php-best-practices",
         "php-pro",
-        "sentry-php-sdk"
+        "sentry-php-sdk",
+        "md-expert",
+        "ui-implementation",
+        "readme-sync"
     ]
 }

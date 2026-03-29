@@ -11,7 +11,6 @@ use App\Models\Service;
 use App\Models\UltrasoundDoctor;
 use App\Models\XrayTechnician;
 use BackedEnum;
-use UnitEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -22,6 +21,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use UnitEnum;
 
 class ServiceResource extends Resource
 {
@@ -110,6 +110,7 @@ class ServiceResource extends Resource
                         if ($record->is_composit_service) {
                             $features[] = '<span class="inline-flex items-center gap-1"><svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a1 1 0 011-1h14a1 1 0 110 2H3a1 1 0 01-1-1z"></path></svg> Composite</span>';
                         }
+
                         return implode('<br>', $features);
                     })
                     ->html()
@@ -122,6 +123,7 @@ class ServiceResource extends Resource
                     ->formatStateUsing(function ($record) {
                         $created = $record->created_at->format('M j, Y g:i A');
                         $updated = $record->updated_at->format('M j, Y g:i A');
+
                         return "Created: {$created}<br>Updated: {$updated}";
                     })
                     ->html()

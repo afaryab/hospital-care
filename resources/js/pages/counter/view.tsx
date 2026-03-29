@@ -40,7 +40,7 @@ function formatRelativeTime(input: string | Date): string {
 
 export default function CounterView() {
 
-    const { openCounter } = usePage().props as { openCounter: any }
+    const { openCounter } = usePage().props as unknown as { openCounter: any }
 
     const breadcrumbs: BreadcrumbItem[] = [
         {

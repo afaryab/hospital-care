@@ -27,19 +27,19 @@ class TransactionController extends Controller
             ->with(['patient'])
             ->latest('id');
 
-        if (!empty($filters['tr_number'])) {
+        if (! empty($filters['tr_number'])) {
             $query->where('tr_number', 'like', "%{$filters['tr_number']}%");
         }
 
-        if (!empty($filters['patient_id'])) {
+        if (! empty($filters['patient_id'])) {
             $query->where('patient_id', $filters['patient_id']);
         }
 
-        if (!empty($filters['type'])) {
+        if (! empty($filters['type'])) {
             $query->where('type', $filters['type']);
         }
 
-        if (!empty($filters['income_or_expense'])) {
+        if (! empty($filters['income_or_expense'])) {
             $query->where('income_or_expense', $filters['income_or_expense']);
         }
 
@@ -51,17 +51,17 @@ class TransactionController extends Controller
             $query->where('amount', '<=', $filters['amount_max']);
         }
 
-        if (!empty($filters['created_from'])) {
+        if (! empty($filters['created_from'])) {
             $query->whereDate('created_at', '>=', $filters['created_from']);
         }
 
-        if (!empty($filters['created_to'])) {
+        if (! empty($filters['created_to'])) {
             $query->whereDate('created_at', '<=', $filters['created_to']);
         }
 
         $exact = collect();
 
-        if (!empty($filters['tr_number'])) {
+        if (! empty($filters['tr_number'])) {
             $exact = Transaction::query()
                 ->with(['patient'])
                 ->where('tr_number', $filters['tr_number'])

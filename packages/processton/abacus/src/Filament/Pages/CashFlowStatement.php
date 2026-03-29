@@ -2,17 +2,16 @@
 
 namespace Processton\Abacus\Filament\Pages;
 
-use Processton\Abacus\Models\AbacusTransaction;
-use Processton\Abacus\Models\AbacusChartOfAccount;
-use Processton\Abacus\Models\AbacusYear;
-use Filament\Pages\Page;
-use Filament\Forms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Schemas\Schema;
 use Filament\Actions\Action;
+use Filament\Forms;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Pages\Page;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Collection;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Processton\Abacus\Models\AbacusChartOfAccount;
+use Processton\Abacus\Models\AbacusTransaction;
+use Processton\Abacus\Models\AbacusYear;
 use Symfony\Component\HttpFoundation\Response;
 use UnitEnum;
 
@@ -21,19 +20,27 @@ class CashFlowStatement extends Page implements HasForms
     use InteractsWithForms;
 
     protected string $view = 'abacus::cash-flow-statement';
+
     protected static ?string $title = 'Cash Flow Statement';
 
-
     protected static UnitEnum|string|null $navigationGroup = 'Reporting';
+
     protected static ?int $navigationSort = 14;
 
     public ?int $yearId = null;
+
     public Collection $operatingCashFlows;
+
     public Collection $investingCashFlows;
+
     public Collection $financingCashFlows;
+
     public float $operatingTotal = 0;
+
     public float $investingTotal = 0;
+
     public float $financingTotal = 0;
+
     public float $netChange = 0;
 
     public function mount(): void
@@ -54,7 +61,7 @@ class CashFlowStatement extends Page implements HasForms
                         ->options(
                             AbacusYear::orderByDesc('start_date')->get()->map(
                                 fn (AbacusYear $year) => [
-                                    'label' => $year->start_date->format('Y') . ' - ' . $year->end_date->format('Y'),
+                                    'label' => $year->start_date->format('Y').' - '.$year->end_date->format('Y'),
                                     'value' => $year->id,
                                 ]
                             )->pluck('label', 'value')
@@ -62,9 +69,9 @@ class CashFlowStatement extends Page implements HasForms
 
                 ]
             )
-                ->columns(1);
-            }
-    
+            ->columns(1);
+    }
+
     /**
      * @return array<Action>
      */
@@ -82,6 +89,7 @@ class CashFlowStatement extends Page implements HasForms
                 ->visible(fn () => $this->operatingCashFlows->isNotEmpty() || $this->investingCashFlows->isNotEmpty() || $this->financingCashFlows->isNotEmpty()),
         ];
     }
+
     public function viewReport(): void
     {
 
@@ -97,7 +105,9 @@ class CashFlowStatement extends Page implements HasForms
             $pair = AbacusTransaction::where('abacus_incoming_id', $trx->abacus_incoming_id)
                 ->where('id', '!=', $trx->id)->first();
 
-            if (!$pair) continue;
+            if (! $pair) {
+                continue;
+            }
 
             $account = $pair->account;
             $flowType = match ($account->base_type) {
@@ -109,7 +119,7 @@ class CashFlowStatement extends Page implements HasForms
 
             $amount = $trx->entry_type === 'debit' ? $trx->amount : -$trx->amount;
 
-            $this->{$flowType . 'CashFlows'}->push([
+            $this->{$flowType.'CashFlows'}->push([
                 'description' => $trx->incoming->description ?? $account->name,
                 'amount' => $amount,
             ]);
@@ -125,7 +135,7 @@ class CashFlowStatement extends Page implements HasForms
     {
         // Get year information
         $year = $this->yearId ? AbacusYear::find($this->yearId) : null;
-        
+
         $data = [
             'operatingCashFlows' => $this->operatingCashFlows,
             'investingCashFlows' => $this->investingCashFlows,
@@ -139,10 +149,10 @@ class CashFlowStatement extends Page implements HasForms
         ];
 
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->getDomPDF()->set_option("enable_php", true);
+        $pdf->getDomPDF()->set_option('enable_php', true);
         $pdf->loadView('abacus::cash-flow-statement-pdf', $data);
 
-        $filename = 'cash-flow-statement-' . now()->format('Y-m-d') . '.pdf';
+        $filename = 'cash-flow-statement-'.now()->format('Y-m-d').'.pdf';
 
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
@@ -152,7 +162,7 @@ class CashFlowStatement extends Page implements HasForms
     public function streamPdf(): Response
     {
         $this->yearId = request()->input('yearId', $this->yearId);
-        
+
         // Get year information
         $year = $this->yearId ? AbacusYear::find($this->yearId) : null;
 
@@ -162,7 +172,7 @@ class CashFlowStatement extends Page implements HasForms
         if ($this->operatingCashFlows->isEmpty() && $this->investingCashFlows->isEmpty() && $this->financingCashFlows->isEmpty()) {
             $this->viewReport();
         }
-        
+
         $data = [
             'operatingCashFlows' => $this->operatingCashFlows,
             'investingCashFlows' => $this->investingCashFlows,
@@ -176,13 +186,12 @@ class CashFlowStatement extends Page implements HasForms
         ];
 
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->getDomPDF()->set_option("enable_php", true);
+        $pdf->getDomPDF()->set_option('enable_php', true);
         $pdf->loadView('abacus::cash-flow-statement-pdf', $data);
 
         return response($pdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="cash-flow-statement-' . now()->format('Y-m-d') . '.pdf"'
+            'Content-Disposition' => 'inline; filename="cash-flow-statement-'.now()->format('Y-m-d').'.pdf"',
         ]);
     }
-
 }

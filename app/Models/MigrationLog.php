@@ -8,7 +8,7 @@ class MigrationLog extends Model
 {
     protected $fillable = [
         'migration_step',
-        'action_type', 
+        'action_type',
         'old_table',
         'old_record_id',
         'new_table',
@@ -21,7 +21,7 @@ class MigrationLog extends Model
         'new_amount',
         'validation_errors',
         'migration_time',
-        'batch_id'
+        'batch_id',
     ];
 
     protected $casts = [
@@ -30,16 +30,22 @@ class MigrationLog extends Model
         'validation_errors' => 'array',
         'migration_time' => 'datetime',
         'old_amount' => 'decimal:2',
-        'new_amount' => 'decimal:2'
+        'new_amount' => 'decimal:2',
     ];
 
     // Action type constants
     const ACTION_SUCCESS = 'success';
+
     const ACTION_SKIPPED = 'skipped';
+
     const ACTION_DUPLICATED = 'duplicated';
+
     const ACTION_ERROR = 'error';
+
     const ACTION_WARNING = 'warning';
+
     const ACTION_VALIDATION_FAILED = 'validation_failed';
+
     const ACTION_SANITIZED = 'sanitized';
 
     /**
@@ -51,7 +57,7 @@ class MigrationLog extends Model
             'migration_step' => $migrationStep,
             'action_type' => $actionType,
             'migration_time' => now(),
-            'batch_id' => session('migration_batch_id', uniqid('batch_'))
+            'batch_id' => session('migration_batch_id', uniqid('batch_')),
         ], $data));
     }
 
@@ -66,7 +72,7 @@ class MigrationLog extends Model
             'new_table' => $newTable,
             'new_record_id' => $newId,
             'old_data' => $oldData,
-            'new_data' => $newData
+            'new_data' => $newData,
         ]);
     }
 
@@ -79,7 +85,7 @@ class MigrationLog extends Model
             'old_table' => $oldTable,
             'old_record_id' => $oldId,
             'reason' => $reason,
-            'old_data' => $oldData
+            'old_data' => $oldData,
         ]);
     }
 
@@ -93,7 +99,7 @@ class MigrationLog extends Model
             'old_record_id' => $oldId,
             'reason' => 'Migration error occurred',
             'error_details' => $error,
-            'old_data' => $oldData
+            'old_data' => $oldData,
         ]);
     }
 
@@ -107,7 +113,7 @@ class MigrationLog extends Model
             'old_record_id' => $oldId,
             'reason' => 'Validation failed',
             'validation_errors' => $validationErrors,
-            'old_data' => $oldData
+            'old_data' => $oldData,
         ]);
     }
 
@@ -121,9 +127,9 @@ class MigrationLog extends Model
             'old_record_id' => $oldId,
             'new_table' => $newTable,
             'new_record_id' => $newId,
-            'reason' => 'Data sanitized: ' . implode(', ', $changes),
+            'reason' => 'Data sanitized: '.implode(', ', $changes),
             'old_data' => $oldData,
-            'new_data' => $newData
+            'new_data' => $newData,
         ]);
     }
 
@@ -135,11 +141,11 @@ class MigrationLog extends Model
         return self::logAction($migrationStep, $actionType, [
             'old_table' => $oldTable,
             'old_record_id' => $oldId,
-            'new_table' => $newTable, 
+            'new_table' => $newTable,
             'new_record_id' => $newId,
             'old_amount' => $oldAmount,
             'new_amount' => $newAmount,
-            'reason' => $oldAmount != $newAmount ? 'Amount changed during migration' : 'Amount preserved'
+            'reason' => $oldAmount != $newAmount ? 'Amount changed during migration' : 'Amount preserved',
         ]);
     }
 }

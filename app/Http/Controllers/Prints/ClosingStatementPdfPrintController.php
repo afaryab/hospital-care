@@ -5,12 +5,10 @@ namespace App\Http\Controllers\Prints;
 use App\Http\Controllers\Controller;
 use App\Models\Closing;
 use App\Models\Transaction;
-use App\Models\TransactionElement;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\View;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -18,14 +16,8 @@ class ClosingStatementPdfPrintController extends Controller
 {
     /**
      * Stream PDF for closing statement
-     * 
+     *
      * URL: /PRINT/CT/{year}/{month}/{number}?version=mini|normal
-     * 
-     * @param string $year
-     * @param string $month
-     * @param string $number
-     * @param Request $request
-     * @return Response
      */
     public function stream(string $year, string $month, string $number, Request $request): Response
     {
@@ -67,20 +59,21 @@ class ClosingStatementPdfPrintController extends Controller
             ->with($eagerLoads)
             ->first();
 
-        if (!$closing) {
+        if (! $closing) {
             abort(404, "Closing statement {$ctNumber} not found");
         }
 
         // If a specific report type is requested, generate that report
         if ($report && in_array($report, $allowedReports)) {
             $data = $this->prepareClosingData($closing);
+
             return $this->generateReportPdf($data, $report, $closing);
         }
 
         // Get version (mini for thermal printer, normal for A4/legal)
         $version = $request->query('variant', 'normal');
-        
-        if (!in_array($version, ['mini', 'normal'])) {
+
+        if (! in_array($version, ['mini', 'normal'])) {
             $version = 'normal';
         }
 
@@ -93,16 +86,13 @@ class ClosingStatementPdfPrintController extends Controller
 
     /**
      * Prepare closing statement data
-     * 
-     * @param Closing $closing
-     * @return array
      */
     private function prepareClosingData(Closing $closing): array
     {
         // Separate income and expense transactions
         $incomeTransactions = [];
         $expenseTransactions = [];
-        
+
         $totalIncome = 0;
         $totalExpense = 0;
 
@@ -130,26 +120,26 @@ class ClosingStatementPdfPrintController extends Controller
                 'receaveable_patient' => $transaction->receaveable?->patient?->name,
                 'receaveable_panel' => $transaction->receaveable?->panel?->name,
                 'receaveable_status' => $transaction->receaveable?->status ?? 'PENDING',
-                'elements' => []
+                'elements' => [],
             ];
 
-            if($transaction->income_or_expense === 'INCOME'){
+            if ($transaction->income_or_expense === 'INCOME') {
                 $transactonTypesTotals[$transaction->type] = ($transactonTypesTotals[$transaction->type] ?? 0) + $transaction->amount;
-            }else{
+            } else {
                 $transactonTypesTotals['CASH'] = ($transactonTypesTotals['CASH'] ?? 0) - $transaction->amount;
             }
 
-            if($transaction->is_refunded){
+            if ($transaction->is_refunded) {
                 $refundCount++;
             }
-            if($transaction->edited_amount > 0){
+            if ($transaction->edited_amount > 0) {
                 $editedCount++;
             }
-            if($transaction->receaveable_id){
+            if ($transaction->receaveable_id) {
                 $receaveableCount++;
             }
 
-            if($transaction->panel_id){
+            if ($transaction->panel_id) {
                 $panel = $transaction->panel;
                 $pannelBills[] = $transaction;
             }
@@ -232,23 +222,17 @@ class ClosingStatementPdfPrintController extends Controller
 
     /**
      * Generate PDF using HTML/CSS
-     * 
-     * @param array $data
-     * @param string $version
+     *
      * @return string
      */
     /**
      * Generate PDF from prepared data
-     * 
-     * @param array $data
-     * @param string $version
-     * @return Response
      */
     private function generatePdf(array $data, string $version): Response
     {
         // Use different templates for mini and normal versions
-        $viewName = $version === 'mini' 
-            ? 'pdfs.closing-statement.closing-statement-mini' 
+        $viewName = $version === 'mini'
+            ? 'pdfs.closing-statement.closing-statement-mini'
             : 'pdfs.closing-statement.closing-statement-normal';
 
         try {
@@ -256,7 +240,7 @@ class ClosingStatementPdfPrintController extends Controller
             $pdf = Pdf::setOption([
                 'defaultFont' => 'Helvetica',
             ])->loadView($viewName, $data);
-            
+
             // Configure PDF based on version
             if ($version === 'mini') {
                 // Thermal printer settings (80mm width, auto height)
@@ -265,7 +249,7 @@ class ClosingStatementPdfPrintController extends Controller
                 // Standard A4 paper
                 $pdf->setPaper('A4', 'portrait');
             }
-            
+
             // Set PDF options
             // $pdf->setOptions([
             //     'dpi' => 96,
@@ -280,15 +264,15 @@ class ClosingStatementPdfPrintController extends Controller
                 $data['closing']['created_at']->format('Y-m-d'),
                 $version
             );
-            
+
             // Stream PDF with appropriate headers
             return response($pdf->output(), 200, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                'Content-Disposition' => 'inline; filename="'.$filename.'"',
                 'Cache-Control' => 'private, max-age=0, must-revalidate',
                 'Pragma' => 'public',
             ]);
-            
+
         } catch (Throwable $e) {
             Log::error('Closing statement PDF generation failed', [
                 'ct_number' => $data['closing']['ct_number'] ?? null,
@@ -338,21 +322,25 @@ class ClosingStatementPdfPrintController extends Controller
             $serviceGroups = [];
             $totalServiceIncome = 0;
             foreach ($closing->transactions as $transaction) {
-                if ($transaction->income_or_expense !== 'INCOME') continue;
+                if ($transaction->income_or_expense !== 'INCOME') {
+                    continue;
+                }
                 foreach ($transaction->elements as $element) {
-                    if (!$element->service) continue;
+                    if (! $element->service) {
+                        continue;
+                    }
                     $serviceName = $element->service->name ?? 'Unknown Service';
                     $doctorName = $element->doctor?->name ?? 'No Provider';
                     $doctorId = $element->doctor_id ?? 0;
 
-                    if (!isset($serviceGroups[$serviceName])) {
+                    if (! isset($serviceGroups[$serviceName])) {
                         $serviceGroups[$serviceName] = [
                             'service_name' => $serviceName,
                             'providers' => [],
                             'total_income' => 0,
                         ];
                     }
-                    if (!isset($serviceGroups[$serviceName]['providers'][$doctorId])) {
+                    if (! isset($serviceGroups[$serviceName]['providers'][$doctorId])) {
                         $serviceGroups[$serviceName]['providers'][$doctorId] = [
                             'doctor_name' => $doctorName,
                             'doctor_id' => $doctorId,
@@ -379,14 +367,18 @@ class ClosingStatementPdfPrintController extends Controller
             $expensesByDoctor = [];
             $totalExpensePaid = 0;
             foreach ($closing->transactions as $transaction) {
-                if (!in_array($transaction->income_or_expense, ['EXPENSE', 'VOUCHER-PAY'])) continue;
+                if (! in_array($transaction->income_or_expense, ['EXPENSE', 'VOUCHER-PAY'])) {
+                    continue;
+                }
                 foreach ($transaction->elements as $element) {
                     $payedToId = $element->expVoucher?->payed_to ?? 0;
                     $payedToName = $element->expVoucher?->payedTo?->name ?? $element->expVoucher?->payed_to_name ?? null;
-                    if (!$payedToId && !$payedToName) continue;
+                    if (! $payedToId && ! $payedToName) {
+                        continue;
+                    }
 
-                    $key = $payedToId ?: ('name:' . $payedToName);
-                    if (!isset($expensesByDoctor[$key])) {
+                    $key = $payedToId ?: ('name:'.$payedToName);
+                    if (! isset($expensesByDoctor[$key])) {
                         $expensesByDoctor[$key] = [
                             'doctor_name' => $payedToName ?? 'Unknown',
                             'total' => 0,
@@ -428,7 +420,9 @@ class ClosingStatementPdfPrintController extends Controller
             $expenses = [];
             $totalExpenses = 0;
             foreach ($closing->transactions as $transaction) {
-                if (!in_array($transaction->income_or_expense, ['EXPENSE', 'VOUCHER-PAY'])) continue;
+                if (! in_array($transaction->income_or_expense, ['EXPENSE', 'VOUCHER-PAY'])) {
+                    continue;
+                }
                 foreach ($transaction->elements as $element) {
                     // For voucher payments, get category from the voucher itself
                     $categoryName = $element->expenseCategory?->name ?? 'N/A';
@@ -454,7 +448,7 @@ class ClosingStatementPdfPrintController extends Controller
             $reportData['total_expenses_detail'] = $totalExpenses;
         }
 
-        $viewName = 'pdfs.closing-statement.report-' . $report;
+        $viewName = 'pdfs.closing-statement.report-'.$report;
 
         try {
             $pdf = Pdf::setOption(['defaultFont' => 'Helvetica'])
@@ -465,7 +459,7 @@ class ClosingStatementPdfPrintController extends Controller
 
             return response($pdf->output(), 200, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                'Content-Disposition' => 'inline; filename="'.$filename.'"',
                 'Cache-Control' => 'private, max-age=0, must-revalidate',
                 'Pragma' => 'public',
             ]);
@@ -481,20 +475,14 @@ class ClosingStatementPdfPrintController extends Controller
 
     /**
      * Helper method to format currency
-     * 
-     * @param float $amount
-     * @return string
      */
     private function formatCurrency(float $amount): string
     {
-        return 'Rs. ' . number_format($amount, 2);
+        return 'Rs. '.number_format($amount, 2);
     }
 
     /**
      * Helper method to format date
-     * 
-     * @param Carbon $date
-     * @return string
      */
     private function formatDate(Carbon $date): string
     {

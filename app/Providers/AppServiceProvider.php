@@ -15,6 +15,7 @@ use App\Observers\TransactionObserver;
 use App\Policies\ClosingPolicy;
 use App\Policies\PatientPolicy;
 use App\Policies\TransactionPolicy;
+use BezhanSalleh\PanelSwitch\PanelSwitch;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -49,5 +50,20 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Closing::class, ClosingPolicy::class);
         Gate::policy(Transaction::class, TransactionPolicy::class);
         Gate::policy(Patient::class, PatientPolicy::class);
+
+        PanelSwitch::configureUsing(function (PanelSwitch $panelSwitch): void {
+            $panelSwitch
+                // ->visible(fn (): bool => (bool) auth()->user()?->adminProfiles()?->count())
+                ->panels(['admin', 'accounts'])
+                ->modalHeading('Switch Panel')
+                ->labels([
+                    'admin' => 'Admin',
+                    'accounts' => 'Accounts',
+                ])
+                ->icons([
+                    'admin' => 'heroicon-o-chart-pie',
+                    'accounts' => 'heroicon-o-calculator',
+                ]);
+        });
     }
 }

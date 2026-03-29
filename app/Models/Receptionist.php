@@ -8,6 +8,6 @@ class Receptionist extends Model
 {
     protected $fillable = [
         'user_id',
-        'authority'
+        'authority',
     ];
 }

@@ -2,13 +2,10 @@
 
 namespace Processton\AbacusDatabase\Seeders;
 
-use Processton\Abacus\Models\AbacusYear;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use Processton\Abacus\Models\AbacusIncoming;
-use Processton\Abacus\Models\AbacusTransaction;
+use Processton\Abacus\Models\AbacusYear;
 
 class AbacusYearSeeder extends Seeder
 {
@@ -20,7 +17,6 @@ class AbacusYearSeeder extends Seeder
                 'end_date' => Carbon::create(2026, 12, 31),
             ]);
 
-            
         });
     }
 }

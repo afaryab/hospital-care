@@ -1,0 +1,14 @@
+import{c as v,j as r}from"./utils-q4EKThuO.js";import{B as y}from"./badge-DghL8o_I.js";import{o as f}from"./index-CSrV_1Wb.js";import"./iframe-DOYQQv_f.js";import"./preload-helper-PPVm8Dsz.js";import"./index-BZoqsebz.js";const h=p=>{const e=v.c(10),{serviceOrders:o,onSelect:a,emptyMessage:u}=p,x=u===void 0?"No service orders found.":u;if(!o.length){let s;return e[0]!==x?(s=r.jsx("p",{className:"py-6 text-center text-sm text-muted-foreground",children:x}),e[0]=x,e[1]=s):s=e[1],s}let l;e[2]===Symbol.for("react.memo_cache_sentinel")?(l=r.jsx("thead",{className:"bg-muted/50 text-xs uppercase text-muted-foreground",children:r.jsxs("tr",{children:[r.jsx("th",{className:"px-4 py-2 text-left",children:"SO Number"}),r.jsx("th",{className:"px-4 py-2 text-left",children:"Type"}),r.jsx("th",{className:"px-4 py-2 text-left",children:"Department"}),r.jsx("th",{className:"px-4 py-2 text-left",children:"Date"})]})}),e[2]=l):l=e[2];let c;if(e[3]!==a||e[4]!==o){let s;e[6]!==a?(s=(t,g)=>r.jsxs("tr",{className:a?"cursor-pointer hover:bg-accent transition-colors":"",onClick:()=>a?.(t),children:[r.jsx("td",{className:"px-4 py-2 font-mono text-xs",children:t.so_number}),r.jsx("td",{className:"px-4 py-2",children:t.type}),r.jsx("td",{className:"px-4 py-2",children:r.jsx(y,{variant:"outline",className:"text-xs",children:t.so_short??t.departmentKey??"-"})}),r.jsx("td",{className:"px-4 py-2 text-xs",children:t.created_at?.split("T")[0]})]},t.id??g),e[6]=a,e[7]=s):s=e[7],c=o.map(s),e[3]=a,e[4]=o,e[5]=c}else c=e[5];let n;return e[8]!==c?(n=r.jsx("div",{className:"overflow-x-auto rounded-lg border",children:r.jsxs("table",{className:"w-full text-sm",children:[l,r.jsx("tbody",{className:"divide-y",children:c})]})}),e[8]=c,e[9]=n):n=e[9],n};h.__docgenInfo={description:"",methods:[],displayName:"ServiceOrdersListingTable",props:{emptyMessage:{defaultValue:{value:"'No service orders found.'",computed:!1},required:!1}}};const E={title:"Elements/ServiceOrder/ServiceOrdersListingTable",component:h,tags:["autodocs"],parameters:{layout:"fullscreen"}},i={args:{serviceOrders:f}},d={args:{serviceOrders:f,onSelect:p=>alert(`Selected: ${p.so_number}`)}},m={args:{serviceOrders:[]}};i.parameters={...i.parameters,docs:{...i.parameters?.docs,source:{originalSource:`{
+  args: {
+    serviceOrders: mockServiceOrders
+  }
+}`,...i.parameters?.docs?.source}}};d.parameters={...d.parameters,docs:{...d.parameters?.docs,source:{originalSource:`{
+  args: {
+    serviceOrders: mockServiceOrders,
+    onSelect: so => alert(\`Selected: \${so.so_number}\`)
+  }
+}`,...d.parameters?.docs?.source}}};m.parameters={...m.parameters,docs:{...m.parameters?.docs,source:{originalSource:`{
+  args: {
+    serviceOrders: []
+  }
+}`,...m.parameters?.docs?.source}}};const T=["Default","WithSelect","Empty"];export{i as Default,m as Empty,d as WithSelect,T as __namedExportsOrder,E as default};

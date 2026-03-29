@@ -19,8 +19,8 @@ class Service extends Model
         'service_provider_types',
         'is_composit_service',
         'created_by',
-        "is_featured",
-        "generate_service_order"
+        'is_featured',
+        'generate_service_order',
     ];
 
     protected $casts = [
@@ -30,7 +30,7 @@ class Service extends Model
         'service_provider_types' => 'json',
         'is_composit_service' => 'boolean',
         'generate_service_order' => 'boolean',
-        'is_featured' => 'boolean'
+        'is_featured' => 'boolean',
     ];
 
     // Auto-append computed attributes (accessors) when serializing
@@ -47,11 +47,10 @@ class Service extends Model
     {
         // Return collection of users who have OPD doctor profiles
         // when this service allows OPD doctors as providers
-        if($this->have_service_provider && in_array(OpdDoctor::class, $this->service_provider_types ?? [])){
+        if ($this->have_service_provider && in_array(OpdDoctor::class, $this->service_provider_types ?? [])) {
             return User::whereHas('opdDoctorProfiles')->get();
         }
 
-        
         return collect(); // Return empty collection if not applicable
     }
 
@@ -61,10 +60,10 @@ class Service extends Model
      */
     public function opdDoctors()
     {
-        if($this->have_service_provider && in_array(OpdDoctor::class, $this->service_provider_types ?? [])){
+        if ($this->have_service_provider && in_array(OpdDoctor::class, $this->service_provider_types ?? [])) {
             return User::whereHas('opdDoctorProfiles');
         }
-        
+
         return User::whereRaw('1=0'); // Return empty query if not applicable
     }
 
@@ -89,7 +88,7 @@ class Service extends Model
     //         // Build a base query selecting only user_id to keep memory usage low
     //         $userIds = $userIds->merge($providerType::query()->select('user_id')->pluck('user_id')->toArray());
     //     }
-        
+
     //     return $userIds;
     // }
 
@@ -97,6 +96,4 @@ class Service extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
-
-
 }

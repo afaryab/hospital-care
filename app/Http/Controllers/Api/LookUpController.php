@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 
 class LookUpController extends Controller
 {
-
     public function index()
     {
         $results = [];
@@ -15,7 +14,7 @@ class LookUpController extends Controller
         // if key work starts with PS, search in patients
         if (str_starts_with($keyWord, 'PS')) {
             // If key work length is less than 17
-            if(strlen($keyWord) < 17){
+            if (strlen($keyWord) < 17) {
                 $results = \App\Models\Patient::where('ps_number', 'LIKE', "{$keyWord}%")
                     ->limit(10)
                     ->get()
@@ -32,9 +31,9 @@ class LookUpController extends Controller
                     })
                     ->values()
                     ->toArray();
-            }else if(strlen($keyWord) === 17){
+            } elseif (strlen($keyWord) === 17) {
                 $patient = \App\Models\Patient::where('ps_number', $keyWord)->first();
-                if($patient){
+                if ($patient) {
                     $results = [
                         [
                             'type' => 'link',
@@ -44,14 +43,14 @@ class LookUpController extends Controller
                                 'number' => $patient->ps_number,
                             ]),
                             'name' => 'View '.$patient->name,
-                        ]
+                        ],
                     ];
                 }
 
-            }else if(strlen($keyWord) > 17 && strlen($keyWord) <= 27){
+            } elseif (strlen($keyWord) > 17 && strlen($keyWord) <= 27) {
                 // Get pattient by first 17 characters and then return service orders related to that patient like this keywork
                 $patient = \App\Models\Patient::where('ps_number', substr($keyWord, 0, 17))->first();
-                if($patient){
+                if ($patient) {
 
                     $results[] = [
                         'type' => 'link',
@@ -80,10 +79,10 @@ class LookUpController extends Controller
 
                     $results = array_merge($results, $serviceOrders);
                 }
-            }else if(strlen($keyWord) === 30){
+            } elseif (strlen($keyWord) === 30) {
                 // Get pattient by first 17 characters and then return service order by 27 characters
                 $patient = \App\Models\Patient::where('ps_number', substr($keyWord, 0, 17))->first();
-                if($patient){
+                if ($patient) {
 
                     $results[] = [
                         'type' => 'static',
@@ -91,7 +90,7 @@ class LookUpController extends Controller
                     ];
 
                     $serviceOrder = \App\Models\ServiceOrder::where('patient_id', $patient->id)->where('so_number', $keyWord)->first();
-                    if($serviceOrder){
+                    if ($serviceOrder) {
                         $results[] = [
                             'type' => 'link',
                             'url' => route('patients-register-ps-number-department-service', [
@@ -106,11 +105,11 @@ class LookUpController extends Controller
                     }
                 }
             }
-        
-        }else if (str_starts_with($keyWord, 'TR')){
+
+        } elseif (str_starts_with($keyWord, 'TR')) {
 
             // if string length is less than 14 then search with like if it is 14 then search with exact match
-            if(strlen($keyWord) < 18){
+            if (strlen($keyWord) < 18) {
                 $results = \App\Models\Transaction::where('tr_number', 'LIKE', "{$keyWord}%")
                     ->limit(10)
                     ->get()
@@ -128,9 +127,9 @@ class LookUpController extends Controller
                     })
                     ->values()
                     ->toArray();
-            }else if(strlen($keyWord) === 18){
+            } elseif (strlen($keyWord) === 18) {
                 $transaction = \App\Models\Transaction::where('tr_number', $keyWord)->first();
-                if($transaction){
+                if ($transaction) {
                     $results = [
                         [
                             'type' => 'link',
@@ -151,7 +150,7 @@ class LookUpController extends Controller
                                 'tNumber' => $transaction->number,
                             ]),
                             'name' => 'Edit transaction '.$transaction->tr_number,
-                        ]
+                        ],
                     ];
                 }
             }

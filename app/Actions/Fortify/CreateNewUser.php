@@ -9,14 +9,14 @@ use App\Models\EmergencyDoctor;
 use App\Models\IndDoctor;
 use App\Models\NursingStaff;
 use App\Models\OpdDoctor;
-use App\Models\User;
 use App\Models\Patient;
 use App\Models\PatientManager;
 use App\Models\Receptionist;
 use App\Models\UltrasoundDoctor;
+use App\Models\User;
 use App\Models\XrayTechnician;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
@@ -33,14 +33,14 @@ class CreateNewUser implements CreatesNewUsers
     {
         // Normalize mobile to include +country code if user typed local format
         $data = $input;
-        if (!empty($data['mobile'])) {
+        if (! empty($data['mobile'])) {
             $mobileRaw = $data['mobile'];
             $digits = preg_replace('/\D+/', '', $mobileRaw ?? '');
             if (str_starts_with($mobileRaw ?? '', '+')) {
-                $data['mobile'] = '+' . $digits;
+                $data['mobile'] = '+'.$digits;
             } elseif (preg_match('/^0\d{9,}$/', $digits)) {
                 // Convert leading 0XXXXXXXXX to +92XXXXXXXXX (Pakistan default)
-                $data['mobile'] = '+92' . substr($digits, 1);
+                $data['mobile'] = '+92'.substr($digits, 1);
             }
         }
 
@@ -72,7 +72,7 @@ class CreateNewUser implements CreatesNewUsers
             $isFirstUser = User::query()->lockForUpdate()->nonSystem()->doesntExist();
 
             // Determine username: whichever of email or mobile is provided first
-            $username = !empty($data['email']) ? $data['email'] : $data['mobile'];
+            $username = ! empty($data['email']) ? $data['email'] : $data['mobile'];
 
             $user = User::create([
                 'name' => $data['name'],
@@ -123,7 +123,7 @@ class CreateNewUser implements CreatesNewUsers
                     'authority' => 'manager',
                 ]);
 
-            }else{
+            } else {
 
                 // Create patient record with provided demographic info
                 $patient = Patient::create([

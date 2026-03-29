@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Models\MigrationLog;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class ViewMigrationLogs extends Command
@@ -33,11 +33,13 @@ class ViewMigrationLogs extends Command
     {
         if ($this->option('summary')) {
             $this->showSummary();
+
             return;
         }
 
         if ($this->option('financial')) {
             $this->showFinancialLogs();
+
             return;
         }
 
@@ -103,9 +105,15 @@ class ViewMigrationLogs extends Command
         if ($errorCount > 0 || $skippedCount > 0 || $duplicatedCount > 0) {
             $this->line('');
             $this->info('⚠️  Issues Found:');
-            if ($errorCount > 0) $this->line("  • Errors: {$errorCount}");
-            if ($skippedCount > 0) $this->line("  • Skipped records: {$skippedCount}");
-            if ($duplicatedCount > 0) $this->line("  • Duplicates detected: {$duplicatedCount}");
+            if ($errorCount > 0) {
+                $this->line("  • Errors: {$errorCount}");
+            }
+            if ($skippedCount > 0) {
+                $this->line("  • Skipped records: {$skippedCount}");
+            }
+            if ($duplicatedCount > 0) {
+                $this->line("  • Duplicates detected: {$duplicatedCount}");
+            }
         }
     }
 
@@ -119,7 +127,7 @@ class ViewMigrationLogs extends Command
 
         $financialLogs = MigrationLog::whereNotNull('old_amount')
             ->whereNotNull('new_amount')
-            ->select('migration_step', 'old_table', 
+            ->select('migration_step', 'old_table',
                 DB::raw('count(*) as count'),
                 DB::raw('sum(old_amount) as total_old_amount'),
                 DB::raw('sum(new_amount) as total_new_amount'),
@@ -129,14 +137,14 @@ class ViewMigrationLogs extends Command
             ->get();
 
         foreach ($financialLogs as $log) {
-            $variance = $log->total_old_amount > 0 ? 
+            $variance = $log->total_old_amount > 0 ?
                 (abs($log->total_old_amount - $log->total_new_amount) / $log->total_old_amount) * 100 : 0;
-            
+
             $this->line("📊 {$log->migration_step} ({$log->old_table}):");
             $this->line("   • Records: {$log->count}");
-            $this->line("   • Old Amount: " . number_format($log->total_old_amount, 2));
-            $this->line("   • New Amount: " . number_format($log->total_new_amount, 2));
-            $this->line("   • Variance: " . number_format($variance, 2) . "%");
+            $this->line('   • Old Amount: '.number_format($log->total_old_amount, 2));
+            $this->line('   • New Amount: '.number_format($log->total_new_amount, 2));
+            $this->line('   • Variance: '.number_format($variance, 2).'%');
             $this->line('');
         }
     }
@@ -158,7 +166,7 @@ class ViewMigrationLogs extends Command
         }
 
         if ($this->option('batch')) {
-            $query->where('batch_id', 'like', '%' . $this->option('batch') . '%');
+            $query->where('batch_id', 'like', '%'.$this->option('batch').'%');
         }
 
         if ($this->option('table')) {
@@ -171,39 +179,39 @@ class ViewMigrationLogs extends Command
 
         $logs = $query->limit($this->option('limit'))->get();
 
-        $this->info('📋 Migration Logs (' . $logs->count() . ' entries)');
+        $this->info('📋 Migration Logs ('.$logs->count().' entries)');
         $this->line('');
 
         foreach ($logs as $log) {
             $icon = $this->getActionIcon($log->action_type);
             $this->line("{$icon} [{$log->created_at}] {$log->migration_step} - {$log->action_type}");
-            
+
             if ($log->old_table && $log->old_record_id) {
                 $this->line("   Source: {$log->old_table}#{$log->old_record_id}");
             }
-            
+
             if ($log->new_table && $log->new_record_id) {
                 $this->line("   Target: {$log->new_table}#{$log->new_record_id}");
             }
-            
+
             if ($log->reason) {
                 $this->line("   Reason: {$log->reason}");
             }
 
             if ($log->old_amount || $log->new_amount) {
-                $this->line("   Amounts: " . ($log->old_amount ? number_format($log->old_amount, 2) : 'N/A') . 
-                          " → " . ($log->new_amount ? number_format($log->new_amount, 2) : 'N/A'));
+                $this->line('   Amounts: '.($log->old_amount ? number_format($log->old_amount, 2) : 'N/A').
+                          ' → '.($log->new_amount ? number_format($log->new_amount, 2) : 'N/A'));
             }
 
             if ($log->error_details) {
-                $this->line("   Error: " . substr($log->error_details, 0, 100) . '...');
+                $this->line('   Error: '.substr($log->error_details, 0, 100).'...');
             }
 
             $this->line('');
         }
 
         // Show available filters
-        if (!$this->option('step') && !$this->option('action')) {
+        if (! $this->option('step') && ! $this->option('action')) {
             $this->line('');
             $this->info('💡 Available filters:');
             $this->line('   --step=users          Filter by migration step');
@@ -220,7 +228,7 @@ class ViewMigrationLogs extends Command
      */
     protected function getActionIcon($actionType)
     {
-        return match($actionType) {
+        return match ($actionType) {
             'success' => '✅',
             'error' => '❌',
             'skipped' => '⏭️',

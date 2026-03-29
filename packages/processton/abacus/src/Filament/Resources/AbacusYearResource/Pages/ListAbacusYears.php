@@ -2,9 +2,9 @@
 
 namespace Processton\Abacus\Filament\Resources\AbacusYearResource\Pages;
 
-use Processton\Abacus\Filament\Resources\AbacusYearResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Processton\Abacus\Filament\Resources\AbacusYearResource;
 
 class ListAbacusYears extends ListRecords
 {

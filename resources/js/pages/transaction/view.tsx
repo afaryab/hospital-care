@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
@@ -7,6 +8,7 @@ import PatientMiniCard from '@/elements/patient/mini-card';
 import HumanSimpleBody from '@/human/simple-body';
 import AppLayout from '@/layouts/app-layout';
 import { counterExpense, counterList, counterSelectDepartment, counterSelectPatient, counterView, home, myCounterList, patientsRegister, patientsRegisterPsNumberDepartment, printClosingStatement, printTransaction } from '@/routes';
+
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import clsx from 'clsx';

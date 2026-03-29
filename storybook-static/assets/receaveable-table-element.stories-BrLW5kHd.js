@@ -1,0 +1,9 @@
+import{c as f,a as v,j as n}from"./utils-q4EKThuO.js";import{B as g}from"./badge-DghL8o_I.js";import{C as R}from"./currency-CQP0FS4i.js";import{j,i as h}from"./index-CSrV_1Wb.js";import"./iframe-DOYQQv_f.js";import"./preload-helper-PPVm8Dsz.js";import"./index-BZoqsebz.js";const b=x=>{const e=f.c(16),{receaveable:a,className:d}=x;let s;e[0]!==d?(s=v("flex items-center gap-2 min-w-0",d),e[0]=d,e[1]=s):s=e[1];const p=a.transaction?.tr_number;let t;e[2]!==p?(t=n.jsx("p",{className:"text-xs font-mono text-muted-foreground",children:p}),e[2]=p,e[3]=t):t=e[3];let r;e[4]!==a.amount?(r=n.jsx("p",{className:"text-sm font-semibold",children:n.jsx(R,{value:a.amount})}),e[4]=a.amount,e[5]=r):r=e[5];let o;e[6]!==t||e[7]!==r?(o=n.jsxs("div",{className:"min-w-0",children:[t,r]}),e[6]=t,e[7]=r,e[8]=o):o=e[8];const u=a.status==="paid"?"default":"secondary";let c;e[9]!==a.status||e[10]!==u?(c=n.jsx(g,{variant:u,className:"text-xs shrink-0",children:a.status}),e[9]=a.status,e[10]=u,e[11]=c):c=e[11];let l;return e[12]!==s||e[13]!==o||e[14]!==c?(l=n.jsxs("div",{className:s,children:[o,c]}),e[12]=s,e[13]=o,e[14]=c,e[15]=l):l=e[15],l};b.__docgenInfo={description:"",methods:[],displayName:"ReceaveableTableElement"};const w={title:"Elements/Receivable/ReceaveableTableElement",component:b,tags:["autodocs"],parameters:{layout:"padded"}},m={args:{receaveable:h}},i={args:{receaveable:j}};m.parameters={...m.parameters,docs:{...m.parameters?.docs,source:{originalSource:`{
+  args: {
+    receaveable: mockReceaveable
+  }
+}`,...m.parameters?.docs?.source}}};i.parameters={...i.parameters,docs:{...i.parameters?.docs,source:{originalSource:`{
+  args: {
+    receaveable: mockReceaveablePaid
+  }
+}`,...i.parameters?.docs?.source}}};const B=["Pending","Paid"];export{i as Paid,m as Pending,B as __namedExportsOrder,w as default};

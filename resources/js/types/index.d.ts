@@ -63,6 +63,7 @@ export interface ServiceDepartment {
     id: number;
     name: string;
     slug: string;
+    image?: string;
 }
 
 export interface Service {
@@ -91,9 +92,18 @@ export interface Transaction {
     edited_amount: number;
     created_at: string;
     updated_at: string;
+    elements?: any[];
+    patient?: Patient;
+    closing?: any;
+    year?: number | string;
+    month?: number | string;
+    day?: number | string;
+    number?: number | string;
+    [key: string]: unknown;
 }
 
 export interface ServiceOrder {
+    id?: number;
     type: string
     so_number: string
     so_short: string
@@ -105,6 +115,11 @@ export interface ServiceOrder {
     is_composit: boolean
     notes: string
     notes_json: any
+    created_at?: string
+    updated_at?: string
+    departmentKey?: string
+    serviceNumber?: string
+    [key: string]: unknown;
 }
 
 export interface Receaveable {
@@ -118,3 +133,47 @@ export interface Receaveable {
     created_at: string;
     closed_at?: string;
 }
+
+export interface Closing {
+    id: number;
+    ct_number: string;
+    year?: number | string;
+    month?: number | string;
+    number?: number | string;
+    status: string;
+    reception_id?: number;
+    receptionist_id?: number;
+    opening_amount: number;
+    closing_amount?: number;
+    closing_amount_cash?: number;
+    closing_amount_cheque?: number;
+    closing_amount_card?: number;
+    expense_payed?: number;
+    amount_received?: number;
+    closed_at?: string;
+    created_at: string;
+    updated_at: string;
+    reception?: { id: number; name: string };
+    receptionist?: User;
+    [key: string]: unknown;
+}
+
+export interface ExpenseVoucher {
+    id: number;
+    vc_number: string;
+    exp_category_id?: number;
+    service_order_id?: number;
+    payed_to?: string;
+    payed_to_name?: string;
+    amount: number;
+    notes?: string;
+    transaction_id?: number;
+    transaction_element_id?: number;
+    status: 'pending' | 'payed';
+    created_at: string;
+    updated_at: string;
+    expenseCategory?: { id: number; name: string };
+    [key: string]: unknown;
+}
+
+export type Receivable = Receaveable;

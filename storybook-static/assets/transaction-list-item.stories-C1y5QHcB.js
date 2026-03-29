@@ -1,0 +1,14 @@
+import{c as S,a as C,j as n}from"./utils-q4EKThuO.js";import{B as w}from"./badge-DghL8o_I.js";import{C as L}from"./currency-CQP0FS4i.js";import{q as B,p as T}from"./index-CSrV_1Wb.js";import"./iframe-DOYQQv_f.js";import"./preload-helper-PPVm8Dsz.js";import"./index-BZoqsebz.js";const b=k=>{const e=S.c(31),{transaction:t,className:_,onClick:s,selected:I}=k,j=I&&"bg-accent",h=s&&"cursor-pointer";let r;e[0]!==_||e[1]!==j||e[2]!==h?(r=C("flex items-center justify-between gap-3 px-3 py-2 rounded-md","hover:bg-accent transition-colors",j,h,_),e[0]=_,e[1]=j,e[2]=h,e[3]=r):r=e[3];const v=s?"button":void 0,E=s?0:void 0;let a;e[4]!==s?(a=s?y=>y.key==="Enter"&&s():void 0,e[4]=s,e[5]=a):a=e[5];let o;e[6]!==t.tr_number?(o=n.jsx("p",{className:"text-xs font-mono text-muted-foreground",children:t.tr_number}),e[6]=t.tr_number,e[7]=o):o=e[7];let c;e[8]!==t.amount?(c=n.jsx("p",{className:"text-sm font-semibold",children:n.jsx(L,{value:t.amount})}),e[8]=t.amount,e[9]=c):c=e[9];let i;e[10]!==o||e[11]!==c?(i=n.jsxs("div",{className:"min-w-0",children:[o,c]}),e[10]=o,e[11]=c,e[12]=i):i=e[12];let m;e[13]!==t.created_at?(m=t.created_at?.split("T")[0],e[13]=t.created_at,e[14]=m):m=e[14];let l;e[15]!==m?(l=n.jsx("span",{className:"text-xs text-muted-foreground",children:m}),e[15]=m,e[16]=l):l=e[16];const N=t.income_or_expense==="INCOME"?"default":"destructive";let d;e[17]!==N||e[18]!==t.income_or_expense?(d=n.jsx(w,{variant:N,className:"text-xs",children:t.income_or_expense}),e[17]=N,e[18]=t.income_or_expense,e[19]=d):d=e[19];let p;e[20]!==l||e[21]!==d?(p=n.jsxs("div",{className:"flex items-center gap-1.5 shrink-0",children:[l,d]}),e[20]=l,e[21]=d,e[22]=p):p=e[22];let u;return e[23]!==s||e[24]!==p||e[25]!==r||e[26]!==v||e[27]!==E||e[28]!==a||e[29]!==i?(u=n.jsxs("div",{className:r,onClick:s,role:v,tabIndex:E,onKeyDown:a,children:[i,p]}),e[23]=s,e[24]=p,e[25]=r,e[26]=v,e[27]=E,e[28]=a,e[29]=i,e[30]=u):u=e[30],u};b.__docgenInfo={description:"",methods:[],displayName:"TransactionListItem"};const z={title:"Elements/Transaction/TransactionListItem",component:b,tags:["autodocs"],parameters:{layout:"padded"}},x={args:{transaction:T}},f={args:{transaction:B}},g={args:{transaction:T,selected:!0}};x.parameters={...x.parameters,docs:{...x.parameters?.docs,source:{originalSource:`{
+  args: {
+    transaction: mockTransaction
+  }
+}`,...x.parameters?.docs?.source}}};f.parameters={...f.parameters,docs:{...f.parameters?.docs,source:{originalSource:`{
+  args: {
+    transaction: mockTransactionExpense
+  }
+}`,...f.parameters?.docs?.source}}};g.parameters={...g.parameters,docs:{...g.parameters?.docs,source:{originalSource:`{
+  args: {
+    transaction: mockTransaction,
+    selected: true
+  }
+}`,...g.parameters?.docs?.source}}};const A=["Income","Expense","Selected"];export{f as Expense,x as Income,g as Selected,A as __namedExportsOrder,z as default};

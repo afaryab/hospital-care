@@ -23,7 +23,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     /**
      * Global level
      */
-    
     Route::get('PS', [WebController::class, 'register'])->name('patients-register');
     Route::get('PS/{year}', [WebController::class, 'register'])->name('patients-register-year');
     Route::get('PS/{year}/{month}', [WebController::class, 'register'])->name('patients-register-year-month');
@@ -31,17 +30,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('PS/{year}/{month}/{number}/{departmentKey}', [WebController::class, 'patient'])->name('patients-register-ps-number-department');
     Route::get('PS/{year}/{month}/{number}/{departmentKey}/{serviceNumber}', [WebController::class, 'patient'])->name('patients-register-ps-number-department-service');
 
-    
     /**
      * Counter routes
      */
-    
     Route::get('CT-NEW', [WebController::class, 'counterOpen'])->name('counter-open');
     Route::post('CT-NEW', [WebController::class, 'counterStore'])->name('counter-store');
     Route::get('CT-CLOSE', [WebController::class, 'counterClose'])->name('counter-close');
     Route::post('CT-CLOSE', [WebController::class, 'counterClose'])->name('counter-close-post');
     Route::get('CT', [WebController::class, 'counter'])->name('counter');
-    
+
     // Route::get('CT/{ctYear}', [WebController::class, 'countersList'])->name('counters-year');
     // Route::get('CT/{ctYear}/{ctMonth}', [WebController::class, 'countersList'])->name('counters-year-month');
     Route::get('CT/{ctYear}/{ctMonth}/{ctNumber}', [WebController::class, 'counterView'])->name('counter-view');
@@ -71,16 +68,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('RECEAVEABLES-PAYMENT', [WebController::class, 'receaveablesPayment'])->name('receaveables-payment');
 
-    
-
     Route::get('appointments', [WebController::class, 'counter'])->name('appointments');
     Route::get('expenses', [WebController::class, 'counter'])->name('expenses');
-
 
     /**
      * Hospital Routes
      */
-
     Route::get('/que/opd', [WebController::class, 'opdQueue'])->name('hospital-opd-queue');
     Route::get('/que/indoor', [WebController::class, 'indoorQueue'])->name('hospital-indoor-queue');
     Route::get('/que/emergency', [WebController::class, 'emergencyQueue'])->name('hospital-emergency-queue');
@@ -89,29 +82,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/que/ultrasound', [WebController::class, 'ultrasoundQueue'])->name('hospital-ultrasound-queue');
     Route::get('/que/radiology', [WebController::class, 'radiologyQueue'])->name('hospital-radiology-queue');
 
-    
-
-
-
     /**
      * Accounts routes
      */
-
     Route::get('ACC-CT-ALL', [WebController::class, 'countersList'])->name('counter-list-all');
-
-
 
     /**
      * Print routes (auth required for printing)
      */
-
-
     Route::get('PRINT/CT/{year}/{month}/{number}', [ClosingStatementPdfPrintController::class, 'stream'])
         ->name('print-closing-statement');
 
     Route::get('PRINT/TR/{year}/{month}/{day}/{number}', [TransactionPdfPrintController::class, 'stream'])
         ->name('print-transaction');
-    
+
     Route::get('DOWNLOAD/TR/{year}/{month}/{day}/{number}', [TransactionPdfPrintController::class, 'download'])
         ->name('download-transaction');
 
@@ -137,7 +121,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('reports.generic.service-orders');
     Route::get('reports/generic/service-order/{id}', [\App\Http\Controllers\Reports\GenericReportPdfController::class, 'serviceOrder'])
         ->name('reports.generic.service-order');
-    
+
 });
 
 /**

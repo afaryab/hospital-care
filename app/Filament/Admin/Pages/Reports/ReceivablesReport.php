@@ -20,13 +20,18 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
 {
     use Tables\Concerns\InteractsWithTable;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clock';
-    protected static string | UnitEnum | null $navigationGroup = 'Reports';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clock';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Reports';
+
     protected static ?int $navigationSort = 3;
+
     protected static ?string $title = 'Receivables Report';
+
     protected string $view = 'filament.accounts.pages.report-page';
 
     public ?array $filters = [];
+
     public string $activeTab = 'general';
 
     public function mount(): void
@@ -135,6 +140,6 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
 
     public function getPdfUrl(): string
     {
-        return url('/reports/generic/receivables') . '?' . http_build_query(array_filter($this->filters));
+        return url('/reports/generic/receivables').'?'.http_build_query(array_filter($this->filters));
     }
 }

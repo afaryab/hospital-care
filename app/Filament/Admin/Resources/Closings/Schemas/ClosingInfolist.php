@@ -5,7 +5,6 @@ namespace App\Filament\Admin\Resources\Closings\Schemas;
 use App\Models\Closing;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Tabs;
-use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 
 class ClosingInfolist
@@ -26,7 +25,7 @@ class ClosingInfolist
                                         'transactions' => $record->transactions(),
                                         'printUrl' => self::buildMiniPrintUrl($record),
                                     ])
-                                    ->columnSpanFull(),  
+                                    ->columnSpanFull(),
                             ]),
                         Tabs\Tab::make('Detailed Summery')
                             ->schema([
@@ -38,7 +37,7 @@ class ClosingInfolist
                                         'transactions' => $record->transactions(),
                                         'printUrl' => self::buildPrintUrl($record),
                                     ])
-                                    ->columnSpanFull(),  
+                                    ->columnSpanFull(),
                             ]),
                         Tabs\Tab::make('Services Report')
                             ->schema([
@@ -50,7 +49,7 @@ class ClosingInfolist
                                         'transactions' => $record->transactions(),
                                         'printUrl' => self::buildReportUrl($record, 'services'),
                                     ])
-                                    ->columnSpanFull(),  
+                                    ->columnSpanFull(),
                             ]),
                         Tabs\Tab::make('Income Report')
                             ->schema([
@@ -62,7 +61,7 @@ class ClosingInfolist
                                         'transactions' => $record->transactions(),
                                         'printUrl' => self::buildReportUrl($record, 'income'),
                                     ])
-                                    ->columnSpanFull(),  
+                                    ->columnSpanFull(),
                             ]),
                         Tabs\Tab::make('Expense Report')
                             ->schema([
@@ -74,7 +73,7 @@ class ClosingInfolist
                                         'transactions' => $record->transactions(),
                                         'printUrl' => self::buildReportUrl($record, 'expense'),
                                     ])
-                                    ->columnSpanFull(),  
+                                    ->columnSpanFull(),
                             ]),
                         Tabs\Tab::make('Receivables Report')
                             ->schema([
@@ -86,11 +85,11 @@ class ClosingInfolist
                                         'transactions' => $record->transactions(),
                                         'printUrl' => self::buildReportUrl($record, 'receivables'),
                                     ])
-                                    ->columnSpanFull(),  
+                                    ->columnSpanFull(),
                             ]),
                     ])
                     ->columnSpanFull(),
-                
+
             ]);
     }
 

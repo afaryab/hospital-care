@@ -26,14 +26,14 @@ const PatientTreatmentsHistoryCard: React.FC<PatientTreatmentsHistoryCardProps> 
                                 year: patient.year,
                                 month: patient.month,
                                 number: patient.number,
-                                departmentKey: treatment.departmentKey,
-                                serviceNumber: treatment.serviceNumber,
+                                departmentKey: treatment.departmentKey ?? '',
+                                serviceNumber: treatment.serviceNumber ?? ''
                             })}
                             className="flex flex-col md:flex-row items-center justify-between p-3 border rounded-md"
                         >
                             <div className='w-full'>
-                                <p>{new Date(treatment.created_at).toLocaleDateString()}</p>
-                                <p>{new Date(treatment.created_at).toLocaleTimeString()}</p>
+                                <p>{new Date(treatment.created_at!).toLocaleDateString()}</p>
+                                <p>{new Date(treatment.created_at!).toLocaleTimeString()}</p>
                             </div>
                             <div className="text-right w-full">
                                 

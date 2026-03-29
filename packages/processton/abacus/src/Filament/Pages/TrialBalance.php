@@ -2,17 +2,16 @@
 
 namespace Processton\Abacus\Filament\Pages;
 
-use Processton\Abacus\Models\AbacusTransaction;
-use Processton\Abacus\Models\AbacusChartOfAccount;
-use Processton\Abacus\Models\AbacusYear;
-use Filament\Pages\Page;
-use Filament\Forms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Schemas\Schema;
 use Filament\Actions\Action;
+use Filament\Forms;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Pages\Page;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Collection;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Processton\Abacus\Models\AbacusChartOfAccount;
+use Processton\Abacus\Models\AbacusTransaction;
+use Processton\Abacus\Models\AbacusYear;
 use Symfony\Component\HttpFoundation\Response;
 use UnitEnum;
 
@@ -22,16 +21,21 @@ class TrialBalance extends Page implements HasForms
 
     // protected static ?string $navigationIcon = 'heroicon-o-table';
     protected string $view = 'abacus::trial-balance';
+
     protected static ?string $title = 'Trial Balance';
 
     protected static UnitEnum|string|null $navigationGroup = 'Reporting';
+
     protected static ?int $navigationSort = 11;
 
     public ?int $yearId = null;
+
     public ?string $startDate = null;
+
     public ?string $endDate = null;
 
     public Collection $rows;
+
     public bool $showPdf = false;
 
     public function mount(): void
@@ -49,7 +53,7 @@ class TrialBalance extends Page implements HasForms
                         ->options(
                             AbacusYear::orderByDesc('start_date')->get()->map(
                                 fn (AbacusYear $year) => [
-                                    'label' => $year->start_date->format('Y') . ' - ' . $year->end_date->format('Y'),
+                                    'label' => $year->start_date->format('Y').' - '.$year->end_date->format('Y'),
                                     'value' => $year->id,
                                 ]
                             )->pluck('label', 'value')
@@ -59,9 +63,8 @@ class TrialBalance extends Page implements HasForms
                     Forms\Components\DatePicker::make('endDate')->label('To'),
                 ]
             )
-                ->columns(1);
-            }
-    
+            ->columns(1);
+    }
 
     /**
      * @return array<Action>
@@ -80,6 +83,7 @@ class TrialBalance extends Page implements HasForms
                 ->visible(fn () => $this->rows->isNotEmpty()),
         ];
     }
+
     public function viewReport(): void
     {
         $accounts = AbacusChartOfAccount::orderBy('code')->get();
@@ -110,14 +114,14 @@ class TrialBalance extends Page implements HasForms
                 'debit' => $net > 0 ? $net : 0,
                 'credit' => $net < 0 ? abs($net) : 0,
             ];
-        })->filter(fn($row) => $row['debit'] != 0 || $row['credit'] != 0);
+        })->filter(fn ($row) => $row['debit'] != 0 || $row['credit'] != 0);
     }
 
     public function downloadPdf(): Response
     {
         // Get year information
         $year = $this->yearId ? AbacusYear::find($this->yearId) : null;
-        
+
         $data = [
             'rows' => $this->rows,
             'year' => $year,
@@ -129,11 +133,11 @@ class TrialBalance extends Page implements HasForms
         ];
 
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->getDomPDF()->set_option("enable_php", true);
+        $pdf->getDomPDF()->set_option('enable_php', true);
         $pdf->loadView('abacus::trial-balance-pdf', $data);
-        
-        $filename = 'trial-balance-' . now()->format('Y-m-d') . '.pdf';
-        
+
+        $filename = 'trial-balance-'.now()->format('Y-m-d').'.pdf';
+
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
         }, $filename, ['Content-Type' => 'application/pdf']);
@@ -158,7 +162,7 @@ class TrialBalance extends Page implements HasForms
         if ($this->rows->isEmpty()) {
             $this->viewReport();
         }
-        
+
         $data = [
             'rows' => $this->rows,
             'year' => $year,
@@ -170,12 +174,12 @@ class TrialBalance extends Page implements HasForms
         ];
 
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->getDomPDF()->set_option("enable_php", true);
+        $pdf->getDomPDF()->set_option('enable_php', true);
         $pdf->loadView('abacus::trial-balance-pdf', $data);
-        
+
         return response($pdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="trial-balance-' . now()->format('Y-m-d') . '.pdf"'
+            'Content-Disposition' => 'inline; filename="trial-balance-'.now()->format('Y-m-d').'.pdf"',
         ]);
     }
 }

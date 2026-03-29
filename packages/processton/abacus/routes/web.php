@@ -7,12 +7,12 @@ use Processton\Abacus\Filament\Pages\ProfitLossStatement;
 use Processton\Abacus\Filament\Pages\TrialBalance;
 
 Route::middleware([
-        'web',
-    ])->group(function () {
+    'web',
+])->group(function () {
 
     Route::middleware([
         'auth',
-        'verified'
+        'verified',
     ])->prefix('abacus')->group(function () {
 
         Route::get('/general-ledger', [GeneralLedger::class, 'streamPdf'])->name('general-ledger.stream-pdf');

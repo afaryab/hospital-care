@@ -1,0 +1,9 @@
+import{c as h,a as f,j as c}from"./utils-q4EKThuO.js";import{B as g}from"./badge-DghL8o_I.js";import{C as E}from"./currency-CQP0FS4i.js";import{c as v,d as j}from"./index-CSrV_1Wb.js";import"./iframe-DOYQQv_f.js";import"./preload-helper-PPVm8Dsz.js";import"./index-BZoqsebz.js";const p=x=>{const e=h.c(16),{voucher:s,className:u}=x;let t;e[0]!==u?(t=f("flex items-center gap-2 min-w-0",u),e[0]=u,e[1]=t):t=e[1];let r;e[2]!==s.vc_number?(r=c.jsx("p",{className:"text-xs font-mono text-muted-foreground",children:s.vc_number}),e[2]=s.vc_number,e[3]=r):r=e[3];let a;e[4]!==s.amount?(a=c.jsx("p",{className:"text-sm font-semibold",children:c.jsx(E,{value:s.amount})}),e[4]=s.amount,e[5]=a):a=e[5];let o;e[6]!==r||e[7]!==a?(o=c.jsxs("div",{className:"min-w-0",children:[r,a]}),e[6]=r,e[7]=a,e[8]=o):o=e[8];const d=s.status==="payed"?"default":"secondary";let n;e[9]!==d||e[10]!==s.status?(n=c.jsx(g,{variant:d,className:"text-xs shrink-0 capitalize",children:s.status}),e[9]=d,e[10]=s.status,e[11]=n):n=e[11];let m;return e[12]!==t||e[13]!==o||e[14]!==n?(m=c.jsxs("div",{className:t,children:[o,n]}),e[12]=t,e[13]=o,e[14]=n,e[15]=m):m=e[15],m};p.__docgenInfo={description:"",methods:[],displayName:"ExpenseVoucherTableElement"};const T={title:"Elements/ExpenseVoucher/ExpenseVoucherTableElement",component:p,tags:["autodocs"],parameters:{layout:"padded"}},i={args:{voucher:v}},l={args:{voucher:j}};i.parameters={...i.parameters,docs:{...i.parameters?.docs,source:{originalSource:`{
+  args: {
+    voucher: mockExpenseVoucher
+  }
+}`,...i.parameters?.docs?.source}}};l.parameters={...l.parameters,docs:{...l.parameters?.docs,source:{originalSource:`{
+  args: {
+    voucher: mockExpenseVoucherPending
+  }
+}`,...l.parameters?.docs?.source}}};const w=["Paid","Pending"];export{i as Paid,l as Pending,w as __namedExportsOrder,T as default};

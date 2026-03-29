@@ -50,10 +50,10 @@ class AbacusIncoming extends Model
 
     public function isBalanced(): bool
     {
-        if (!$this->isConverted()) {
+        if (! $this->isConverted()) {
             return false;
         }
-        
+
         return abs($this->getTotalDebitsAttribute() - $this->getTotalCreditsAttribute()) < 0.01;
     }
 }

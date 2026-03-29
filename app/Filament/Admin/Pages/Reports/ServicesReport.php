@@ -23,13 +23,18 @@ class ServicesReport extends Page implements Tables\Contracts\HasTable
 {
     use Tables\Concerns\InteractsWithTable;
 
-    protected static string | \BackedEnum | null $navigationIcon = 'heroicon-o-clipboard-document-list';
-    protected static string | UnitEnum | null $navigationGroup = 'Reports';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Reports';
+
     protected static ?int $navigationSort = 4;
+
     protected static ?string $title = 'Services Report';
+
     protected string $view = 'filament.accounts.pages.report-page';
 
     public ?array $filters = [];
+
     public string $activeTab = 'general';
 
     public function mount(): void
@@ -85,10 +90,10 @@ class ServicesReport extends Page implements Tables\Contracts\HasTable
                 $query = TransactionElement::query()
                     ->where(function (Builder $q) {
                         $q->whereNotNull('service_id')
-                          ->orWhere(function (Builder $q2) {
-                              $q2->where('income_or_expense', 'EXPENSE')
-                                 ->whereNotNull('exp_voucher_id');
-                          });
+                            ->orWhere(function (Builder $q2) {
+                                $q2->where('income_or_expense', 'EXPENSE')
+                                    ->whereNotNull('exp_voucher_id');
+                            });
                     });
 
                 if ($this->filters['from'] ?? null) {
@@ -172,6 +177,6 @@ class ServicesReport extends Page implements Tables\Contracts\HasTable
 
     public function getPdfUrl(): string
     {
-        return url('/reports/generic/services') . '?' . http_build_query(array_filter($this->filters));
+        return url('/reports/generic/services').'?'.http_build_query(array_filter($this->filters));
     }
 }

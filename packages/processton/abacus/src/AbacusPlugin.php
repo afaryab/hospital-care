@@ -4,21 +4,18 @@ declare(strict_types=1);
 
 namespace Processton\Abacus;
 
-use Filament\Pages;
 use Filament\Contracts\Plugin;
 use Filament\Panel;
 use Filament\Support\Concerns\EvaluatesClosures;
-use Processton\Abacus\Filament\Resources\AbacusChartOfAccountResource;
-use Processton\Abacus\Filament\Resources\AbacusIncomingResource;
-use Processton\Abacus\Filament\Resources\AbacusTransactionResource;
-use Processton\Abacus\Filament\Resources\AbacusYearResource;
-
 use Processton\Abacus\Filament\Pages\BalanceSheet;
 use Processton\Abacus\Filament\Pages\CashFlowStatement;
 use Processton\Abacus\Filament\Pages\GeneralLedger;
 use Processton\Abacus\Filament\Pages\ProfitLossStatement;
 use Processton\Abacus\Filament\Pages\TrialBalance;
-
+use Processton\Abacus\Filament\Resources\AbacusChartOfAccountResource;
+use Processton\Abacus\Filament\Resources\AbacusIncomingResource;
+use Processton\Abacus\Filament\Resources\AbacusTransactionResource;
+use Processton\Abacus\Filament\Resources\AbacusYearResource;
 
 class AbacusPlugin implements Plugin
 {
@@ -40,7 +37,7 @@ class AbacusPlugin implements Plugin
             AbacusChartOfAccountResource::class,
             AbacusIncomingResource::class,
             AbacusTransactionResource::class,
-            AbacusYearResource::class
+            AbacusYearResource::class,
         ]);
 
         $panel->pages([
@@ -48,7 +45,7 @@ class AbacusPlugin implements Plugin
             GeneralLedger::class,
             ProfitLossStatement::class,
             TrialBalance::class,
-            CashFlowStatement::class
+            CashFlowStatement::class,
         ]);
     }
 

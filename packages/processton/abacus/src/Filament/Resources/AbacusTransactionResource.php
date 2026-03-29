@@ -3,14 +3,14 @@
 namespace Processton\Abacus\Filament\Resources;
 
 use BackedEnum;
-use Processton\Abacus\Filament\Resources\AbacusTransactionResource\Pages;
-use Processton\Abacus\Models\AbacusTransaction;
 use Filament\Forms;
-// use Filament\Forms\Form;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
+// use Filament\Forms\Form;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Processton\Abacus\Filament\Resources\AbacusTransactionResource\Pages;
+use Processton\Abacus\Models\AbacusTransaction;
 // use Filament\Infolists\Infolist;
 use Processton\Abacus\Models\Currency;
 use UnitEnum;
@@ -29,11 +29,10 @@ class AbacusTransactionResource extends Resource
 
     protected static UnitEnum|string|null $navigationGroup = 'Abacus';
 
-
-
     public static function form(Schema $form): Schema
     {
         $currency = Currency::find(config('org.primary_currency')) ?? Currency::where('code', 'PKR')->first();
+
         return $form
             ->schema([
                 Forms\Components\TextInput::make('amount')
@@ -63,15 +62,17 @@ class AbacusTransactionResource extends Resource
                     ->getOptionLabelFromRecordUsing(function ($record) {
                         $start = $record->start_date ? \Carbon\Carbon::parse($record->start_date)->format('M-y') : '';
                         $end = $record->end_date ? \Carbon\Carbon::parse($record->end_date)->format('M-y') : '';
+
                         return $start && $end ? "{$start} - {$end}" : ($start ?: $end);
                     })
-                    ->preload()
+                    ->preload(),
             ]);
     }
 
     public static function infolist(Schema $schema): Schema
     {
         $currency = Currency::find(config('org.primary_currency')) ?? Currency::where('code', 'PKR')->first();
+
         return $schema
             ->schema([
                 \Filament\Schemas\Components\Section::make('Entry')
@@ -92,10 +93,11 @@ class AbacusTransactionResource extends Resource
                             ->getStateUsing(function ($record) {
                                 $start = optional($record->year)->start_date ? \Carbon\Carbon::parse($record->year->start_date)->format('M-y') : '';
                                 $end = optional($record->year)->end_date ? \Carbon\Carbon::parse($record->year->end_date)->format('M-y') : '';
+
                                 return $start && $end ? "{$start} - {$end}" : ($start ?: $end);
                             }),
                     ])->columns(3),
-                
+
                 \Filament\Schemas\Components\Section::make('Incoming')
                     ->schema([
                         \Filament\Infolists\Components\TextEntry::make('incoming.reference')
@@ -112,8 +114,7 @@ class AbacusTransactionResource extends Resource
                             ->columnSpanFull(),
                     ])
                     ->columns(3)
-                    ->visible(fn ($record) => $record->abacus_incoming_id !== null)
-                
+                    ->visible(fn ($record) => $record->abacus_incoming_id !== null),
 
             ])->columns(3);
     }
@@ -121,6 +122,7 @@ class AbacusTransactionResource extends Resource
     public static function table(Table $table): Table
     {
         $currency = Currency::find(config('org.primary_currency')) ?? Currency::where('code', 'PKR')->first();
+
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('amount')
@@ -142,6 +144,7 @@ class AbacusTransactionResource extends Resource
                     ->getStateUsing(function ($record) {
                         $start = optional($record->year)->start_date ? \Carbon\Carbon::parse($record->year->start_date)->format('M-y') : '';
                         $end = optional($record->year)->end_date ? \Carbon\Carbon::parse($record->year->end_date)->format('M-y') : '';
+
                         return $start && $end ? "{$start} - {$end}" : ($start ?: $end);
                     })
                     ->sortable(),
@@ -153,6 +156,7 @@ class AbacusTransactionResource extends Resource
                     ->getOptionLabelFromRecordUsing(function ($record) {
                         $start = $record->start_date ? \Carbon\Carbon::parse($record->start_date)->format('M-y') : '';
                         $end = $record->end_date ? \Carbon\Carbon::parse($record->end_date)->format('M-y') : '';
+
                         return $start && $end ? "{$start} - {$end}" : ($start ?: $end);
                     }),
 
@@ -162,7 +166,7 @@ class AbacusTransactionResource extends Resource
                         'credit' => 'Credit',
                         'debit' => 'Debit',
                     ])
-                    ->searchable()
+                    ->searchable(),
             ])
             ->actions([
                 \Filament\Actions\ViewAction::make()->modal()

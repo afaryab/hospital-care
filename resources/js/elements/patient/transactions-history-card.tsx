@@ -64,8 +64,8 @@ const PatientTreatmentsHistory: React.FC<{ treatments: ServiceOrder[] }> = ({ tr
                             </div>
                             <div className='flex flex-col md:flex-row md:flex-row items-center justify-between '>
                                 <div className='w-full'>
-                                    <p>{new Date(treatment.created_at).toLocaleDateString()}</p>
-                                    <p>{new Date(treatment.created_at).toLocaleTimeString()}</p>
+                                    <p>{new Date(treatment.created_at!).toLocaleDateString()}</p>
+                                    <p>{new Date(treatment.created_at!).toLocaleTimeString()}</p>
                                 </div>
                                 <div className="text-right w-full">
                                     <Button>Open</Button>
