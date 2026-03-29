@@ -5,127 +5,185 @@ import { Input } from '@/components/ui/input';
 import { RadioInput } from '@/components/ui/input-radio';
 import { Label } from '@/components/ui/label';
 import { MaskInput } from '@/components/ui/mask-input';
-import { PlaceholderPattern } from '@/components/ui/placeholder-pattern';
-import PatientHistoryMiniTree from '@/elements/history/patient-history-mini-tree';
-import FindOrSelectPatient from '@/elements/patient/find-or-select-patient';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MultiSelect } from '@/components/ui/multi-select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import { AdvancedTagSelect } from '@/components/ui/tag-select';
-import AppLayout from '@/layouts/app-layout';
-import { apiPatientsSearch, apiPatientsStore, counter, counterSelectDepartment, counterSelectDepartmentService, counterSelectPatient, counterView, home, patientsRegisterPsNumberDepartment, printTransaction, downloadTransaction, transactionStore } from '@/routes';
-import { type BreadcrumbItem } from '@/types';
-import { Head, Link, usePage, router } from '@inertiajs/react';
-import { AlertTriangle, LoaderCircle } from 'lucide-react';
-import { useEffect, useState, lazy, Suspense, use } from 'react';
-import { clsx } from 'clsx';
-import { patient } from '@/actions/App/Http/Controllers/WebController';
 import BulletsWrapper from '@/elements/bullets-wrapper';
+import DepartmentMiniCard from '@/elements/department/mini-card';
 import PatientMiniCard from '@/elements/patient/mini-card';
 import PatientHistorySideBar from '@/elements/patient/transactions-history-card';
-import DepartmentMiniCard from '@/elements/department/mini-card';
-const CreatePatientPolicy = lazy(() => import('@/policy/create-patient-policy'));
+import AppLayout from '@/layouts/app-layout';
+import {
+    apiPatientsStore,
+    counter,
+    counterSelectDepartment,
+    counterSelectDepartmentService,
+    counterSelectPatient,
+    counterView,
+    home,
+    transactionStore,
+} from '@/routes';
+import { type BreadcrumbItem } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { clsx } from 'clsx';
+import { LoaderCircle } from 'lucide-react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+const CreatePatientPolicy = lazy(
+    () => import('@/policy/create-patient-policy'),
+);
 
 export default function CounterIncome() {
+    const {
+        selectedPatient,
+        departments,
+        departmentKey,
+        openCounter,
+        services,
+        providers,
+        recesitation,
+        existingServiceOrders,
+        panelCompanies,
+    } = usePage().props;
 
-    const {selectedPatient, departments, departmentKey, openCounter, services, providers, recesitation, existingServiceOrders, panelCompanies} = usePage().props;
+    const step = !selectedPatient ? 1 : !departmentKey ? 2 : 3;
 
-    const step = !selectedPatient ? 1 : (!departmentKey ? 2 : 3);
-
-    let breadcrumbs: BreadcrumbItem[] = [
+    const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Dashboard',
             href: home().url,
         },
         {
             title: 'Counter',
-            href: openCounter ? counterView({
-                ctYear: openCounter.year,
-                ctMonth: openCounter.month,
-                ctNumber: openCounter.number
-            }).url : counter().url,
-        }
+            href: openCounter
+                ? counterView({
+                      ctYear: openCounter.year,
+                      ctMonth: openCounter.month,
+                      ctNumber: openCounter.number,
+                  }).url
+                : counter().url,
+        },
     ];
-    
 
-    let bullets = [
-        { 
+    const bullets = [
+        {
             title: openCounter && openCounter.ct_number,
-            url: openCounter && counterView({
-                ctYear: openCounter.year,
-                ctMonth: openCounter.month,
-                ctNumber: openCounter.number
-            }).url,
-            active: step === 1
-        }];
+            url:
+                openCounter &&
+                counterView({
+                    ctYear: openCounter.year,
+                    ctMonth: openCounter.month,
+                    ctNumber: openCounter.number,
+                }).url,
+            active: step === 1,
+        },
+    ];
 
-    if(selectedPatient?.name){
-        bullets.push({ 
+    if (selectedPatient?.name) {
+        bullets.push({
             title: selectedPatient && selectedPatient?.ps_number,
-            url: selectedPatient && counterSelectDepartment({
-                pYear: selectedPatient.year,
-                pMonth: selectedPatient.month,
-                number: selectedPatient.number
-            }).url,
-            active: step === 2
+            url:
+                selectedPatient &&
+                counterSelectDepartment({
+                    pYear: selectedPatient.year,
+                    pMonth: selectedPatient.month,
+                    number: selectedPatient.number,
+                }).url,
+            active: step === 2,
         });
         breadcrumbs.push({
             title: selectedPatient?.name,
-            href: selectedPatient && counterSelectDepartment({
-                pYear: selectedPatient.year,
-                pMonth: selectedPatient.month,
-                number: selectedPatient.number
-            }).url
+            href:
+                selectedPatient &&
+                counterSelectDepartment({
+                    pYear: selectedPatient.year,
+                    pMonth: selectedPatient.month,
+                    number: selectedPatient.number,
+                }).url,
         });
-    }else{
+    } else {
         bullets.push({
             title: 'No patient selected',
             url: counterSelectPatient({
                 ctYear: openCounter.year,
                 ctMonth: openCounter.month,
-                ctNumber: openCounter.number
+                ctNumber: openCounter.number,
             }).url,
-            active: step === 2
+            active: step === 2,
         });
         breadcrumbs.push({
             title: 'Select Patient',
             href: counterSelectPatient({
                 ctYear: openCounter.year,
                 ctMonth: openCounter.month,
-                ctNumber: openCounter.number
-            }).url
+                ctNumber: openCounter.number,
+            }).url,
         });
     }
-    if(selectedPatient?.name && departmentKey != ''){
-        bullets.push({ 
+    if (selectedPatient?.name && departmentKey != '') {
+        bullets.push({
             title: departmentKey != '' && `Departments (${departmentKey})`,
-            url: (selectedPatient && departmentKey != '') && counterSelectDepartmentService({
-                pYear: selectedPatient.year,
-                pMonth: selectedPatient.month,
-                number: selectedPatient.number,
-                departmentKey: departmentKey as string
-            }).url,
-            active: step === 3
+            url:
+                selectedPatient &&
+                departmentKey != '' &&
+                counterSelectDepartmentService({
+                    pYear: selectedPatient.year,
+                    pMonth: selectedPatient.month,
+                    number: selectedPatient.number,
+                    departmentKey: departmentKey as string,
+                }).url,
+            active: step === 3,
         });
         breadcrumbs.push({
-            title: departmentKey != '' ? `Departments (${departmentKey})` : 'Select Department',
-            href: (selectedPatient && departmentKey != '') ? counterSelectDepartmentService({
-                pYear: selectedPatient.year,
-                pMonth: selectedPatient.month,
-                number: selectedPatient.number,
-                departmentKey: departmentKey as string
-            }).url : '#'
+            title:
+                departmentKey != ''
+                    ? `Departments (${departmentKey})`
+                    : 'Select Department',
+            href:
+                selectedPatient && departmentKey != ''
+                    ? counterSelectDepartmentService({
+                          pYear: selectedPatient.year,
+                          pMonth: selectedPatient.month,
+                          number: selectedPatient.number,
+                          departmentKey: departmentKey as string,
+                      }).url
+                    : '#',
         });
     }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Counter" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72] dark:bg-[#262626]">
-                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-2 bg-white dark:bg-neutral-950 text-gray-800 dark:text-white">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800 dark:bg-neutral-950 dark:text-white">
                     <BulletsWrapper bullets={bullets}>
-                        {step === 1 && <SelectPatient openCounter={openCounter} />}
-                        {step === 2 && <SelectDepartment openCounter={openCounter} patient={selectedPatient} departments={departments} />}
-                        {step === 3 && <CollectPayment recesitation={recesitation} existingServiceOrders={existingServiceOrders} openCounter={openCounter} patient={selectedPatient} departments={departments} departmentKey={departmentKey} services={services} providers={providers} panelCompanies={panelCompanies ?? []} />}
+                        {step === 1 && (
+                            <SelectPatient openCounter={openCounter} />
+                        )}
+                        {step === 2 && (
+                            <SelectDepartment
+                                openCounter={openCounter}
+                                patient={selectedPatient}
+                                departments={departments}
+                            />
+                        )}
+                        {step === 3 && (
+                            <CollectPayment
+                                recesitation={recesitation}
+                                existingServiceOrders={existingServiceOrders}
+                                openCounter={openCounter}
+                                patient={selectedPatient}
+                                departments={departments}
+                                departmentKey={departmentKey}
+                                services={services}
+                                providers={providers}
+                                panelCompanies={panelCompanies ?? []}
+                            />
+                        )}
                     </BulletsWrapper>
                 </div>
             </div>
@@ -133,10 +191,17 @@ export default function CounterIncome() {
     );
 }
 
-
-
-function CollectPayment({recesitation, existingServiceOrders, openCounter, patient, departments, departmentKey, services, providers, panelCompanies}:any) {
-
+function CollectPayment({
+    recesitation,
+    existingServiceOrders,
+    openCounter,
+    patient,
+    departments,
+    departmentKey,
+    services,
+    providers,
+    panelCompanies,
+}: any) {
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [mriNumber, setMriNumber] = useState<string>('');
     const [paymentMethod, setPaymentMethod] = useState<string>('CASH');
@@ -151,45 +216,52 @@ function CollectPayment({recesitation, existingServiceOrders, openCounter, patie
 
     const [formData, setFormData] = useState<any>({
         total: 0,
-        items: []
+        items: [],
     });
 
     const calculateChange = () => {
-        console.log('Calculating change with amountPaid:', amountPaid, 'and total:', formData.total);
+        console.log(
+            'Calculating change with amountPaid:',
+            amountPaid,
+            'and total:',
+            formData.total,
+        );
         return amountPaid - formData.total;
     };
 
-    const validatedInput = (billData:any) => {
+    const validatedInput = (billData: any) => {
         // Patient ID must be set
-        if(!billData.patient_id){
+        if (!billData.patient_id) {
             validationErrors.patient_id = ['Patient ID is required.'];
             setValidationErrors(validationErrors);
             return false;
         }
 
         // Check each item if sevice have providers then provider must be selected
-        for(const item of billData.items){
-            const service = services.find((s:any) => s.id == item.service_id);
-            if(service && service.have_service_provider && !item.provider_id){
-                validationErrors[`provider_id_${item.service_id}`] = ['Provider is required for this service.'];
+        for (const item of billData.items) {
+            const service = services.find((s: any) => s.id == item.service_id);
+            if (service && service.have_service_provider && !item.provider_id) {
+                validationErrors[`provider_id_${item.service_id}`] = [
+                    'Provider is required for this service.',
+                ];
                 setValidationErrors(validationErrors);
                 return false;
             }
         }
         return true;
-    }
+    };
 
     const generateBill = async () => {
         // Clear previous validation errors
         setValidationErrors({});
         setProcessing(true);
 
-        if(recesitation && selectedServiceOrder === ''){
+        if (recesitation && selectedServiceOrder === '') {
             alert('Please enter MRI number for recesitation services.');
             setProcessing(false);
             return;
         }
-        
+
         try {
             const billData = {
                 patient_id: patient.id,
@@ -204,18 +276,20 @@ function CollectPayment({recesitation, existingServiceOrders, openCounter, patie
                     service_name: item.name,
                     quantity: item.quantity,
                     unit_price: item.charges,
-                    total: item.total || (item.quantity * item.charges),
-                    provider_id: serviceProviders[item.serviceId] || null
+                    total: item.total || item.quantity * item.charges,
+                    provider_id: serviceProviders[item.serviceId] || null,
                 })),
                 total_amount: formData.total,
                 payment_method: paymentMethod,
                 panel_company: paymentMethod === 'PANEL' ? panelCompany : null,
                 amount_paid: amountPaid ? amountPaid : 0,
-                change_amount: calculateChange()
+                change_amount: calculateChange(),
             };
 
-            if(!validatedInput(billData)){  
-                alert('Please fix the validation errors before generating the bill.');
+            if (!validatedInput(billData)) {
+                alert(
+                    'Please fix the validation errors before generating the bill.',
+                );
                 setProcessing(false);
                 return;
             }
@@ -223,7 +297,7 @@ function CollectPayment({recesitation, existingServiceOrders, openCounter, patie
             router.post(transactionStore().url, billData, {
                 onSuccess: (response) => {
                     console.log('Bill generated successfully:', response);
-                    
+
                     // Create a simple success message with PDF options
                     // const now = response.url;
                     // const year = ;
@@ -231,25 +305,25 @@ function CollectPayment({recesitation, existingServiceOrders, openCounter, patie
                     // const day = String(now.getDate()).padStart(2, '0');
                     // // Use current timestamp as transaction number if not available
                     // const number = now.getTime();
-                    
+
                     // setTimeout(() => {
                     //     window.open(printTransaction.url({year, month, day, number}), '_blank', 'width=800,height=600,scrollbars=yes');
                     // }, 1000);
-                    
+
                     setValidationErrors({});
                     setProcessing(false);
                 },
                 onError: (errors) => {
                     console.error('Validation errors:', errors);
                     setValidationErrors(errors);
-                    
+
                     // Show a general error message
                     const errorMessages = Object.values(errors).flat();
                     setProcessing(false);
                 },
                 onFinish: () => {
                     console.log('Request completed');
-                }
+                },
             });
         } catch (error) {
             console.error('Error generating bill:', error);
@@ -257,7 +331,11 @@ function CollectPayment({recesitation, existingServiceOrders, openCounter, patie
         }
     };
 
-    const updateItemQuantityAndCharges = (serviceId: string, quantity: number, charges: number) => {
+    const updateItemQuantityAndCharges = (
+        serviceId: string,
+        quantity: number,
+        charges: number,
+    ) => {
         setFormData((prevData: any) => {
             const updatedItems = prevData.items.map((item: any) => {
                 if (item.serviceId === serviceId) {
@@ -265,18 +343,21 @@ function CollectPayment({recesitation, existingServiceOrders, openCounter, patie
                         ...item,
                         quantity: quantity,
                         charges: charges,
-                        total: quantity * charges
+                        total: quantity * charges,
                     };
                 }
                 return item;
             });
 
-            const newTotal = updatedItems.reduce((sum: number, item: any) => sum + (item.total || 0), 0);
+            const newTotal = updatedItems.reduce(
+                (sum: number, item: any) => sum + (item.total || 0),
+                0,
+            );
 
             return {
                 ...prevData,
                 items: updatedItems,
-                total: newTotal
+                total: newTotal,
             };
         });
     };
@@ -284,20 +365,19 @@ function CollectPayment({recesitation, existingServiceOrders, openCounter, patie
     const updateServiceProvider = (serviceId: string, providerId: string) => {
         setServiceProviders((prev: any) => ({
             ...prev,
-            [serviceId]: providerId
+            [serviceId]: providerId,
         }));
     };
 
     const flattenObject = (obj: any, keysToInclude: any[] = []) => {
-        
-        if(typeof obj !== 'object' || obj === null){
+        if (typeof obj !== 'object' || obj === null) {
             return [];
         }
 
         // Object keys foreach loop
         let items: any[] = [];
-        if(keysToInclude.length > 0){
-            keysToInclude.forEach((key:any) => {
+        if (keysToInclude.length > 0) {
+            keysToInclude.forEach((key: any) => {
                 const item = obj[key];
                 items = items.concat(item);
             });
@@ -311,64 +391,72 @@ function CollectPayment({recesitation, existingServiceOrders, openCounter, patie
     };
 
     useEffect(() => {
-
         let totalCharges = 0;
-        
-        const customerSelectedServicesCartArray = selectedServices.map((serviceId:any) => {
-            
-            const sl = services.find((s:any) => s.id == serviceId);
-            const itemCharges = sl?.charges || 0;
-            const itemQuantity = 1;
-            const itemTotal = itemQuantity * itemCharges;
-            totalCharges += itemTotal;
-            console.log(sl);
 
-            // Flat providers array
-            let providerUsers = flattenObject(providers, sl?.service_provider_types || []);
+        const customerSelectedServicesCartArray = selectedServices.map(
+            (serviceId: any) => {
+                const sl = services.find((s: any) => s.id == serviceId);
+                const itemCharges = sl?.charges || 0;
+                const itemQuantity = 1;
+                const itemTotal = itemQuantity * itemCharges;
+                totalCharges += itemTotal;
+                console.log(sl);
 
-            console.log('Providers for service ', serviceId, providerUsers);
+                // Flat providers array
+                const providerUsers = flattenObject(
+                    providers,
+                    sl?.service_provider_types || [],
+                );
 
-            return {
-                serviceId: sl?.id || '',
-                name: sl?.name || '',
-                quantity: itemQuantity,
-                charges: itemCharges,
-                providerId: providerUsers.find((p:any) => p.serviceId == serviceId)?.id || '',
-                total: itemTotal
-            };
-        }, {});
+                console.log('Providers for service ', serviceId, providerUsers);
+
+                return {
+                    serviceId: sl?.id || '',
+                    name: sl?.name || '',
+                    quantity: itemQuantity,
+                    charges: itemCharges,
+                    providerId:
+                        providerUsers.find((p: any) => p.serviceId == serviceId)
+                            ?.id || '',
+                    total: itemTotal,
+                };
+            },
+            {},
+        );
 
         const newFormData = {
             total: totalCharges,
-            items: customerSelectedServicesCartArray
+            items: customerSelectedServicesCartArray,
         };
 
         setFormData(newFormData);
     }, [selectedServices]);
 
-    const [ department, setDepartment ] = useState<any>({
+    const [department, setDepartment] = useState<any>({
         id: '',
         name: '',
         slug: '',
     });
 
-    const [ isRecesitation, setIsRecestitation ] = useState<boolean>(false);
+    const [isRecesitation, setIsRecestitation] = useState<boolean>(false);
 
     useEffect(() => {
         console.log(departmentKey);
 
         // If depatmentKey is recesitation type then remove RECES- prefix
         let departmentKeyCleaned = departmentKey;
-        if(departmentKey && departmentKey.startsWith('RECES-')){
+        if (departmentKey && departmentKey.startsWith('RECES-')) {
             setIsRecestitation(true);
             departmentKeyCleaned = departmentKey.replace('RECES-', '');
         }
 
-        const dept = departments.find((d:any) => d.slug === departmentKeyCleaned);
+        const dept = departments.find(
+            (d: any) => d.slug === departmentKeyCleaned,
+        );
         setDepartment(dept);
     }, [departmentKey]);
 
-    const [ changeAmount, setChangeAmount ] = useState<any>(0);
+    const [changeAmount, setChangeAmount] = useState<any>(0);
 
     useEffect(() => {
         console.log('Recesitation:', isRecesitation);
@@ -378,192 +466,349 @@ function CollectPayment({recesitation, existingServiceOrders, openCounter, patie
         setChangeAmount(calculateChange());
     }, [amountPaid, formData.total]);
 
-    return <div className='flex flex-col h-full w-full space-y-4'>
-        <div className='flex flex-row h-full w-full space-x-6'>
-            <div className='flex-1'>
-                <h3 className='text-3xl mb-2 font-bold'>Add Bill</h3>
-                <div className='flex-1 grid grid-cols-4 gap-4 w-full mb-2 '>
-                    <DepartmentMiniCard department={department} recestitation={isRecesitation} patient={patient} className='h-full w-full border rounded-xl flex flex-col items-center justify-center' />
-                    <PatientMiniCard patient={patient} className='col-span-3 w-full'/>
-                </div>
-                <div className='p-4 border dark:border-neutral-950 rounded-xl mb-2'>
-                    {recesitation && <div className="grid gap-2 mb-2">
-                        <Label htmlFor="service">MRI #</Label>
-                        <Select name="mri_number" defaultValue={selectedServiceOrder} onValueChange={setSelectedServiceOrder}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select MRI number" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {existingServiceOrders.map((order:any) => (<SelectItem value={order.id}>{order.so_number + ` - `+ order.service.name}</SelectItem>))}
-                            </SelectContent>
-                        </Select>
-                    </div>}
-                    <div className="grid gap-2 mb-2">
-                        <Label htmlFor="featured_services">Featured Services</Label>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {services.filter((service: any) => service.is_featured).map((service: any) => (
-                                <button
-                                    key={service.id}
-                                    onClick={() => setSelectedServices(prev => 
-                                        prev.includes(service.id) 
-                                            ? prev.filter(id => id !== service.id)
-                                            : [...prev, service.id]
-                                    )}
-                                    className={clsx(
-                                        'p-3 rounded-lg border-2 transition-all text-left',
-                                        selectedServices.includes(service.id)
-                                            ? 'border-green-500 bg-green-50 dark:bg-green-950'
-                                            : 'border-gray-200 dark:border-neutral-700 hover:border-gray-300'
-                                    )}
-                                >
-                                    <div className="font-semibold text-sm">{service.name}</div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="service">Service</Label>
-                        <AdvancedTagSelect
-                            options={services.map((service:any) => ({value: service.id, label: service.name}))}
-                            value={selectedServices}
-                            onValueChange={setSelectedServices}
-                            placeholder="Select services..."
-                            disabled={department?.have_composit_services && selectedServices.length > 0}
+    return (
+        <div className="flex h-full w-full flex-col space-y-4">
+            <div className="flex h-full w-full flex-row space-x-6">
+                <div className="flex-1">
+                    <h3 className="mb-2 text-3xl font-bold">Add Bill</h3>
+                    <div className="mb-2 grid w-full flex-1 grid-cols-4 gap-4">
+                        <DepartmentMiniCard
+                            department={department}
+                            recestitation={isRecesitation}
+                            patient={patient}
+                            className="flex h-full w-full flex-col items-center justify-center rounded-xl border"
                         />
-                        {/* <InputError message={errors.email} /> */}
+                        <PatientMiniCard
+                            patient={patient}
+                            className="col-span-3 w-full"
+                        />
                     </div>
-                </div>
-                <div className='p-4 border dark:border-neutral-950 rounded-xl mb-2'>
-                    <div className="grid gap-2">
-                        <table className="w-full text-left border">
-                            <tbody>
-                                <tr className="border-b dark:bg-neutral-950 dark:text-white rounded-tl-xl rounded-tr-xl">
-                                    <td className="p-2 text-left">Product</td>
-                                    <td className="p-2 text-right">Provider</td>
-                                    {/* <td className="p-2 text-right">QTY</td> */}
-                                    <td className="p-2 text-right">Total</td>
-                                </tr>
-                                {formData.items.length > 0 ? formData.items.map((item:any) => {
-                                    const service = services.find((s:any) => s.id == item.serviceId);
-                                    return (<BillItemsEditableTableRow 
-                                        key={item.serviceId}
-                                        service_name={item.name}
-                                        serviceid={item.serviceId}
-                                        quantity={item.quantity}
-                                        charges={item.charges}
-                                        service={service}
-                                        selectedProvider={serviceProviders[item.serviceId] || ''}
-                                        providers={flattenObject(providers, service?.service_provider_types || [])}
-                                        onUpdate={updateItemQuantityAndCharges}
-                                        onProviderUpdate={updateServiceProvider}
-                                        validationErrors={validationErrors}
-                                    />);
-                                }) : (
-                                    <tr>
-                                        <td colSpan={4} className="p-4 text-center text-gray-500 border dark:text-white dark:border-neutral-950 rounded-bl-xl rounded-br-xl">
-                                            No services selected.
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
-                        <div className="mt-4 flex justify-end">
-                            <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-
-                                    
-                                </div>
-
-                                <div className='flex flex-col space-y-2'>
-
-                                    <div>
-                                        <Label htmlFor="total_amount">Total Amount</Label>
-                                        <Input
-                                            id="total_amount"
-                                            type="text"
-                                            name="total_amount"
-                                            className="text-right font-semibold"
-                                            value={`${formData.total.toFixed(2)}/- only`}
-                                            readOnly
-                                        />
-                                        <InputError message={validationErrors.total_amount} />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="payment_method">Payment Method</Label>
-                                        <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select payment method" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="CASH">Cash</SelectItem>
-                                                <SelectItem value="CARD">Card</SelectItem>
-                                                <SelectItem value="CHEQUE">Cheque</SelectItem>
-                                                <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
-                                                <SelectItem value="PANEL">INSURANCE</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError message={validationErrors.payment_method} />
-                                    </div>
-
-                                    {paymentMethod === 'PANEL' && <div>
-                                        <Label htmlFor="panel_company">Panel Company</Label>
-                                        <Select value={panelCompany} onValueChange={setPanelCompany}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select panel company" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {panelCompanies.map((company:any) => (
-                                                    <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <InputError message={validationErrors.panel_company} />
-                                    </div>}
-
-                                    {(paymentMethod === 'CASH' || paymentMethod === 'CARD' || paymentMethod === 'CHEQUE' || paymentMethod === 'BANK_TRANSFER') && <div>
-                                        <Label htmlFor="amount_paid">Amount Paid</Label>
-                                        <Input
-                                            id="amount_paid"
-                                            type="number"
-                                            name="amount_paid"
-                                            className="text-right"
-                                            value={amountPaid === 0 ? '' : amountPaid}
-                                            onChange={(e) => setAmountPaid(parseFloat(e.target.value))}
-                                            min={0}
-                                            step={0.01}
-                                            placeholder="0.00"
-                                        />
-                                        <InputError message={validationErrors.amount_paid} />
-                                    </div>}
-
-                                    <div className='cursor-not-allowed'>
-                                        <Label htmlFor="change_amount">{changeAmount > 0 ? `Change` : 'Pending Receivable'}</Label>
-                                        <Input
-                                            id="change_amount"
-                                            type="text"
-                                            name="change_amount"
-                                            className="text-right font-semibold bg-green-50 cursor-not-allowed"
-                                            value={`${changeAmount.toFixed(2)}/- only`}
-                                            readOnly
-                                        />
-                                    </div>
-
-
-                                    <div className="pt-4">
-                                        <Button 
-                                            variant={'default'}
-                                            onClick={generateBill}
-                                            disabled={formData.items.length === 0 || amountPaid < 0 || processing}
+                    <div className="mb-2 rounded-xl border p-4 dark:border-neutral-950">
+                        {recesitation && (
+                            <div className="mb-2 grid gap-2">
+                                <Label htmlFor="service">MRI #</Label>
+                                <Select
+                                    name="mri_number"
+                                    defaultValue={selectedServiceOrder}
+                                    onValueChange={setSelectedServiceOrder}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select MRI number" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {existingServiceOrders.map(
+                                            (order: any) => (
+                                                <SelectItem value={order.id}>
+                                                    {order.so_number +
+                                                        ` - ` +
+                                                        order.service.name}
+                                                </SelectItem>
+                                            ),
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                        <div className="mb-2 grid gap-2">
+                            <Label htmlFor="featured_services">
+                                Featured Services
+                            </Label>
+                            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                                {services
+                                    .filter(
+                                        (service: any) => service.is_featured,
+                                    )
+                                    .map((service: any) => (
+                                        <button
+                                            key={service.id}
+                                            onClick={() =>
+                                                setSelectedServices((prev) =>
+                                                    prev.includes(service.id)
+                                                        ? prev.filter(
+                                                              (id) =>
+                                                                  id !==
+                                                                  service.id,
+                                                          )
+                                                        : [...prev, service.id],
+                                                )
+                                            }
                                             className={clsx(
-                                                formData.items.length === 0 || amountPaid < 0 || processing ? 'opacity-50 cursor-not-allowed' : ''
+                                                'rounded-lg border-2 p-3 text-left transition-all',
+                                                selectedServices.includes(
+                                                    service.id,
+                                                )
+                                                    ? 'border-green-500 bg-green-50 dark:bg-green-950'
+                                                    : 'border-gray-200 hover:border-gray-300 dark:border-neutral-700',
                                             )}
                                         >
+                                            <div className="text-sm font-semibold">
+                                                {service.name}
+                                            </div>
+                                        </button>
+                                    ))}
+                            </div>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="service">Service</Label>
+                            <AdvancedTagSelect
+                                options={services.map((service: any) => ({
+                                    value: service.id,
+                                    label: service.name,
+                                }))}
+                                value={selectedServices}
+                                onValueChange={setSelectedServices}
+                                placeholder="Select services..."
+                                disabled={
+                                    department?.have_composit_services &&
+                                    selectedServices.length > 0
+                                }
+                            />
+                            {/* <InputError message={errors.email} /> */}
+                        </div>
+                    </div>
+                    <div className="mb-2 rounded-xl border p-4 dark:border-neutral-950">
+                        <div className="grid gap-2">
+                            <table className="w-full border text-left">
+                                <tbody>
+                                    <tr className="rounded-tl-xl rounded-tr-xl border-b dark:bg-neutral-950 dark:text-white">
+                                        <td className="p-2 text-left">
+                                            Product
+                                        </td>
+                                        <td className="p-2 text-right">
+                                            Provider
+                                        </td>
+                                        {/* <td className="p-2 text-right">QTY</td> */}
+                                        <td className="p-2 text-right">
+                                            Total
+                                        </td>
+                                    </tr>
+                                    {formData.items.length > 0 ? (
+                                        formData.items.map((item: any) => {
+                                            const service = services.find(
+                                                (s: any) =>
+                                                    s.id == item.serviceId,
+                                            );
+                                            return (
+                                                <BillItemsEditableTableRow
+                                                    key={item.serviceId}
+                                                    service_name={item.name}
+                                                    serviceid={item.serviceId}
+                                                    quantity={item.quantity}
+                                                    charges={item.charges}
+                                                    service={service}
+                                                    selectedProvider={
+                                                        serviceProviders[
+                                                            item.serviceId
+                                                        ] || ''
+                                                    }
+                                                    providers={flattenObject(
+                                                        providers,
+                                                        service?.service_provider_types ||
+                                                            [],
+                                                    )}
+                                                    onUpdate={
+                                                        updateItemQuantityAndCharges
+                                                    }
+                                                    onProviderUpdate={
+                                                        updateServiceProvider
+                                                    }
+                                                    validationErrors={
+                                                        validationErrors
+                                                    }
+                                                />
+                                            );
+                                        })
+                                    ) : (
+                                        <tr>
+                                            <td
+                                                colSpan={4}
+                                                className="rounded-br-xl rounded-bl-xl border p-4 text-center text-gray-500 dark:border-neutral-950 dark:text-white"
+                                            >
+                                                No services selected.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                            <div className="mt-4 flex justify-end">
+                                <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div></div>
 
-                                            {processing && (
-                                                <LoaderCircle className="h-4 w-4 animate-spin" />
-                                            )}
-                                            Generate Bill
-                                        </Button>
+                                    <div className="flex flex-col space-y-2">
+                                        <div>
+                                            <Label htmlFor="total_amount">
+                                                Total Amount
+                                            </Label>
+                                            <Input
+                                                id="total_amount"
+                                                type="text"
+                                                name="total_amount"
+                                                className="text-right font-semibold"
+                                                value={`${formData.total.toFixed(2)}/- only`}
+                                                readOnly
+                                            />
+                                            <InputError
+                                                message={
+                                                    validationErrors.total_amount
+                                                }
+                                            />
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="payment_method">
+                                                Payment Method
+                                            </Label>
+                                            <Select
+                                                value={paymentMethod}
+                                                onValueChange={setPaymentMethod}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select payment method" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="CASH">
+                                                        Cash
+                                                    </SelectItem>
+                                                    <SelectItem value="CARD">
+                                                        Card
+                                                    </SelectItem>
+                                                    <SelectItem value="CHEQUE">
+                                                        Cheque
+                                                    </SelectItem>
+                                                    <SelectItem value="BANK_TRANSFER">
+                                                        Bank Transfer
+                                                    </SelectItem>
+                                                    <SelectItem value="PANEL">
+                                                        INSURANCE
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <InputError
+                                                message={
+                                                    validationErrors.payment_method
+                                                }
+                                            />
+                                        </div>
+
+                                        {paymentMethod === 'PANEL' && (
+                                            <div>
+                                                <Label htmlFor="panel_company">
+                                                    Panel Company
+                                                </Label>
+                                                <Select
+                                                    value={panelCompany}
+                                                    onValueChange={
+                                                        setPanelCompany
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select panel company" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {panelCompanies.map(
+                                                            (company: any) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        company.id
+                                                                    }
+                                                                    value={
+                                                                        company.id
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        company.name
+                                                                    }
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                <InputError
+                                                    message={
+                                                        validationErrors.panel_company
+                                                    }
+                                                />
+                                            </div>
+                                        )}
+
+                                        {(paymentMethod === 'CASH' ||
+                                            paymentMethod === 'CARD' ||
+                                            paymentMethod === 'CHEQUE' ||
+                                            paymentMethod ===
+                                                'BANK_TRANSFER') && (
+                                            <div>
+                                                <Label htmlFor="amount_paid">
+                                                    Amount Paid
+                                                </Label>
+                                                <Input
+                                                    id="amount_paid"
+                                                    type="number"
+                                                    name="amount_paid"
+                                                    className="text-right"
+                                                    value={
+                                                        amountPaid === 0
+                                                            ? ''
+                                                            : amountPaid
+                                                    }
+                                                    onChange={(e) =>
+                                                        setAmountPaid(
+                                                            parseFloat(
+                                                                e.target.value,
+                                                            ),
+                                                        )
+                                                    }
+                                                    min={0}
+                                                    step={0.01}
+                                                    placeholder="0.00"
+                                                />
+                                                <InputError
+                                                    message={
+                                                        validationErrors.amount_paid
+                                                    }
+                                                />
+                                            </div>
+                                        )}
+
+                                        <div className="cursor-not-allowed">
+                                            <Label htmlFor="change_amount">
+                                                {changeAmount > 0
+                                                    ? `Change`
+                                                    : 'Pending Receivable'}
+                                            </Label>
+                                            <Input
+                                                id="change_amount"
+                                                type="text"
+                                                name="change_amount"
+                                                className="cursor-not-allowed bg-green-50 text-right font-semibold"
+                                                value={`${changeAmount.toFixed(2)}/- only`}
+                                                readOnly
+                                            />
+                                        </div>
+
+                                        <div className="pt-4">
+                                            <Button
+                                                variant={'default'}
+                                                onClick={generateBill}
+                                                disabled={
+                                                    formData.items.length ===
+                                                        0 ||
+                                                    amountPaid < 0 ||
+                                                    processing
+                                                }
+                                                className={clsx(
+                                                    formData.items.length ===
+                                                        0 ||
+                                                        amountPaid < 0 ||
+                                                        processing
+                                                        ? 'cursor-not-allowed opacity-50'
+                                                        : '',
+                                                )}
+                                            >
+                                                {processing && (
+                                                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                                                )}
+                                                Generate Bill
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -571,81 +816,108 @@ function CollectPayment({recesitation, existingServiceOrders, openCounter, patie
                     </div>
                 </div>
             </div>
-            
         </div>
-    </div>
+    );
 }
 
-function SelectDepartment({openCounter, patient, departments}:any) {
-    return <div className='flex flex-row h-full w-full space-y-4'>
-        <PatientHistorySideBar patient={patient} className='w-1/4' />
-        <div className='flex-1 flex flex-col h-full w-full space-y-4 px-4'>
-            <PatientMiniCard patient={patient} className='w-full'/>
-            <h3 className='text-3xl mb-2 font-bold'>Departments</h3>
-            <div className='grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 w-full'>
-                {departments.map((department:any) => (
-                    <div key={department.id} className='flex flex-col items-center justify-center'>
-                        <Link href={counterSelectDepartmentService({
-                            pYear: patient.year,
-                            pMonth: patient.month,
-                            number: patient.number,
-                            departmentKey: department.slug
-                        }).url} className='h-32 w-32 border rounded-xl flex flex-col items-center justify-center'>
-                            <img src={department.image} alt={department.name} className='w-12 h-12 object-contain'/>
-                            <span className='text-center text-sm mt-2 max-w-28'>{department.name}</span>
-                        </Link>
-                    </div>
-                ))}
-            </div>
-            <h3 className='text-3xl mb-2 font-bold'>Recesitation</h3>
-            <div className='grid grid-cols-1 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 w-full'>
-                {departments.filter((department:any) => department.have_composit_services).map((department:any) => (
-                    <div key={department.id} className='flex flex-col items-center justify-center'>
-                        <Link href={counterSelectDepartmentService({
-                            pYear: patient.year,
-                            pMonth: patient.month,
-                            number: patient.number,
-                            departmentKey: `RECES-${department.slug}`
-                        }).url} className='h-32 w-32 border rounded-xl flex flex-col items-center justify-center'>
-                            <img src={department.image} alt={department.name} className='w-12 h-12 object-contain'/>
-                            <span className='text-center text-sm mt-2 max-w-28'>{department.name}</span>
-                        </Link>
-                    </div>
-                ))}
+function SelectDepartment({ openCounter, patient, departments }: any) {
+    return (
+        <div className="flex h-full w-full flex-row space-y-4">
+            <PatientHistorySideBar patient={patient} className="w-1/4" />
+            <div className="flex h-full w-full flex-1 flex-col space-y-4 px-4">
+                <PatientMiniCard patient={patient} className="w-full" />
+                <h3 className="mb-2 text-3xl font-bold">Departments</h3>
+                <div className="grid w-full grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                    {departments.map((department: any) => (
+                        <div
+                            key={department.id}
+                            className="flex flex-col items-center justify-center"
+                        >
+                            <Link
+                                href={
+                                    counterSelectDepartmentService({
+                                        pYear: patient.year,
+                                        pMonth: patient.month,
+                                        number: patient.number,
+                                        departmentKey: department.slug,
+                                    }).url
+                                }
+                                className="flex h-32 w-32 flex-col items-center justify-center rounded-xl border"
+                            >
+                                <img
+                                    src={department.image}
+                                    alt={department.name}
+                                    className="h-12 w-12 object-contain"
+                                />
+                                <span className="mt-2 max-w-28 text-center text-sm">
+                                    {department.name}
+                                </span>
+                            </Link>
+                        </div>
+                    ))}
+                </div>
+                <h3 className="mb-2 text-3xl font-bold">Recesitation</h3>
+                <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                    {departments
+                        .filter(
+                            (department: any) =>
+                                department.have_composit_services,
+                        )
+                        .map((department: any) => (
+                            <div
+                                key={department.id}
+                                className="flex flex-col items-center justify-center"
+                            >
+                                <Link
+                                    href={
+                                        counterSelectDepartmentService({
+                                            pYear: patient.year,
+                                            pMonth: patient.month,
+                                            number: patient.number,
+                                            departmentKey: `RECES-${department.slug}`,
+                                        }).url
+                                    }
+                                    className="flex h-32 w-32 flex-col items-center justify-center rounded-xl border"
+                                >
+                                    <img
+                                        src={department.image}
+                                        alt={department.name}
+                                        className="h-12 w-12 object-contain"
+                                    />
+                                    <span className="mt-2 max-w-28 text-center text-sm">
+                                        {department.name}
+                                    </span>
+                                </Link>
+                            </div>
+                        ))}
+                </div>
             </div>
         </div>
-    </div>
+    );
 }
 
-function SelectPatient({openCounter}:any) {
-
-
+function SelectPatient({ openCounter }: any) {
     const [patients, setPatients] = useState([]);
     const [exactMatch, setExactMatch] = useState([]);
 
-    const [psInput , setPsInput] = useState<string>('');
+    const [psInput, setPsInput] = useState<string>('');
 
-    const psNumberIsChanged = (val:string, unmasked:string) =>{
-
+    const psNumberIsChanged = (val: string, unmasked: string) => {
         console.log(val, unmasked);
         setPsInput(val);
+    };
 
-    }
+    const [patientCnic, setPatientCnic] = useState<string>('');
 
-
-    const [patientCnic , setPatientCnic] = useState<string>('');
-
-    const patientCnicIsChanged = (val:string, unmasked:string) =>{
-
+    const patientCnicIsChanged = (val: string, unmasked: string) => {
         console.log(val, unmasked);
         setPatientCnic(val);
+    };
 
-    }
-
-    const [patientName , setPatientName] = useState<string>('');
-    const [patientContact , setPatientContact] = useState<string>('');
-    const [patientAge , setPatientAge] = useState<string>('');
-    const [patientGender , setPatientGender] = useState<string>('');
+    const [patientName, setPatientName] = useState<string>('');
+    const [patientContact, setPatientContact] = useState<string>('');
+    const [patientAge, setPatientAge] = useState<string>('');
+    const [patientGender, setPatientGender] = useState<string>('');
 
     useEffect(() => {
         fetchPatientsFromApi();
@@ -655,9 +927,8 @@ function SelectPatient({openCounter}:any) {
         patientName,
         patientContact,
         patientAge,
-        patientGender
-    ])
-
+        patientGender,
+    ]);
 
     const fetchPatientsFromApi = async () => {
         try {
@@ -675,7 +946,7 @@ function SelectPatient({openCounter}:any) {
                     patient_gender: patientGender,
                 }),
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 setPatients(data.data.possible);
@@ -684,7 +955,7 @@ function SelectPatient({openCounter}:any) {
         } catch (error) {
             console.error('Error fetching patients:', error);
         }
-    }
+    };
 
     const createPatientInApi = async () => {
         try {
@@ -709,9 +980,8 @@ function SelectPatient({openCounter}:any) {
                 window.location.href = counterSelectDepartment({
                     pYear: data.data.year,
                     pMonth: data.data.month,
-                    number: data.data.number
+                    number: data.data.number,
                 }).url;
-                
             }
         } catch (error) {
             console.error('Error creating patient:', error);
@@ -720,185 +990,264 @@ function SelectPatient({openCounter}:any) {
 
     useEffect(() => {
         console.log(patients);
-    }, [patients])
+    }, [patients]);
 
-
-    return <div className='h-full w-full grid grid-cols-2 divide-x divide-[#06df72]'>
-        <div className='flex flex-col p-4 pr-8'>
-            <div className='flex flex-col w-full space-y-4'>
-                <h3 className='text-3xl mb-2 font-bold'>Select / Create Patient</h3>
-                <div className="grid gap-2">
-                    <Label htmlFor="mr_number">MR Number</Label>
-                    <MaskInput
-                        id="mr_number"
-                        type="text"
-                        name="mr_number"
-                        required
-                        autoFocus
-                        tabIndex={100}
-                        autoComplete="false"
-                        mask="aa/9999/99/999999"
-                        placeholder="--/----/--/------"
-                        value={psInput} onValueChange={({ masked, unmasked }) => psNumberIsChanged(masked, unmasked)}
-                    />
-                    {/* <InputError message={errors.email} /> */}
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="cnic_number">CNIC Number</Label>
-                    <MaskInput
-                        id="cnic_number"
-                        type="text"
-                        name="cnic_number"
-                        required
-                        autoFocus
-                        tabIndex={2}
-                        autoComplete="false"
-                        mask="99999-9999999-9"
-                        placeholder='----- ------- -'
-                        value={patientCnic} onValueChange={({ masked, unmasked }) => patientCnicIsChanged(masked, unmasked)}
-                    />
-                    {/* <InputError message={errors.email} /> */}
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="patient_name" required={true}>Patient Name</Label>
-                    <Input
-                        id="patient_name"
-                        type="text"
-                        name="patient_name"
-                        required
-                        autoFocus
-                        tabIndex={3}
-                        autoComplete="false"
-                        placeholder='Patient name'
-                        value={patientName} onChange={(e) => setPatientName(e.target.value)}
-                    />
-                    {/* <InputError message={errors.email} /> */}
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="patient_contact" required={true}>Patient Contact</Label>
-                    <MaskInput
-                        id="patient_contact"
-                        type="text"
-                        name="patient_contact"
-                        required
-                        autoFocus
-                        tabIndex={3}
-                        autoComplete="false"
-                        value={patientContact === '' ? '+92-' : patientContact}
-                        mask="+99-999-9999999"
-                        placeholder="+92-000-0000000"
-                        onValueChange={({ masked, unmasked }) => setPatientContact(masked)}
-                    />
-                    {/* <InputError message={errors.email} /> */}
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="patient_age" required={true}>Patient Age</Label>
-                    <Input
-                        id="patient_age"
-                        type="number"
-                        name="patient_age"
-                        required
-                        autoFocus
-                        tabIndex={3}
-                        autoComplete="false"
-                        placeholder='Patient age'
-                        value={patientAge} onChange={(e) => setPatientAge(e.target.value)}
-                    />
-                </div>
-                <div className='grid gap-2'>
-                    <Label htmlFor="patient_gender" required={true}>Patient Gender</Label>
-                    <div className='flex flex-row space-x-4'>
-                        <Label htmlFor="patient_gender_m">
-                            <RadioInput
-                                id="patient_gender_m"
-                                type="radio"
-                                name="patient_gender"
-                                required
-                                autoFocus
-                                tabIndex={4}
-                                autoComplete="false"
-                                value={'m'}
-                                className='mr-2'
-                                checked={patientGender === 'm'} onChange={(e) => setPatientGender(e.target.value)}
-                            />
-                            Male</Label>
-                        <Label htmlFor="patient_gender_f">
-                            <RadioInput
-                                id="patient_gender_f"
-                                type="radio"
-                                name="patient_gender"
-                                required
-                                autoFocus
-                                tabIndex={4}
-                                autoComplete="false"
-                                value={'f'}
-                                className='mr-2'
-                                checked={patientGender === 'f'} onChange={(e) => setPatientGender(e.target.value)}
-                            />
-                            Female</Label>
-                        <Label htmlFor="patient_gender_t">
-                            <RadioInput
-                                id="patient_gender_t"
-                                type="radio"
-                                name="patient_gender"
-                                required
-                                autoFocus
-                                tabIndex={4}
-                                autoComplete="false"
-                                value={'t'}
-                                className='mr-2'
-                                checked={patientGender === 't'} onChange={(e) => setPatientGender(e.target.value)}
-                            />
-                            Transgender</Label>
+    return (
+        <div className="grid h-full w-full grid-cols-2 divide-x divide-[#06df72]">
+            <div className="flex flex-col p-4 pr-8">
+                <div className="flex w-full flex-col space-y-4">
+                    <h3 className="mb-2 text-3xl font-bold">
+                        Select / Create Patient
+                    </h3>
+                    <div className="grid gap-2">
+                        <Label htmlFor="mr_number">MR Number</Label>
+                        <MaskInput
+                            id="mr_number"
+                            type="text"
+                            name="mr_number"
+                            required
+                            autoFocus
+                            tabIndex={100}
+                            autoComplete="false"
+                            mask="aa/9999/99/999999"
+                            placeholder="--/----/--/------"
+                            value={psInput}
+                            onValueChange={({ masked, unmasked }) =>
+                                psNumberIsChanged(masked, unmasked)
+                            }
+                        />
+                        {/* <InputError message={errors.email} /> */}
                     </div>
-                    {/* <InputError message={errors.email} /> */}
+                    <div className="grid gap-2">
+                        <Label htmlFor="cnic_number">CNIC Number</Label>
+                        <MaskInput
+                            id="cnic_number"
+                            type="text"
+                            name="cnic_number"
+                            required
+                            autoFocus
+                            tabIndex={2}
+                            autoComplete="false"
+                            mask="99999-9999999-9"
+                            placeholder="----- ------- -"
+                            value={patientCnic}
+                            onValueChange={({ masked, unmasked }) =>
+                                patientCnicIsChanged(masked, unmasked)
+                            }
+                        />
+                        {/* <InputError message={errors.email} /> */}
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="patient_name" required={true}>
+                            Patient Name
+                        </Label>
+                        <Input
+                            id="patient_name"
+                            type="text"
+                            name="patient_name"
+                            required
+                            autoFocus
+                            tabIndex={3}
+                            autoComplete="false"
+                            placeholder="Patient name"
+                            value={patientName}
+                            onChange={(e) => setPatientName(e.target.value)}
+                        />
+                        {/* <InputError message={errors.email} /> */}
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="patient_contact" required={true}>
+                            Patient Contact
+                        </Label>
+                        <MaskInput
+                            id="patient_contact"
+                            type="text"
+                            name="patient_contact"
+                            required
+                            autoFocus
+                            tabIndex={3}
+                            autoComplete="false"
+                            value={
+                                patientContact === '' ? '+92-' : patientContact
+                            }
+                            mask="+99-999-9999999"
+                            placeholder="+92-000-0000000"
+                            onValueChange={({ masked, unmasked }) =>
+                                setPatientContact(masked)
+                            }
+                        />
+                        {/* <InputError message={errors.email} /> */}
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="patient_age" required={true}>
+                            Patient Age
+                        </Label>
+                        <Input
+                            id="patient_age"
+                            type="number"
+                            name="patient_age"
+                            required
+                            autoFocus
+                            tabIndex={3}
+                            autoComplete="false"
+                            placeholder="Patient age"
+                            value={patientAge}
+                            onChange={(e) => setPatientAge(e.target.value)}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="patient_gender" required={true}>
+                            Patient Gender
+                        </Label>
+                        <div className="flex flex-row space-x-4">
+                            <Label htmlFor="patient_gender_m">
+                                <RadioInput
+                                    id="patient_gender_m"
+                                    type="radio"
+                                    name="patient_gender"
+                                    required
+                                    autoFocus
+                                    tabIndex={4}
+                                    autoComplete="false"
+                                    value={'m'}
+                                    className="mr-2"
+                                    checked={patientGender === 'm'}
+                                    onChange={(e) =>
+                                        setPatientGender(e.target.value)
+                                    }
+                                />
+                                Male
+                            </Label>
+                            <Label htmlFor="patient_gender_f">
+                                <RadioInput
+                                    id="patient_gender_f"
+                                    type="radio"
+                                    name="patient_gender"
+                                    required
+                                    autoFocus
+                                    tabIndex={4}
+                                    autoComplete="false"
+                                    value={'f'}
+                                    className="mr-2"
+                                    checked={patientGender === 'f'}
+                                    onChange={(e) =>
+                                        setPatientGender(e.target.value)
+                                    }
+                                />
+                                Female
+                            </Label>
+                            <Label htmlFor="patient_gender_t">
+                                <RadioInput
+                                    id="patient_gender_t"
+                                    type="radio"
+                                    name="patient_gender"
+                                    required
+                                    autoFocus
+                                    tabIndex={4}
+                                    autoComplete="false"
+                                    value={'t'}
+                                    className="mr-2"
+                                    checked={patientGender === 't'}
+                                    onChange={(e) =>
+                                        setPatientGender(e.target.value)
+                                    }
+                                />
+                                Transgender
+                            </Label>
+                        </div>
+                        {/* <InputError message={errors.email} /> */}
+                    </div>
+                    <Suspense
+                        fallback={
+                            <div className="text-xs text-gray-400">
+                                Loading policy…
+                            </div>
+                        }
+                    >
+                        <CreatePatientPolicy className="text-xs text-gray-500" />
+                    </Suspense>
                 </div>
-                <Suspense fallback={<div className='text-xs text-gray-400'>Loading policy…</div>}>
-                    <CreatePatientPolicy className='text-xs text-gray-500' />
-                </Suspense>
+            </div>
+            <div className="flex flex-col space-y-4 p-4 pr-8">
+                <div className="flex w-full flex-col space-y-4">
+                    {exactMatch.length > 0 && (
+                        <>
+                            <h3>Exact Match found</h3>
+
+                            {exactMatch.map((p) => (
+                                <PatientMiniCard
+                                    patient={p}
+                                    tempAge={patientAge}
+                                    tempGender={patientGender}
+                                    tempContact={patientContact}
+                                    tempCnic={patientCnic}
+                                    className="w-full"
+                                    link={
+                                        counterSelectDepartment({
+                                            pYear: p.year,
+                                            pMonth: p.month,
+                                            number: p.number,
+                                        }).url
+                                    }
+                                />
+                            ))}
+                        </>
+                    )}
+
+                    {patients.length > 0 && (
+                        <>
+                            <h3>Possible Matches</h3>
+
+                            {patients.map((p, i) => (
+                                <PatientMiniCard
+                                    patient={p}
+                                    tempAge={patientAge}
+                                    tempGender={patientGender}
+                                    tempContact={patientContact}
+                                    tempCnic={patientCnic}
+                                    className="w-full"
+                                    link={
+                                        counterSelectDepartment({
+                                            pYear: p.year,
+                                            pMonth: p.month,
+                                            number: p.number,
+                                        }).url
+                                    }
+                                />
+                            ))}
+                        </>
+                    )}
+
+                    {patientName &&
+                        patientContact &&
+                        patientAge &&
+                        patientGender && (
+                            <div className="flex cursor-default flex-col space-y-4 rounded-xl bg-[#1c398e] p-2 hover:bg-[#06df72] dark:bg-[#0a0a0a] dark:bg-[#262626]">
+                                <PatientMiniCard
+                                    patient={{
+                                        name: patientName,
+                                        gender: patientGender,
+                                        ps_number: psInput,
+                                        contact: patientContact,
+                                        cnic: patientCnic,
+                                        age: patientAge,
+                                    }}
+                                    className="w-full"
+                                />
+                                <div className="items-right justify-end">
+                                    <Button
+                                        onClick={() => createPatientInApi()}
+                                    >
+                                        <span>Create New Patient</span>
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                </div>
             </div>
         </div>
-        <div className='flex flex-col p-4 pr-8 space-y-4'>
-            <div className='flex flex-col w-full space-y-4'>
-
-                {exactMatch.length > 0 && <>
-                    
-                    <h3>Exact Match found</h3>
-
-                    {exactMatch.map((p) => <PatientMiniCard patient={p} tempAge={patientAge} tempGender={patientGender} tempContact={patientContact} tempCnic={patientCnic} className='w-full' link={counterSelectDepartment({ pYear: p.year, pMonth: p.month, number: p.number }).url} />)}
-                
-                </>}
-
-                {patients.length > 0 && <>
-                
-                    <h3>Possible Matches</h3>
-
-                    {patients.map((p, i) => <PatientMiniCard patient={p} tempAge={patientAge} tempGender={patientGender} tempContact={patientContact} tempCnic={patientCnic} className='w-full' link={counterSelectDepartment({pYear: p.year, pMonth: p.month, number: p.number}).url} />)}
-
-                </>}
-
-                {(
-                    patientName &&
-                    patientContact &&
-                    patientAge &&
-                    patientGender
-                    
-                    ) && <div className='bg-[#1c398e] dark:bg-[#0a0a0a] hover:bg-[#06df72] dark:bg-[#262626] rounded-xl p-2 flex flex-col space-y-4 cursor-default'>
-                    <PatientMiniCard patient={{name: patientName, gender: patientGender, ps_number: psInput, contact: patientContact, cnic: patientCnic, age: patientAge}} className='w-full' />
-                    <div className='items-right justify-end'>
-                        <Button onClick={() => createPatientInApi()}>
-                            <span>Create New Patient</span>
-                        </Button>
-                    </div>
-                </div>}
-
-
-
-            </div>
-        </div>
-    </div>
+    );
 }
-
 
 function BillItemsEditableTableRow({
     service_name,
@@ -911,8 +1260,7 @@ function BillItemsEditableTableRow({
     onProviderUpdate,
     validationErrors,
     providers,
-}:any) {
-
+}: any) {
     const [q, setQ] = useState<number>(quantity);
     const [c, setC] = useState<number>(charges);
     const [sPErrors, setSPErrors] = useState<any>({});
@@ -938,30 +1286,38 @@ function BillItemsEditableTableRow({
 
     console.log(providers);
 
-
     return (
         <>
             <tr className="border-b border-neutral-950 dark:bg-neutral-700 dark:text-white">
                 <td className="p-2">{service_name}</td>
                 <td className="p-2 text-right">
-                    {service?.service_provider_types && service.service_provider_types.length > 0 ? (<>
-                        <Select value={selectedProvider} onValueChange={handleProviderChange}>
-                            <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select provider" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {providers.map((provider: any) => (
-                                    <SelectItem key={provider.id} value={provider.id.toString()}>
-                                        {provider.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {!selectedProvider && (
-                            <InputError message="Please select a provider." />
-                        )}
-                    </>) : (
-                        <span className="text-gray-400 text-sm">N/A</span>
+                    {service?.service_provider_types &&
+                    service.service_provider_types.length > 0 ? (
+                        <>
+                            <Select
+                                value={selectedProvider}
+                                onValueChange={handleProviderChange}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select provider" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {providers.map((provider: any) => (
+                                        <SelectItem
+                                            key={provider.id}
+                                            value={provider.id.toString()}
+                                        >
+                                            {provider.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {!selectedProvider && (
+                                <InputError message="Please select a provider." />
+                            )}
+                        </>
+                    ) : (
+                        <span className="text-sm text-gray-400">N/A</span>
                     )}
                 </td>
                 {/* <td className="p-2 felx justify-end">
@@ -975,25 +1331,32 @@ function BillItemsEditableTableRow({
                     />
                 </td> */}
                 <td className="p-2 text-right">
-                    <Input 
-                        type="number" 
-                        name={`charges_${serviceid}`} 
-                        className='w-24 text-right inline-block' 
-                        value={parseInt(c.toString()) == 0 ? '' : c} 
-                        onChange={(e) => handleChargesChange(parseFloat(e.target.value) || 0)} 
-                        min={0} 
+                    <Input
+                        type="number"
+                        name={`charges_${serviceid}`}
+                        className="inline-block w-24 text-right"
+                        value={parseInt(c.toString()) == 0 ? '' : c}
+                        onChange={(e) =>
+                            handleChargesChange(parseFloat(e.target.value) || 0)
+                        }
+                        min={0}
                         step={0.01}
                     />
                 </td>
             </tr>
-            {(validationErrors[`items.${serviceid}`] || validationErrors[`items.${serviceid}.provider_id`]) && (
+            {(validationErrors[`items.${serviceid}`] ||
+                validationErrors[`items.${serviceid}.provider_id`]) && (
                 <tr className="flex">
                     <td colSpan={4} className="w-full p-2">
-                        <div className="text-red-500 text-sm space-y-1">
-                            {validationErrors[`items.${serviceid}`]?.map((error: string, index: number) => (
-                                <div key={index}>{error}</div>
-                            ))}
-                            {validationErrors[`items.${serviceid}.provider_id`]?.map((error: string, index: number) => (
+                        <div className="space-y-1 text-sm text-red-500">
+                            {validationErrors[`items.${serviceid}`]?.map(
+                                (error: string, index: number) => (
+                                    <div key={index}>{error}</div>
+                                ),
+                            )}
+                            {validationErrors[
+                                `items.${serviceid}.provider_id`
+                            ]?.map((error: string, index: number) => (
                                 <div key={index}>{error}</div>
                             ))}
                         </div>

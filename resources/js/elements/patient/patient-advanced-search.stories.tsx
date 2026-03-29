@@ -1,5 +1,7 @@
+import PatientAdvancedSearch, {
+    PatientSearchFilters,
+} from '@/elements/patient/patient-advanced-search';
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import PatientAdvancedSearch, { PatientSearchFilters } from '@/elements/patient/patient-advanced-search';
 import { useState } from 'react';
 
 const meta: Meta<typeof PatientAdvancedSearch> = {
@@ -28,19 +30,21 @@ export const Default: Story = {
     render: () => <ControlledSearch />,
 };
 
+function PrefilledSearch() {
+    const [filters, setFilters] = useState<PatientSearchFilters>({
+        name: 'Ahmed',
+        ps_number: 'PS/2026',
+    });
+    return (
+        <PatientAdvancedSearch
+            filters={filters}
+            onChange={setFilters}
+            onSearch={() => alert('Search triggered')}
+            onReset={() => setFilters({})}
+        />
+    );
+}
+
 export const WithPrefilled: Story = {
-    render: () => {
-        const [filters, setFilters] = useState<PatientSearchFilters>({
-            name: 'Ahmed',
-            ps_number: 'PS/2026',
-        });
-        return (
-            <PatientAdvancedSearch
-                filters={filters}
-                onChange={setFilters}
-                onSearch={() => alert('Search triggered')}
-                onReset={() => setFilters({})}
-            />
-        );
-    },
+    render: () => <PrefilledSearch />,
 };

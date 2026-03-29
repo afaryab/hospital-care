@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import PatientSelectInput, { PatientSelectOption } from '@/elements/patient/patient-select-input';
+import PatientSelectInput, {
+    PatientSelectOption,
+} from '@/elements/patient/patient-select-input';
 import { mockPatients } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const options: PatientSelectOption[] = mockPatients.map((p) => ({
     value: p.id.toString(),

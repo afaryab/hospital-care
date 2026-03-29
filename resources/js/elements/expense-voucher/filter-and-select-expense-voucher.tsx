@@ -8,11 +8,11 @@ import {
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import SelectExpenseCategory from '@/elements/expense-category/select-expense-category';
 import FilterAndSelectServiceOrder from '@/elements/serviceorder/filter-and-select-serviceorder';
 import SelectUser from '@/elements/user/select-user';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { LoaderCircle, Search } from 'lucide-react';
 
 export interface ExpenseVoucherSearchItem {
@@ -80,7 +80,12 @@ const hasSearchResults = (result: SearchResult | null) => {
 };
 
 const resolvePayedTo = (voucher: ExpenseVoucherSearchItem) => {
-    return voucher.payedTo?.name ?? voucher.payed_to_user?.name ?? voucher.payed_to_name ?? 'N/A';
+    return (
+        voucher.payedTo?.name ??
+        voucher.payed_to_user?.name ??
+        voucher.payed_to_name ??
+        'N/A'
+    );
 };
 
 export default function FilterAndSelectExpenseVoucher({
@@ -93,11 +98,16 @@ export default function FilterAndSelectExpenseVoucher({
     const [query, setQuery] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<SearchResult | null>(null);
-    const [selected, setSelected] = useState<ExpenseVoucherSearchItem | null>(null);
+    const [selected, setSelected] = useState<ExpenseVoucherSearchItem | null>(
+        null,
+    );
 
     const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
-    const [filters, setFilters] = useState<ExpenseVoucherFilters>(initialFilters);
-    const [advancedResult, setAdvancedResult] = useState<SearchResult | null>(null);
+    const [filters, setFilters] =
+        useState<ExpenseVoucherFilters>(initialFilters);
+    const [advancedResult, setAdvancedResult] = useState<SearchResult | null>(
+        null,
+    );
     const [isAdvancedLoading, setIsAdvancedLoading] = useState(false);
 
     const allQuickResults = useMemo(() => {
@@ -108,7 +118,10 @@ export default function FilterAndSelectExpenseVoucher({
         return [...result.exact, ...result.possible];
     }, [result]);
 
-    const search = async (payload: Record<string, unknown>, advanced = false) => {
+    const search = async (
+        payload: Record<string, unknown>,
+        advanced = false,
+    ) => {
         if (advanced) {
             setIsAdvancedLoading(true);
         } else {
@@ -130,7 +143,10 @@ export default function FilterAndSelectExpenseVoucher({
             }
 
             const data = await response.json();
-            const parsedResult: SearchResult = data?.data ?? { exact: [], possible: [] };
+            const parsedResult: SearchResult = data?.data ?? {
+                exact: [],
+                possible: [],
+            };
 
             if (advanced) {
                 setAdvancedResult(parsedResult);
@@ -196,7 +212,7 @@ export default function FilterAndSelectExpenseVoucher({
                 created_to: filters.created_to || undefined,
                 limit: 25,
             },
-            true
+            true,
         );
     };
 
@@ -215,7 +231,12 @@ export default function FilterAndSelectExpenseVoucher({
                         <LoaderCircle className="absolute top-2.5 right-2 h-4 w-4 animate-spin text-muted-foreground" />
                     ) : null}
                 </div>
-                <Button type="button" variant="outline" className="rounded-l-none border-l-0 px-3" onClick={() => setIsAdvancedOpen(true)}>
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-l-none border-l-0 px-3"
+                    onClick={() => setIsAdvancedOpen(true)}
+                >
                     <Search className="h-4 w-4" />
                 </Button>
             </div>
@@ -230,8 +251,12 @@ export default function FilterAndSelectExpenseVoucher({
                             className="w-full border-b px-3 py-2 text-left last:border-b-0 hover:bg-muted/40"
                         >
                             <div className="font-medium">{item.vc_number}</div>
-                            <div className="text-xs text-muted-foreground">Amount: {item.amount ?? 0}</div>
-                            <div className="text-xs text-muted-foreground">Paid To: {resolvePayedTo(item)}</div>
+                            <div className="text-xs text-muted-foreground">
+                                Amount: {item.amount ?? 0}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                Paid To: {resolvePayedTo(item)}
+                            </div>
                         </button>
                     ))}
                 </div>
@@ -241,10 +266,19 @@ export default function FilterAndSelectExpenseVoucher({
                 <div className="flex items-center justify-between rounded-md border bg-muted/20 p-2 text-sm">
                     <div>
                         <div className="font-medium">{selected.vc_number}</div>
-                        <div className="text-xs text-muted-foreground">Amount: {selected.amount ?? 0}</div>
-                        <div className="text-xs text-muted-foreground">Paid To: {resolvePayedTo(selected)}</div>
+                        <div className="text-xs text-muted-foreground">
+                            Amount: {selected.amount ?? 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                            Paid To: {resolvePayedTo(selected)}
+                        </div>
                     </div>
-                    <Button type="button" variant="ghost" size="sm" onClick={clearSelection}>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={clearSelection}
+                    >
                         Clear
                     </Button>
                 </div>
@@ -255,8 +289,12 @@ export default function FilterAndSelectExpenseVoucher({
             <Dialog open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
                 <DialogContent className="max-w-5xl">
                     <DialogHeader>
-                        <DialogTitle>Advanced Expense Voucher Search</DialogTitle>
-                        <DialogDescription>Filter expense vouchers and select one from results.</DialogDescription>
+                        <DialogTitle>
+                            Advanced Expense Voucher Search
+                        </DialogTitle>
+                        <DialogDescription>
+                            Filter expense vouchers and select one from results.
+                        </DialogDescription>
                     </DialogHeader>
 
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -264,13 +302,23 @@ export default function FilterAndSelectExpenseVoucher({
                             <Label>Voucher Number</Label>
                             <Input
                                 value={filters.vc_number}
-                                onChange={(event) => setFilters((prev) => ({ ...prev, vc_number: event.target.value }))}
+                                onChange={(event) =>
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        vc_number: event.target.value,
+                                    }))
+                                }
                             />
                         </div>
                         <div className="space-y-1">
                             <SelectExpenseCategory
                                 value={filters.exp_category_id}
-                                onValueChange={(value) => setFilters((prev) => ({ ...prev, exp_category_id: value }))}
+                                onValueChange={(value) =>
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        exp_category_id: value,
+                                    }))
+                                }
                                 label="Expense Category"
                                 placeholder="Select expense category"
                             />
@@ -278,7 +326,12 @@ export default function FilterAndSelectExpenseVoucher({
                         <div className="space-y-1">
                             <FilterAndSelectServiceOrder
                                 value={filters.service_order_id}
-                                onValueChange={(value) => setFilters((prev) => ({ ...prev, service_order_id: value }))}
+                                onValueChange={(value) =>
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        service_order_id: value,
+                                    }))
+                                }
                                 label="Service Order"
                                 placeholder="Find service order"
                             />
@@ -286,7 +339,12 @@ export default function FilterAndSelectExpenseVoucher({
                         <div className="space-y-1">
                             <SelectUser
                                 value={filters.payed_to}
-                                onValueChange={(value) => setFilters((prev) => ({ ...prev, payed_to: value }))}
+                                onValueChange={(value) =>
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        payed_to: value,
+                                    }))
+                                }
                                 label="Paid To"
                                 placeholder="Select paid-to user"
                             />
@@ -295,7 +353,12 @@ export default function FilterAndSelectExpenseVoucher({
                             <Label>Paid To Name</Label>
                             <Input
                                 value={filters.payed_to_name}
-                                onChange={(event) => setFilters((prev) => ({ ...prev, payed_to_name: event.target.value }))}
+                                onChange={(event) =>
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        payed_to_name: event.target.value,
+                                    }))
+                                }
                             />
                         </div>
                         <div className="space-y-1">
@@ -304,7 +367,12 @@ export default function FilterAndSelectExpenseVoucher({
                                 type="number"
                                 step="0.01"
                                 value={filters.amount_min}
-                                onChange={(event) => setFilters((prev) => ({ ...prev, amount_min: event.target.value }))}
+                                onChange={(event) =>
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        amount_min: event.target.value,
+                                    }))
+                                }
                             />
                         </div>
                         <div className="space-y-1">
@@ -313,7 +381,12 @@ export default function FilterAndSelectExpenseVoucher({
                                 type="number"
                                 step="0.01"
                                 value={filters.amount_max}
-                                onChange={(event) => setFilters((prev) => ({ ...prev, amount_max: event.target.value }))}
+                                onChange={(event) =>
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        amount_max: event.target.value,
+                                    }))
+                                }
                             />
                         </div>
                         <div className="space-y-1">
@@ -321,7 +394,12 @@ export default function FilterAndSelectExpenseVoucher({
                             <Input
                                 type="date"
                                 value={filters.created_from}
-                                onChange={(event) => setFilters((prev) => ({ ...prev, created_from: event.target.value }))}
+                                onChange={(event) =>
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        created_from: event.target.value,
+                                    }))
+                                }
                             />
                         </div>
                         <div className="space-y-1">
@@ -329,37 +407,63 @@ export default function FilterAndSelectExpenseVoucher({
                             <Input
                                 type="date"
                                 value={filters.created_to}
-                                onChange={(event) => setFilters((prev) => ({ ...prev, created_to: event.target.value }))}
+                                onChange={(event) =>
+                                    setFilters((prev) => ({
+                                        ...prev,
+                                        created_to: event.target.value,
+                                    }))
+                                }
                             />
                         </div>
                     </div>
 
                     <div className="flex justify-end gap-2">
-                        <Button type="button" variant="outline" onClick={() => setFilters(initialFilters)}>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setFilters(initialFilters)}
+                        >
                             Reset
                         </Button>
-                        <Button type="button" onClick={runAdvancedSearch} disabled={isAdvancedLoading}>
-                            {isAdvancedLoading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+                        <Button
+                            type="button"
+                            onClick={runAdvancedSearch}
+                            disabled={isAdvancedLoading}
+                        >
+                            {isAdvancedLoading ? (
+                                <LoaderCircle className="h-4 w-4 animate-spin" />
+                            ) : null}
                             Search
                         </Button>
                     </div>
 
                     <div className="max-h-72 overflow-auto rounded-md border">
                         {hasSearchResults(advancedResult) ? (
-                            [...(advancedResult?.exact ?? []), ...(advancedResult?.possible ?? [])].map((item) => (
+                            [
+                                ...(advancedResult?.exact ?? []),
+                                ...(advancedResult?.possible ?? []),
+                            ].map((item) => (
                                 <button
                                     key={`advanced-${item.id}`}
                                     type="button"
                                     onClick={() => selectVoucher(item)}
                                     className="w-full border-b px-3 py-2 text-left last:border-b-0 hover:bg-muted/40"
                                 >
-                                    <div className="font-medium">{item.vc_number}</div>
-                                    <div className="text-xs text-muted-foreground">Amount: {item.amount ?? 0}</div>
-                                    <div className="text-xs text-muted-foreground">Paid To: {resolvePayedTo(item)}</div>
+                                    <div className="font-medium">
+                                        {item.vc_number}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        Amount: {item.amount ?? 0}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                        Paid To: {resolvePayedTo(item)}
+                                    </div>
                                 </button>
                             ))
                         ) : (
-                            <div className="p-4 text-sm text-muted-foreground">No results yet. Apply filters and click Search.</div>
+                            <div className="p-4 text-sm text-muted-foreground">
+                                No results yet. Apply filters and click Search.
+                            </div>
                         )}
                     </div>
                 </DialogContent>

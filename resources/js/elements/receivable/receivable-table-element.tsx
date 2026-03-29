@@ -6,8 +6,9 @@ export type ReceivableTableElementProps = {
     className?: string;
 };
 
-const ReceivableTableElement: React.FC<ReceivableTableElementProps> = ({ receivable, ...props }) => (
-    <ReceaveableTableElement receaveable={receivable} {...props} />
-);
+const ReceivableTableElement: React.FC<ReceivableTableElementProps> = ({
+    receivable,
+    ...props
+}) => <ReceaveableTableElement receaveable={receivable} {...props} />;
 
 export default ReceivableTableElement;

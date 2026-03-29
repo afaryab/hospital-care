@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import TransactionSelectInput, { TransactionSelectOption } from '@/elements/transaction/transaction-select-input';
+import TransactionSelectInput, {
+    TransactionSelectOption,
+} from '@/elements/transaction/transaction-select-input';
 import { mockTransactions } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const options: TransactionSelectOption[] = mockTransactions.map((t) => ({
     value: t.id.toString(),

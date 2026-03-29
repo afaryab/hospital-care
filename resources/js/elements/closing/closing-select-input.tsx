@@ -34,9 +34,16 @@ const ClosingSelectInput: React.FC<ClosingSelectInputProps> = ({
         <SelectTrigger>
             <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent searchable={searchable} searchPlaceholder="Search closings...">
+        <SelectContent
+            searchable={searchable}
+            searchPlaceholder="Search closings..."
+        >
             {options.map((option) => (
-                <SelectItem key={option.value} value={option.value} textValue={option.label}>
+                <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    textValue={option.label}
+                >
                     {option.label}
                 </SelectItem>
             ))}

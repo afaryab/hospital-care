@@ -8,6 +8,8 @@ export type VoucherListItemProps = {
     selected?: boolean;
 };
 
-const VoucherListItem: React.FC<VoucherListItemProps> = (props) => <ExpenseVoucherListItem {...props} />;
+const VoucherListItem: React.FC<VoucherListItemProps> = (props) => (
+    <ExpenseVoucherListItem {...props} />
+);
 
 export default VoucherListItem;

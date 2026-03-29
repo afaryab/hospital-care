@@ -7,6 +7,8 @@ export type VoucherCardProps = {
     onClick?: () => void;
 };
 
-const VoucherCard: React.FC<VoucherCardProps> = (props) => <ExpenseVoucherCard {...props} />;
+const VoucherCard: React.FC<VoucherCardProps> = (props) => (
+    <ExpenseVoucherCard {...props} />
+);
 
 export default VoucherCard;

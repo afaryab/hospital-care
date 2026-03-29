@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
 import ExpenseVouchersListingTable from '@/elements/expense-voucher/expense-vouchers-listing-table';
 import { mockExpenseVouchers } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof ExpenseVouchersListingTable> = {
     title: 'Elements/ExpenseVoucher/ExpenseVouchersListingTable',

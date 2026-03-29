@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import ExpenseVoucherSelectInput, { ExpenseVoucherSelectOption } from '@/elements/expense-voucher/expense-voucher-select-input';
+import ExpenseVoucherSelectInput, {
+    ExpenseVoucherSelectOption,
+} from '@/elements/expense-voucher/expense-voucher-select-input';
 import { mockExpenseVouchers } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const options: ExpenseVoucherSelectOption[] = mockExpenseVouchers.map((v) => ({
     value: v.id.toString(),

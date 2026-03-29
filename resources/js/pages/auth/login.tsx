@@ -11,7 +11,6 @@ import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
-import { MaskInput } from '@/components/ui/mask-input';
 
 interface LoginProps {
     status?: string;
@@ -67,7 +66,9 @@ export default function Login({
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email / Username / Mobile</Label>
+                                <Label htmlFor="email">
+                                    Email / Username / Mobile
+                                </Label>
                                 <Input
                                     id="email"
                                     type="text"

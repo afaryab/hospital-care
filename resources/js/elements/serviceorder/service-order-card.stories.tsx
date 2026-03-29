@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
 import ServiceOrderCard from '@/elements/serviceorder/service-order-card';
 import { mockServiceOrder, mockServiceOrderLab } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof ServiceOrderCard> = {
     title: 'Elements/ServiceOrder/ServiceOrderCard',

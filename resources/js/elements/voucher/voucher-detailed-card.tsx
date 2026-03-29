@@ -6,6 +6,8 @@ export type VoucherDetailedCardProps = {
     className?: string;
 };
 
-const VoucherDetailedCard: React.FC<VoucherDetailedCardProps> = (props) => <ExpenseVoucherDetailedCard {...props} />;
+const VoucherDetailedCard: React.FC<VoucherDetailedCardProps> = (props) => (
+    <ExpenseVoucherDetailedCard {...props} />
+);
 
 export default VoucherDetailedCard;

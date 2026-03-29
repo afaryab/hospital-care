@@ -51,7 +51,10 @@ export default function FilterAndSelectPatient({
             return [] as PatientSearchItem[];
         }
 
-        return [...result.exact.filter(Boolean) as PatientSearchItem[], ...result.possible];
+        return [
+            ...(result.exact.filter(Boolean) as PatientSearchItem[]),
+            ...result.possible,
+        ];
     }, [result]);
 
     const search = async (searchQuery: string) => {
@@ -108,8 +111,14 @@ export default function FilterAndSelectPatient({
         <div className="space-y-2">
             <Label>{label}</Label>
             <div className="relative">
-                <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={placeholder} />
-                {isLoading ? <LoaderCircle className="absolute top-2.5 right-2 h-4 w-4 animate-spin text-muted-foreground" /> : null}
+                <Input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder={placeholder}
+                />
+                {isLoading ? (
+                    <LoaderCircle className="absolute top-2.5 right-2 h-4 w-4 animate-spin text-muted-foreground" />
+                ) : null}
             </div>
 
             {hasSearchResults(result) ? (
@@ -121,8 +130,12 @@ export default function FilterAndSelectPatient({
                             onClick={() => selectPatient(patient)}
                             className="w-full border-b px-3 py-2 text-left last:border-b-0 hover:bg-muted/40"
                         >
-                            <div className="font-medium">{patient.ps_number ?? 'N/A'}</div>
-                            <div className="text-xs text-muted-foreground">{patient.name ?? 'Unknown patient'}</div>
+                            <div className="font-medium">
+                                {patient.ps_number ?? 'N/A'}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                {patient.name ?? 'Unknown patient'}
+                            </div>
                         </button>
                     ))}
                 </div>
@@ -130,8 +143,12 @@ export default function FilterAndSelectPatient({
 
             {selected ? (
                 <div className="rounded-md border bg-muted/20 p-2 text-sm">
-                    <div className="font-medium">{selected.ps_number ?? 'N/A'}</div>
-                    <div className="text-xs text-muted-foreground">{selected.name ?? 'Unknown patient'}</div>
+                    <div className="font-medium">
+                        {selected.ps_number ?? 'N/A'}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                        {selected.name ?? 'Unknown patient'}
+                    </div>
                 </div>
             ) : null}
 

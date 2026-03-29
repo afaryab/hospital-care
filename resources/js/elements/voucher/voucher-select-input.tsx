@@ -34,9 +34,16 @@ const VoucherSelectInput: React.FC<VoucherSelectInputProps> = ({
         <SelectTrigger>
             <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent searchable={searchable} searchPlaceholder="Search vouchers...">
+        <SelectContent
+            searchable={searchable}
+            searchPlaceholder="Search vouchers..."
+        >
             {options.map((option) => (
-                <SelectItem key={option.value} value={option.value} textValue={option.label}>
+                <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    textValue={option.label}
+                >
                     {option.label}
                 </SelectItem>
             ))}

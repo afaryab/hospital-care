@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
 import ServiceOrdersListingTable from '@/elements/serviceorder/service-orders-listing-table';
 import { mockServiceOrders } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof ServiceOrdersListingTable> = {
     title: 'Elements/ServiceOrder/ServiceOrdersListingTable',

@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
 import ReceivablesListingTable from '@/elements/receivable/receivables-listing-table';
 import { mockReceaveables } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof ReceivablesListingTable> = {
     title: 'Elements/Receivable/ReceivablesListingTable',

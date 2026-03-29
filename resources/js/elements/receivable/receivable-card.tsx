@@ -7,8 +7,9 @@ export type ReceivableCardProps = {
     onClick?: () => void;
 };
 
-const ReceivableCard: React.FC<ReceivableCardProps> = ({ receivable, ...props }) => (
-    <ReceaveableCard receaveable={receivable} {...props} />
-);
+const ReceivableCard: React.FC<ReceivableCardProps> = ({
+    receivable,
+    ...props
+}) => <ReceaveableCard receaveable={receivable} {...props} />;
 
 export default ReceivableCard;

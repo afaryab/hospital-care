@@ -1,7 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 export interface ClosingOption {
     id: number;
@@ -33,7 +39,10 @@ export default function SelectCounter({
             try {
                 const response = await fetch('/api/closings/search', {
                     method: 'POST',
-                    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                    },
                     body: JSON.stringify({ limit: 100 }),
                 });
                 if (!response.ok) throw new Error('Failed to load counters');
@@ -56,7 +65,8 @@ export default function SelectCounter({
             onSelect(null);
             return;
         }
-        const selected = options.find((c) => c.id.toString() === normalized) ?? null;
+        const selected =
+            options.find((c) => c.id.toString() === normalized) ?? null;
         onSelect(selected);
     };
 
@@ -65,12 +75,20 @@ export default function SelectCounter({
             <Label>{label}</Label>
             <Select value={value || '__all__'} onValueChange={handleChange}>
                 <SelectTrigger className="w-full">
-                    <SelectValue placeholder={isLoading ? 'Loading...' : placeholder} />
+                    <SelectValue
+                        placeholder={isLoading ? 'Loading...' : placeholder}
+                    />
                 </SelectTrigger>
                 <SelectContent searchable searchPlaceholder="Search counter...">
-                    <SelectItem value="__all__" textValue="All counters">All counters</SelectItem>
+                    <SelectItem value="__all__" textValue="All counters">
+                        All counters
+                    </SelectItem>
                     {options.map((c) => (
-                        <SelectItem key={c.id} value={c.id.toString()} textValue={c.ct_number}>
+                        <SelectItem
+                            key={c.id}
+                            value={c.id.toString()}
+                            textValue={c.ct_number}
+                        >
                             {c.ct_number}
                         </SelectItem>
                     ))}

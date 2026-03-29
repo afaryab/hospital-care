@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge';
-import { Patient } from '@/types';
 import { cn } from '@/lib/utils';
+import { Patient } from '@/types';
 
 const genderLabel: Record<string, string> = {
     m: 'Male',
@@ -15,13 +15,18 @@ type PatientTableElementProps = {
 };
 
 /** Compact inline representation for use as a table cell value. */
-const PatientTableElement: React.FC<PatientTableElementProps> = ({ patient, className }) => (
-    <div className={cn('flex items-center gap-2 min-w-0', className)}>
+const PatientTableElement: React.FC<PatientTableElementProps> = ({
+    patient,
+    className,
+}) => (
+    <div className={cn('flex min-w-0 items-center gap-2', className)}>
         <div className="min-w-0">
-            <p className="text-sm font-medium truncate">{patient.name}</p>
-            <p className="text-xs text-muted-foreground font-mono">{patient.ps_number}</p>
+            <p className="truncate text-sm font-medium">{patient.name}</p>
+            <p className="font-mono text-xs text-muted-foreground">
+                {patient.ps_number}
+            </p>
         </div>
-        <Badge variant="outline" className="text-xs shrink-0">
+        <Badge variant="outline" className="shrink-0 text-xs">
             {genderLabel[patient.gender] ?? patient.gender}
         </Badge>
     </div>

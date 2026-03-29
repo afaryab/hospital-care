@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
 import ClosingsListingTable from '@/elements/closing/closings-listing-table';
 import { mockClosings } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof ClosingsListingTable> = {
     title: 'Elements/Closing/ClosingsListingTable',

@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import ClosingSelectInput, { ClosingSelectOption } from '@/elements/closing/closing-select-input';
+import ClosingSelectInput, {
+    ClosingSelectOption,
+} from '@/elements/closing/closing-select-input';
 import { mockClosings } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const options: ClosingSelectOption[] = mockClosings.map((c) => ({
     value: c.id.toString(),

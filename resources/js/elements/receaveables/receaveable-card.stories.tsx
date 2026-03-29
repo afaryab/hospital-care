@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
 import ReceaveableCard from '@/elements/receaveables/receaveable-card';
 import { mockReceaveable, mockReceaveablePaid } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof ReceaveableCard> = {
     title: 'Elements/Receivable/ReceaveableCard',

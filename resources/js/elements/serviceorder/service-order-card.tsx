@@ -1,7 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { ServiceOrder } from '@/types';
 import { cn } from '@/lib/utils';
+import { ServiceOrder } from '@/types';
 
 type ServiceOrderCardProps = {
     serviceOrder: ServiceOrder;
@@ -9,17 +9,29 @@ type ServiceOrderCardProps = {
     onClick?: () => void;
 };
 
-const ServiceOrderCard: React.FC<ServiceOrderCardProps> = ({ serviceOrder, className, onClick }) => (
+const ServiceOrderCard: React.FC<ServiceOrderCardProps> = ({
+    serviceOrder,
+    className,
+    onClick,
+}) => (
     <Card
-        className={cn('cursor-default', onClick && 'cursor-pointer hover:shadow-md transition-shadow', className)}
+        className={cn(
+            'cursor-default',
+            onClick && 'cursor-pointer transition-shadow hover:shadow-md',
+            className,
+        )}
         onClick={onClick}
     >
-        <CardContent className="p-4 flex items-center justify-between gap-3">
+        <CardContent className="flex items-center justify-between gap-3 p-4">
             <div className="min-w-0">
-                <p className="text-xs font-mono text-muted-foreground">{serviceOrder.so_number}</p>
-                <p className="font-semibold text-sm mt-0.5">{serviceOrder.type}</p>
+                <p className="font-mono text-xs text-muted-foreground">
+                    {serviceOrder.so_number}
+                </p>
+                <p className="mt-0.5 text-sm font-semibold">
+                    {serviceOrder.type}
+                </p>
             </div>
-            <Badge variant="outline" className="text-xs shrink-0">
+            <Badge variant="outline" className="shrink-0 text-xs">
                 {serviceOrder.so_short ?? serviceOrder.departmentKey}
             </Badge>
         </CardContent>

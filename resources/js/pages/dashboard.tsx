@@ -11,8 +11,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-export default function dashboard() {
-
+export default function Dashboard() {
     const { auth } = usePage().props as unknown as { auth: any };
 
     const { user } = auth;
@@ -49,13 +48,11 @@ function WelcomeBanner({ user }: { user: any }) {
     };
 
     return (
-        <div className="rounded-lg h-full p-6 shadow-md dark:bg-gray-800">
+        <div className="h-full rounded-lg p-6 shadow-md dark:bg-gray-800">
             <h2 className="mb-2 text-2xl font-semibold">
                 {getTimeGreeting()}, {user.name}!
             </h2>
-            <p className="">
-                Welcome back to Hospital Care Digital Center
-            </p>
+            <p className="">Welcome back to Hospital Care Digital Center</p>
         </div>
     );
 }

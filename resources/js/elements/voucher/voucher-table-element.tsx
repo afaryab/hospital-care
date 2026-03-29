@@ -6,6 +6,8 @@ export type VoucherTableElementProps = {
     className?: string;
 };
 
-const VoucherTableElement: React.FC<VoucherTableElementProps> = (props) => <ExpenseVoucherTableElement {...props} />;
+const VoucherTableElement: React.FC<VoucherTableElementProps> = (props) => (
+    <ExpenseVoucherTableElement {...props} />
+);
 
 export default VoucherTableElement;

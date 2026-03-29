@@ -110,8 +110,14 @@ export default function FilterAndSelectUser({
         <div className="space-y-2">
             <Label>{label}</Label>
             <div className="relative">
-                <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={placeholder} />
-                {isLoading ? <LoaderCircle className="absolute top-2.5 right-2 h-4 w-4 animate-spin text-muted-foreground" /> : null}
+                <Input
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder={placeholder}
+                />
+                {isLoading ? (
+                    <LoaderCircle className="absolute top-2.5 right-2 h-4 w-4 animate-spin text-muted-foreground" />
+                ) : null}
             </div>
 
             {hasSearchResults(result) ? (
@@ -123,8 +129,12 @@ export default function FilterAndSelectUser({
                             onClick={() => selectUser(user)}
                             className="w-full border-b px-3 py-2 text-left last:border-b-0 hover:bg-muted/40"
                         >
-                            <div className="font-medium">{user.name ?? 'Unknown user'}</div>
-                            <div className="text-xs text-muted-foreground">{user.username ?? user.email ?? 'N/A'}</div>
+                            <div className="font-medium">
+                                {user.name ?? 'Unknown user'}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                {user.username ?? user.email ?? 'N/A'}
+                            </div>
                         </button>
                     ))}
                 </div>
@@ -132,8 +142,12 @@ export default function FilterAndSelectUser({
 
             {selected ? (
                 <div className="rounded-md border bg-muted/20 p-2 text-sm">
-                    <div className="font-medium">{selected.name ?? 'Unknown user'}</div>
-                    <div className="text-xs text-muted-foreground">{selected.username ?? selected.email ?? 'N/A'}</div>
+                    <div className="font-medium">
+                        {selected.name ?? 'Unknown user'}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                        {selected.username ?? selected.email ?? 'N/A'}
+                    </div>
                 </div>
             ) : null}
 

@@ -120,7 +120,7 @@ export const MaskInput = React.forwardRef<HTMLInputElement, MaskInputProps>(
     const placeCaret = React.useCallback((el: HTMLInputElement | null, mstr: string) => {
       if (!el) return
       // Find the index after the last token character
-      let pos = mstr.length
+      const pos = mstr.length
       // Avoid placing caret inside trailing literals beyond last filled slot
       // (e.g., "+92 (" shouldn't leave caret after the space if there's no digit)
       el.setSelectionRange(pos, pos)

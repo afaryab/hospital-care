@@ -1,20 +1,30 @@
-import { Badge } from '@/components/ui/badge';
 import Currency from '@/components/currency';
-import { Receaveable } from '@/types';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Receaveable } from '@/types';
 
 type ReceaveableTableElementProps = {
     receaveable: Receaveable;
     className?: string;
 };
 
-const ReceaveableTableElement: React.FC<ReceaveableTableElementProps> = ({ receaveable, className }) => (
-    <div className={cn('flex items-center gap-2 min-w-0', className)}>
+const ReceaveableTableElement: React.FC<ReceaveableTableElementProps> = ({
+    receaveable,
+    className,
+}) => (
+    <div className={cn('flex min-w-0 items-center gap-2', className)}>
         <div className="min-w-0">
-            <p className="text-xs font-mono text-muted-foreground">{receaveable.transaction?.tr_number}</p>
-            <p className="text-sm font-semibold"><Currency value={receaveable.amount} /></p>
+            <p className="font-mono text-xs text-muted-foreground">
+                {receaveable.transaction?.tr_number}
+            </p>
+            <p className="text-sm font-semibold">
+                <Currency value={receaveable.amount} />
+            </p>
         </div>
-        <Badge variant={receaveable.status === 'paid' ? 'default' : 'secondary'} className="text-xs shrink-0">
+        <Badge
+            variant={receaveable.status === 'paid' ? 'default' : 'secondary'}
+            className="shrink-0 text-xs"
+        >
             {receaveable.status}
         </Badge>
     </div>

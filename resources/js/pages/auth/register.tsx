@@ -17,7 +17,9 @@ interface RegisterProps {
 export default function Register({ isFirstSignup = false }: RegisterProps) {
     return (
         <AuthLayout
-            title={isFirstSignup ? 'Create the first account' : 'Create an account'}
+            title={
+                isFirstSignup ? 'Create the first account' : 'Create an account'
+            }
             description={
                 isFirstSignup
                     ? 'This first sign up becomes the administrator account.'
@@ -36,7 +38,8 @@ export default function Register({ isFirstSignup = false }: RegisterProps) {
                         <div className="grid gap-6">
                             {isFirstSignup && (
                                 <p className="text-sm text-muted-foreground">
-                                    This account will be assigned administrator access.
+                                    This account will be assigned administrator
+                                    access.
                                 </p>
                             )}
 
@@ -59,7 +62,9 @@ export default function Register({ isFirstSignup = false }: RegisterProps) {
                             </div>
 
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address (optional)</Label>
+                                <Label htmlFor="email">
+                                    Email address (optional)
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -87,7 +92,13 @@ export default function Register({ isFirstSignup = false }: RegisterProps) {
 
                             <div className="grid gap-2">
                                 <Label htmlFor="gender">Gender</Label>
-                                <select id="gender" name="gender" required tabIndex={4} className="border rounded px-3 py-2">
+                                <select
+                                    id="gender"
+                                    name="gender"
+                                    required
+                                    tabIndex={4}
+                                    className="rounded border px-3 py-2"
+                                >
                                     <option value="">Select gender</option>
                                     <option value="m">Male</option>
                                     <option value="f">Female</option>

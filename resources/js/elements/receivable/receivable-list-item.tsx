@@ -8,8 +8,9 @@ export type ReceivableListItemProps = {
     selected?: boolean;
 };
 
-const ReceivableListItem: React.FC<ReceivableListItemProps> = ({ receivable, ...props }) => (
-    <ReceaveableListItem receaveable={receivable} {...props} />
-);
+const ReceivableListItem: React.FC<ReceivableListItemProps> = ({
+    receivable,
+    ...props
+}) => <ReceaveableListItem receaveable={receivable} {...props} />;
 
 export default ReceivableListItem;

@@ -1,5 +1,5 @@
 // Components
-import { counterStore, home, login } from '@/routes';
+import { counterStore, home } from '@/routes';
 import { Form, Head, usePage } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 
@@ -8,14 +8,18 @@ import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+} from '@/components/ui/select';
 import AuthLayout from '@/layouts/auth-layout';
-import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
-import { useState } from 'react';
 import { SelectValue } from '@radix-ui/react-select';
 import clsx from 'clsx';
+import { useState } from 'react';
 
 export default function CounterOpen({ status }: { status?: string }) {
-
     const { recptions } = usePage().props as any;
 
     const [openingBalance, setOpeningBalance] = useState<number | string>(0);
@@ -39,7 +43,9 @@ export default function CounterOpen({ status }: { status?: string }) {
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="opening_balance">Opening Balance</Label>
+                                <Label htmlFor="opening_balance">
+                                    Opening Balance
+                                </Label>
                                 <Input
                                     id="opening_balance"
                                     type="number"
@@ -49,23 +55,41 @@ export default function CounterOpen({ status }: { status?: string }) {
                                     placeholder="0.00"
                                     step=".01"
                                     value={openingBalance}
-                                    onChange={(e) => setOpeningBalance(e.target.value)}
+                                    onChange={(e) =>
+                                        setOpeningBalance(e.target.value)
+                                    }
                                 />
                                 <InputError message={errors.opening_balance} />
                             </div>
 
                             <div className="mt-6 grid gap-2">
                                 <Label htmlFor="reception_id">Reception</Label>
-                                <Select value={receptionId?.toString() || ''} name='reception_id' onValueChange={(value) => setReceptionId(value ? parseInt(value) : null)}>
+                                <Select
+                                    value={receptionId?.toString() || ''}
+                                    name="reception_id"
+                                    onValueChange={(value) =>
+                                        setReceptionId(
+                                            value ? parseInt(value) : null,
+                                        )
+                                    }
+                                >
                                     <SelectTrigger id="reception">
                                         <SelectValue placeholder="Select Reception" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {recptions.map((reception: { id: number; name: string }) => (
-                                            <SelectItem key={reception.id} value={reception.id.toString()}>
-                                                {reception.name}
-                                            </SelectItem>
-                                        ))}
+                                        {recptions.map(
+                                            (reception: {
+                                                id: number;
+                                                name: string;
+                                            }) => (
+                                                <SelectItem
+                                                    key={reception.id}
+                                                    value={reception.id.toString()}
+                                                >
+                                                    {reception.name}
+                                                </SelectItem>
+                                            ),
+                                        )}
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.reception_id} />
@@ -73,7 +97,12 @@ export default function CounterOpen({ status }: { status?: string }) {
 
                             <div className="my-6 flex items-center justify-start">
                                 <Button
-                                    className={clsx("w-full", processing ? 'opacity-50 cursor-not-allowed' : '')}
+                                    className={clsx(
+                                        'w-full',
+                                        processing
+                                            ? 'cursor-not-allowed opacity-50'
+                                            : '',
+                                    )}
                                     disabled={processing}
                                     data-test="email-password-reset-link-button"
                                 >

@@ -1,6 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
-import ServiceOrderSelectInput, { ServiceOrderSelectOption } from '@/elements/serviceorder/service-order-select-input';
+import ServiceOrderSelectInput, {
+    ServiceOrderSelectOption,
+} from '@/elements/serviceorder/service-order-select-input';
 import { mockServiceOrders } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const options: ServiceOrderSelectOption[] = mockServiceOrders.map((so) => ({
     value: so.id?.toString() ?? so.so_number,

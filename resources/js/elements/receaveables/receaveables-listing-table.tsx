@@ -1,5 +1,5 @@
-import { Badge } from '@/components/ui/badge';
 import Currency from '@/components/currency';
+import { Badge } from '@/components/ui/badge';
 import { Receaveable } from '@/types';
 
 type ReceaveablesListingTableProps = {
@@ -14,13 +14,17 @@ const ReceaveablesListingTable: React.FC<ReceaveablesListingTableProps> = ({
     emptyMessage = 'No receivables found.',
 }) => {
     if (!receaveables.length) {
-        return <p className="py-6 text-center text-sm text-muted-foreground">{emptyMessage}</p>;
+        return (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+                {emptyMessage}
+            </p>
+        );
     }
 
     return (
         <div className="overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
+                <thead className="bg-muted/50 text-xs text-muted-foreground uppercase">
                     <tr>
                         <th className="px-4 py-2 text-left">TR Number</th>
                         <th className="px-4 py-2 text-left">Patient</th>
@@ -34,22 +38,37 @@ const ReceaveablesListingTable: React.FC<ReceaveablesListingTableProps> = ({
                     {receaveables.map((receaveable) => (
                         <tr
                             key={receaveable.id}
-                            className={onSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}
+                            className={
+                                onSelect
+                                    ? 'cursor-pointer transition-colors hover:bg-accent'
+                                    : ''
+                            }
                             onClick={() => onSelect?.(receaveable)}
                         >
                             <td className="px-4 py-2 font-mono text-xs">
                                 {receaveable.transaction?.tr_number ?? '-'}
                             </td>
-                            <td className="px-4 py-2">{receaveable.patient?.name ?? '-'}</td>
+                            <td className="px-4 py-2">
+                                {receaveable.patient?.name ?? '-'}
+                            </td>
                             <td className="px-4 py-2 text-right font-semibold">
                                 <Currency value={receaveable.orignal_amount} />
                             </td>
                             <td className="px-4 py-2 text-right">
                                 <Currency value={receaveable.amount} />
                             </td>
-                            <td className="px-4 py-2 text-xs">{receaveable.due_date ?? '-'}</td>
+                            <td className="px-4 py-2 text-xs">
+                                {receaveable.due_date ?? '-'}
+                            </td>
                             <td className="px-4 py-2">
-                                <Badge variant={receaveable.status === 'paid' ? 'default' : 'secondary'} className="text-xs">
+                                <Badge
+                                    variant={
+                                        receaveable.status === 'paid'
+                                            ? 'default'
+                                            : 'secondary'
+                                    }
+                                    className="text-xs"
+                                >
                                     {receaveable.status}
                                 </Badge>
                             </td>

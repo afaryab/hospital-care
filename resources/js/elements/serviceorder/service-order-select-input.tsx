@@ -34,9 +34,16 @@ const ServiceOrderSelectInput: React.FC<ServiceOrderSelectInputProps> = ({
         <SelectTrigger>
             <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent searchable={searchable} searchPlaceholder="Search service orders...">
+        <SelectContent
+            searchable={searchable}
+            searchPlaceholder="Search service orders..."
+        >
             {options.map((option) => (
-                <SelectItem key={option.value} value={option.value} textValue={option.label}>
+                <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    textValue={option.label}
+                >
                     {option.label}
                 </SelectItem>
             ))}

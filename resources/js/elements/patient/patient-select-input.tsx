@@ -34,9 +34,16 @@ const PatientSelectInput: React.FC<PatientSelectInputProps> = ({
         <SelectTrigger>
             <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent searchable={searchable} searchPlaceholder="Search patients...">
+        <SelectContent
+            searchable={searchable}
+            searchPlaceholder="Search patients..."
+        >
             {options.map((option) => (
-                <SelectItem key={option.value} value={option.value} textValue={option.label}>
+                <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    textValue={option.label}
+                >
                     {option.label}
                 </SelectItem>
             ))}

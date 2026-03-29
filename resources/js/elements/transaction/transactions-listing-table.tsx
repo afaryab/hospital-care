@@ -1,5 +1,5 @@
-import { Badge } from '@/components/ui/badge';
 import Currency from '@/components/currency';
+import { Badge } from '@/components/ui/badge';
 import { Transaction } from '@/types';
 
 type TransactionsListingTableProps = {
@@ -14,13 +14,17 @@ const TransactionsListingTable: React.FC<TransactionsListingTableProps> = ({
     emptyMessage = 'No transactions found.',
 }) => {
     if (!transactions.length) {
-        return <p className="py-6 text-center text-sm text-muted-foreground">{emptyMessage}</p>;
+        return (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+                {emptyMessage}
+            </p>
+        );
     }
 
     return (
         <div className="overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
+                <thead className="bg-muted/50 text-xs text-muted-foreground uppercase">
                     <tr>
                         <th className="px-4 py-2 text-left">TR Number</th>
                         <th className="px-4 py-2 text-left">Type</th>
@@ -34,10 +38,16 @@ const TransactionsListingTable: React.FC<TransactionsListingTableProps> = ({
                     {transactions.map((tr) => (
                         <tr
                             key={tr.id}
-                            className={onSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}
+                            className={
+                                onSelect
+                                    ? 'cursor-pointer transition-colors hover:bg-accent'
+                                    : ''
+                            }
                             onClick={() => onSelect?.(tr)}
                         >
-                            <td className="px-4 py-2 font-mono text-xs">{tr.tr_number}</td>
+                            <td className="px-4 py-2 font-mono text-xs">
+                                {tr.tr_number}
+                            </td>
                             <td className="px-4 py-2">{tr.type || '-'}</td>
                             <td className="px-4 py-2 text-right font-semibold">
                                 <Currency value={tr.amount} />
@@ -45,10 +55,16 @@ const TransactionsListingTable: React.FC<TransactionsListingTableProps> = ({
                             <td className="px-4 py-2 text-right">
                                 <Currency value={tr.customer_payed} />
                             </td>
-                            <td className="px-4 py-2 text-xs">{tr.created_at?.split('T')[0]}</td>
+                            <td className="px-4 py-2 text-xs">
+                                {tr.created_at?.split('T')[0]}
+                            </td>
                             <td className="px-4 py-2">
                                 <Badge
-                                    variant={tr.income_or_expense === 'INCOME' ? 'default' : 'destructive'}
+                                    variant={
+                                        tr.income_or_expense === 'INCOME'
+                                            ? 'default'
+                                            : 'destructive'
+                                    }
                                     className="text-xs"
                                 >
                                     {tr.income_or_expense}

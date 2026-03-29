@@ -1,16 +1,35 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import SelectExpenseCategory, { ExpenseCategoryOption } from '@/elements/expense-category/select-expense-category';
-import FilterAndSelectExpenseVoucher, { ExpenseVoucherSearchItem } from '@/elements/expense-voucher/filter-and-select-expense-voucher';
-import FilterAndSelectServiceOrder from '@/elements/serviceorder/filter-and-select-serviceorder';
-import FilterAndSelectTransaction, { TransactionSearchItem } from '@/elements/transaction/filter-and-select-transaction';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import BulletsWrapper from '@/elements/bullets-wrapper';
+import SelectExpenseCategory, {
+    ExpenseCategoryOption,
+} from '@/elements/expense-category/select-expense-category';
+import FilterAndSelectExpenseVoucher, {
+    ExpenseVoucherSearchItem,
+} from '@/elements/expense-voucher/filter-and-select-expense-voucher';
+import FilterAndSelectServiceOrder from '@/elements/serviceorder/filter-and-select-serviceorder';
+import FilterAndSelectTransaction, {
+    TransactionSearchItem,
+} from '@/elements/transaction/filter-and-select-transaction';
 import AppLayout from '@/layouts/app-layout';
-import { counterExpense, counterExpenseNewVoucher, counterView, home, myCounterList, transactionStore } from '@/routes';
+import {
+    counterExpense,
+    counterExpenseNewVoucher,
+    counterView,
+    home,
+    myCounterList,
+    transactionStore,
+} from '@/routes';
 import { User, type BreadcrumbItem } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import clsx from 'clsx';
 import { LoaderCircle } from 'lucide-react';
 import { useState } from 'react';
@@ -30,36 +49,66 @@ interface VoucherSearchResults {
     possible: ExpenseVoucher[];
 }
 
-const normalizeCategoryName = (category?: ExpenseCategoryOption | null) => (category?.name ?? '').trim().toLowerCase();
+const normalizeCategoryName = (category?: ExpenseCategoryOption | null) =>
+    (category?.name ?? '').trim().toLowerCase();
 
 export default function CounterExpense() {
+    const { openCounter, users, categories, selected } = usePage<{
+        openCounter: any;
+        users: User[];
+        categories: any[];
+        selected?: any;
+    }>().props;
 
-    const { openCounter, users, categories, selected } = usePage<{ openCounter: any, users: User[], categories: any[], selected?: any }>().props
-
-    const [payedTo, setPayedTo] = useState(selected?.voucher?.payed_to ? selected.voucher.payed_to.toString() : '');
+    const [payedTo, setPayedTo] = useState(
+        selected?.voucher?.payed_to ? selected.voucher.payed_to.toString() : '',
+    );
     const [payedToOther, setPayedToOther] = useState('');
-    const [selectedVoucher, setSelectedVoucher] = useState<ExpenseVoucherSearchItem | null>(selected?.voucher ? {
-        id: selected.voucher.id,
-        vc_number: selected.voucher.vc_number,
-        amount: selected.voucher.amount,
-        payed_to: selected.voucher.payed_to,
-        payed_to_name: selected.voucher.payed_to_user?.name ?? selected.voucher.payedTo?.name,
-        payedTo: selected.voucher.payed_to_user ?? selected.voucher.payedTo,
-    } as ExpenseVoucherSearchItem : null);
-    const [selectedVoucherId, setSelectedVoucherId] = useState(selected?.voucher ? selected.voucher.id.toString() : '');
-    const [processingVoucherPayment, setProcessingVoucherPayment] = useState(false);
-    
+    const [selectedVoucher, setSelectedVoucher] =
+        useState<ExpenseVoucherSearchItem | null>(
+            selected?.voucher
+                ? ({
+                      id: selected.voucher.id,
+                      vc_number: selected.voucher.vc_number,
+                      amount: selected.voucher.amount,
+                      payed_to: selected.voucher.payed_to,
+                      payed_to_name:
+                          selected.voucher.payed_to_user?.name ??
+                          selected.voucher.payedTo?.name,
+                      payedTo:
+                          selected.voucher.payed_to_user ??
+                          selected.voucher.payedTo,
+                  } as ExpenseVoucherSearchItem)
+                : null,
+        );
+    const [selectedVoucherId, setSelectedVoucherId] = useState(
+        selected?.voucher ? selected.voucher.id.toString() : '',
+    );
+    const [processingVoucherPayment, setProcessingVoucherPayment] =
+        useState(false);
 
     // Petty cash state
-    const [pettyCashAmount, setPettyCashAmount] = useState(selected?.amount ? selected.amount.toString() : '');
+    const [pettyCashAmount, setPettyCashAmount] = useState(
+        selected?.amount ? selected.amount.toString() : '',
+    );
     const [pettyCashDescription, setPettyCashDescription] = useState('');
-    const [pettyCashCategory, setPettyCashCategory] = useState(selected?.category?.id ? selected.category.id.toString() : '');
-    const [selectedExpenseCategory, setSelectedExpenseCategory] = useState<ExpenseCategoryOption | null>(selected?.category ?? null);
-    const [pettyCashPayedTo, setPettyCashPayedTo] = useState(selected?.doctor?.id ? selected.doctor.id.toString() : '');
-    const [pettyCashOtherName, setPettyCashOtherName] = useState(selected?.payed_to_other || '');
-    const [pettyCashTransactionId, setPettyCashTransactionId] = useState(selected?.transaction?.tr_number || '');
+    const [pettyCashCategory, setPettyCashCategory] = useState(
+        selected?.category?.id ? selected.category.id.toString() : '',
+    );
+    const [selectedExpenseCategory, setSelectedExpenseCategory] =
+        useState<ExpenseCategoryOption | null>(selected?.category ?? null);
+    const [pettyCashPayedTo, setPettyCashPayedTo] = useState(
+        selected?.doctor?.id ? selected.doctor.id.toString() : '',
+    );
+    const [pettyCashOtherName, setPettyCashOtherName] = useState(
+        selected?.payed_to_other || '',
+    );
+    const [pettyCashTransactionId, setPettyCashTransactionId] = useState(
+        selected?.transaction?.tr_number || '',
+    );
     const [pettyCashFileNumber, setPettyCashFileNumber] = useState('');
-    const [processingPettyCashPayment, setProcessingPettyCashPayment] = useState(false);
+    const [processingPettyCashPayment, setProcessingPettyCashPayment] =
+        useState(false);
     const [pettyCashErrors, setPettyCashErrors] = useState<string[]>([]);
 
     // Handle voucher payment
@@ -88,22 +137,22 @@ export default function CounterExpense() {
         setProcessingVoucherPayment(true);
         router.post(transactionStore().url, paymentData, {
             onSuccess: () => {
-            // Reset form on success
-            setSelectedVoucher(null);
-            setSelectedVoucherId('');
-            setPayedTo('');
-            setPayedToOther('');
-            setProcessingVoucherPayment(false);
+                // Reset form on success
+                setSelectedVoucher(null);
+                setSelectedVoucherId('');
+                setPayedTo('');
+                setPayedToOther('');
+                setProcessingVoucherPayment(false);
             },
             onError: (errors) => {
-            // Handle validation errors
-            console.error('Validation errors:', errors);
-            
-            // Display errors to user
-            const errorMessages = Object.values(errors).flat().join('\n');
-            alert(`Payment failed:\n${errorMessages}`);
-            setProcessingVoucherPayment(false);
-            }
+                // Handle validation errors
+                console.error('Validation errors:', errors);
+
+                // Display errors to user
+                const errorMessages = Object.values(errors).flat().join('\n');
+                alert(`Payment failed:\n${errorMessages}`);
+                setProcessingVoucherPayment(false);
+            },
         });
     };
 
@@ -126,7 +175,8 @@ export default function CounterExpense() {
             transaction_id: pettyCashTransactionId,
             file_number: pettyCashFileNumber,
             payed_to: pettyCashPayedTo === 'other' ? null : pettyCashPayedTo,
-            payed_to_other: pettyCashPayedTo === 'other' ? pettyCashOtherName : null,
+            payed_to_other:
+                pettyCashPayedTo === 'other' ? pettyCashOtherName : null,
             income_or_expense: 'EXPENSE',
             type: 'EXP',
         };
@@ -148,21 +198,28 @@ export default function CounterExpense() {
             onError: (errors) => {
                 // Handle validation errors
                 console.error('Validation errors:', errors);
-                
+
                 // Display errors to user
                 const errorMessages = Object.values(errors).flat().join('\n');
                 // alert(`Payment failed:\n${errorMessages}`);
                 setPettyCashErrors(Object.values(errors).flat());
                 setProcessingPettyCashPayment(false);
-            }
+            },
         });
     };
 
-    const handleRefundTransactionSelect = (transaction: TransactionSearchItem | null) => {
+    const handleRefundTransactionSelect = (
+        transaction: TransactionSearchItem | null,
+    ) => {
         setPettyCashTransactionId(transaction ? transaction.id.toString() : '');
 
-        if (normalizeCategoryName(selectedExpenseCategory) === 'refund' && transaction?.patient?.name) {
-            setPettyCashDescription(`Refund for patient: ${transaction.patient.name}`);
+        if (
+            normalizeCategoryName(selectedExpenseCategory) === 'refund' &&
+            transaction?.patient?.name
+        ) {
+            setPettyCashDescription(
+                `Refund for patient: ${transaction.patient.name}`,
+            );
         }
     };
 
@@ -173,55 +230,66 @@ export default function CounterExpense() {
         },
         {
             title: 'Counter',
-            href: openCounter ? counterView({
-                ctYear: openCounter.year,
-                ctMonth: openCounter.month,
-                ctNumber: openCounter.number
-            }).url : myCounterList().url, 
+            href: openCounter
+                ? counterView({
+                      ctYear: openCounter.year,
+                      ctMonth: openCounter.month,
+                      ctNumber: openCounter.number,
+                  }).url
+                : myCounterList().url,
         },
         {
             title: 'Expenses',
-            href: openCounter ? counterExpense().url : myCounterList().url, 
+            href: openCounter ? counterExpense().url : myCounterList().url,
         },
     ];
 
-    let bullets = [];
+    const bullets = [];
 
-    openCounter && bullets.push({ 
-        title: openCounter && openCounter.ct_number,
-        url: openCounter && counterView({
-            ctYear: openCounter.year,
-            ctMonth: openCounter.month,
-            ctNumber: openCounter.number
-        }).url,
-        active: true
-    });
+    openCounter &&
+        bullets.push({
+            title: openCounter && openCounter.ct_number,
+            url:
+                openCounter &&
+                counterView({
+                    ctYear: openCounter.year,
+                    ctMonth: openCounter.month,
+                    ctNumber: openCounter.number,
+                }).url,
+            active: true,
+        });
 
-    openCounter && bullets.push({ 
-        title: 'Expense Payment',
-        url: openCounter && counterExpense().url,
-        active: true
-    });
+    openCounter &&
+        bullets.push({
+            title: 'Expense Payment',
+            url: openCounter && counterExpense().url,
+            active: true,
+        });
 
     const handleNewVoucher = () => {
         // redirect to counterExpenseNewVoucher
         router.get(counterExpenseNewVoucher().url);
-    }
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Counter ${openCounter?.ct_number} Expense`} />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72] dark:bg-[#262626]">
-                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-2 bg-white text-gray-800">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800">
                     <BulletsWrapper bullets={bullets}>
-                        <div className="flex h-full w-full flex-row gap-4 overflow-x-auto rounded-xl p-2 bg-white">
+                        <div className="flex h-full w-full flex-row gap-4 overflow-x-auto rounded-xl bg-white p-2">
                             {/* Voucher Payment - Left Side */}
-                            <div className="flex-1 flex flex-col gap-4 p-4 border rounded-lg">
-                                <h2 className="text-xl font-semibold text-center">Voucher Payment</h2>
-                                <form onSubmit={handleVoucherPayment} className="flex flex-col gap-4 items-center justify-center flex-1">
-                                    <Button 
+                            <div className="flex flex-1 flex-col gap-4 rounded-lg border p-4">
+                                <h2 className="text-center text-xl font-semibold">
+                                    Voucher Payment
+                                </h2>
+                                <form
+                                    onSubmit={handleVoucherPayment}
+                                    className="flex flex-1 flex-col items-center justify-center gap-4"
+                                >
+                                    <Button
                                         onClick={handleNewVoucher}
-                                        type="button" 
+                                        type="button"
                                         className="w-full max-w-sm"
                                     >
                                         New Voucher
@@ -234,40 +302,66 @@ export default function CounterExpense() {
                                             label="Voucher Number"
                                         />
                                     </div>
-                                    {selectedVoucher && (<div className="w-full max-w-sm space-y-2">
-                                        <Label htmlFor="payedTo">Payed To</Label>
-                                        <div className="relative">
-                                            <Select
-                                                onValueChange={(value) => setPayedTo(value)}
-                                                value={payedTo}
-                                            >
-                                                <SelectTrigger className="w-full">
-                                                    <SelectValue placeholder="Select user" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {users.map((user: User) => (
-                                                        <SelectItem key={user.id} value={user.id.toString()}>
-                                                            {user.name}
+                                    {selectedVoucher && (
+                                        <div className="w-full max-w-sm space-y-2">
+                                            <Label htmlFor="payedTo">
+                                                Payed To
+                                            </Label>
+                                            <div className="relative">
+                                                <Select
+                                                    onValueChange={(value) =>
+                                                        setPayedTo(value)
+                                                    }
+                                                    value={payedTo}
+                                                >
+                                                    <SelectTrigger className="w-full">
+                                                        <SelectValue placeholder="Select user" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {users.map(
+                                                            (user: User) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        user.id
+                                                                    }
+                                                                    value={user.id.toString()}
+                                                                >
+                                                                    {user.name}
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                        <SelectItem value="Other">
+                                                            Other
                                                         </SelectItem>
-                                                    ))}
-                                                    <SelectItem value="Other">Other</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
                                         </div>
-                                    </div>)}
-                                    {payedTo === 'Other' && (<div className="w-full max-w-sm space-y-2">
-                                        <Label htmlFor="payedToOther">Payed To (Other)</Label>
-                                        <Input
-                                            id="payedToOther"
-                                            type="text"
-                                            value={payedToOther}
-                                            onChange={(e) => setPayedToOther(e.target.value)}
-                                        />
-                                    </div>)}
-                                    <Button 
-                                        type="submit" 
+                                    )}
+                                    {payedTo === 'Other' && (
+                                        <div className="w-full max-w-sm space-y-2">
+                                            <Label htmlFor="payedToOther">
+                                                Payed To (Other)
+                                            </Label>
+                                            <Input
+                                                id="payedToOther"
+                                                type="text"
+                                                value={payedToOther}
+                                                onChange={(e) =>
+                                                    setPayedToOther(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                    )}
+                                    <Button
+                                        type="submit"
                                         className="w-full max-w-sm"
-                                        disabled={!selectedVoucher || processingVoucherPayment}
+                                        disabled={
+                                            !selectedVoucher ||
+                                            processingVoucherPayment
+                                        }
                                     >
                                         {processingVoucherPayment && (
                                             <LoaderCircle className="h-4 w-4 animate-spin" />
@@ -278,9 +372,14 @@ export default function CounterExpense() {
                             </div>
 
                             {/* Petty Cash Payment - Right Side */}
-                            <div className="flex-1 flex flex-col gap-4 p-4 border rounded-lg">
-                                <h2 className="text-xl font-semibold text-center">Petty Cash Payment</h2>
-                                <form onSubmit={handlePettyCashPayment} className="flex flex-col gap-4 items-center justify-center flex-1">
+                            <div className="flex flex-1 flex-col gap-4 rounded-lg border p-4">
+                                <h2 className="text-center text-xl font-semibold">
+                                    Petty Cash Payment
+                                </h2>
+                                <form
+                                    onSubmit={handlePettyCashPayment}
+                                    className="flex flex-1 flex-col items-center justify-center gap-4"
+                                >
                                     <div className="w-full max-w-sm">
                                         <Label htmlFor="amount">Amount</Label>
                                         <Input
@@ -288,48 +387,94 @@ export default function CounterExpense() {
                                             type="number"
                                             step="0.01"
                                             value={pettyCashAmount}
-                                            onChange={(e) => setPettyCashAmount(e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            onChange={(e) =>
+                                                setPettyCashAmount(
+                                                    e.target.value,
+                                                )
+                                            }
+                                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                             placeholder="Enter amount"
                                         />
-                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('amount')).map((error, index) => (
-                                            <div key={index} className="text-sm text-red-600">
-                                                {error}
-                                            </div>
-                                        ))}
+                                        {pettyCashErrors.length > 0 &&
+                                            pettyCashErrors
+                                                .filter((error) =>
+                                                    error
+                                                        .toLowerCase()
+                                                        .includes('amount'),
+                                                )
+                                                .map((error, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="text-sm text-red-600"
+                                                    >
+                                                        {error}
+                                                    </div>
+                                                ))}
                                     </div>
                                     <div className="w-full max-w-sm">
                                         <SelectExpenseCategory
                                             value={pettyCashCategory}
                                             onValueChange={setPettyCashCategory}
-                                            onSelect={setSelectedExpenseCategory}
+                                            onSelect={
+                                                setSelectedExpenseCategory
+                                            }
                                             label="Category"
                                             placeholder="Select a category"
                                         />
-                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('category')).map((error, index) => (
-                                            <div key={index} className="text-sm text-red-600">
-                                                {error}
-                                            </div>
-                                        ))}
+                                        {pettyCashErrors.length > 0 &&
+                                            pettyCashErrors
+                                                .filter((error) =>
+                                                    error
+                                                        .toLowerCase()
+                                                        .includes('category'),
+                                                )
+                                                .map((error, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="text-sm text-red-600"
+                                                    >
+                                                        {error}
+                                                    </div>
+                                                ))}
                                     </div>
-                                    {normalizeCategoryName(selectedExpenseCategory) === 'refund' && (
+                                    {normalizeCategoryName(
+                                        selectedExpenseCategory,
+                                    ) === 'refund' && (
                                         <div className="w-full max-w-sm">
                                             <FilterAndSelectTransaction
                                                 value={pettyCashTransactionId}
-                                                onValueChange={setPettyCashTransactionId}
-                                                onSelect={handleRefundTransactionSelect}
+                                                onValueChange={
+                                                    setPettyCashTransactionId
+                                                }
+                                                onSelect={
+                                                    handleRefundTransactionSelect
+                                                }
                                                 label="Transaction"
                                                 placeholder="Find refunded transaction"
                                             />
-                                            {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('transaction_id')).map((error, index) => (
-                                                <div key={index} className="text-sm text-red-600">
-                                                    {error}
-                                                </div>
-                                            ))}
+                                            {pettyCashErrors.length > 0 &&
+                                                pettyCashErrors
+                                                    .filter((error) =>
+                                                        error
+                                                            .toLowerCase()
+                                                            .includes(
+                                                                'transaction_id',
+                                                            ),
+                                                    )
+                                                    .map((error, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="text-sm text-red-600"
+                                                        >
+                                                            {error}
+                                                        </div>
+                                                    ))}
                                         </div>
                                     )}
                                     <div className="w-full max-w-sm">
-                                        <Label htmlFor="payed_to">Payed To</Label>
+                                        <Label htmlFor="payed_to">
+                                            Payed To
+                                        </Label>
                                         <Select
                                             value={pettyCashPayedTo}
                                             onValueChange={setPettyCashPayedTo}
@@ -338,68 +483,151 @@ export default function CounterExpense() {
                                                 <SelectValue placeholder="Select a user" />
                                             </SelectTrigger>
                                             <SelectContent searchable>
-                                                <SelectItem value="other">Other</SelectItem>
+                                                <SelectItem value="other">
+                                                    Other
+                                                </SelectItem>
                                                 {users.map((user: any) => (
-                                                    <SelectItem key={user.id} value={user.id.toString()}>
+                                                    <SelectItem
+                                                        key={user.id}
+                                                        value={user.id.toString()}
+                                                    >
                                                         {user.name}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('payed_to')).map((error, index) => (
-                                            <div key={index} className="text-sm text-red-600">
-                                                {error}
-                                            </div>
-                                        ))}
+                                        {pettyCashErrors.length > 0 &&
+                                            pettyCashErrors
+                                                .filter((error) =>
+                                                    error
+                                                        .toLowerCase()
+                                                        .includes('payed_to'),
+                                                )
+                                                .map((error, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="text-sm text-red-600"
+                                                    >
+                                                        {error}
+                                                    </div>
+                                                ))}
                                     </div>
-                                    {pettyCashPayedTo === 'other' && <div className="w-full max-w-sm">
-                                        <Label htmlFor="other_name">Other name</Label>
-                                        <Input
-                                            id="other_name"
-                                            type="text"
-                                            value={pettyCashOtherName}
-                                            onChange={(e) => setPettyCashOtherName(e.target.value)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                            placeholder="Enter other person name"
-                                        />
-                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('payed_to_other')).map((error, index) => (
-                                            <div key={index} className="text-sm text-red-600">
-                                                {error}
-                                            </div>
-                                        ))}
-                                    </div>}
-                                    {normalizeCategoryName(selectedExpenseCategory) === 'inpatient doctor payment' && (<div className="w-full max-w-sm">
-                                        <FilterAndSelectServiceOrder
-                                            value={pettyCashFileNumber}
-                                            onValueChange={setPettyCashFileNumber}
-                                            label="File Number"
-                                            placeholder="Find service order"
-                                        />
-                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('file_number')).map((error, index) => (
-                                            <div key={index} className="text-sm text-red-600">
-                                                {error}
-                                            </div>
-                                        ))}
-                                    </div>)}
+                                    {pettyCashPayedTo === 'other' && (
+                                        <div className="w-full max-w-sm">
+                                            <Label htmlFor="other_name">
+                                                Other name
+                                            </Label>
+                                            <Input
+                                                id="other_name"
+                                                type="text"
+                                                value={pettyCashOtherName}
+                                                onChange={(e) =>
+                                                    setPettyCashOtherName(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                placeholder="Enter other person name"
+                                            />
+                                            {pettyCashErrors.length > 0 &&
+                                                pettyCashErrors
+                                                    .filter((error) =>
+                                                        error
+                                                            .toLowerCase()
+                                                            .includes(
+                                                                'payed_to_other',
+                                                            ),
+                                                    )
+                                                    .map((error, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="text-sm text-red-600"
+                                                        >
+                                                            {error}
+                                                        </div>
+                                                    ))}
+                                        </div>
+                                    )}
+                                    {normalizeCategoryName(
+                                        selectedExpenseCategory,
+                                    ) === 'inpatient doctor payment' && (
+                                        <div className="w-full max-w-sm">
+                                            <FilterAndSelectServiceOrder
+                                                value={pettyCashFileNumber}
+                                                onValueChange={
+                                                    setPettyCashFileNumber
+                                                }
+                                                label="File Number"
+                                                placeholder="Find service order"
+                                            />
+                                            {pettyCashErrors.length > 0 &&
+                                                pettyCashErrors
+                                                    .filter((error) =>
+                                                        error
+                                                            .toLowerCase()
+                                                            .includes(
+                                                                'file_number',
+                                                            ),
+                                                    )
+                                                    .map((error, index) => (
+                                                        <div
+                                                            key={index}
+                                                            className="text-sm text-red-600"
+                                                        >
+                                                            {error}
+                                                        </div>
+                                                    ))}
+                                        </div>
+                                    )}
                                     <div className="w-full max-w-sm">
-                                        <Label htmlFor="description">Description</Label>
+                                        <Label htmlFor="description">
+                                            Description
+                                        </Label>
                                         <textarea
                                             id="description"
                                             rows={4}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                             placeholder="Enter description"
                                             value={pettyCashDescription}
-                                            onChange={(e) => setPettyCashDescription(e.target.value)}
+                                            onChange={(e) =>
+                                                setPettyCashDescription(
+                                                    e.target.value,
+                                                )
+                                            }
                                         />
-                                        {pettyCashErrors.length > 0 && pettyCashErrors.filter(error => error.toLowerCase().includes('description')).map((error, index) => (
-                                            <div key={index} className="text-sm text-red-600">
-                                                {error}
-                                            </div>
-                                        ))}
+                                        {pettyCashErrors.length > 0 &&
+                                            pettyCashErrors
+                                                .filter((error) =>
+                                                    error
+                                                        .toLowerCase()
+                                                        .includes(
+                                                            'description',
+                                                        ),
+                                                )
+                                                .map((error, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="text-sm text-red-600"
+                                                    >
+                                                        {error}
+                                                    </div>
+                                                ))}
                                     </div>
-                                    <Button type="submit" className={clsx("w-full max-w-sm",{
-                                            'opacity-50 cursor-not-allowed': !pettyCashAmount || parseFloat(pettyCashAmount) <= 0 || processingPettyCashPayment
-                                    })} disabled={!pettyCashAmount || parseFloat(pettyCashAmount) <= 0 || processingPettyCashPayment}>
+                                    <Button
+                                        type="submit"
+                                        className={clsx('w-full max-w-sm', {
+                                            'cursor-not-allowed opacity-50':
+                                                !pettyCashAmount ||
+                                                parseFloat(pettyCashAmount) <=
+                                                    0 ||
+                                                processingPettyCashPayment,
+                                        })}
+                                        disabled={
+                                            !pettyCashAmount ||
+                                            parseFloat(pettyCashAmount) <= 0 ||
+                                            processingPettyCashPayment
+                                        }
+                                    >
                                         {processingPettyCashPayment && (
                                             <LoaderCircle className="h-4 w-4 animate-spin" />
                                         )}

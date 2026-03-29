@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 export interface UserOption {
     id: number;
@@ -85,7 +91,8 @@ export default function SelectUser({
             return;
         }
 
-        const selectedOption = options.find((item) => item.id.toString() === value) ?? null;
+        const selectedOption =
+            options.find((item) => item.id.toString() === value) ?? null;
         onSelect(selectedOption);
     }, [onSelect, options, value]);
 
@@ -96,7 +103,9 @@ export default function SelectUser({
             return;
         }
 
-        const selectedOption = options.find((item) => item.id.toString() === selectedValue) ?? null;
+        const selectedOption =
+            options.find((item) => item.id.toString() === selectedValue) ??
+            null;
         onSelect(selectedOption);
     };
 
@@ -105,11 +114,17 @@ export default function SelectUser({
             <Label>{label}</Label>
             <Select value={value} onValueChange={handleChange}>
                 <SelectTrigger className="w-full">
-                    <SelectValue placeholder={isLoading ? 'Loading...' : placeholder} />
+                    <SelectValue
+                        placeholder={isLoading ? 'Loading...' : placeholder}
+                    />
                 </SelectTrigger>
                 <SelectContent searchable searchPlaceholder="Search user...">
                     {options.map((user) => (
-                        <SelectItem key={user.id} value={user.id.toString()} textValue={`${user.name} ${user.username ?? ''} ${user.email ?? ''}`}>
+                        <SelectItem
+                            key={user.id}
+                            value={user.id.toString()}
+                            textValue={`${user.name} ${user.username ?? ''} ${user.email ?? ''}`}
+                        >
                             {user.name}
                         </SelectItem>
                     ))}

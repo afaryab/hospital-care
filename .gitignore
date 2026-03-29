@@ -29,3 +29,4 @@ yarn-error.log
 supervisord.log
 supervisord.log
 .pnpm-store
+/storybook-static

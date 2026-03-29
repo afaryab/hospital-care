@@ -31,7 +31,9 @@ const PatientAdvancedSearch: React.FC<PatientAdvancedSearchProps> = ({
                 <Label>Name</Label>
                 <Input
                     value={filters.name ?? ''}
-                    onChange={(event) => onChange({ ...filters, name: event.target.value })}
+                    onChange={(event) =>
+                        onChange({ ...filters, name: event.target.value })
+                    }
                     placeholder="Patient name"
                 />
             </label>
@@ -39,7 +41,9 @@ const PatientAdvancedSearch: React.FC<PatientAdvancedSearchProps> = ({
                 <Label>PS Number</Label>
                 <Input
                     value={filters.ps_number ?? ''}
-                    onChange={(event) => onChange({ ...filters, ps_number: event.target.value })}
+                    onChange={(event) =>
+                        onChange({ ...filters, ps_number: event.target.value })
+                    }
                     placeholder="PS/2026/03/0001"
                 />
             </label>
@@ -47,7 +51,9 @@ const PatientAdvancedSearch: React.FC<PatientAdvancedSearchProps> = ({
                 <Label>CNIC</Label>
                 <Input
                     value={filters.cnic ?? ''}
-                    onChange={(event) => onChange({ ...filters, cnic: event.target.value })}
+                    onChange={(event) =>
+                        onChange({ ...filters, cnic: event.target.value })
+                    }
                     placeholder="XXXXX-XXXXXXX-X"
                 />
             </label>
@@ -55,7 +61,9 @@ const PatientAdvancedSearch: React.FC<PatientAdvancedSearchProps> = ({
                 <Label>Contact</Label>
                 <Input
                     value={filters.contact ?? ''}
-                    onChange={(event) => onChange({ ...filters, contact: event.target.value })}
+                    onChange={(event) =>
+                        onChange({ ...filters, contact: event.target.value })
+                    }
                     placeholder="03XX-XXXXXXX"
                 />
             </label>

@@ -7,8 +7,9 @@ export type ReceivablesListingTableProps = {
     emptyMessage?: string;
 };
 
-const ReceivablesListingTable: React.FC<ReceivablesListingTableProps> = ({ receaveables, ...props }) => (
-    <ReceaveablesListingTable receaveables={receaveables} {...props} />
-);
+const ReceivablesListingTable: React.FC<ReceivablesListingTableProps> = ({
+    receaveables,
+    ...props
+}) => <ReceaveablesListingTable receaveables={receaveables} {...props} />;
 
 export default ReceivablesListingTable;

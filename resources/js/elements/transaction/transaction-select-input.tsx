@@ -34,9 +34,16 @@ const TransactionSelectInput: React.FC<TransactionSelectInputProps> = ({
         <SelectTrigger>
             <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent searchable={searchable} searchPlaceholder="Search transactions...">
+        <SelectContent
+            searchable={searchable}
+            searchPlaceholder="Search transactions..."
+        >
             {options.map((option) => (
-                <SelectItem key={option.value} value={option.value} textValue={option.label}>
+                <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    textValue={option.label}
+                >
                     {option.label}
                 </SelectItem>
             ))}

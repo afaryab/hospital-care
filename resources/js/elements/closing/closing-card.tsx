@@ -1,8 +1,8 @@
+import Currency from '@/components/currency';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import Currency from '@/components/currency';
-import { Closing } from '@/types';
 import { cn } from '@/lib/utils';
+import { Closing } from '@/types';
 
 type ClosingCardProps = {
     closing: Closing;
@@ -10,19 +10,32 @@ type ClosingCardProps = {
     onClick?: () => void;
 };
 
-const ClosingCard: React.FC<ClosingCardProps> = ({ closing, className, onClick }) => (
+const ClosingCard: React.FC<ClosingCardProps> = ({
+    closing,
+    className,
+    onClick,
+}) => (
     <Card
-        className={cn('cursor-default', onClick && 'cursor-pointer hover:shadow-md transition-shadow', className)}
+        className={cn(
+            'cursor-default',
+            onClick && 'cursor-pointer transition-shadow hover:shadow-md',
+            className,
+        )}
         onClick={onClick}
     >
-        <CardContent className="p-4 flex items-center justify-between gap-3">
+        <CardContent className="flex items-center justify-between gap-3 p-4">
             <div className="min-w-0">
-                <p className="text-xs font-mono text-muted-foreground">{closing.ct_number}</p>
-                <p className="font-semibold text-sm mt-0.5">
+                <p className="font-mono text-xs text-muted-foreground">
+                    {closing.ct_number}
+                </p>
+                <p className="mt-0.5 text-sm font-semibold">
                     Opening: <Currency value={closing.opening_amount} />
                 </p>
             </div>
-            <Badge variant={closing.status === 'OPEN' ? 'default' : 'secondary'} className="text-xs shrink-0">
+            <Badge
+                variant={closing.status === 'OPEN' ? 'default' : 'secondary'}
+                className="shrink-0 text-xs"
+            >
                 {closing.status}
             </Badge>
         </CardContent>

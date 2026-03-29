@@ -13,13 +13,17 @@ const ServiceOrdersListingTable: React.FC<ServiceOrdersListingTableProps> = ({
     emptyMessage = 'No service orders found.',
 }) => {
     if (!serviceOrders.length) {
-        return <p className="py-6 text-center text-sm text-muted-foreground">{emptyMessage}</p>;
+        return (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+                {emptyMessage}
+            </p>
+        );
     }
 
     return (
         <div className="overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-xs uppercase text-muted-foreground">
+                <thead className="bg-muted/50 text-xs text-muted-foreground uppercase">
                     <tr>
                         <th className="px-4 py-2 text-left">SO Number</th>
                         <th className="px-4 py-2 text-left">Type</th>
@@ -31,17 +35,25 @@ const ServiceOrdersListingTable: React.FC<ServiceOrdersListingTableProps> = ({
                     {serviceOrders.map((so, i) => (
                         <tr
                             key={so.id ?? i}
-                            className={onSelect ? 'cursor-pointer hover:bg-accent transition-colors' : ''}
+                            className={
+                                onSelect
+                                    ? 'cursor-pointer transition-colors hover:bg-accent'
+                                    : ''
+                            }
                             onClick={() => onSelect?.(so)}
                         >
-                            <td className="px-4 py-2 font-mono text-xs">{so.so_number}</td>
+                            <td className="px-4 py-2 font-mono text-xs">
+                                {so.so_number}
+                            </td>
                             <td className="px-4 py-2">{so.type}</td>
                             <td className="px-4 py-2">
                                 <Badge variant="outline" className="text-xs">
                                     {so.so_short ?? so.departmentKey ?? '-'}
                                 </Badge>
                             </td>
-                            <td className="px-4 py-2 text-xs">{so.created_at?.split('T')[0]}</td>
+                            <td className="px-4 py-2 text-xs">
+                                {so.created_at?.split('T')[0]}
+                            </td>
                         </tr>
                     ))}
                 </tbody>

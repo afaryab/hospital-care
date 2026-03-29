@@ -104,21 +104,21 @@ export interface Transaction {
 
 export interface ServiceOrder {
     id?: number;
-    type: string
-    so_number: string
-    so_short: string
-    created_by: number
-    patient_id: number
-    service_id?: number
-    service_recestation_id?: number
-    doctor_id: number
-    is_composit: boolean
-    notes: string
-    notes_json: any
-    created_at?: string
-    updated_at?: string
-    departmentKey?: string
-    serviceNumber?: string
+    type: string;
+    so_number: string;
+    so_short: string;
+    created_by: number;
+    patient_id: number;
+    service_id?: number;
+    service_recestation_id?: number;
+    doctor_id: number;
+    is_composit: boolean;
+    notes: string;
+    notes_json: any;
+    created_at?: string;
+    updated_at?: string;
+    departmentKey?: string;
+    serviceNumber?: string;
     [key: string]: unknown;
 }
 

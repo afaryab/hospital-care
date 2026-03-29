@@ -1,12 +1,22 @@
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import AppLayout from '@/layouts/app-layout';
-import { counterExpense, counterExpenseNewVoucher, counterExpenseVouchersList, home } from '@/routes';
+import {
+    counterExpense,
+    counterExpenseNewVoucher,
+    counterExpenseVouchersList,
+    home,
+} from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
-import { router } from '@inertiajs/react';
 
 interface ExpenseVoucher {
     id: number;
@@ -34,7 +44,6 @@ interface PageProps {
 }
 
 export default function VouchersList() {
-
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Dashboard',
@@ -50,7 +59,8 @@ export default function VouchersList() {
         },
     ];
 
-    const { yearSelected, monthSelected, vouchers } = usePage<PageProps>().props;
+    const { yearSelected, monthSelected, vouchers } =
+        usePage<PageProps>().props;
 
     const [year, setYear] = useState<string>(yearSelected as string);
     const [month, setMonth] = useState<string>(monthSelected as string);
@@ -61,27 +71,40 @@ export default function VouchersList() {
             if (year !== '0') query.year = year;
             if (month !== '0') query.month = month;
 
-            router.get(counterExpenseVouchersList({ query }).url, {}, { preserveState: true });
+            router.get(
+                counterExpenseVouchersList({ query }).url,
+                {},
+                { preserveState: true },
+            );
         }
     }, [year, month, yearSelected, monthSelected]);
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Doctor Vouchers" />
-            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-1 bg-[#06df72] dark:bg-[#262626]">
-                <div className="flex flex-0 flex-row gap-4 rounded-xl p-2 bg-[#1c398e] dark:bg-[#0a0a0a] items-end">
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
+                <div className="flex flex-0 flex-row items-end gap-4 rounded-xl bg-[#1c398e] p-2 dark:bg-[#0a0a0a]">
                     <div className="grid gap-2">
                         <Label htmlFor="year">Year</Label>
-                        <Select value={year.toString()} onValueChange={(value) => setYear(value)}>
+                        <Select
+                            value={year.toString()}
+                            onValueChange={(value) => setYear(value)}
+                        >
                             <SelectTrigger id="year">
                                 <SelectValue placeholder="Select Year" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem key={0} value={'0'}>All</SelectItem>
+                                <SelectItem key={0} value={'0'}>
+                                    All
+                                </SelectItem>
                                 {Array.from({ length: 10 }, (_, i) => {
-                                    const yearOption = new Date().getFullYear() - i;
+                                    const yearOption =
+                                        new Date().getFullYear() - i;
                                     return (
-                                        <SelectItem key={yearOption} value={yearOption.toString()}>
+                                        <SelectItem
+                                            key={yearOption}
+                                            value={yearOption.toString()}
+                                        >
                                             {yearOption}
                                         </SelectItem>
                                     );
@@ -91,7 +114,10 @@ export default function VouchersList() {
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="month">Month</Label>
-                        <Select value={month.toString()} onValueChange={(value) => setMonth(value)}>
+                        <Select
+                            value={month.toString()}
+                            onValueChange={(value) => setMonth(value)}
+                        >
                             <SelectTrigger id="month">
                                 <SelectValue placeholder="Select Month" />
                             </SelectTrigger>
@@ -114,29 +140,52 @@ export default function VouchersList() {
                     </div>
                     <div className="grid gap-2">
                         <Link href={counterExpenseNewVoucher().url}>
-                            <Button variant="secondary">+ New Doctor Voucher</Button>
+                            <Button variant="secondary">
+                                + New Doctor Voucher
+                            </Button>
                         </Link>
                     </div>
                 </div>
-                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-0 bg-white dark:bg-neutral-950 text-[#1c398e]">
-                    <table className='text-xs text-gray-700 uppercase bg-gray-50 dark:bg-neutral-950 dark:text-gray-400 text-left'>
+                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950">
+                    <table className="bg-gray-50 text-left text-xs text-gray-700 uppercase dark:bg-neutral-950 dark:text-gray-400">
                         <thead>
                             <tr>
-                                <th scope="col" className="px-6 py-3">Voucher #</th>
-                                <th scope="col" className="px-6 py-3">Category</th>
-                                <th scope="col" className="px-6 py-3">Payed To</th>
-                                <th scope="col" className="px-6 py-3">Amount</th>
-                                <th scope="col" className="px-6 py-3">Status</th>
-                                <th scope="col" className="px-6 py-3">Notes</th>
-                                <th scope="col" className="px-6 py-3">Date</th>
-                                <th scope="col" className="px-6 py-3">Actions</th>
+                                <th scope="col" className="px-6 py-3">
+                                    Voucher #
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Category
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Payed To
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Amount
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Status
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Notes
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Date
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
                             {vouchers.data.map((v) => (
-                                <tr key={v.id} className='bg-white border-b dark:bg-neutral-800 dark:border-neutral-950 border-gray-200'>
-                                    <td className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">
-                                        <span className='text-blue-500'>{v.vc_number}</span>
+                                <tr
+                                    key={v.id}
+                                    className="border-b border-gray-200 bg-white dark:border-neutral-950 dark:bg-neutral-800"
+                                >
+                                    <td className="px-6 py-3 font-medium whitespace-nowrap text-gray-900 dark:text-white">
+                                        <span className="text-blue-500">
+                                            {v.vc_number}
+                                        </span>
                                     </td>
                                     <td className="px-6 py-3">
                                         {v.exp_category?.name ?? '-'}
@@ -144,28 +193,48 @@ export default function VouchersList() {
                                     <td className="px-6 py-3">
                                         {v.payed_to?.name ?? '-'}
                                     </td>
+                                    <td className="px-6 py-3">{v.amount}</td>
                                     <td className="px-6 py-3">
-                                        {v.amount}
-                                    </td>
-                                    <td className="px-6 py-3">
-                                        <span className={`inline-block px-2 py-1 rounded text-xs font-semibold ${
-                                            v.status === 'payed'
-                                                ? 'bg-green-100 text-green-800'
-                                                : 'bg-yellow-100 text-yellow-800'
-                                        }`}>
-                                            {v.status === 'payed' ? 'Payed' : 'Pending'}
+                                        <span
+                                            className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
+                                                v.status === 'payed'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-yellow-100 text-yellow-800'
+                                            }`}
+                                        >
+                                            {v.status === 'payed'
+                                                ? 'Payed'
+                                                : 'Pending'}
                                         </span>
                                     </td>
                                     <td className="px-6 py-3">
                                         {v.notes ?? '-'}
                                     </td>
                                     <td className="px-6 py-3">
-                                        {v.created_at ? new Date(v.created_at).toLocaleDateString() : '-'}
+                                        {v.created_at
+                                            ? new Date(
+                                                  v.created_at,
+                                              ).toLocaleDateString()
+                                            : '-'}
                                     </td>
                                     <td className="px-6 py-3">
                                         {v.status === 'pending' && (
-                                            <Link href={counterExpense({ query: { voucher_id: v.id.toString() } }).url}>
-                                                <Button variant="outline" size="sm">Pay</Button>
+                                            <Link
+                                                href={
+                                                    counterExpense({
+                                                        query: {
+                                                            voucher_id:
+                                                                v.id.toString(),
+                                                        },
+                                                    }).url
+                                                }
+                                            >
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                >
+                                                    Pay
+                                                </Button>
                                             </Link>
                                         )}
                                     </td>
@@ -173,7 +242,10 @@ export default function VouchersList() {
                             ))}
                             {vouchers.data.length === 0 && (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-3 text-center text-gray-500">
+                                    <td
+                                        colSpan={8}
+                                        className="px-6 py-3 text-center text-gray-500"
+                                    >
                                         No vouchers found.
                                     </td>
                                 </tr>
@@ -181,55 +253,97 @@ export default function VouchersList() {
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colSpan={8} className='text-right'>
+                                <td colSpan={8} className="text-right">
                                     {(() => {
                                         const current = vouchers.current_page;
                                         const last = vouchers.last_page;
 
-                                        function buildRange(curr: number, lastPage: number) {
+                                        function buildRange(
+                                            curr: number,
+                                            lastPage: number,
+                                        ) {
                                             if (lastPage <= 7) {
-                                                return Array.from({ length: lastPage }, (_, i) => i + 1) as (number | '...')[];
+                                                return Array.from(
+                                                    { length: lastPage },
+                                                    (_, i) => i + 1,
+                                                ) as (number | '...')[];
                                             }
                                             const delta = 1;
                                             const range: number[] = [];
-                                            for (let i = Math.max(2, curr - delta); i <= Math.min(lastPage - 1, curr + delta); i++) {
+                                            for (
+                                                let i = Math.max(
+                                                    2,
+                                                    curr - delta,
+                                                );
+                                                i <=
+                                                Math.min(
+                                                    lastPage - 1,
+                                                    curr + delta,
+                                                );
+                                                i++
+                                            ) {
                                                 range.push(i);
                                             }
-                                            const pages: (number | '...')[] = [1];
-                                            if (range.length && range[0] > 2) pages.push('...');
+                                            const pages: (number | '...')[] = [
+                                                1,
+                                            ];
+                                            if (range.length && range[0] > 2)
+                                                pages.push('...');
                                             pages.push(...range);
-                                            if (range.length && range[range.length - 1] < lastPage - 1) pages.push('...');
+                                            if (
+                                                range.length &&
+                                                range[range.length - 1] <
+                                                    lastPage - 1
+                                            )
+                                                pages.push('...');
                                             pages.push(lastPage);
                                             return pages;
                                         }
 
                                         const pages = buildRange(current, last);
                                         const makeHref = (page: number) =>
-                                            counterExpenseVouchersList({ query: { page: page.toString(), year, month } }).url;
+                                            counterExpenseVouchersList({
+                                                query: {
+                                                    page: page.toString(),
+                                                    year,
+                                                    month,
+                                                },
+                                            }).url;
 
                                         return (
                                             <nav className="flex items-center justify-center gap-2 py-2">
                                                 {current > 1 ? (
                                                     <a
-                                                        href={makeHref(current - 1)}
-                                                        className="px-3 py-1 rounded border bg-white text-[#1c398e] hover:underline"
+                                                        href={makeHref(
+                                                            current - 1,
+                                                        )}
+                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
                                                         aria-label="Previous page"
                                                     >
                                                         ‹
                                                     </a>
                                                 ) : (
-                                                    <span className="px-3 py-1 rounded border bg-gray-100 text-gray-400">‹</span>
+                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400">
+                                                        ‹
+                                                    </span>
                                                 )}
                                                 {pages.map((p, idx) =>
                                                     p === '...' ? (
-                                                        <span key={`ellipsis-${idx}`} className="px-2">…</span>
+                                                        <span
+                                                            key={`ellipsis-${idx}`}
+                                                            className="px-2"
+                                                        >
+                                                            …
+                                                        </span>
                                                     ) : (
                                                         <a
                                                             key={p}
-                                                            href={makeHref(p as number)}
-                                                            className={`px-3 py-1 rounded border ${
+                                                            href={makeHref(
+                                                                p as number,
+                                                            )}
+                                                            className={`rounded border px-3 py-1 ${
                                                                 p === current
-                                                                    ? 'bg-[#1c398e] text-white font-bold'
+                                                                    ? 'bg-[#1c398e] font-bold text-white'
                                                                     : 'bg-white text-[#1c398e] hover:underline'
                                                             }`}
                                                         >
@@ -239,14 +353,18 @@ export default function VouchersList() {
                                                 )}
                                                 {current < last ? (
                                                     <a
-                                                        href={makeHref(current + 1)}
-                                                        className="px-3 py-1 rounded border bg-white text-[#1c398e] hover:underline"
+                                                        href={makeHref(
+                                                            current + 1,
+                                                        )}
+                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
                                                         aria-label="Next page"
                                                     >
                                                         ›
                                                     </a>
                                                 ) : (
-                                                    <span className="px-3 py-1 rounded border bg-gray-100 text-gray-400">›</span>
+                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400">
+                                                        ›
+                                                    </span>
                                                 )}
                                             </nav>
                                         );

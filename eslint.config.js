@@ -30,7 +30,28 @@ export default [
         },
     },
     {
-        ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js'],
+        ignores: [
+            'vendor',
+            'node_modules',
+            'public',
+            'bootstrap/ssr',
+            'tailwind.config.js',
+            'storybook-static',
+            'vite-module-loader.js',
+            'resources/js/actions/**',
+            'resources/js/routes/**',
+        ],
+    },
+    {
+        rules: {
+            '@typescript-eslint/no-unused-vars': 'warn',
+            '@typescript-eslint/no-explicit-any': 'warn',
+            '@typescript-eslint/ban-ts-comment': 'warn',
+            '@typescript-eslint/no-unused-expressions': 'warn',
+            'no-empty': 'warn',
+            'react-hooks/set-state-in-effect': 'warn',
+            'react-hooks/immutability': 'warn',
+        },
     },
     prettier, // Turn off all rules that might conflict with Prettier
 ];

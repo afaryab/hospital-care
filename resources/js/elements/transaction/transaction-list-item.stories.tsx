@@ -1,6 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/react-vite';
 import TransactionListItem from '@/elements/transaction/transaction-list-item';
 import { mockTransaction, mockTransactionExpense } from '@/storybook-mocks';
+import type { Meta, StoryObj } from '@storybook/react-vite';
 
 const meta: Meta<typeof TransactionListItem> = {
     title: 'Elements/Transaction/TransactionListItem',

@@ -1,4 +1,11 @@
-import { Closing, ExpenseVoucher, Patient, Receaveable, ServiceOrder, Transaction } from '@/types';
+import {
+    Closing,
+    ExpenseVoucher,
+    Patient,
+    Receaveable,
+    ServiceOrder,
+    Transaction,
+} from '@/types';
 
 export const mockPatient: Patient = {
     id: '1',
@@ -153,8 +160,20 @@ export const mockReceaveablePaid: Receaveable = {
 };
 
 export const mockPatients: Patient[] = [mockPatient, mockPatientFemale];
-export const mockTransactions: Transaction[] = [mockTransaction, mockTransactionExpense];
+export const mockTransactions: Transaction[] = [
+    mockTransaction,
+    mockTransactionExpense,
+];
 export const mockClosings: Closing[] = [mockClosing, mockClosingClosed];
-export const mockExpenseVouchers: ExpenseVoucher[] = [mockExpenseVoucher, mockExpenseVoucherPending];
-export const mockServiceOrders: ServiceOrder[] = [mockServiceOrder, mockServiceOrderLab];
-export const mockReceaveables: Receaveable[] = [mockReceaveable, mockReceaveablePaid];
+export const mockExpenseVouchers: ExpenseVoucher[] = [
+    mockExpenseVoucher,
+    mockExpenseVoucherPending,
+];
+export const mockServiceOrders: ServiceOrder[] = [
+    mockServiceOrder,
+    mockServiceOrderLab,
+];
+export const mockReceaveables: Receaveable[] = [
+    mockReceaveable,
+    mockReceaveablePaid,
+];
