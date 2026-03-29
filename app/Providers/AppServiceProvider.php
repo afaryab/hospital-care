@@ -2,14 +2,21 @@
 
 namespace App\Providers;
 
+use App\Models\Asset;
 use App\Models\Closing;
 use App\Models\ExpenseVoucher;
 use App\Models\Patient;
+use App\Models\PurchaseOrder;
+use App\Models\Task;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
 use App\Models\User;
+use App\Observers\AssetObserver;
+use App\Observers\ClosingObserver;
 use App\Observers\ExpenseVoucherObserver;
 use App\Observers\PatientObserver;
+use App\Observers\PurchaseOrderObserver;
+use App\Observers\TaskObserver;
 use App\Observers\TransactionElementObserver;
 use App\Observers\TransactionObserver;
 use App\Policies\ClosingPolicy;
@@ -39,9 +46,13 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register observers
         Patient::observe(PatientObserver::class);
+        Closing::observe(ClosingObserver::class);
         Transaction::observe(TransactionObserver::class);
         TransactionElement::observe(TransactionElementObserver::class);
         ExpenseVoucher::observe(ExpenseVoucherObserver::class);
+        PurchaseOrder::observe(PurchaseOrderObserver::class);
+        Asset::observe(AssetObserver::class);
+        Task::observe(TaskObserver::class);
 
         Gate::define('viewPulse', function (User $user) {
             return $user->adminProfiles()->count() > 0;

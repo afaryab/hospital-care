@@ -13,7 +13,7 @@
 
 ---
 
-### Phase 1.1 — Core Model Factories & Seeders (Missing Infrastructure) 🔲
+### Phase 1.1 — Core Model Factories & Seeders (Missing Infrastructure) ✅
 
 The codebase has 30 models but only 1 factory (`UserFactory`). All core models need factories for proper testing.
 
@@ -27,12 +27,12 @@ The codebase has 30 models but only 1 factory (`UserFactory`). All core models n
 | 1.1.6 | Create `ServiceFactory` (depends on `ServiceDepartmentFactory`) | 🔲 |
 | 1.1.7 | Create `ServiceOrderFactory` (depends on `PatientFactory`, `ServiceFactory`) | 🔲 |
 | 1.1.8 | Create `ReceptionFactory` | 🔲 |
-| 1.1.9 | Create `PanelFactory` | 🔲 |
+| 1.1.9 | Create `PanelFactory` | ✅ |
 | 1.1.10 | Create `ExpenseCategoryFactory` | 🔲 |
 | 1.1.11 | Create `ExpenseVoucherFactory` (depends on `ExpenseCategoryFactory`) | 🔲 |
 | 1.1.12 | Create `ReceaveableFactory` (depends on `PatientFactory`, `TransactionFactory`) | 🔲 |
-| 1.1.13 | Create profile factories: `AdministratorFactory`, `AccountantFactory`, `ReceptionistFactory`, `OpdDoctorFactory`, `IndDoctorFactory`, `EmergencyDoctorFactory`, `DentistFactory`, `UltrasoundDoctorFactory`, `XrayTechnicianFactory`, `NursingStaffFactory`, `PatientManagerFactory` | 🔲 |
-| 1.1.14 | Update `DatabaseSeeder` to use all factories for dev environment | 🔲 |
+| 1.1.13 | Create profile factories: `AdministratorFactory`, `AccountantFactory`, `ReceptionistFactory`, `OpdDoctorFactory`, `IndDoctorFactory`, `EmergencyDoctorFactory`, `DentistFactory`, `UltrasoundDoctorFactory`, `XrayTechnicianFactory`, `NursingStaffFactory`, `PatientManagerFactory` | ✅ |
+| 1.1.14 | Update `DatabaseSeeder` to use all factories for dev environment | ✅ |
 
 **Feature Tests:**
 ```
@@ -66,19 +66,19 @@ These migrations and models already exist and are functional.
 | `expense_vouchers` | `ExpenseVoucher` | ✅ | 🔲 | ✅ |
 | `expense_voucher_service_order` | — (pivot) | ✅ | — | ✅ |
 | `receaveables` | `Receaveable` | ✅ | 🔲 | ✅ |
-| `panels` | `Panel` | ✅ | 🔲 | ✅ |
+| `panels` | `Panel` | ✅ | ✅ `PanelFactory` | ✅ |
 | `instance_variables` | `InstanceVariable` | ✅ | — | ✅ |
-| `administrators` | `Administrator` | ✅ | 🔲 | ✅ |
-| `accountants` | `Accountant` | ✅ | 🔲 | ✅ |
-| `receptionists` | `Receptionist` | ✅ | 🔲 | ✅ |
-| `opd_doctors` | `OpdDoctor` | ✅ | 🔲 | ✅ |
-| `ind_doctors` | `IndDoctor` | ✅ | 🔲 | ✅ |
-| `emergency_doctors` | `EmergencyDoctor` | ✅ | 🔲 | ✅ |
-| `dentists` | `Dentist` | ✅ | 🔲 | ✅ |
-| `ultrasound_doctors` | `UltrasoundDoctor` | ✅ | 🔲 | ✅ |
-| `xray_technicians` | `XrayTechnician` | ✅ | 🔲 | ✅ |
-| `nursing_staff` | `NursingStaff` | ✅ | 🔲 | ✅ |
-| `patient_managers` | `PatientManager` | ✅ | 🔲 | ✅ |
+| `administrators` | `Administrator` | ✅ | ✅ `AdministratorFactory` | ✅ |
+| `accountants` | `Accountant` | ✅ | ✅ `AccountantFactory` | ✅ |
+| `receptionists` | `Receptionist` | ✅ | ✅ `ReceptionistFactory` | ✅ |
+| `opd_doctors` | `OpdDoctor` | ✅ | ✅ `OpdDoctorFactory` | ✅ |
+| `ind_doctors` | `IndDoctor` | ✅ | ✅ `IndDoctorFactory` | ✅ |
+| `emergency_doctors` | `EmergencyDoctor` | ✅ | ✅ `EmergencyDoctorFactory` | ✅ |
+| `dentists` | `Dentist` | ✅ | ✅ `DentistFactory` | ✅ |
+| `ultrasound_doctors` | `UltrasoundDoctor` | ✅ | ✅ `UltrasoundDoctorFactory` | ✅ |
+| `xray_technicians` | `XrayTechnician` | ✅ | ✅ `XrayTechnicianFactory` | ✅ |
+| `nursing_staff` | `NursingStaff` | ✅ | ✅ `NursingStaffFactory` | ✅ |
+| `patient_managers` | `PatientManager` | ✅ | ✅ `PatientManagerFactory` | ✅ |
 | `password_reset_tokens` | — | ✅ | — | ✅ |
 | `sessions` | — | ✅ | — | ✅ |
 | `cache` / `cache_locks` | — | ✅ | — | ✅ |
@@ -96,7 +96,7 @@ These migrations and models already exist and are functional.
 
 ---
 
-### Phase 1.3 — Hospital Settings Table 🔲
+### Phase 1.3 — Hospital Settings Table ✅
 
 > Ref: US-9.6 — Hospital-wide settings (name, logo, address, contact).
 
@@ -128,7 +128,7 @@ tests/Feature/Models/HospitalSettingTest.php
 
 ---
 
-### Phase 1.4 — Consent Management Tables 🔲
+### Phase 1.4 — Consent Management Tables ✅
 
 > Ref: US-15.4, §13.1 Consent Management, §14.1 PHC Compliance.
 
@@ -162,7 +162,7 @@ tests/Feature/Models/ConsentTest.php
 
 ---
 
-### Phase 1.5 — Treatment Record & Vital Signs Tables 🔲
+### Phase 1.5 — Treatment Record & Vital Signs Tables ✅
 
 > Ref: Epic 18 — Service Order Treatments (PHC Compliance).
 
@@ -255,7 +255,7 @@ tests/Feature/Models/Icd10CodeTest.php
 
 ---
 
-### Phase 1.6 — Stock Tracking Tables 🔲
+### Phase 1.6 — Stock Tracking Tables ✅
 
 > Ref: Epic 19 — Stock Tracking.
 
@@ -384,7 +384,7 @@ tests/Feature/Models/PurchaseOrderTest.php
 
 ---
 
-### Phase 1.7 — Asset Tracking Tables 🔲
+### Phase 1.7 — Asset Tracking Tables ✅
 
 > Ref: Epic 20 — Asset Tracking.
 
@@ -504,7 +504,7 @@ tests/Feature/Models/AssetDepreciationEntryTest.php
 
 ---
 
-### Phase 1.8 — User Tasking Tables 🔲
+### Phase 1.8 — User Tasking Tables ✅
 
 > Ref: Epic 21 — User Tasking.
 > File attachments via `spatie/laravel-medialibrary` (media table).
@@ -568,7 +568,7 @@ tests/Feature/Models/TaskCommentTest.php
 
 ---
 
-### Phase 1.9 — User Payroll Tables 🔲
+### Phase 1.9 — User Payroll Tables ✅
 
 > Ref: Epic 22 — User Payroll.
 
