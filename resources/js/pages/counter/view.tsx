@@ -621,6 +621,11 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                                 PKR
                                                                             </span>
                                                                         )}
+                                                                    {el.receaveable_id && (
+                                                                        <span className="rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] text-green-700">
+                                                                            Receaveable ID: {el.receaveable_id} Payment
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             ),
                                                         )}

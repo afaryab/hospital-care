@@ -267,11 +267,6 @@ export default function CounterExpense() {
             active: true,
         });
 
-    const handleNewVoucher = () => {
-        // redirect to counterExpenseNewVoucher
-        router.get(counterExpenseNewVoucher().url);
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Counter ${openCounter?.ct_number} Expense`} />
@@ -288,13 +283,6 @@ export default function CounterExpense() {
                                     onSubmit={handleVoucherPayment}
                                     className="flex flex-1 flex-col items-center justify-center gap-4"
                                 >
-                                    <Button
-                                        onClick={handleNewVoucher}
-                                        type="button"
-                                        className="w-full max-w-sm"
-                                    >
-                                        New Voucher
-                                    </Button>
                                     <div className="w-full max-w-sm space-y-2">
                                         <FilterAndSelectExpenseVoucher
                                             value={selectedVoucherId}

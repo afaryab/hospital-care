@@ -616,7 +616,7 @@ class WebController extends Controller
                     // Create receaveable for the remaining amount
                     $receaveableAmount = abs($validatedData['change_amount']);
 
-                    \App\Models\Receaveable::create([
+                    Receaveable::create([
                         'patient_id' => $validatedData['patient_id'],
                         'transaction_id' => $transaction->id,
                         'amount' => $receaveableAmount,
@@ -686,6 +686,7 @@ class WebController extends Controller
                 'income_or_expense' => 'INCOME',
                 'amount' => $validatedData['amount_to_collect'],
                 'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
+                'receaveable_id' => $receaveable->id,
             ]);
 
             $newTransactionElement = TransactionElement::create([
@@ -826,7 +827,7 @@ class WebController extends Controller
             return redirect(route('counter-open'));
         }
 
-        $receaveables = \App\Models\Receaveable::with('patient', 'transaction')->where('status', 'unpaid')->paginate();
+        $receaveables = Receaveable::with('patient', 'transaction')->where('status', 'unpaid')->paginate();
 
         return Inertia::render('counter/receaveables', [
             'openCounter' => $openCounter,
@@ -916,7 +917,7 @@ class WebController extends Controller
 
         return Inertia::render('counter/expense', [
             'openCounter' => $openCounter,
-            'users' => \App\Models\User::all(),
+            'users' => User::all(),
             'categories' => $expenseCategories,
             'selected' => [
                 'type' => $paymentTypeInUrl,
@@ -1322,6 +1323,8 @@ class WebController extends Controller
 
         $expenseCategories = ExpenseCategory::query()
             ->where('allow_voucher', true)
+            ->where('pay_doc', false)
+            ->where('pay_users', false)
             ->get();
 
         $users = User::where(function ($query) {
@@ -1333,6 +1336,52 @@ class WebController extends Controller
         })->get();
 
         return Inertia::render('counter/new-voucher', [
+            'categories' => $expenseCategories,
+            'users' => $users,
+
+        ]);
+    }
+
+    public function newVoucherForDoctor()
+    {
+
+        $expenseCategories = ExpenseCategory::query()
+            ->where('allow_voucher', true)
+            ->where('pay_doc', true)
+            ->get();
+
+        $users = User::where(function ($query) {
+            $query->whereHas('opdDoctorProfiles')
+                ->orWhereHas('indDoctorProfiles')
+                ->orWhereHas('emergencyDoctorProfiles')
+                ->orWhereHas('dentistProfiles')
+                ->orWhereHas('ultrasoundDoctorProfiles');
+        })->get();
+
+        return Inertia::render('counter/new-doctor-voucher', [
+            'categories' => $expenseCategories,
+            'users' => $users,
+
+        ]);
+    }
+
+    public function newVoucherForUser()
+    {
+
+        $expenseCategories = ExpenseCategory::query()
+            ->where('allow_voucher', true)
+            ->where('pay_users', true)
+            ->get();
+
+        $users = User::where(function ($query) {
+            $query->whereHas('opdDoctorProfiles')
+                ->orWhereHas('indDoctorProfiles')
+                ->orWhereHas('emergencyDoctorProfiles')
+                ->orWhereHas('dentistProfiles')
+                ->orWhereHas('ultrasoundDoctorProfiles');
+        })->get();
+
+        return Inertia::render('counter/new-user-voucher', [
             'categories' => $expenseCategories,
             'users' => $users,
 

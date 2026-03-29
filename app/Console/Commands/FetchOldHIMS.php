@@ -36,7 +36,7 @@ use Illuminate\Support\Str;
 
 class FetchOldHIMS extends Command
 {
-    public static $TOTAL_STEPS = 77;
+    public static $TOTAL_STEPS = 78;
 
     /**
      * The name and signature of the console command.

@@ -19,7 +19,7 @@ class TransactionElementObserver
             $service = Service::find($transactionElement->service_id);
             $patient = $transactionElement->patient;
 
-            if ($patient == null || $service == null) {
+            if ($patient == null || $service == null || $service->receaveable_id != null) {
                 return;
             }
 

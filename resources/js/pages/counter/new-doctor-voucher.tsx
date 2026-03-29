@@ -31,7 +31,7 @@ interface CompletedServiceOrder {
     service?: { id: number; name?: string };
 }
 
-export default function NewVoucher({
+export default function NewDoctorVoucher({
     categories,
     openCounter,
     users,
