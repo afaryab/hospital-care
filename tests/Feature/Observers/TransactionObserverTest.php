@@ -25,3 +25,37 @@ test('transaction observer stores edited_amount when amount changes', function (
 
     expect($transaction->edited_amount)->toBe($originalAmount);
 });
+
+test('transaction tr_number is immutable after creation', function () {
+    $transaction = Transaction::factory()->create(['tr_number' => null]);
+    $originalNumber = $transaction->tr_number;
+
+    $transaction->tr_number = 'TR/9999/99/99/9999';
+    $transaction->save();
+    $transaction->refresh();
+
+    expect($transaction->tr_number)->toBe($originalNumber);
+});
+
+test('transaction tr_number format matches expected pattern', function () {
+    $transaction = Transaction::factory()->create(['tr_number' => null]);
+
+    expect($transaction->tr_number)->toMatch('/^TR\/\d{4}\/\d{2}\/\d{2}\/\d{4}$/');
+});
+
+test('transaction observer does not overwrite an already set tr_number on create', function () {
+    $transaction = Transaction::factory()->create(['tr_number' => 'TR/2024/01/01/0001']);
+
+    expect($transaction->tr_number)->toBe('TR/2024/01/01/0001');
+});
+
+test('transaction edited_amount is not set when amount is unchanged', function () {
+    $transaction = Transaction::factory()->create(['amount' => 500, 'edited_amount' => null]);
+
+    $transaction->notes = 'Updated notes';
+    $transaction->save();
+    $transaction->refresh();
+
+    expect($transaction->edited_amount)->toBeNull();
+});
+

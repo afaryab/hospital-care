@@ -32,23 +32,28 @@ class TransactionObserver
     }
 
     /**
+     * Handle the Transaction "updating" event.
+     * Runs before the SQL update — allows us to revert the tr_number change.
+     */
+    public function updating(Transaction $transaction): void
+    {
+        // Prevent TR number from being manually changed after creation
+        if ($transaction->isDirty('tr_number') && ! empty($transaction->getOriginal('tr_number'))) {
+            $transaction->tr_number = $transaction->getOriginal('tr_number');
+        }
+    }
+
+    /**
      * Handle the Transaction "updated" event.
      */
     public function updated(Transaction $transaction): void
     {
-        // Prevent TR number from being manually changed after creation
-        if ($transaction->isDirty('tr_number') && ! empty($transaction->getOriginal('tr_number'))) {
-            // If TR number was already set and someone is trying to change it, revert it
-            $transaction->tr_number = $transaction->getOriginal('tr_number');
-        }
-
-        // If amount is changed, store orinal amount in edited_amount field
+        // If amount is changed, store original amount in edited_amount field
         if ($transaction->isDirty('amount')) {
             $transaction->edited_amount = $transaction->getOriginal('amount');
             $transaction->saveQuietly(); // Save without triggering observer again
             $transaction->updateCounter();
         }
-
     }
 
     /**

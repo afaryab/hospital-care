@@ -53,7 +53,10 @@ test('reception fillable attributes can be mass assigned', function () {
     $reception = Reception::create([
         'name' => 'Main Reception',
         'is_allowed_to_pay_voucher' => true,
+        'is_allowed_to_pay_from_petty_cash' => false,
         'is_cash_allowed' => true,
+        'is_cheques_allowed' => false,
+        'is_card_allowed' => false,
     ]);
 
     expect($reception->name)->toBe('Main Reception')
