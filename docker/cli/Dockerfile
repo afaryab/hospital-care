@@ -80,8 +80,7 @@ RUN chown -R www-data:www-data /var/www/html
 RUN chmod -R 755 /var/www/html/storage /var/www/html/bootstrap/cache
 
 RUN cp .env.example .env || true
-# Install PHP dependencies
-RUN git config --global --add safe.directory /var/www/html
+# Install PHP dependencies using Composer
 RUN composer install --no-dev --optimize-autoloader || true
 
 RUN npm install -g pnpm
