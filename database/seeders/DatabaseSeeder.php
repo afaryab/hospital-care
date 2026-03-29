@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
             ServicesAndDepartmentsSeeder::class,
             ExpenseCategorySeeder::class,
             ChartOfAccountsSeeder::class,
+            HospitalSettingSeeder::class,
+            StockCategorySeeder::class,
+            AssetCategorySeeder::class,
         ]);
-
     }
 }
