@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Reception extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'id',
         'name',
@@ -14,7 +17,7 @@ class Reception extends Model
         'is_allowed_to_pay_from_petty_cash',
         'is_cash_allowed',
         'is_cheques_allowed',
-        'is_card_allowed'
+        'is_card_allowed',
     ];
 
     protected $casts = [

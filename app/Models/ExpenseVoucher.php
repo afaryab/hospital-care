@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 
 class ExpenseVoucher extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'vc_number',
         'old_id',
@@ -22,7 +25,7 @@ class ExpenseVoucher extends Model
         'transaction_id',
         'transaction_element_id',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     protected $casts = [
@@ -45,11 +48,8 @@ class ExpenseVoucher extends Model
         });
     }
 
-
     /**
      * Generate a unique expense voucher number.
-     *
-     * @return string
      */
     public static function generateExpenseVoucherNumber(): string
     {

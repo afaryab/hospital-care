@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enum\CounterStatus;
 use App\Enum\TransactionElementType;
 use App\Models\Closing;
-use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseVoucher;
 use App\Models\Panel;
@@ -46,8 +45,8 @@ class WebController extends Controller
         return Inertia::render('dashboard');
     }
 
-
-    public function register($year = false, $month = false){
+    public function register($year = false, $month = false)
+    {
 
         $query = Patient::query();
 
@@ -58,18 +57,17 @@ class WebController extends Controller
 
         $serviceDepartments = ServiceDepartment::all();
 
-        return Inertia::render('register',[
+        return Inertia::render('register', [
             'yearSelected' => $year,
             'monthSelected' => $month,
             'patientsPaginated' => $data,
-            'serviceDepartments' => $serviceDepartments
+            'serviceDepartments' => $serviceDepartments,
         ]);
-
 
     }
 
-
-    public function patient($year, $month, $number, $departmentKey = false, $serviceNumber = false){
+    public function patient($year, $month, $number, $departmentKey = false, $serviceNumber = false)
+    {
 
         $psNumber = 'PS/'.$year.'/'.$month.'/'.$number;
 
@@ -78,32 +76,31 @@ class WebController extends Controller
         $serviceDepartments = ServiceDepartment::all();
         $serviceOrder = null;
 
-        if($serviceNumber){
+        if ($serviceNumber) {
 
             $soNumber = 'PS/'.$year.'/'.$month.'/'.$number.'/'.$departmentKey.'/'.$serviceNumber;
-        
+
             $serviceOrder = ServiceOrder::where('so_number', $soNumber)->firstOrFail();
 
         }
-        
-        return Inertia::render('patient',[
+
+        return Inertia::render('patient', [
             'departmentKey' => $departmentKey,
             'patientData' => $patientData,
             'serviceDepartments' => $serviceDepartments,
             'serviceOrder' => $serviceOrder,
         ]);
 
-        
     }
 
-
-    public function treatment($year, $month, $number, $departmentKey, $treatment){
+    public function treatment($year, $month, $number, $departmentKey, $treatment)
+    {
 
         $psNumber = 'PS/'.$year.'/'.$month.'/'.$number;
 
         $patientData = Patient::where('ps_number', $psNumber)->firstOrFail();
 
-        return Inertia::render('patient',[
+        return Inertia::render('patient', [
             'departmentKey' => $departmentKey,
             'treatmentKey' => $treatment,
             'patientData' => $patientData,
@@ -113,15 +110,15 @@ class WebController extends Controller
 
     public function counter(Request $request)
     {
-        $openCounter = Closing::where('status','open')->where('receptionist_id', $request->user()->id)->first();
+        $openCounter = Closing::where('status', 'open')->where('receptionist_id', $request->user()->id)->first();
 
-        if(!$openCounter){
+        if (! $openCounter) {
             return redirect(route('counter-open'));
-        }else{
-            return redirect(route('counter-view',[
+        } else {
+            return redirect(route('counter-view', [
                 'ctYear' => $openCounter->year,
                 'ctMonth' => $openCounter->month,
-                'ctNumber' => $openCounter->number
+                'ctNumber' => $openCounter->number,
             ]));
         }
     }
@@ -137,7 +134,7 @@ class WebController extends Controller
 
         $data = $query->paginate(8);
 
-        return Inertia::render('counter/list',[
+        return Inertia::render('counter/list', [
             'yearSelected' => $year,
             'monthSelected' => $month,
             'closings' => $data,
@@ -146,18 +143,18 @@ class WebController extends Controller
 
     public function counterOpen(Request $request)
     {
-        $openCounter = Closing::where('status','open')->where('receptionist_id', $request->user()->id)->first();
-        
-        if($openCounter){
-            return redirect(route('counter-view',[
+        $openCounter = Closing::where('status', 'open')->where('receptionist_id', $request->user()->id)->first();
+
+        if ($openCounter) {
+            return redirect(route('counter-view', [
                 'ctYear' => $openCounter->year,
                 'ctMonth' => $openCounter->month,
-                'ctNumber' => $openCounter->number
+                'ctNumber' => $openCounter->number,
             ]));
-        }else{
+        } else {
 
-            return Inertia::render('counter/open',[
-                'recptions' => Reception::all()
+            return Inertia::render('counter/open', [
+                'recptions' => Reception::all(),
             ]);
         }
     }
@@ -167,7 +164,7 @@ class WebController extends Controller
 
         $data = $request->validate([
             'opening_balance' => 'nullable|numeric',
-            'reception_id' => 'required|exists:receptions,id'
+            'reception_id' => 'required|exists:receptions,id',
         ]);
 
         $counter = Closing::create([
@@ -175,26 +172,26 @@ class WebController extends Controller
             'receptionist_id' => $request->user()->id,
             'ct_number' => Closing::generateCounterNumber(),
             'status' => CounterStatus::OPEN,
-            'opening_amount' => $data['opening_balance'] ?? 0
+            'opening_amount' => $data['opening_balance'] ?? 0,
         ]);
 
-        return redirect(route('counter-view',[
+        return redirect(route('counter-view', [
             'ctYear' => $counter->year,
             'ctMonth' => $counter->month,
-            'ctNumber' => $counter->number
+            'ctNumber' => $counter->number,
         ]));
     }
 
     public function counterClose(Request $request)
     {
-        $openCounter = Closing::where('status','open')->where('receptionist_id', $request->user()->id)->first();
-        
-        if(!$openCounter){
-            return redirect(route('counter-open'));
-        }else{
+        $openCounter = Closing::where('status', 'open')->where('receptionist_id', $request->user()->id)->first();
 
-            if($request->isMethod('post')){
-                
+        if (! $openCounter) {
+            return redirect(route('counter-open'));
+        } else {
+
+            if ($request->isMethod('post')) {
+
                 // Sum elements amounts
                 $totalAmount = $openCounter->transactions()->sum('amount');
                 $openCounter->closing_amount = $totalAmount;
@@ -203,97 +200,91 @@ class WebController extends Controller
                 $openCounter->closed_at = now();
                 $openCounter->save();
 
-                return redirect(route('counter-view',[
+                return redirect(route('counter-view', [
                     'ctYear' => $openCounter->year,
                     'ctMonth' => $openCounter->month,
-                    'ctNumber' => $openCounter->number
+                    'ctNumber' => $openCounter->number,
                 ]));
             }
 
-            $totalIncAmount = $openCounter->transactions()->where('income_or_expense','INCOME')->sum('amount');
-            $totalExpAmount = $openCounter->transactions()->where('income_or_expense','EXPENSE')->sum('amount');
+            $totalIncAmount = $openCounter->transactions()->where('income_or_expense', 'INCOME')->sum('amount');
+            $totalExpAmount = $openCounter->transactions()->where('income_or_expense', 'EXPENSE')->sum('amount');
             $openCounter->closing_amount = $totalIncAmount - $totalExpAmount;
             $openCounter->expense_payed = $totalExpAmount;
             $openCounter->save();
 
-
-            return Inertia::render('counter/close',[
-                'openCounter' => $openCounter
+            return Inertia::render('counter/close', [
+                'openCounter' => $openCounter,
             ]);
         }
-    
+
     }
 
-    public function counterView($ctYear = '', $ctMonth = '', $ctNumber = '', Request $request)
+    public function counterView($ctYear, $ctMonth, $ctNumber, Request $request)
     {
 
         $ctNumber = 'CT/'.$ctYear.'/'.$ctMonth.'/'.$ctNumber;
 
-        $openCounter = Closing::with('transactions', 'transactions.receaveable', 'transactions.receaveable.patient', 'transactions.receaveable.panel', 'transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceRecestation', 'transactions.elements.serviceOrder', 'transactions.elements.expenseCategory', 'transactions.elements.expVoucher', 'transactions.elements.doctor')->where('ct_number',$ctNumber)->first();
+        $openCounter = Closing::with('transactions', 'transactions.receaveable', 'transactions.receaveable.patient', 'transactions.receaveable.panel', 'transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceRecestation', 'transactions.elements.serviceOrder', 'transactions.elements.expenseCategory', 'transactions.elements.expVoucher', 'transactions.elements.doctor')->where('ct_number', $ctNumber)->first();
 
-        //->where('receptionist_id', $request->user()->id)
-
-        // dd($openCounter->transactions->toArray());
-
-        if(!$openCounter){
+        if (! $openCounter) {
             return redirect(route('counter-open'));
-        }else{
-            // dd($openCounter);
-            return Inertia::render('counter/view',[
-                'openCounter' => $openCounter,
-            ]);
         }
+
+        $this->authorize('view', $openCounter);
+
+        return Inertia::render('counter/view', [
+            'openCounter' => $openCounter,
+        ]);
     }
 
     public function counterPatient($pYear = false, $pMonth = false, $number = false, $departmentKey = false)
     {
-        $openCounter = Closing::where('status','open')->where('receptionist_id', request()->user()->id)->first();
+        $openCounter = Closing::where('status', 'open')->where('receptionist_id', request()->user()->id)->first();
 
-        if(!$openCounter){
+        if (! $openCounter) {
             return redirect(route('counter-open'));
         }
         $pageData = [
-            'openCounter' => $openCounter
+            'openCounter' => $openCounter,
         ];
-        
-        if($pYear || $pMonth || $number){
+
+        if ($pYear || $pMonth || $number) {
 
             $psNumber = 'PS/'.$pYear.'/'.$pMonth.'/'.$number;
 
-            $patientData = Patient::with('treatments','transactions','transactions.elements','transactions.elements.service','transactions.elements.serviceOrder', 'receaveables')->where('ps_number', $psNumber)->firstOrFail();
-
+            $patientData = Patient::with('treatments', 'transactions', 'transactions.elements', 'transactions.elements.service', 'transactions.elements.serviceOrder', 'receaveables')->where('ps_number', $psNumber)->firstOrFail();
 
             $pageData['selectedPatient'] = $patientData;
         }
         $pageData['departmentKey'] = $departmentKey;
 
-        if(!$departmentKey || $departmentKey == ''){
+        if (! $departmentKey || $departmentKey == '') {
 
             $pageData['departments'] = ServiceDepartment::all();
-            
-        }else{
+
+        } else {
 
             // $pageData['panels'] = Panel::all();
 
             $isRecesitation = Str::startsWith($departmentKey, 'RECES-');
             $departmentKey = $isRecesitation ? Str::replaceFirst('RECES-', '', $departmentKey) : $departmentKey;
-            
+
             $department = ServiceDepartment::where('slug', $departmentKey)->firstOrFail();
-        
 
             $pageData['departments'] = ServiceDepartment::all();
 
-            if($isRecesitation){
+            if ($isRecesitation) {
                 $pageData['recesitation'] = true;
 
-                //Get Service orders of patient for this department
-                
+                // Get Service orders of patient for this department
+
                 $pageData['existingServiceOrders'] = ServiceOrder::with('service')->where('patient_id', $pageData['selectedPatient']->id)
                     ->where('type', $departmentKey)
                     ->get();
 
                 $pageData['services'] = ServiceRecestation::where('service_department_id', $department->id)->get();
-            }else{
+            } else {
                 $pageData['services'] = Service::where('service_department_id', $department->id)->get();
 
                 $providerTypes = $pageData['services']->pluck('service_provider_types')->flatten()->unique()->filter();
@@ -313,8 +304,6 @@ class WebController extends Controller
 
                 }
 
-                
-                
                 // dd($pageData['services']->map(function($service){
                 //     if(!$service->have_service_provider || empty($service->service_provider_types)) {
                 //         dd($service);
@@ -333,14 +322,14 @@ class WebController extends Controller
 
         $pageData['panelCompanies'] = Panel::all();
 
-        return Inertia::render('counter/income',$pageData);
+        return Inertia::render('counter/income', $pageData);
     }
 
     public function transactionStore(Request $request)
     {
-        $openCounter = Closing::with('transactions')->where('status','open')->where('receptionist_id', request()->user()->id)->first();
+        $openCounter = Closing::with('transactions')->where('status', 'open')->where('receptionist_id', request()->user()->id)->first();
 
-        if(!$openCounter){
+        if (! $openCounter) {
             return redirect(route('counter-open'));
         }
 
@@ -348,15 +337,13 @@ class WebController extends Controller
             'income_or_expense' => 'required|in:INCOME,EXPENSE',
         ]);
 
-        
-
-        if($validatedData['income_or_expense'] == 'EXPENSE'){
+        if ($validatedData['income_or_expense'] == 'EXPENSE') {
 
             $request->validate([
                 'type' => 'required|in:EXP,VOUCHER-PAY',
             ]);
 
-            if($request->get('type') == 'VOUCHER-PAY'){
+            if ($request->get('type') == 'VOUCHER-PAY') {
                 $expenseVData = $request->validate([
                     'voucher_id' => 'required|exists:expense_vouchers,id',
                     'payed_to' => 'nullable|exists:users,id',
@@ -365,7 +352,7 @@ class WebController extends Controller
 
                 DB::beginTransaction();
 
-                try{
+                try {
 
                     $voucher = ExpenseVoucher::find($expenseVData['voucher_id']);
 
@@ -374,7 +361,7 @@ class WebController extends Controller
                         'created_by' => $request->user()->id,
                         'type' => TransactionElementType::VOUCHER_PAY,
                         'income_or_expense' => 'EXPENSE',
-                        'amount' => $voucher->amount
+                        'amount' => $voucher->amount,
                     ]);
 
                     $transactionElement = TransactionElement::create([
@@ -392,43 +379,42 @@ class WebController extends Controller
                         'transaction_element_id' => $transactionElement->id,
                     ]);
 
-                }catch(\Exception $e){
+                } catch (\Exception $e) {
                     DB::rollBack();
+
                     return back()->withErrors(['message' => 'An error occurred while processing the transaction. Please try again.']);
                 }
 
                 DB::commit();
 
-                return redirect()->route('transaction-view',[
+                return redirect()->route('transaction-view', [
                     'tYear' => $transaction->year,
                     'tMonth' => $transaction->month,
                     'tDay' => $transaction->day,
-                    'tNumber' => $transaction->number
+                    'tNumber' => $transaction->number,
                 ]);
 
+            } elseif ($request->get('type') == 'EXP') {
 
-            }else if($request->get('type') == 'EXP'){
-                
                 $expenseData = $request->validate([
                     'amount' => 'required|numeric',
                     'category_id' => 'required|exists:expense_categories,id',
                     'payed_to' => 'nullable',
                 ]);
-                if(empty($expenseData['payed_to'])){
+                if (empty($expenseData['payed_to'])) {
                     $expenseData['payed_to'] = 'Other';
                 }
-                if($expenseData['payed_to'] == 'Other' && empty($expenseData['payed_to_other'])){
+                if ($expenseData['payed_to'] == 'Other' && empty($expenseData['payed_to_other'])) {
                     $array = $request->validate([
                         'payed_to_other' => 'required|string',
                     ]);
                     $expenseData['payed_to_other'] = $array['payed_to_other'];
-                }else{
+                } else {
                     $array = $request->validate([
                         'payed_to' => 'exists:users,id',
                     ]);
                     $expenseData['payed_to'] = $array['payed_to'];
                 }
-                
 
                 $expenseCategory = ExpenseCategory::find($expenseData['category_id']);
 
@@ -436,7 +422,7 @@ class WebController extends Controller
 
                 $isDoctorFilePayment = $expenseCategory->name == 'Inpatient Doctor Payment';
 
-                if($isRefund && empty($expenseData['transaction_id'])){
+                if ($isRefund && empty($expenseData['transaction_id'])) {
                     $array = $request->validate([
                         'transaction_id' => 'required|exists:transactions,id',
                     ]);
@@ -444,7 +430,7 @@ class WebController extends Controller
                     $expenseData['transaction_id'] = $array['transaction_id'];
                 }
 
-                if($isDoctorFilePayment && empty($expenseData['file_number'])){
+                if ($isDoctorFilePayment && empty($expenseData['file_number'])) {
                     $array = $request->validate([
                         'file_number' => 'required|exists:service_orders,id|or_exists:service_orders,so_number',
                     ]);
@@ -452,11 +438,11 @@ class WebController extends Controller
                     $expenseData['file_number'] = $array['file_number'];
                 }
 
-                if($isRefund){
-                    
+                if ($isRefund) {
+
                     $refundedTransaction = Transaction::find($expenseData['transaction_id']);
-                    
-                    if(!$refundedTransaction){
+
+                    if (! $refundedTransaction) {
                         $refundedTransaction = Transaction::where('tr_number', $expenseData['transaction_id'])->first();
                     }
 
@@ -465,7 +451,7 @@ class WebController extends Controller
                         ->whereNotNull('service_order_id')
                         ->value('service_order_id');
 
-                    if (!$relatedServiceOrderId) {
+                    if (! $relatedServiceOrderId) {
                         return back()->withErrors(['transaction_id' => 'Refund is only allowed for transactions linked to an open service order.']);
                     }
 
@@ -475,14 +461,14 @@ class WebController extends Controller
                         && in_array(strtolower((string) $relatedServiceOrder->status), ['open', 'in-progress'], true)
                         && is_null($relatedServiceOrder->closed_at);
 
-                    if (!$isServiceOrderOpen) {
+                    if (! $isServiceOrderOpen) {
                         return back()->withErrors(['transaction_id' => 'Refund is not allowed because the related service order is closed.']);
                     }
                 }
 
-                if($isDoctorFilePayment){
+                if ($isDoctorFilePayment) {
                     $ServiceOrderExp = ServiceOrder::find($expenseData['file_number']);
-                    if(!$ServiceOrderExp){
+                    if (! $ServiceOrderExp) {
                         $ServiceOrderExp = ServiceOrder::where('so_number', $expenseData['file_number'])->first();
                     }
                 }
@@ -495,7 +481,7 @@ class WebController extends Controller
 
                 DB::beginTransaction();
 
-                try{
+                try {
 
                     $transaction = Transaction::create([
                         'closing_id' => $openCounter->id,
@@ -505,7 +491,7 @@ class WebController extends Controller
                         'expense_category_id' => $expenseData['category_id'] ?? null,
                         'notes' => $expenseData['description'] ?? null,
                         'amount' => $expenseData['amount'],
-                        'is_refunded' => $isRefund
+                        'is_refunded' => $isRefund,
                     ]);
 
                     TransactionElement::create([
@@ -520,32 +506,31 @@ class WebController extends Controller
                         'expense_service_order_id' => $isDoctorFilePayment ? $ServiceOrderExp->id : null,
                     ]);
 
-                    if($isRefund && $refundedTransaction){
-                        
+                    if ($isRefund && $refundedTransaction) {
+
                         $refundedTransaction->is_refunded = 1;
                         $refundedTransaction->save();
                     }
 
-                }catch(\Exception $e){
+                } catch (\Exception $e) {
                     // Log exception
-                    Log::error("Expense Record Failed " .  $e->getMessage());
+                    Log::error('Expense Record Failed '.$e->getMessage());
                     DB::rollBack();
+
                     return back()->withErrors(['message' => 'An error occurred while processing the transaction. Please try again.']);
                 }
 
                 DB::commit();
 
-                return redirect()->route('transaction-view',[
+                return redirect()->route('transaction-view', [
                     'tYear' => $transaction->year,
                     'tMonth' => $transaction->month,
                     'tDay' => $transaction->day,
-                    'tNumber' => $transaction->number
+                    'tNumber' => $transaction->number,
                 ]);
             }
 
-
-
-        }elseif($validatedData['income_or_expense'] == 'INCOME'){
+        } elseif ($validatedData['income_or_expense'] == 'INCOME') {
 
             $validatedData = $request->validate([
                 'income_or_expense' => 'required|in:INCOME,EXPENSE',
@@ -560,16 +545,16 @@ class WebController extends Controller
 
             $validatedData['change_amount'] = $validatedData['amount_paid'] - $validatedData['total_amount'];
 
-            if($validatedData['payment_method'] === 'PANEL'){
+            if ($validatedData['payment_method'] === 'PANEL') {
                 $request->validate([
-                    'panel_company' => 'exists:panels,id'
+                    'panel_company' => 'exists:panels,id',
                 ]);
             }
 
             $isRecesitation = Str::startsWith($validatedData['department_key'], 'RECES-');
             $departmentKey = $isRecesitation ? Str::replaceFirst('RECES-', '', $validatedData['department_key']) : $validatedData['department_key'];
 
-            if($isRecesitation){
+            if ($isRecesitation) {
                 // Validate service_order_id
                 $request->validate([
                     'service_order_id' => 'required|exists:service_orders,id',
@@ -578,7 +563,7 @@ class WebController extends Controller
 
             DB::beginTransaction();
 
-            try{
+            try {
 
                 $transaction = Transaction::create([
                     'closing_id' => $openCounter->id,
@@ -597,9 +582,9 @@ class WebController extends Controller
 
                 $orinalTotal = 0;
 
-                foreach($validatedData['items'] as $item){
+                foreach ($validatedData['items'] as $item) {
 
-                    $service = !$isRecesitation ? Service::find($item['service_id']) : ServiceRecestation::find($item['service_id']);
+                    $service = ! $isRecesitation ? Service::find($item['service_id']) : ServiceRecestation::find($item['service_id']);
 
                     $orinalTotal += $service ? $service->charges * $item['quantity'] : 0;
 
@@ -608,7 +593,7 @@ class WebController extends Controller
                         'transaction_id' => $transaction->id,
                         'created_by' => $request->user()->id,
                         'patient_id' => $validatedData['patient_id'],
-                        'service_id' => !$isRecesitation ? $item['service_id'] : null,
+                        'service_id' => ! $isRecesitation ? $item['service_id'] : null,
                         'service_recestation_id' => $isRecesitation ? $item['service_id'] : null,
                         'service_order_id' => $isRecesitation ? $request->get('service_order_id', null) : null,
                         'doctor_id' => $item['provider_id'] ?? null,
@@ -624,9 +609,7 @@ class WebController extends Controller
                 $transaction->orignal_amount = $orinalTotal;
                 $transaction->save();
 
-
-
-                if($validatedData['change_amount'] < 0){
+                if ($validatedData['change_amount'] < 0) {
                     // Create receaveable for the remaining amount
                     $receaveableAmount = abs($validatedData['change_amount']);
 
@@ -640,132 +623,134 @@ class WebController extends Controller
                     ]);
                 }
 
-
-            }catch(\Exception $e){
+            } catch (\Exception $e) {
                 Log::error($e->getMessage());
                 DB::rollBack();
+
                 return back()->withErrors(['message' => 'An error occurred while processing the transaction. Please try again.']);
             }
 
             DB::commit();
 
-            return redirect()->route('transaction-view',[
+            return redirect()->route('transaction-view', [
                 'tYear' => $transaction->year,
                 'tMonth' => $transaction->month,
                 'tDay' => $transaction->day,
-                'tNumber' => $transaction->number
+                'tNumber' => $transaction->number,
             ]);
 
         }
     }
-    
+
     public function receaveablesPayment(Request $request)
     {
 
+        $openCounter = Closing::with('transactions')->where('status', 'open')->where('receptionist_id', request()->user()->id)->first();
 
-            $openCounter = Closing::with('transactions')->where('status','open')->where('receptionist_id', request()->user()->id)->first();
+        if (! $openCounter) {
+            return redirect(route('counter-open'));
+        }
 
-            if(!$openCounter){
-                return redirect(route('counter-open'));
-            }
+        $validatedData = $request->validate([
+            'receaveable_id' => 'required|exists:receaveables,id',
+            'payment_method' => 'required|in:CASH,CARD,PANEL,CHEQUE,BANK_TRANSFER',
+            'panel_id' => 'required_if:payment_method,PANEL|exists:panels,id',
+            'amount_to_collect' => 'required|numeric|gt:0',
+            'note' => 'nullable|string',
+        ]);
 
-            $validatedData = $request->validate([
-                'receaveable_id' => 'required|exists:receaveables,id',
-                'payment_method' => 'required|in:CASH,CARD,PANEL,CHEQUE,BANK_TRANSFER',
-                'panel_id' => 'required_if:payment_method,PANEL|exists:panels,id',
-                'amount_to_collect' => 'required|numeric|gt:0',
-                'note' => 'nullable|string',
+        $receaveable = Receaveable::with('transaction')->findOrFail($validatedData['receaveable_id']);
+
+        $transaction = $receaveable->transaction;
+
+        $elements = $transaction->elements;
+
+        if ($elements->count() !== 1) {
+            return redirect()->back()->withErrors(['error' => 'Invalid receaveable transaction elements.']);
+        }
+
+        $element = $elements->first();
+
+        DB::beginTransaction();
+
+        try {
+
+            $newTransaction = Transaction::create([
+                'closing_id' => $openCounter->id,
+                'created_by' => $request->user()->id,
+                'patient_id' => $receaveable->patient_id,
+                'type' => $validatedData['payment_method'],
+                'income_or_expense' => 'INCOME',
+                'amount' => $validatedData['amount_to_collect'],
+                'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
             ]);
 
-            $receaveable = Receaveable::with('transaction')->findOrFail($validatedData['receaveable_id']);
-
-            $transaction = $receaveable->transaction;
-
-            $elements = $transaction->elements;
-
-            if($elements->count() !== 1){
-                return redirect()->back()->withErrors(['error' => 'Invalid receaveable transaction elements.']);
-            }
-
-            $element = $elements->first();
-
-            DB::beginTransaction();
-
-            try{
-
-                $newTransaction = Transaction::create([
-                    'closing_id' => $openCounter->id,
-                    'created_by' => $request->user()->id,
-                    'patient_id' => $receaveable->patient_id,
-                    'type' => $validatedData['payment_method'],
-                    'income_or_expense' => 'INCOME',
-                    'amount' => $validatedData['amount_to_collect'],
-                    'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
-                ]);
-
-                $newTransactionElement = TransactionElement::create([
-                    'closing_id' => $openCounter->id,
-                    'transaction_id' => $newTransaction->id,
-                    'receaveable_id' => $receaveable->id,
-                    'created_by' => $request->user()->id,
-                    'patient_id' => $receaveable->patient_id,
-                    'type' => $element->type,
-                    'income_or_expense' => $element->income_or_expense,
-                    'service_id' => $element->service_id,
-                    'amount' => $validatedData['amount_to_collect'],
-                    'note' => $validatedData['note'] ?? null,
-                ]);
-
-
-                $receaveable->amount -= $validatedData['amount_to_collect'];
-                if($receaveable->amount <= 0){
-                    $receaveable->status = 'paid';
-                    $receaveable->amount = 0;
-                }
-                $receaveable->save();
-
-            }catch(\Exception $e){
-                DB::rollBack();
-                return redirect()->back()->withErrors(['error' => 'An error occurred while processing the payment: '.$e->getMessage()]);
-            }
-
-            DB::commit();
-
-            return redirect()->route('transaction-view',[
-                'tYear' => $newTransaction->year,
-                'tMonth' => $newTransaction->month,
-                'tDay' => $newTransaction->day,
-                'tNumber' => $newTransaction->number
+            $newTransactionElement = TransactionElement::create([
+                'closing_id' => $openCounter->id,
+                'transaction_id' => $newTransaction->id,
+                'receaveable_id' => $receaveable->id,
+                'created_by' => $request->user()->id,
+                'patient_id' => $receaveable->patient_id,
+                'type' => $element->type,
+                'income_or_expense' => $element->income_or_expense,
+                'service_id' => $element->service_id,
+                'amount' => $validatedData['amount_to_collect'],
+                'note' => $validatedData['note'] ?? null,
             ]);
+
+            $receaveable->amount -= $validatedData['amount_to_collect'];
+            if ($receaveable->amount <= 0) {
+                $receaveable->status = 'paid';
+                $receaveable->amount = 0;
+            }
+            $receaveable->save();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()->back()->withErrors(['error' => 'An error occurred while processing the payment: '.$e->getMessage()]);
+        }
+
+        DB::commit();
+
+        return redirect()->route('transaction-view', [
+            'tYear' => $newTransaction->year,
+            'tMonth' => $newTransaction->month,
+            'tDay' => $newTransaction->day,
+            'tNumber' => $newTransaction->number,
+        ]);
 
     }
 
     public function transactionView($tYear = null, $tMonth = null, $tDay = null, $tNumber = null)
     {
-        if(!$tYear || !$tMonth || !$tDay || !$tNumber){
+        if (! $tYear || ! $tMonth || ! $tDay || ! $tNumber) {
             return Inertia::render('transaction/search');
         }
         $trNumber = 'TR/'.$tYear.'/'.$tMonth.'/'.$tDay.'/'.$tNumber;
 
+        $transaction = Transaction::with('elements', 'elements.service', 'elements.serviceOrder', 'closing', 'patient', 'closing.reception', 'patient.receaveables')->where('tr_number', $trNumber)->firstOrFail();
 
-        $transaction = Transaction::with('elements','elements.service','elements.serviceOrder', 'closing','patient','closing.reception', 'patient.receaveables')->where('tr_number', $trNumber)->firstOrFail();
+        $this->authorize('view', $transaction);
 
-        return Inertia::render('transaction/view',[
-            'transaction' => $transaction
+        return Inertia::render('transaction/view', [
+            'transaction' => $transaction,
         ]);
     }
 
-    public function transactionEdit($tYear = null, $tMonth = null, $tDay = null, $tNumber = null){
-        if(!$tYear || !$tMonth || !$tDay || !$tNumber){
+    public function transactionEdit($tYear = null, $tMonth = null, $tDay = null, $tNumber = null)
+    {
+        if (! $tYear || ! $tMonth || ! $tDay || ! $tNumber) {
             return Inertia::render('transaction/search');
         }
         $trNumber = 'TR/'.$tYear.'/'.$tMonth.'/'.$tDay.'/'.$tNumber;
 
+        $transaction = Transaction::with('elements', 'elements.service', 'elements.serviceOrder', 'closing', 'patient', 'closing.reception', 'patient.receaveables')->where('tr_number', $trNumber)->firstOrFail();
 
-        $transaction = Transaction::with('elements','elements.service','elements.serviceOrder', 'closing','patient','closing.reception', 'patient.receaveables')->where('tr_number', $trNumber)->firstOrFail();
+        $this->authorize('update', $transaction);
 
-        return Inertia::render('transaction/edit',[
-            'transaction' => $transaction
+        return Inertia::render('transaction/edit', [
+            'transaction' => $transaction,
         ]);
     }
 
@@ -786,6 +771,8 @@ class WebController extends Controller
 
         $transaction = Transaction::with('elements')->findOrFail($validated['transaction_id']);
 
+        $this->authorize('update', $transaction);
+
         if (array_key_exists('type', $validated) && $validated['type'] !== null) {
             $transaction->type = $validated['type'];
         }
@@ -800,10 +787,12 @@ class WebController extends Controller
         }
         $transaction->save();
 
-        if (!empty($validated['elements'])) {
+        if (! empty($validated['elements'])) {
             foreach ($validated['elements'] as $elementData) {
                 $element = TransactionElement::find($elementData['id']);
-                if (!$element) continue;
+                if (! $element) {
+                    continue;
+                }
 
                 if (array_key_exists('amount', $elementData) && $elementData['amount'] !== null) {
                     $element->amount = $elementData['amount'];
@@ -826,29 +815,27 @@ class WebController extends Controller
         ])->with('success', 'Transaction updated');
     }
 
-
     public function receaveables()
     {
-        $openCounter = Closing::with('transactions')->where('status','open')->where('receptionist_id', request()->user()->id)->first();
+        $openCounter = Closing::with('transactions')->where('status', 'open')->where('receptionist_id', request()->user()->id)->first();
 
-        if(!$openCounter){
+        if (! $openCounter) {
             return redirect(route('counter-open'));
         }
 
-        $receaveables = \App\Models\Receaveable::with('patient','transaction')->where('status','unpaid')->paginate();
+        $receaveables = \App\Models\Receaveable::with('patient', 'transaction')->where('status', 'unpaid')->paginate();
 
-        return Inertia::render('counter/receaveables',[
+        return Inertia::render('counter/receaveables', [
             'openCounter' => $openCounter,
-            'receaveables' => $receaveables
+            'receaveables' => $receaveables,
         ]);
     }
 
-
     public function counterExpense(Request $request)
     {
-        $openCounter = Closing::with('transactions')->where('status','open')->where('receptionist_id', request()->user()->id)->first();
+        $openCounter = Closing::with('transactions')->where('status', 'open')->where('receptionist_id', request()->user()->id)->first();
 
-        if(!$openCounter){
+        if (! $openCounter) {
             return redirect(route('counter-open'));
         }
 
@@ -872,41 +859,41 @@ class WebController extends Controller
 
         $expenseCategory = null;
 
-        if($categoryNameInUrl && $categoryIdInUrl){
+        if ($categoryNameInUrl && $categoryIdInUrl) {
             $expenseCategory = ExpenseCategory::find($categoryIdInUrl);
-        }else{
-            if($categoryNameInUrl){
+        } else {
+            if ($categoryNameInUrl) {
                 $expenseCategory = ExpenseCategory::firstOrCreate(['name' => $categoryNameInUrl]);
-            }elseif($categoryIdInUrl){
+            } elseif ($categoryIdInUrl) {
                 $expenseCategory = ExpenseCategory::find($categoryIdInUrl);
-            }else{
+            } else {
                 $expenseCategory = null;
             }
         }
 
         $doctor = null;
 
-        if($doctorIdInUrl){
+        if ($doctorIdInUrl) {
             $doctor = User::find($doctorIdInUrl);
         }
 
         $trnsaction = null;
 
-        if($transactionIdInUrl && $transactionNumberInUrl){
+        if ($transactionIdInUrl && $transactionNumberInUrl) {
             $trnsaction = Transaction::find($transactionIdInUrl);
-        }else{
-            if($transactionNumberInUrl){
+        } else {
+            if ($transactionNumberInUrl) {
                 $trnsaction = Transaction::where('tr_number', $transactionNumberInUrl)->first();
-            }elseif($transactionIdInUrl){
+            } elseif ($transactionIdInUrl) {
                 $trnsaction = Transaction::find($transactionIdInUrl);
-            }else{
+            } else {
                 $trnsaction = null;
             }
         }
 
         $voucher = null;
 
-        if($voucherIdInUrl){
+        if ($voucherIdInUrl) {
             $voucher = ExpenseVoucher::with('payedTo')->find($voucherIdInUrl);
         }
 
@@ -919,10 +906,9 @@ class WebController extends Controller
         //         'payed_to_other' => $payedToOtherInUrl,
         //     ]);
 
-
         $expenseCategories = ExpenseCategory::whereNotIn('name', ['Outdoor Doctors Payments'])->get();
 
-        return Inertia::render('counter/expense',[
+        return Inertia::render('counter/expense', [
             'openCounter' => $openCounter,
             'users' => \App\Models\User::all(),
             'categories' => $expenseCategories,
@@ -934,17 +920,16 @@ class WebController extends Controller
                 'transaction' => $trnsaction,
                 'payed_to_other' => $payedToOtherInUrl,
                 'voucher' => $voucher,
-            ]
+            ],
         ]);
     }
-
 
     public function opdQueue()
     {
         $type = 'OPD';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
             ->where('type', $type)
             ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
@@ -960,7 +945,7 @@ class WebController extends Controller
         $serviceOrdersByService = ServiceOrder::query()
             ->with([
                 'patient:id,name,ps_number',
-                'service:id,name'
+                'service:id,name',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
@@ -968,15 +953,15 @@ class WebController extends Controller
             ->get()
             ->groupBy('service_id')
             // Filter out null keys (orders without a service) just in case
-            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+            ->filter(fn ($items, $serviceId) => ! is_null($serviceId) && $items->isNotEmpty());
 
         // Get department services
         $serviceIds = $serviceOrdersByService->keys()->filter()->values();
         $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
-        
-        return Inertia::render('hospital/opd-queue',[
+
+        return Inertia::render('hospital/opd-queue', [
             'serviceOrdersByService' => $serviceOrdersByService,
-            'services' => $services
+            'services' => $services,
         ]);
     }
 
@@ -986,7 +971,7 @@ class WebController extends Controller
         $type = 'IND';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
             ->where('type', $type)
             ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
@@ -1002,7 +987,7 @@ class WebController extends Controller
         $serviceOrdersByService = ServiceOrder::query()
             ->with([
                 'patient:id,name,ps_number',
-                'service:id,name'
+                'service:id,name',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
@@ -1010,15 +995,15 @@ class WebController extends Controller
             ->get()
             ->groupBy('service_id')
             // Filter out null keys (orders without a service) just in case
-            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+            ->filter(fn ($items, $serviceId) => ! is_null($serviceId) && $items->isNotEmpty());
 
         // Get department services
         $serviceIds = $serviceOrdersByService->keys()->filter()->values();
         $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
-        
-        return Inertia::render('hospital/opd-queue',[
+
+        return Inertia::render('hospital/opd-queue', [
             'serviceOrdersByService' => $serviceOrdersByService,
-            'services' => $services
+            'services' => $services,
         ]);
     }
 
@@ -1027,7 +1012,7 @@ class WebController extends Controller
         $type = 'EMER';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
             ->where('type', $type)
             ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
@@ -1043,22 +1028,22 @@ class WebController extends Controller
         $serviceOrdersByService = ServiceOrder::query()
             ->with([
                 'patient:id,name,ps_number',
-                'service:id,name'
+                'service:id,name',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
-            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+            ->filter(fn ($items, $serviceId) => ! is_null($serviceId) && $items->isNotEmpty());
 
         // Get department services
         $serviceIds = $serviceOrdersByService->keys()->filter()->values();
         $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
-        
-        return Inertia::render('hospital/opd-queue',[
+
+        return Inertia::render('hospital/opd-queue', [
             'serviceOrdersByService' => $serviceOrdersByService,
-            'services' => $services
+            'services' => $services,
         ]);
     }
 
@@ -1067,7 +1052,7 @@ class WebController extends Controller
         $type = 'DNT';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
             ->where('type', $type)
             ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
@@ -1083,22 +1068,22 @@ class WebController extends Controller
         $serviceOrdersByService = ServiceOrder::query()
             ->with([
                 'patient:id,name,ps_number',
-                'service:id,name'
+                'service:id,name',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
-            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+            ->filter(fn ($items, $serviceId) => ! is_null($serviceId) && $items->isNotEmpty());
 
         // Get department services
         $serviceIds = $serviceOrdersByService->keys()->filter()->values();
         $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
-        
-        return Inertia::render('hospital/opd-queue',[
+
+        return Inertia::render('hospital/opd-queue', [
             'serviceOrdersByService' => $serviceOrdersByService,
-            'services' => $services
+            'services' => $services,
         ]);
     }
 
@@ -1107,7 +1092,7 @@ class WebController extends Controller
         $type = 'DNT';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
             ->where('type', $type)
             ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
@@ -1123,22 +1108,22 @@ class WebController extends Controller
         $serviceOrdersByService = ServiceOrder::query()
             ->with([
                 'patient:id,name,ps_number',
-                'service:id,name'
+                'service:id,name',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
-            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+            ->filter(fn ($items, $serviceId) => ! is_null($serviceId) && $items->isNotEmpty());
 
         // Get department services
         $serviceIds = $serviceOrdersByService->keys()->filter()->values();
         $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
-        
-        return Inertia::render('hospital/opd-queue',[
+
+        return Inertia::render('hospital/opd-queue', [
             'serviceOrdersByService' => $serviceOrdersByService,
-            'services' => $services
+            'services' => $services,
         ]);
     }
 
@@ -1147,7 +1132,7 @@ class WebController extends Controller
         $type = 'ULT';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
             ->where('type', $type)
             ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
@@ -1163,22 +1148,22 @@ class WebController extends Controller
         $serviceOrdersByService = ServiceOrder::query()
             ->with([
                 'patient:id,name,ps_number',
-                'service:id,name'
+                'service:id,name',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
-            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+            ->filter(fn ($items, $serviceId) => ! is_null($serviceId) && $items->isNotEmpty());
 
         // Get department services
         $serviceIds = $serviceOrdersByService->keys()->filter()->values();
         $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
-        
-        return Inertia::render('hospital/opd-queue',[
+
+        return Inertia::render('hospital/opd-queue', [
             'serviceOrdersByService' => $serviceOrdersByService,
-            'services' => $services
+            'services' => $services,
         ]);
     }
 
@@ -1187,7 +1172,7 @@ class WebController extends Controller
         $type = 'RAD';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id','service_id','patient_id','created_at','status','type','so_number'])
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
             ->where('type', $type)
             ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
@@ -1203,28 +1188,25 @@ class WebController extends Controller
         $serviceOrdersByService = ServiceOrder::query()
             ->with([
                 'patient:id,name,ps_number',
-                'service:id,name'
+                'service:id,name',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
-            ->filter(fn ($items, $serviceId) => !is_null($serviceId) && $items->isNotEmpty());
+            ->filter(fn ($items, $serviceId) => ! is_null($serviceId) && $items->isNotEmpty());
 
         // Get department services
         $serviceIds = $serviceOrdersByService->keys()->filter()->values();
         $services = Service::whereIn('id', $serviceIds)->get()->keyBy('id');
-        
-        return Inertia::render('hospital/opd-queue',[
+
+        return Inertia::render('hospital/opd-queue', [
             'serviceOrdersByService' => $serviceOrdersByService,
             'services' => $services,
-            
+
         ]);
     }
-
-
-
 
     public function hospitalSettings()
     {
@@ -1252,7 +1234,8 @@ class WebController extends Controller
         ]);
     }
 
-    public function newVoucher(){
+    public function newVoucher()
+    {
 
         $expenseCategories = ExpenseCategory::where('pay_doc', true)->get();
 
@@ -1264,7 +1247,7 @@ class WebController extends Controller
                 ->orWhereHas('ultrasoundDoctorProfiles');
         })->get();
 
-        return Inertia::render('counter/new-voucher',[
+        return Inertia::render('counter/new-voucher', [
             'categories' => $expenseCategories,
             'users' => $users,
 
@@ -1285,20 +1268,20 @@ class WebController extends Controller
         $category = ExpenseCategory::findOrFail($validated['exp_category_id']);
         $serviceOrderIds = $validated['service_order_ids'] ?? [];
 
-        if ($category->pay_doc && !$category->pay_others && !$category->pay_users && empty($serviceOrderIds)) {
+        if ($category->pay_doc && ! $category->pay_others && ! $category->pay_users && empty($serviceOrderIds)) {
             return back()->withErrors([
                 'service_order_ids' => 'Service orders are required for this category.',
             ]);
         }
 
-        if (!empty($serviceOrderIds)) {
+        if (! empty($serviceOrderIds)) {
             // Backend validation: all service orders must be CLOSED
             $serviceOrders = ServiceOrder::whereIn('id', $serviceOrderIds)->get();
 
             $notClosed = $serviceOrders->filter(fn ($so) => $so->status !== 'CLOSED');
             if ($notClosed->isNotEmpty()) {
                 return back()->withErrors([
-                    'service_order_ids' => 'All selected service orders must have CLOSED status. Invalid: ' . $notClosed->pluck('so_number')->implode(', '),
+                    'service_order_ids' => 'All selected service orders must have CLOSED status. Invalid: '.$notClosed->pluck('so_number')->implode(', '),
                 ]);
             }
         }
@@ -1311,7 +1294,7 @@ class WebController extends Controller
                 'notes' => $validated['description'] ?? null,
             ]);
 
-            if (!empty($serviceOrderIds)) {
+            if (! empty($serviceOrderIds)) {
                 $voucher->serviceOrders()->attach($serviceOrderIds);
             }
 

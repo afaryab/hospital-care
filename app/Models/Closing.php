@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Closing extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'old_id',
         'reception_id',
@@ -24,7 +28,7 @@ class Closing extends Model
         'cash_recieving_time',
         'reported_by',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     protected $appends = [
@@ -40,10 +44,12 @@ class Closing extends Model
     {
         return $this->ct_number_parts['year'] ?? null;
     }
+
     public function getMonthAttribute()
     {
         return $this->ct_number_parts['month'] ?? null;
     }
+
     public function getNumberAttribute()
     {
         return $this->ct_number_parts['number'] ?? null;
@@ -54,33 +60,33 @@ class Closing extends Model
         if (empty($this->ct_number)) {
             return null;
         }
-        
+
         $parts = explode('/', $this->ct_number);
-        
+
         return [
             'year' => $parts[1] ?? null,
             'month' => $parts[2] ?? null,
-            'number' => $parts[3] ?? null
+            'number' => $parts[3] ?? null,
         ];
     }
 
-
     public static function generateCounterNumber(): string
     {
-        $now = Carbon::now();
-        $year = $now->format('Y');
-        $month = $now->format('m');
+        return DB::transaction(function () {
+            $now = Carbon::now();
+            $year = $now->format('Y');
+            $month = $now->format('m');
 
-        // Count how many counters have been created this month
-        $count = self::where('ct_number', 'like', "CT/{$year}/{$month}/%")->count();
-        $count += 1; // Increment for the new counter
+            $count = self::where('ct_number', 'like', "CT/{$year}/{$month}/%")
+                ->lockForUpdate()
+                ->count();
+            $count += 1;
 
-        // STRPAD the count to be 4 digits
-        $count = str_pad($count, 4, '0', STR_PAD_LEFT);
+            $count = str_pad($count, 4, '0', STR_PAD_LEFT);
 
-        return "CT/{$year}/{$month}/{$count}";
+            return "CT/{$year}/{$month}/{$count}";
+        });
     }
-
 
     public function reception()
     {
@@ -101,5 +107,4 @@ class Closing extends Model
     {
         return $this->belongsTo(User::class, 'reported_by');
     }
-
 }

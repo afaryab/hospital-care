@@ -3,11 +3,14 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class Patient extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'id',
         'ps_number',
@@ -22,7 +25,7 @@ class Patient extends Model
         'contact',
         'cnic',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     protected $appends = [
@@ -40,6 +43,7 @@ class Patient extends Model
             $birthDate = Carbon::parse($this->age_dob);
             $formToday = Carbon::now();
             $ageInYears = $birthDate->diffInYears($formToday);
+
             return (int) $ageInYears;
         }
 
@@ -49,6 +53,7 @@ class Patient extends Model
             $birthDate = $createdAt->copy()->subDays($this->age_days);
             $formToday = Carbon::now();
             $ageInYears = $birthDate->diffInYears($formToday);
+
             return (int) $ageInYears;
         }
     }
@@ -57,10 +62,12 @@ class Patient extends Model
     {
         return $this->ps_number_parts['year'] ?? null;
     }
+
     public function getMonthAttribute()
     {
         return $this->ps_number_parts['month'] ?? null;
     }
+
     public function getNumberAttribute()
     {
         return $this->ps_number_parts['number'] ?? null;
@@ -77,10 +84,9 @@ class Patient extends Model
         return [
             'year' => $parts[1] ?? null,
             'month' => $parts[2] ?? null,
-            'number' => $parts[3] ?? null
+            'number' => $parts[3] ?? null,
         ];
     }
-
 
     public static function generateCounterNumber(): string
     {
@@ -92,8 +98,8 @@ class Patient extends Model
             // Count how many patients have been created this month with PS numbers
             // Use FOR UPDATE to lock the table and prevent race conditions
             $count = self::where('ps_number', 'like', "PS/{$year}/{$month}/%")
-                        ->lockForUpdate()
-                        ->count();
+                ->lockForUpdate()
+                ->count();
             $count += 1; // Increment for the new patient
 
             // Pad the count to be 4 digits
