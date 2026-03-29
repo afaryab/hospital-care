@@ -4,6 +4,19 @@ Project-specific frontend patterns extracted from the codebase. Follow these whe
 
 ---
 
+## Package Manager
+
+- **Always use `pnpm`** — never use `npm`, `yarn`, or `bun` for installing or running packages.
+- Install dependencies: `pnpm install`
+- Add a package: `pnpm add <package>`
+- Add a dev package: `pnpm add -D <package>`
+- Run scripts: `pnpm run dev`, `pnpm run build`, `pnpm run lint`, etc.
+- In Dockerfiles: install pnpm via `npm install -g pnpm`, then use `pnpm install --frozen-lockfile` and `pnpm run build`.
+- In documentation and README: always reference `pnpm` commands, not `npm` or `bun`.
+- **Pre-PR checks (mandatory):** Always run `pnpm run build:ssr`, `pnpm run format:check`, `pnpm run lint`, and `pnpm run types` before completing any task. All four must pass.
+
+---
+
 ## Page Components
 
 - **Location:** `resources/js/pages/`

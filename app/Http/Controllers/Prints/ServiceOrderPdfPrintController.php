@@ -31,7 +31,7 @@ class ServiceOrderPdfPrintController extends Controller
             'patient' => $patient,
         ])->render();
 
-        $fileName = 'ED-Clinical-Performa-' . ($serviceOrder->id ?? Str::uuid()) . '.pdf';
+        $fileName = 'ED-Clinical-Performa-'.($serviceOrder->id ?? Str::uuid()).'.pdf';
 
         return Pdf::loadHTML($html)
             ->setPaper('A4')

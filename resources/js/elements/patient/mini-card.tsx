@@ -250,7 +250,7 @@ const PatientMiniCardInner: React.FC<PatientMiniCardProps> = ({ patient, classNa
     return (
         <div className={`bg-white dark:bg-neutral-950 dark:text-white rounded-lg shadow-md p-4 ${className}`}>
             <div className="flex items-center space-x-4">
-                <div className="flex-shrink-0">
+                <div className="shrink-0">
                     <div className="w-12 h-12 bg-gray-50">
                         {gender ? (
                             <img 

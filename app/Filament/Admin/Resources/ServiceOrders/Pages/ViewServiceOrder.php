@@ -9,8 +9,8 @@ use App\Models\TransactionElement;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\ViewEntry;
-use Filament\Schemas\Components\Section;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
 class ViewServiceOrder extends ViewRecord
@@ -72,6 +72,7 @@ class ViewServiceOrder extends ViewRecord
                                 ->where('income_or_expense', 'INCOME')
                                 ->pluck('transaction_id')->unique()->filter();
                             $receivableIds = Receaveable::whereIn('transaction_id', $transactionIds)->pluck('id')->filter();
+
                             return Transaction::whereIn('receaveable_id', $receivableIds)
                                 ->with(['receaveable.transaction'])
                                 ->orderBy('created_at')

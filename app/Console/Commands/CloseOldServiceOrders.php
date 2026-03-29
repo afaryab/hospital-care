@@ -41,7 +41,7 @@ class CloseOldServiceOrders extends Command
                     $order->notes = 'Automatically closed by system due to being open for more than 12 hours.';
                     $order->save();
                 }
-                $this->info('Processed ' . count($orders) . ' service orders');
+                $this->info('Processed '.count($orders).' service orders');
             });
 
         ServiceOrder::whereNull('closed_at')
@@ -57,7 +57,7 @@ class CloseOldServiceOrders extends Command
                     $order->notes = 'Automatically closed by system due to being open for more than 6 hours.';
                     $order->save();
                 }
-                $this->info('Processed ' . count($orders) . ' service orders');
+                $this->info('Processed '.count($orders).' service orders');
             });
 
         ServiceOrder::whereNull('closed_at')
@@ -73,7 +73,7 @@ class CloseOldServiceOrders extends Command
                     $order->notes = 'Automatically closed by system due to being open for more than 2 months.';
                     $order->save();
                 }
-                $this->info('Processed ' . count($orders) . ' service orders');
+                $this->info('Processed '.count($orders).' service orders');
             });
 
         ServiceOrder::whereNull('closed_at')
@@ -89,7 +89,7 @@ class CloseOldServiceOrders extends Command
                     $order->notes = 'Automatically closed by system due to being open for more than 12 hours.';
                     $order->save();
                 }
-                $this->info('Processed ' . count($orders) . ' service orders');
+                $this->info('Processed '.count($orders).' service orders');
             });
 
         ServiceOrder::whereNull('closed_at')
@@ -105,7 +105,7 @@ class CloseOldServiceOrders extends Command
                     $order->notes = 'Automatically closed by system due to being open for more than 36 hours.';
                     $order->save();
                 }
-                $this->info('Processed ' . count($orders) . ' service orders');
+                $this->info('Processed '.count($orders).' service orders');
             });
 
         $this->info('Finished closing service orders for existing transactions.');

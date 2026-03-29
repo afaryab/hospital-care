@@ -3,20 +3,16 @@
 namespace App\Filament\Admin\Pages;
 
 use Carbon\Carbon;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Select;
+use Filament\Pages\Dashboard\Actions\FilterAction;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersAction;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
-use Filament\Pages\Dashboard\Actions\FilterAction;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Hidden;
-
 
 class Dashboard extends BaseDashboard
 {
     use HasFiltersAction;
-
 
     protected static ?int $sort = 1;
 
@@ -28,7 +24,7 @@ class Dashboard extends BaseDashboard
 
     protected bool $persistsFiltersInSession = true;
 
-    public function getColumns(): int | array
+    public function getColumns(): int|array
     {
         return [
             'sm' => 4,
@@ -68,21 +64,21 @@ class Dashboard extends BaseDashboard
                             $set('startDate', $dates['start']);
                             $set('endDate', $dates['end']);
                         }),
-                    
+
                     DatePicker::make('startDate')
                         ->label('Start Date')
                         ->visible(fn ($get) => $get('dateRange') === 'custom')
                         ->default(Carbon::now()->subDays(7)),
-                    
+
                     DatePicker::make('endDate')
                         ->label('End Date')
                         ->visible(fn ($get) => $get('dateRange') === 'custom')
                         ->default(Carbon::now()),
-                    
+
                     // Hidden fields to always have startDate and endDate available for widgets
                     Hidden::make('computed_startDate'),
                     Hidden::make('computed_endDate'),
-                ])
+                ]),
         ];
     }
 
@@ -92,7 +88,7 @@ class Dashboard extends BaseDashboard
     protected function calculateDateRange(string $range): array
     {
         $now = Carbon::now();
-        
+
         return match ($range) {
             'today' => [
                 'start' => $now->copy()->startOfDay(),
@@ -145,12 +141,12 @@ class Dashboard extends BaseDashboard
     {
         $now = Carbon::now();
         $currentFinancialYearStart = $now->copy()->month(7)->startOfMonth();
-        
+
         if ($now->month < 7) {
             // If we're before July, current financial year started last year
             $currentFinancialYearStart->subYear();
         }
-        
+
         // Last financial year started one year before current financial year
         return $currentFinancialYearStart->copy()->subYear();
     }
@@ -169,20 +165,21 @@ class Dashboard extends BaseDashboard
     public function getStartDate(): Carbon
     {
         $filters = $this->getFilters();
-        
+
         // Handle custom date range
         if (isset($filters['dateRange']) && $filters['dateRange'] === 'custom') {
             if (isset($filters['startDate'])) {
                 return Carbon::parse($filters['startDate']);
             }
         }
-        
+
         // Handle predefined date ranges
         if (isset($filters['dateRange']) && $filters['dateRange'] !== 'custom') {
             $dates = $this->calculateDateRange($filters['dateRange']);
+
             return $dates['start'];
         }
-        
+
         // Default fallback
         return Carbon::now()->subDays(7);
     }
@@ -193,20 +190,21 @@ class Dashboard extends BaseDashboard
     public function getEndDate(): Carbon
     {
         $filters = $this->getFilters();
-        
+
         // Handle custom date range
         if (isset($filters['dateRange']) && $filters['dateRange'] === 'custom') {
             if (isset($filters['endDate'])) {
                 return Carbon::parse($filters['endDate']);
             }
         }
-        
+
         // Handle predefined date ranges
         if (isset($filters['dateRange']) && $filters['dateRange'] !== 'custom') {
             $dates = $this->calculateDateRange($filters['dateRange']);
+
             return $dates['end'];
         }
-        
+
         // Default fallback
         return Carbon::now();
     }

@@ -6,7 +6,7 @@ import BulletsWrapper from '@/elements/bullets-wrapper';
 import PatientMiniCard from '@/elements/patient/mini-card';
 import HumanSimpleBody from '@/human/simple-body';
 import AppLayout from '@/layouts/app-layout';
-import { counterExpense, counterList, counterSelectDepartment, counterSelectPatient, counterView, home, myCounterList, patientsRegister, patientsRegisterPsNumberDepartment, printClosingStatement, printTransaction } from '@/routes';
+import { counterExpense, counterSelectDepartment, counterSelectPatient, counterView, home, myCounterList, patientsRegister, patientsRegisterPsNumberDepartment, printClosingStatement, printTransaction } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 import clsx from 'clsx';
@@ -31,7 +31,7 @@ export default function TransactionSearch() {
         // },
     ];
 
-    let bullets = [];
+    let bullets: any[] = [];
 
     // openCounter && bullets.push({ 
     //     title: openCounter && openCounter.ct_number,

@@ -2,10 +2,10 @@
 
 namespace Processton\Abacus\Filament\Resources\AbacusTransactionResource\Pages;
 
-use Processton\Abacus\Filament\Resources\AbacusTransactionResource;
 use BackedEnum;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Processton\Abacus\Filament\Resources\AbacusTransactionResource;
 
 class ListAbacusTransactions extends ListRecords
 {

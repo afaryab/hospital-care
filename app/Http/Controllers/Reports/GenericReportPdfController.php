@@ -170,14 +170,14 @@ class GenericReportPdfController extends Controller
             $doctorName = $el->doctor?->name ?? 'No Provider';
             $doctorId = $el->doctor_id ?? 0;
 
-            if (!isset($serviceGroups[$serviceName])) {
+            if (! isset($serviceGroups[$serviceName])) {
                 $serviceGroups[$serviceName] = [
                     'service_name' => $serviceName,
                     'providers' => [],
                     'total_income' => 0,
                 ];
             }
-            if (!isset($serviceGroups[$serviceName]['providers'][$doctorId])) {
+            if (! isset($serviceGroups[$serviceName]['providers'][$doctorId])) {
                 $serviceGroups[$serviceName]['providers'][$doctorId] = [
                     'doctor_name' => $doctorName,
                     'doctor_id' => $doctorId,
@@ -204,10 +204,12 @@ class GenericReportPdfController extends Controller
         foreach ($expenseElements as $el) {
             $payedToId = $el->expVoucher?->payed_to ?? 0;
             $payedToName = $el->expVoucher?->payedTo?->name ?? $el->expVoucher?->payed_to_name ?? null;
-            if (!$payedToId && !$payedToName) continue;
+            if (! $payedToId && ! $payedToName) {
+                continue;
+            }
 
-            $key = $payedToId ?: ('name:' . $payedToName);
-            if (!isset($expensesByDoctor[$key])) {
+            $key = $payedToId ?: ('name:'.$payedToName);
+            if (! isset($expensesByDoctor[$key])) {
                 $expensesByDoctor[$key] = [
                     'doctor_name' => $payedToName ?? 'Unknown',
                     'doctor_id' => $payedToId,
@@ -328,7 +330,7 @@ class GenericReportPdfController extends Controller
             'receivablePayments' => $receivablePayments,
             'expenseVouchers' => $expenseVouchers,
             'generated_at' => now(),
-        ], 'service-order-' . $order->so_short);
+        ], 'service-order-'.$order->so_short);
     }
 
     private function renderPdf(string $view, array $data, string $filename): Response
@@ -340,7 +342,7 @@ class GenericReportPdfController extends Controller
 
             return response($pdf->output(), 200, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => 'inline; filename="' . $filename . '.pdf"',
+                'Content-Disposition' => 'inline; filename="'.$filename.'.pdf"',
                 'Cache-Control' => 'private, max-age=0, must-revalidate',
                 'Pragma' => 'public',
             ]);
@@ -360,6 +362,7 @@ class GenericReportPdfController extends Controller
                 $filters[$key] = $request->input($key);
             }
         }
+
         return $filters;
     }
 }

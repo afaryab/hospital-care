@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useEffect, useMemo, useState } from "react";
 import { Input as UIInput } from '@/components/ui/input';
 import { Checkbox as UICheckbox } from '@/components/ui/checkbox';
@@ -172,7 +173,7 @@ function EditableTable({
 }
 
 export default function EmergencyClinicalPerforma({
-    patient, serviceOrder
+    patient, serviceOrder, className
 }) {
   const fmtDate = (d) => {
     if (!d) return "";

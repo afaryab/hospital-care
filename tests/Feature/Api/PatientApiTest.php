@@ -103,6 +103,7 @@ test('patient update validates required fields', function () {
         ->assertJsonValidationErrors(['contact', 'age']);
 });
 
+
 // ─── CNIC search (bug fix #5) ─────────────────────────────────────────────────
 
 test('patient search filters by cnic prefix', function () {

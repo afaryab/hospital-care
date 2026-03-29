@@ -70,11 +70,13 @@ function filterSelectChildren(
     .map((child) => {
       if (!React.isValidElement(child)) return child
 
+      const childProps = child.props as any
+
       if (child.type === SelectItem) {
         const textValue =
-          child.props.textValue ??
-          (typeof child.props.children === "string"
-            ? child.props.children
+          childProps.textValue ??
+          (typeof childProps.children === "string"
+            ? childProps.children
             : "")
         if (!textValue) return child
         return textValue.toLowerCase().includes(normalizedQuery) ? child : null
@@ -82,7 +84,7 @@ function filterSelectChildren(
 
       if (child.type === SelectGroup) {
         const filteredGroupChildren = filterSelectChildren(
-          child.props.children,
+          childProps.children,
           normalizedQuery
         )
         const hasItems = React.Children.toArray(filteredGroupChildren).some(
@@ -94,7 +96,7 @@ function filterSelectChildren(
         if (!hasItems) return null
         return React.cloneElement(child, {
           children: filteredGroupChildren,
-        })
+        } as any)
       }
 
       return child

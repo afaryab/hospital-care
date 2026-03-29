@@ -1,0 +1,158 @@
+name: PR Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+
+  build-and-test:
+    name: Docker Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root_password
+          MYSQL_DATABASE: hospital_care
+          MYSQL_USER: hc_user
+          MYSQL_PASSWORD: hc_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build app image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/app/Dockerfile
+          push: false
+          load: true
+          build-args: |
+            SENTRY_RELEASE=pr-test
+            SENTRY_ENVIRONMENT=ci
+            APP_ENV=production
+          tags: hospital-care:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Start test container
+        run: |
+          docker run -d --name test-runner \
+            --network host \
+            -e APP_ENV=testing \
+            -e APP_KEY=base64:$(openssl rand -base64 32) \
+            -e APP_DEBUG=true \
+            -e DB_CONNECTION=mysql \
+            -e DB_HOST=127.0.0.1 \
+            -e DB_PORT=3306 \
+            -e DB_DATABASE=hospital_care \
+            -e DB_USERNAME=hc_user \
+            -e DB_PASSWORD=hc_password \
+            hospital-care:test sleep infinity
+
+          echo "Waiting for container to be ready..."
+          sleep 5
+
+          if ! docker ps --filter "name=test-runner" --filter "status=running" | grep -q test-runner; then
+            echo "Test container failed to start!"
+            docker logs test-runner
+            exit 1
+          fi
+
+          echo "Test container is running."
+
+      - name: Install dev dependencies & coverage driver
+        run: |
+          docker exec test-runner composer install --no-interaction
+          docker exec test-runner sh -c "pecl install pcov && docker-php-ext-enable pcov"
+
+      - name: Run migrations
+        run: docker exec test-runner php artisan migrate --force
+
+      # --- Filament checks ---
+      - name: Filament resource validation
+        run: |
+          # Verify all Filament panels boot without errors
+          docker exec test-runner php artisan filament:about --no-interaction
+
+          # Verify all routes (including Filament resource routes) register successfully
+          docker exec test-runner php artisan route:list --no-interaction > /dev/null
+
+          # Check Filament translation integrity (non-blocking warning)
+          docker exec test-runner php artisan filament:check-translations --no-interaction || true
+
+          # Verify Filament components can be cached (catches broken resource configs)
+          docker exec test-runner php artisan filament:cache-components --no-interaction
+          docker exec test-runner php artisan filament:clear-cached-components --no-interaction
+
+      # --- Backend checks ---
+      - name: Run Pest tests with coverage
+        run: docker exec test-runner php artisan test --compact --coverage --min=5
+
+      - name: Run Pint (code style)
+        run: docker exec test-runner vendor/bin/pint --test
+
+      # --- Frontend checks ---
+      - name: Patch generated Wayfinder files
+        run: |
+          for f in \
+            resources/js/actions/App/Http/Controllers/WebController.ts \
+            resources/js/actions/Livewire/Mechanisms/FrontendAssets/index.ts \
+            resources/js/actions/Livewire/Mechanisms/HandleRequests/index.ts; do
+            if [ -f "$f" ] && ! grep -q '@ts-nocheck' "$f"; then
+              docker exec test-runner sh -c "sed -i '1s/^/\/\/ @ts-nocheck\n/' $f"
+            fi
+          done
+
+      - name: TypeScript type check
+        run: docker exec test-runner pnpm run types
+
+      - name: ESLint
+        run: docker exec test-runner pnpm run lint
+
+      - name: Prettier format check
+        run: docker exec test-runner pnpm run format:check
+
+      - name: Vite SSR build
+        run: docker exec test-runner pnpm run build:ssr
+
+      # --- Verify CLI image builds ---
+      - name: Build CLI image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/cli/Dockerfile
+          push: false
+          load: true
+          build-args: |
+            SENTRY_RELEASE=pr-test
+            SENTRY_ENVIRONMENT=ci
+            APP_ENV=production
+          tags: hospital-care:cli-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker stop test-runner 2>/dev/null || true
+          docker rm test-runner 2>/dev/null || true

@@ -65,7 +65,7 @@ export default function ServiceOrdersList() {
                                     </td>
                                 </tr>
                             )}
-                            {serviceOrders?.data.length > 0 && serviceOrders?.data.map((serviceOrder) => {
+                            {serviceOrders?.data.length > 0 && serviceOrders?.data.map((serviceOrder: any) => {
 
                                 let explodedPsid = serviceOrder.so_number.split('/');
 

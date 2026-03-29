@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TransactionElement extends Model
@@ -29,7 +28,7 @@ class TransactionElement extends Model
         'change',
         'edited_amount',
         'refunded_transaction_id',
-        
+
         'service_order_id',
         'created_at',
         'updated_at',
@@ -100,5 +99,4 @@ class TransactionElement extends Model
     {
         return $this->belongsTo(ExpenseVoucher::class, 'exp_voucher_id');
     }
-    
 }

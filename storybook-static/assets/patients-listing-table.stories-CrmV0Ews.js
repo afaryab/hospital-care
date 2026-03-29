@@ -1,0 +1,14 @@
+import{c as h,j as t}from"./utils-q4EKThuO.js";import{B as y}from"./badge-DghL8o_I.js";import{h as f}from"./index-CSrV_1Wb.js";import"./iframe-DOYQQv_f.js";import"./preload-helper-PPVm8Dsz.js";import"./index-BZoqsebz.js";const N=o=>"outline",g=o=>{const e=h.c(10),{patients:c,onSelect:r,emptyMessage:u}=o,x=u===void 0?"No patients found.":u;if(!c.length){let s;return e[0]!==x?(s=t.jsx("p",{className:"py-6 text-center text-sm text-muted-foreground",children:x}),e[0]=x,e[1]=s):s=e[1],s}let l;e[2]===Symbol.for("react.memo_cache_sentinel")?(l=t.jsx("thead",{className:"bg-muted/50 text-xs uppercase text-muted-foreground",children:t.jsxs("tr",{children:[t.jsx("th",{className:"px-4 py-2 text-left",children:"Patient"}),t.jsx("th",{className:"px-4 py-2 text-left",children:"PS Number"}),t.jsx("th",{className:"px-4 py-2 text-left",children:"Age"}),t.jsx("th",{className:"px-4 py-2 text-left",children:"Contact"}),t.jsx("th",{className:"px-4 py-2 text-left",children:"Gender"})]})}),e[2]=l):l=e[2];let n;if(e[3]!==r||e[4]!==c){let s;e[6]!==r?(s=a=>t.jsxs("tr",{className:r?"cursor-pointer hover:bg-accent transition-colors":"",onClick:()=>r?.(a),children:[t.jsx("td",{className:"px-4 py-2 font-medium",children:a.name}),t.jsx("td",{className:"px-4 py-2 font-mono text-xs",children:a.ps_number}),t.jsxs("td",{className:"px-4 py-2",children:[a.age??"-"," yrs"]}),t.jsx("td",{className:"px-4 py-2 font-mono text-xs",children:a.contact||"-"}),t.jsx("td",{className:"px-4 py-2",children:t.jsx(y,{variant:N(a.gender),className:"text-xs",children:a.gender?.toUpperCase()})})]},a.id),e[6]=r,e[7]=s):s=e[7],n=c.map(s),e[3]=r,e[4]=c,e[5]=n}else n=e[5];let i;return e[8]!==n?(i=t.jsx("div",{className:"overflow-x-auto rounded-lg border",children:t.jsxs("table",{className:"w-full text-sm",children:[l,t.jsx("tbody",{className:"divide-y",children:n})]})}),e[8]=n,e[9]=i):i=e[9],i};g.__docgenInfo={description:"",methods:[],displayName:"PatientsListingTable",props:{emptyMessage:{defaultValue:{value:"'No patients found.'",computed:!1},required:!1}}};const E={title:"Elements/Patient/PatientsListingTable",component:g,tags:["autodocs"],parameters:{layout:"fullscreen"}},m={args:{patients:f}},d={args:{patients:f,onSelect:o=>alert(`Selected: ${o.name}`)}},p={args:{patients:[]}};m.parameters={...m.parameters,docs:{...m.parameters?.docs,source:{originalSource:`{
+  args: {
+    patients: mockPatients
+  }
+}`,...m.parameters?.docs?.source}}};d.parameters={...d.parameters,docs:{...d.parameters?.docs,source:{originalSource:`{
+  args: {
+    patients: mockPatients,
+    onSelect: p => alert(\`Selected: \${p.name}\`)
+  }
+}`,...d.parameters?.docs?.source}}};p.parameters={...p.parameters,docs:{...p.parameters?.docs,source:{originalSource:`{
+  args: {
+    patients: []
+  }
+}`,...p.parameters?.docs?.source}}};const k=["Default","WithSelect","Empty"];export{m as Default,p as Empty,d as WithSelect,k as __namedExportsOrder,E as default};

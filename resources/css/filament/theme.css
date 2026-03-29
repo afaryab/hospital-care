@@ -2,3 +2,5 @@
 
 @source '../../../app/Filament/Accounts/**/*';
 @source '../../../resources/views/filament/accounts/**/*';
+@source '../../../vendor/andreia/filament-ui-switcher';
+@source '../../../vendor/bezhansalleh/filament-panel-switch/resources/views/**/*.blade.php';

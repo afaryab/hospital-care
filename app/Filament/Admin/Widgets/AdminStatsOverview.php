@@ -3,7 +3,6 @@
 namespace App\Filament\Admin\Widgets;
 
 use App\Enum\CounterStatus;
-use App\Enum\ExpenseVoucherStatus;
 use App\Helpers\NumberHelper;
 use App\Models\Closing;
 use App\Models\ExpenseVoucher;
@@ -12,11 +11,9 @@ use App\Models\Reception;
 use App\Models\Service;
 use App\Models\ServiceDepartment;
 use App\Models\Transaction;
-use App\Models\UpgradeProcess;
 use App\Models\User;
-use Filament\Widgets\StatsOverviewWidget;
-use Filament\Widgets\StatsOverviewWidget\Card;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
+use Filament\Widgets\StatsOverviewWidget;
 use Illuminate\Database\Eloquent\Builder;
 
 class AdminStatsOverview extends StatsOverviewWidget
@@ -66,10 +63,10 @@ class AdminStatsOverview extends StatsOverviewWidget
             ->get();
 
         return StatsOverviewWidget\Stat::make(
-                label: 'New Users',
-                value: NumberHelper::moneyfy($userThisDuration),
-            )
-            ->description("Total: " . NumberHelper::moneyfy($totalUsers) . " / " . NumberHelper::moneyfy($allowedUsers))
+            label: 'New Users',
+            value: NumberHelper::moneyfy($userThisDuration),
+        )
+            ->description('Total: '.NumberHelper::moneyfy($totalUsers).' / '.NumberHelper::moneyfy($allowedUsers))
             ->chart($userChartThisDuration->pluck('count')->toArray());
     }
 
@@ -93,10 +90,10 @@ class AdminStatsOverview extends StatsOverviewWidget
             ->get();
 
         return StatsOverviewWidget\Stat::make(
-                label: 'New Services',
-                value: NumberHelper::moneyfy($serviceThisDuration),
-            )
-            ->description("Total: " . NumberHelper::moneyfy($totalServices) . " in " . NumberHelper::moneyfy($totalServiceDepartments) . " Departments")
+            label: 'New Services',
+            value: NumberHelper::moneyfy($serviceThisDuration),
+        )
+            ->description('Total: '.NumberHelper::moneyfy($totalServices).' in '.NumberHelper::moneyfy($totalServiceDepartments).' Departments')
             ->chart($serviceChartThisDuration->pluck('count')->toArray());
     }
 
@@ -119,10 +116,10 @@ class AdminStatsOverview extends StatsOverviewWidget
             ->get();
 
         return StatsOverviewWidget\Stat::make(
-                label: 'New Patients',
-                value: NumberHelper::moneyfy($patientThisDuration),
-            )
-            ->description("Total: " . NumberHelper::moneyfy($totalPatients))
+            label: 'New Patients',
+            value: NumberHelper::moneyfy($patientThisDuration),
+        )
+            ->description('Total: '.NumberHelper::moneyfy($totalPatients))
             ->chart($patientChartThisDuration->pluck('count')->toArray());
     }
 
@@ -134,28 +131,27 @@ class AdminStatsOverview extends StatsOverviewWidget
         $totalOpenings = Closing::where('status', CounterStatus::OPEN)->count();
         $receptions = Reception::count();
 
-
         $totalCollectionThisDuration = (
-                Closing::query()
-                    ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-                    ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
-                    ->sum('closing_amount')
-            ) - (
-                Closing::query()
-                    ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-                    ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
-                    ->sum('opening_amount')
-            );
+            Closing::query()
+                ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
+                ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+                ->sum('closing_amount')
+        ) - (
+            Closing::query()
+                ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
+                ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+                ->sum('opening_amount')
+        );
         $totalClosingsThisDuration = Closing::query()
-                    ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-                    ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
-                    ->count();
+            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->count();
         $totalOpeningsThisDuration = Closing::query()
-                    ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-                    ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
-                    ->where('status', CounterStatus::OPEN)
-                    ->count();
-    
+            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->where('status', CounterStatus::OPEN)
+            ->count();
+
         $totalChartThisDuration = Closing::query()
             ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
             ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
@@ -165,10 +161,10 @@ class AdminStatsOverview extends StatsOverviewWidget
             ->get();
 
         return StatsOverviewWidget\Stat::make(
-                label: 'Closings Worth / Open / Total',
-                value: NumberHelper::moneyfy($totalCollectionThisDuration) . " / " . NumberHelper::moneyfy($totalOpeningsThisDuration) . " / " . NumberHelper::moneyfy($totalClosingsThisDuration),
-            )
-            ->description("Total: " . NumberHelper::moneyfy($totalCollection) . " / " . NumberHelper::moneyfy($totalOpenings) . " / " . NumberHelper::moneyfy($totalClosings) . " / " . $receptions)
+            label: 'Closings Worth / Open / Total',
+            value: NumberHelper::moneyfy($totalCollectionThisDuration).' / '.NumberHelper::moneyfy($totalOpeningsThisDuration).' / '.NumberHelper::moneyfy($totalClosingsThisDuration),
+        )
+            ->description('Total: '.NumberHelper::moneyfy($totalCollection).' / '.NumberHelper::moneyfy($totalOpenings).' / '.NumberHelper::moneyfy($totalClosings).' / '.$receptions)
             ->chart($totalChartThisDuration->pluck('count')->toArray());
     }
 
@@ -182,7 +178,7 @@ class AdminStatsOverview extends StatsOverviewWidget
             ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
             ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
             ->sum('amount');
-        
+
         $totalThisDuration = ExpenseVoucher::query()
             ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
             ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
@@ -197,10 +193,10 @@ class AdminStatsOverview extends StatsOverviewWidget
             ->get();
 
         return StatsOverviewWidget\Stat::make(
-                label: 'Exp-Vouchers Issued (Worth)',
-                value: NumberHelper::moneyfy($totalThisDuration) . " (" . NumberHelper::moneyfy($expenseThisDuration) . ")",
-            )
-            ->description("Total: " . NumberHelper::moneyfy($totalExpenses) . " (" . NumberHelper::moneyfy($total) . ")")
+            label: 'Exp-Vouchers Issued (Worth)',
+            value: NumberHelper::moneyfy($totalThisDuration).' ('.NumberHelper::moneyfy($expenseThisDuration).')',
+        )
+            ->description('Total: '.NumberHelper::moneyfy($totalExpenses).' ('.NumberHelper::moneyfy($total).')')
             ->chart($expenseChartThisDuration->pluck('count')->toArray());
     }
 
@@ -211,15 +207,14 @@ class AdminStatsOverview extends StatsOverviewWidget
         $total = Transaction::count();
 
         $totalCollectionThisDuration = Transaction::query()
-                    ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-                    ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
-                    ->sum('amount');
+            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->sum('amount');
         $totalThisDuration = Transaction::query()
-                    ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-                    ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
-                    ->count();
-        
-    
+            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->count();
+
         $totalChartThisDuration = Transaction::query()
             ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
             ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
@@ -229,10 +224,10 @@ class AdminStatsOverview extends StatsOverviewWidget
             ->get();
 
         return StatsOverviewWidget\Stat::make(
-                label: 'Transactions Worth / Total',
-                value: NumberHelper::moneyfy($totalCollectionThisDuration) . " / " . NumberHelper::moneyfy($totalThisDuration),
-            )
-            ->description("Total: " . NumberHelper::moneyfy($totalCollection) . " / " . NumberHelper::moneyfy($total))
+            label: 'Transactions Worth / Total',
+            value: NumberHelper::moneyfy($totalCollectionThisDuration).' / '.NumberHelper::moneyfy($totalThisDuration),
+        )
+            ->description('Total: '.NumberHelper::moneyfy($totalCollection).' / '.NumberHelper::moneyfy($total))
             ->chart($totalChartThisDuration->pluck('count')->toArray());
     }
 }

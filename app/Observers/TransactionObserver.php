@@ -9,9 +9,6 @@ class TransactionObserver
     /**
      * Handle the Transaction "creating" event.
      * This runs before the transaction is saved to the database
-     *
-     * @param  \App\Models\Transaction  $transaction
-     * @return void
      */
     public function creating(Transaction $transaction): void
     {
@@ -40,7 +37,7 @@ class TransactionObserver
     public function updated(Transaction $transaction): void
     {
         // Prevent TR number from being manually changed after creation
-        if ($transaction->isDirty('tr_number') && !empty($transaction->getOriginal('tr_number'))) {
+        if ($transaction->isDirty('tr_number') && ! empty($transaction->getOriginal('tr_number'))) {
             // If TR number was already set and someone is trying to change it, revert it
             $transaction->tr_number = $transaction->getOriginal('tr_number');
         }
@@ -51,7 +48,6 @@ class TransactionObserver
             $transaction->saveQuietly(); // Save without triggering observer again
             $transaction->updateCounter();
         }
-
 
     }
 

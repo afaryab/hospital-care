@@ -4,6 +4,9 @@ namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
+use App\Http\Responses\CaptivePortalLoginResponse;
+use App\Http\Responses\CaptivePortalRegisterResponse;
+use App\Http\Responses\CaptivePortalTwoFactorLoginResponse;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -11,14 +14,11 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Laravel\Fortify\Features;
-use Laravel\Fortify\Fortify;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Laravel\Fortify\Contracts\RegisterResponse as RegisterResponseContract;
 use Laravel\Fortify\Contracts\TwoFactorLoginResponse as TwoFactorLoginResponseContract;
-use App\Http\Responses\CaptivePortalLoginResponse;
-use App\Http\Responses\CaptivePortalRegisterResponse;
-use App\Http\Responses\CaptivePortalTwoFactorLoginResponse;
+use Laravel\Fortify\Features;
+use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -56,7 +56,7 @@ class FortifyServiceProvider extends ServiceProvider
             $identifier = $request->input('email'); // UI uses 'email' field for identifier
             $password = $request->input('password');
 
-            if (!$identifier || !$password) {
+            if (! $identifier || ! $password) {
                 return null;
             }
 
@@ -67,15 +67,15 @@ class FortifyServiceProvider extends ServiceProvider
                 // Normalize mobile: remove non-digits, convert local 0XXXXXXXXX to +92XXXXXXXXX
                 $digits = preg_replace('/\D+/', '', $identifier);
                 $normalized = str_starts_with($digits, '0')
-                    ? '+92' . substr($digits, 1)
-                    : '+' . $digits;
+                    ? '+92'.substr($digits, 1)
+                    : '+'.$digits;
                 $query->where('mobile', $normalized);
             } else {
                 $query->where('username', $identifier);
             }
 
             $user = $query->first();
-            if (!$user) {
+            if (! $user) {
                 return null;
             }
 
@@ -102,9 +102,9 @@ class FortifyServiceProvider extends ServiceProvider
             }
 
             return Inertia::render('auth/login', [
-            'canResetPassword' => Features::enabled(Features::resetPasswords()),
-            'canRegister' => Features::enabled(Features::registration()),
-            'status' => $request->session()->get('status'),
+                'canResetPassword' => Features::enabled(Features::resetPasswords()),
+                'canRegister' => Features::enabled(Features::registration()),
+                'status' => $request->session()->get('status'),
                 'clientMac' => $request->query('clientMac'),
                 'target' => $request->query('target'),
             ]);
@@ -130,6 +130,7 @@ class FortifyServiceProvider extends ServiceProvider
             if ($request->query('target')) {
                 $request->session()->put('captive.target', $request->query('target'));
             }
+
             return Inertia::render('auth/register', [
                 'isFirstSignup' => User::query()->nonSystem()->doesntExist(),
             ]);

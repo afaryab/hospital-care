@@ -3,14 +3,13 @@
 namespace Processton\Abacus\Filament\Resources;
 
 use BackedEnum;
-use Processton\Abacus\Filament\Resources\AbacusYearResource\Pages;
-use Processton\Abacus\Models\AbacusYear;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Processton\Abacus\Filament\Resources\AbacusYearResource\Pages;
+use Processton\Abacus\Models\AbacusYear;
 use UnitEnum;
 
 class AbacusYearResource extends Resource
@@ -24,8 +23,6 @@ class AbacusYearResource extends Resource
     protected static UnitEnum|string|null $navigationGroup = 'Abacus';
 
     protected static ?int $navigationSort = 5;
-
-
 
     public static function form(Schema $form): Schema
     {
@@ -70,7 +67,7 @@ class AbacusYearResource extends Resource
                     ->formatStateUsing(function (AbacusYear $record) {
                         if ($record->status == 1) {
                             return 'Active';
-                        } else if ($record->status == 2) {
+                        } elseif ($record->status == 2) {
                             return 'Archived';
                         } else {
                             return 'Inactive';

@@ -7,6 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 class IndDoctor extends Model
 {
     protected $fillable = [
-        'user_id'
+        'user_id',
     ];
 }

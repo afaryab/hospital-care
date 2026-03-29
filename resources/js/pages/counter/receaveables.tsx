@@ -65,7 +65,7 @@ export default function ReveaveablesList() {
                             </tr>
                         </thead>
                         <tbody>
-                            {receaveables.data.map((r) => {
+                            {receaveables.data.map((r: any) => {
 
                                 let explodedPsid = r.patient.ps_number.split('/');
 

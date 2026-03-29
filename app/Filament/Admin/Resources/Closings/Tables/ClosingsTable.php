@@ -4,19 +4,16 @@ namespace App\Filament\Admin\Resources\Closings\Tables;
 
 use App\Enum\CounterStatus;
 use App\Models\Closing;
-use App\Models\Reception;
-use App\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Grouping\Group;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\Filter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -35,7 +32,7 @@ class ClosingsTable
                         $ctNumber = $record->ct_number ?? 'N/A';
                         $receptionName = $record->reception?->name ?? 'Unknown Reception';
                         $status = $record->status ?? 'Unknown';
-                        
+
                         return "CT: {$ctNumber}<br>Reception: {$receptionName}<br>Status: {$status}";
                     })
                     ->html()
@@ -84,7 +81,7 @@ class ClosingsTable
             })
             ->groups([
                 Group::make('status')
-                    ->label('Status')
+                    ->label('Status'),
             ])
             ->defaultGroup('status')
             ->filters([

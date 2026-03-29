@@ -25,7 +25,7 @@ class CaptivePortalTwoFactorLoginResponse implements TwoFactorLoginResponseContr
     private function handleCaptivePortal(Request $request): void
     {
         $mac = $request->session()->pull('captive.clientMac');
-        if (!$mac) {
+        if (! $mac) {
             return;
         }
 

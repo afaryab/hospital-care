@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Migration;
 use App\Http\Controllers\Controller;
 use App\Models\Closing;
 use App\Models\Dentist;
-use App\Models\EmergencyDoctor;
 use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseVoucher;
@@ -40,32 +39,33 @@ class ImportController extends Controller
         set_time_limit(0);
         ini_set('memory_limit', -1);
 
-        $currentStep = $request->get('step' , 0);
-        
+        $currentStep = $request->get('step', 0);
+
         $this->images();
         $this->users();
         $this->services();
 
-        switch ($currentStep){
+        switch ($currentStep) {
             case 1:
                 return $this->counterClosingTransactions();
                 break;
             case 5:
                 return $this->expenses();
                 break;
-            
+
             default:
-                return Inertia::render('migration/import',[
+                return Inertia::render('migration/import', [
                     'steps' => [
                         4 => 'Counter Closing Transactions',
                         5 => 'Expenses',
-                    ]
+                    ],
                 ]);
                 break;
         }
     }
 
-    protected function expenses(){
+    protected function expenses()
+    {
         DB::connection('secondary')->table('expenses')->orderBy('id')->chunk(100, function ($expenses) {
             foreach ($expenses as $expense) {
 
@@ -80,11 +80,11 @@ class ImportController extends Controller
                     'payed_to' => $expense->payed_to && $expense->payed_to != 0 ? User::where('id', $expense->payed_to)->first()->id ?? null : null,
                     'payed_to_name' => $expense->payment_reference,
                     'amount' => $expense->amount_received_num,
-                    'amount_alphabetical' => $expense->amount_received_words
+                    'amount_alphabetical' => $expense->amount_received_words,
                 ];
 
                 Expense::updateOrCreate([
-                    'old_id' => 'EXP-'.$expense->id
+                    'old_id' => 'EXP-'.$expense->id,
                 ], $new);
             }
         });
@@ -93,7 +93,7 @@ class ImportController extends Controller
             foreach ($expenses as $expense) {
 
                 $new = [
-                    
+
                     'type' => $expense->payment_type,
                     // 'notes' => $expense->payment_reference,
                     // 'notes_json' => [],
@@ -101,26 +101,26 @@ class ImportController extends Controller
                     'payed_to' => $expense->receaved_by && $expense->receaved_by != 0 ? User::where('id', $expense->receaved_by)->first()->id ?? null : null,
                     'payed_to_name' => $expense->payment_refference,
                     'amount' => $expense->amount_received_num,
-                    'amount_alphabetical' => $expense->amount_received_words
+                    'amount_alphabetical' => $expense->amount_received_words,
                 ];
 
                 Expense::updateOrCreate([
-                    'old_id' => 'INP-EXP-'.$expense->id
+                    'old_id' => 'INP-EXP-'.$expense->id,
                 ], $new);
             }
         });
     }
 
-    protected function counterClosingTransactions(){
-
+    protected function counterClosingTransactions()
+    {
 
         $statusObj = UpgradeProcess::firstOrCreate([
-            'name' => 'transaction_id'
-        ] ,[
-            'value' => 0
+            'name' => 'transaction_id',
+        ], [
+            'value' => 0,
         ]);
-        
-        if($statusObj->value == 'finished'){
+
+        if ($statusObj->value == 'finished') {
             return;
         }
 
@@ -131,28 +131,27 @@ class ImportController extends Controller
         $percentAgeCompleted = ($transferedRecords / $availableRecords) * 100;
 
         UpgradeProcess::firstOrCreate([
-            'name' => 'percentage_synced'
-        ] ,[
-            'value' => $percentAgeCompleted
+            'name' => 'percentage_synced',
+        ], [
+            'value' => $percentAgeCompleted,
         ]);
-
 
         $lastProcessedId = $statusObj->value;
         $batchSize = 100;
-        
+
         $transactions = DB::connection('secondary')
             ->table('reception_counters_closings_transactions')
             ->where('id', '>', $lastProcessedId)
             ->orderBy('id')
             ->limit($batchSize)
             ->get();
-        
+
         if ($transactions->isEmpty()) {
             // Reset the session when done
             $statusObj->value = 'finished';
             $statusObj->save();
         }
-        
+
         foreach ($transactions as $transaction) {
 
             $new = [
@@ -169,7 +168,7 @@ class ImportController extends Controller
             ];
 
             $trObject = Transaction::updateOrCreate([
-                'old_id' => $transaction->id
+                'old_id' => $transaction->id,
             ], $new);
 
             $elements = DB::connection('secondary')->table('reception_counters_closings_transaction_elements')->where('id', $transaction->id)->get();
@@ -183,71 +182,67 @@ class ImportController extends Controller
 
                 ];
 
-                if($element->type == 'OPD'){
-                    
-                    
+                if ($element->type == 'OPD') {
+
                     $newElement['income_or_expense'] = 'INCOME';
                     $newElement['doctor_id'] = $element->doctor_id ? $this->getUser($element->doctor_id)->id ?? null : null;
                     $newElement['patient_id'] = $element->patient_id ? $this->getPatient($element->patient_id)->id ?? null : null;
 
                     $serviceObj = $this->getService($element->service_id, 'OPD');
-                    
+
                     $newElement['service_id'] = $serviceObj ? $serviceObj->id : null;
 
                     $newElement['type'] = $serviceObj ? $serviceObj->department->slug : null;
 
-                }else if($element->type == 'INPT'){
-                    
-                    
+                } elseif ($element->type == 'INPT') {
+
                     $newElement['income_or_expense'] = 'INCOME';
                     $newElement['doctor_id'] = $element->doctor_id ? $this->getUser($element->doctor_id)->id ?? null : null;
                     $newElement['patient_id'] = $element->patient_id ? $this->getPatient($element->patient_id)->id ?? null : null;
 
                     $serviceObj = $this->getService($element->service_id, 'IND');
-                    
+
                     $newElement['service_id'] = $serviceObj ? $serviceObj->id : null;
 
                     $newElement['type'] = $serviceObj ? $serviceObj->department->slug : null;
 
-                }else if($element->type == 'EMER'){
-                    
-                    
+                } elseif ($element->type == 'EMER') {
+
                     $newElement['income_or_expense'] = 'INCOME';
                     $newElement['patient_id'] = $element->patient_id ? $this->getPatient($element->patient_id)->id ?? null : null;
 
                     $serviceObj = $this->getService($element->service_id, 'EMG');
-                    
+
                     $newElement['service_id'] = $serviceObj ? $serviceObj->id : null;
 
                     $newElement['type'] = $serviceObj ? $serviceObj->department->slug : null;
 
-                }else if($element->type == 'DENTAL'){
-                    
+                } elseif ($element->type == 'DENTAL') {
+
                     $newElement['income_or_expense'] = 'INCOME';
                     $newElement['doctor_id'] = $element->doctor_id ? $this->getUser($element->doctor_id)->id ?? null : null;
                     $newElement['patient_id'] = $trObject->patient_id ? $this->getPatient($trObject->patient_id)->id ?? null : null;
 
                     $serviceObj = $this->getService($element->service_id, 'DNT');
-                    
+
                     $newElement['service_id'] = $serviceObj ? $serviceObj->id : null;
 
                     $newElement['type'] = $serviceObj ? $serviceObj->department->slug : null;
 
-                }else if($element->type == 'ULTRA'){
-                    
-                    
+                } elseif ($element->type == 'ULTRA') {
+
                     $newElement['income_or_expense'] = 'INCOME';
                     $newElement['doctor_id'] = $element->doctor_id ? $this->getUser($element->doctor_id)->id ?? null : null;
                     $newElement['patient_id'] = $trObject->patient_id ? $this->getPatient($trObject->patient_id)->id ?? null : null;
 
                     $serviceObj = $this->getService($element->service_id, 'ULT');
-                    
+
                     $newElement['service_id'] = $serviceObj ? $serviceObj->id : null;
 
                     $newElement['type'] = $serviceObj ? $serviceObj->department->slug : null;
-                    
-                }else if($element->type == 'RECES'){
-                    
+
+                } elseif ($element->type == 'RECES') {
+
                     $newElement['type'] = 'RECES';
                     $newElement['income_or_expense'] = 'INCOME';
                     $newElement['patient_id'] = $trObject->patient_id ? $this->getPatient($trObject->patient_id)->id ?? null : null;
@@ -255,10 +250,10 @@ class ImportController extends Controller
                     $s = DB::connection('secondary')->table('recestation_services')->where('id', $element->service_id)->first();
 
                     $serviceObj = ServiceRecestation::where('name', $s->name)->first();
-                    
+
                     $newElement['service_recestation_id'] = $serviceObj ? $serviceObj->id : null;
-                }else if($element->type == 'EXP'){
-                    
+                } elseif ($element->type == 'EXP') {
+
                     $newElement['type'] = 'EXP';
                     $newElement['income_or_expense'] = 'EXPENSE';
 
@@ -266,9 +261,8 @@ class ImportController extends Controller
 
                     $newElement['expense_id'] = $expenseObj ? $expenseObj->id : null;
 
+                } elseif ($element->type == 'VOUCHER-PAY') {
 
-                }else if($element->type == 'VOUCHER-PAY'){
-                    
                     $newElement['type'] = 'VOUCHER-PAY';
                     $newElement['income_or_expense'] = 'EXPENSE';
 
@@ -280,8 +274,8 @@ class ImportController extends Controller
 
                     $newElement['exp_voucher_id'] = $voucherObj ? $voucherObj->id : null;
 
-                }else if($element->type == 'INPT-EXP'){
-                    
+                } elseif ($element->type == 'INPT-EXP') {
+
                     $newElement['type'] = 'INPT-EXP';
                     $newElement['income_or_expense'] = 'EXPENSE';
                     $newElement['patient_id'] = $trObject->patient_id ? Patient::where('id', $trObject->patient_id)->first()->id ?? null : null;
@@ -293,12 +287,12 @@ class ImportController extends Controller
                     $voucherObj = ExpenseVoucher::where('id', $expenseObj->voucher_id)->first();
 
                     $newElement['exp_voucher_id'] = $voucherObj ? $voucherObj->id : null;
-                }else{
+                } else {
 
                     dd('Unknown Type '.$element->type);
                 }
                 $transObjModel = TransactionElement::updateOrCreate([
-                    'old_id' => $element->id
+                    'old_id' => $element->id,
                 ], $newElement);
             }
             $statusObj->value = $transaction->id;
@@ -306,21 +300,20 @@ class ImportController extends Controller
         }
     }
 
+    protected function getExpenseObject($id)
+    {
 
-
-    protected function getExpenseObject($id){
-
-        if(!$id || $id == 0){
+        if (! $id || $id == 0) {
             return null;
         }
         $expenseObj = Expense::where('old_id', $id)->first();
 
-        if($expenseObj){
+        if ($expenseObj) {
             return $expenseObj;
         }
 
-        if(str_starts_with($id, 'INP-EXP-')){
-            $expense = DB::connection('secondary')->table('expenses')->find((str_replace('INP-EXP-' , '' , $id)));
+        if (str_starts_with($id, 'INP-EXP-')) {
+            $expense = DB::connection('secondary')->table('expenses')->find((str_replace('INP-EXP-', '', $id)));
             $new = [
                 'old_id' => $expense->id,
                 'voucher_id' => $expense->voucher_id,
@@ -332,15 +325,14 @@ class ImportController extends Controller
                 'payed_to' => $expense->payed_to && $expense->payed_to != 0 ? User::where('id', $expense->payed_to)->first()->id ?? null : null,
                 'payed_to_name' => $expense->payment_reference,
                 'amount' => $expense->amount_received_num,
-                'amount_alphabetical' => $expense->amount_received_words
+                'amount_alphabetical' => $expense->amount_received_words,
             ];
 
             $expenseObj = Expense::updateOrCreate([
-                'old_id' => 'EXP-'.$expense->id
+                'old_id' => 'EXP-'.$expense->id,
             ], $new);
-        }
-        else if(str_starts_with($id, 'EXP-')){
-            $expense = DB::connection('secondary')->table('inpatient_expense_transactions')->find((str_replace('EXP-' , '' , $id)));
+        } elseif (str_starts_with($id, 'EXP-')) {
+            $expense = DB::connection('secondary')->table('inpatient_expense_transactions')->find((str_replace('EXP-', '', $id)));
             $new = [
                 'type' => $expense->payment_type,
                 // 'notes' => $expense->payment_reference,
@@ -349,11 +341,11 @@ class ImportController extends Controller
                 'payed_to' => $expense->receaved_by && $expense->receaved_by != 0 ? User::where('id', $expense->receaved_by)->first()->id ?? null : null,
                 'payed_to_name' => $expense->payment_refference,
                 'amount' => $expense->amount_in_num,
-                'amount_alphabetical' => $expense->amount_in_figure
+                'amount_alphabetical' => $expense->amount_in_figure,
             ];
 
             $expenseObj = Expense::updateOrCreate([
-                'old_id' => 'INP-EXP-'.$expense->id
+                'old_id' => 'INP-EXP-'.$expense->id,
             ], $new);
         }
 
@@ -361,15 +353,16 @@ class ImportController extends Controller
 
     }
 
-    protected function getCounter($int){
+    protected function getCounter($int)
+    {
 
-        if(!$int || $int == 0){
+        if (! $int || $int == 0) {
             return null;
         }
 
         $closingObj = Closing::where('id', $int)->first();
 
-        if($closingObj){
+        if ($closingObj) {
             return $closingObj;
         }
 
@@ -380,7 +373,7 @@ class ImportController extends Controller
             ->whereMonth('created_at', Carbon::parse($closing->created_on)->month)
             ->count();
 
-        $ctNumber = 'CT/' . Carbon::parse($closing->created_on)->format('Y/m/') . str_pad($countInMonth + 1, 4, '0', STR_PAD_LEFT);
+        $ctNumber = 'CT/'.Carbon::parse($closing->created_on)->format('Y/m/').str_pad($countInMonth + 1, 4, '0', STR_PAD_LEFT);
 
         $new = [
             'reception_id' => $this->getReception($closing->reception_id)->id ?? null,
@@ -398,22 +391,23 @@ class ImportController extends Controller
             'updated_at' => $closing->modified_on,
         ];
         $closingObj = Closing::updateOrCreate([
-            'old_id' => $closing->id
+            'old_id' => $closing->id,
         ], $new);
 
         return $closingObj;
 
     }
 
-    protected function getReception($int){
+    protected function getReception($int)
+    {
 
-        if(!$int || $int == 0){
+        if (! $int || $int == 0) {
             return null;
         }
 
         $receptionObj = Reception::where('id', $int)->first();
 
-        if($receptionObj){
+        if ($receptionObj) {
             return $receptionObj;
         }
 
@@ -426,9 +420,9 @@ class ImportController extends Controller
             'DNT',
             'PTH',
             'ULT',
-            'XRY'
+            'XRY',
         ];
-        
+
         $newReception = [
             'name' => $reception->counter_name,
             'allowed_departments' => $allowedDepartments,
@@ -440,20 +434,21 @@ class ImportController extends Controller
         ];
 
         $receptionObj = Reception::updateOrCreate([
-            'id' => $reception->id
+            'id' => $reception->id,
         ], $newReception);
 
         return $receptionObj;
     }
 
-    protected function getUser($int){
+    protected function getUser($int)
+    {
 
-        if(!$int || $int == 0){
+        if (! $int || $int == 0) {
             return null;
         }
         $userObj = User::where('id', $int)->first();
 
-        if($userObj){
+        if ($userObj) {
             return $userObj;
         }
 
@@ -487,10 +482,10 @@ class ImportController extends Controller
             $user->is_emergency_doctor => $userObj->emergencyDoctorProfiles(),
             $user->is_dentist => $userObj->dentistProfiles(),
             $user->is_ultrasound_doc => $userObj->ultrasoundDoctorProfiles(),
-            $user->is_xray_tech => $userObj->xrayTechnicianProfiles()
+            $user->is_xray_tech => $userObj->xrayTechnicianProfiles(),
         ];
 
-        foreach($profiles as $condition => $profile) {
+        foreach ($profiles as $condition => $profile) {
             if ($condition) {
                 $profile->updateOrCreate([
                     'user_id' => $userObj->id,
@@ -503,15 +498,16 @@ class ImportController extends Controller
 
     }
 
-    protected function getPatient($int){
+    protected function getPatient($int)
+    {
 
-        if(!$int || $int == 0){
+        if (! $int || $int == 0) {
             return null;
         }
 
         $patientObj = Patient::where('id', $int)->first();
 
-        if($patientObj){
+        if ($patientObj) {
             return $patientObj;
         }
 
@@ -524,9 +520,9 @@ class ImportController extends Controller
             ->whereMonth('created_at', $createdInTheMonth->format('m'))
             ->count();
 
-        $counter ++;
+        $counter++;
 
-        $psNumber = 'PS/' . $createdInTheMonth->format('Y/m') .'/'. str_pad($counter, 6, '0', STR_PAD_LEFT);;
+        $psNumber = 'PS/'.$createdInTheMonth->format('Y/m').'/'.str_pad($counter, 6, '0', STR_PAD_LEFT);
 
         $newPatient = [
             'name' => $patient->pateint_name,
@@ -545,71 +541,71 @@ class ImportController extends Controller
         ];
 
         $patientObj = Patient::updateOrCreate([
-            'id' => $patient->id
+            'id' => $patient->id,
         ], $newPatient);
 
         return $patientObj;
     }
 
-    protected function getService($int, $type){
+    protected function getService($int, $type)
+    {
 
-        if(!$int || $int == 0){
+        if (! $int || $int == 0) {
             return null;
         }
 
-        if($type == 'OPD'){
+        if ($type == 'OPD') {
             $table = 'opd_services';
-        }elseif($type == 'IND'){
+        } elseif ($type == 'IND') {
             $table = 'inpd_services';
-        }elseif($type == 'EMG'){
+        } elseif ($type == 'EMG') {
             $table = 'emergency_services';
-        }elseif($type == 'DNT'){
+        } elseif ($type == 'DNT') {
             $table = 'dental_services';
-        }elseif($type == 'PTH'){
+        } elseif ($type == 'PTH') {
             $table = 'test_services';
-        }elseif($type == 'ULT'){
+        } elseif ($type == 'ULT') {
             $table = 'ultrasound_services';
-        }elseif($type == 'XRY'){
+        } elseif ($type == 'XRY') {
             $table = 'xray_services';
-        }else{
+        } else {
             dd('Unknown Service Type '.$type);
         }
 
         $s = DB::connection('secondary')->table($table)->where('id', $int)->first();
 
-        if(!$s){
+        if (! $s) {
             dd('Service Not Found ID '.$int.' in '.$table.' for type '.$type);
         }
 
         $department = ServiceDepartment::where('slug', $type)->first();
 
-        if(!$department){
+        if (! $department) {
             ServiceDepartment::updateOrCreate([
-                'slug' => $type
-            ],[
+                'slug' => $type,
+            ], [
                 'name' => $type,
-                'image' => "/img/".Str::lower($type).".png",
+                'image' => '/img/'.Str::lower($type).'.png',
             ]);
         }
 
         $serviceObj = Service::with('department')->where('name', $s->name)->where('service_department_id', $department->id)->first();
 
-        if(!$serviceObj){
-
+        if (! $serviceObj) {
 
             $serviceObj = Service::updateOrCreate([
                 'name' => $s->name,
                 'service_department_id' => $department->id,
-            ],[
+            ], [
                 'slug' => $s->post_key,
                 'charges' => $s->charges,
                 'charges_include_tax' => $s->charges_including_tax,
                 'tax_rate' => $s->tax_rate,
                 'have_service_provider' => in_array(
                     $department->key, ['OPD', 'IND']
-                ) &&  $s->is_doctor_selectable,
+                ) && $s->is_doctor_selectable,
                 'is_composit_service' => $department->have_composit_services,
-                'created_by' => $s->entered_by
+                'created_by' => $s->entered_by,
             ]);
 
         }
@@ -617,70 +613,71 @@ class ImportController extends Controller
         return $serviceObj;
     }
 
-    public function services(){
+    public function services()
+    {
 
-        foreach([
+        foreach ([
             [
                 'key' => 'OPD',
-                'name' => "Outdoor",
-                'image' => "/img/opd.png",
+                'name' => 'Outdoor',
+                'image' => '/img/opd.png',
                 'table' => 'opd_services',
             ],
 
             [
                 'key' => 'IND',
-                'name' => "Indoor",
-                'image' => "/img/ind.png",
+                'name' => 'Indoor',
+                'image' => '/img/ind.png',
                 'table' => 'inpd_services',
-                'recesitation_table' => 'recestation_services'
+                'recesitation_table' => 'recestation_services',
             ],
 
             [
                 'key' => 'EMG',
-                'name' => "Emergency",
-                'image' => "/img/emergency.png",
+                'name' => 'Emergency',
+                'image' => '/img/emergency.png',
                 'table' => 'emergency_services',
             ],
 
             [
                 'key' => 'DNT',
-                'name' => "Dental Department",
-                'image' => "/img/dental.png",
+                'name' => 'Dental Department',
+                'image' => '/img/dental.png',
                 'table' => 'dental_services',
             ],
 
             [
                 'key' => 'PTH',
-                'name' => "Laboratory",
-                'image' => "/img/laboratory.png",
+                'name' => 'Laboratory',
+                'image' => '/img/laboratory.png',
                 'table' => 'test_services',
             ],
 
             [
                 'key' => 'ULT',
-                'name' => "Ultrasound",
-                'image' => "/img/ultrasound.png",
+                'name' => 'Ultrasound',
+                'image' => '/img/ultrasound.png',
                 'table' => 'ultrasound_services',
             ],
 
             [
                 'key' => 'XRY',
-                'name' => "Radiology",
-                'image' => "/img/xray.png",
+                'name' => 'Radiology',
+                'image' => '/img/xray.png',
                 'table' => 'xray_services',
-            ]
-        ] as $row){
+            ],
+        ] as $row) {
             $department = ServiceDepartment::updateOrCreate([
-                'slug' => $row['key']
-            ],[
+                'slug' => $row['key'],
+            ], [
                 'name' => $row['name'],
                 'image' => $row['image'],
-                'have_composit_services' => $row['key'] === 'IND'
+                'have_composit_services' => $row['key'] === 'IND',
             ]);
 
             DB::connection('secondary')->table($row['table'])->orderBy('id')->chunk(100, function ($services) use ($department) {
 
-                foreach($services as $service){
+                foreach ($services as $service) {
                     $newService = [
                         'name' => $service->name,
                         'slug' => $service->post_key,
@@ -690,26 +687,26 @@ class ImportController extends Controller
                         'tax_rate' => $service->tax_rate,
                         'have_service_provider' => in_array(
                             $department->key, ['OPD', 'IND']
-                        ) &&  $service->is_doctor_selectable,
+                        ) && $service->is_doctor_selectable,
                         'is_composit_service' => $department->have_composit_services,
-                        'created_by' => $service->entered_by
+                        'created_by' => $service->entered_by,
                     ];
 
-                    if($service->is_doctor_selectable && $department->key == 'OPD'){
+                    if ($service->is_doctor_selectable && $department->key == 'OPD') {
                         $newService['service_provider_types'] = [
-                            OpdDoctor::class
+                            OpdDoctor::class,
                         ];
                     }
 
-                    if($service->is_doctor_selectable && $department->key == 'IND'){
+                    if ($service->is_doctor_selectable && $department->key == 'IND') {
                         $newService['service_provider_types'] = [
-                            IndDoctor::class
+                            IndDoctor::class,
                         ];
                     }
 
-                    if($service->is_doctor_selectable && $department->key == 'DNT'){
+                    if ($service->is_doctor_selectable && $department->key == 'DNT') {
                         $newService['service_provider_types'] = [
-                            Dentist::class
+                            Dentist::class,
                         ];
                     }
 
@@ -720,15 +717,13 @@ class ImportController extends Controller
 
                 }
 
-                
             });
 
-            if(array_key_exists('recesitation_table', $row)){
+            if (array_key_exists('recesitation_table', $row)) {
 
                 DB::connection('secondary')->table($row['recesitation_table'])->orderBy('id')->chunk(100, function ($services) use ($department) {
 
-                    foreach($services as $service){
-
+                    foreach ($services as $service) {
 
                         $newService = [
                             'name' => $service->name,
@@ -737,7 +732,7 @@ class ImportController extends Controller
                             'charges' => $service->charges,
                             'charges_include_tax' => $service->charges_including_tax,
                             'tax_rate' => $service->tax_rate,
-                            'created_by' => $service->entered_by
+                            'created_by' => $service->entered_by,
                         ];
 
                         ServiceRecestation::updateOrCreate([
@@ -752,7 +747,7 @@ class ImportController extends Controller
         }
 
     }
-    
+
     protected function users()
     {
         DB::connection('secondary')->table('aauth_users')->orderBy('id')->chunk(100, function ($users) {
@@ -785,10 +780,10 @@ class ImportController extends Controller
                     $user->is_emergency_doctor => $userModel->emergencyDoctorProfiles(),
                     $user->is_dentist => $userModel->dentistProfiles(),
                     $user->is_ultrasound_doc => $userModel->ultrasoundDoctorProfiles(),
-                    $user->is_xray_tech => $userModel->xrayTechnicianProfiles()
+                    $user->is_xray_tech => $userModel->xrayTechnicianProfiles(),
                 ];
 
-                foreach($profiles as $condition => $profile) {
+                foreach ($profiles as $condition => $profile) {
                     if ($condition) {
                         $profile->updateOrCreate([
                             'user_id' => $userModel->id,
@@ -802,12 +797,13 @@ class ImportController extends Controller
         });
     }
 
-    protected function images(){
+    protected function images()
+    {
         DB::connection('secondary')->table('images')->orderBy('id')->chunk(100, function ($images) {
             foreach ($images as $image) {
                 $newImage = [
                     'path' => $image['path'],
-                    'owner_id' => $image['owner_id']
+                    'owner_id' => $image['owner_id'],
                 ];
                 Image::updateOrCreate($newImage);
             }

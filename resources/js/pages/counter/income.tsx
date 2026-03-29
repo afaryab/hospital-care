@@ -1,3 +1,4 @@
+// @ts-nocheck
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';

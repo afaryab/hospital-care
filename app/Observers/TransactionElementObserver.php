@@ -3,8 +3,8 @@
 namespace App\Observers;
 
 use App\Models\Service;
-use App\Models\TransactionElement;
 use App\Models\ServiceOrder;
+use App\Models\TransactionElement;
 use Carbon\Carbon;
 
 class TransactionElementObserver
@@ -14,12 +14,12 @@ class TransactionElementObserver
      */
     public function created(TransactionElement $transactionElement): void
     {
-        if($transactionElement->service_id){
+        if ($transactionElement->service_id) {
             // Generate unique SO number
             $service = Service::find($transactionElement->service_id);
             $patient = $transactionElement->patient;
 
-            if($patient == null || $service == null){
+            if ($patient == null || $service == null) {
                 return;
             }
 
@@ -27,14 +27,14 @@ class TransactionElementObserver
             $ss = ServiceOrder::generateShortServiceOrderNumber($transactionElement->type);
 
             $soShort = $service->department->slug.'/'.str_pad($ss, 8, '0', STR_PAD_LEFT);
-            $soNumber = $patient->ps_number . '/' . $service->department->slug.'/'.str_pad($s, 8, '0', STR_PAD_LEFT);
+            $soNumber = $patient->ps_number.'/'.$service->department->slug.'/'.str_pad($s, 8, '0', STR_PAD_LEFT);
 
             $token = Carbon::now()->format('Ym').str_pad($s, 6, '0', STR_PAD_LEFT);
             $payee = null;
             // Order payee set to patient
-            if($transactionElement->transaction->type == 'PANEL'){
+            if ($transactionElement->transaction->type == 'PANEL') {
                 $payee = $transactionElement->transaction->panel;
-            }else{
+            } else {
                 $payee = $transactionElement->transaction->patient;
             }
 
@@ -53,7 +53,7 @@ class TransactionElementObserver
                 'notes' => "Auto-generated service order for transaction element #{$transactionElement->id}",
                 'notes_json' => [],
                 'payee_type' => get_class($payee),
-                'payee_id' => $payee->id
+                'payee_id' => $payee->id,
             ]);
 
             $transactionElement->service_order_id = $order->id;
@@ -68,14 +68,14 @@ class TransactionElementObserver
     {
         // Optionally update the corresponding ServiceOrder
         $serviceOrder = ServiceOrder::where('id', $transactionElement->service_order_id)->first();
-        
+
         if ($serviceOrder) {
             $serviceOrder->update([
                 'patient_id' => $transactionElement->patient_id,
                 'service_id' => $transactionElement->service_id,
                 'service_recestation_id' => $transactionElement->service_recestation_id,
                 'doctor_id' => $transactionElement->doctor_id,
-                'notes_json' => []
+                'notes_json' => [],
             ]);
         }
     }
@@ -87,16 +87,16 @@ class TransactionElementObserver
     {
         // Optionally delete or mark the corresponding ServiceOrder as cancelled
         $serviceOrder = ServiceOrder::where('id', $transactionElement->service_order_id)->first();
-        
+
         if ($serviceOrder) {
             // You can choose to either delete the service order or mark it as cancelled
             // Option 1: Delete the service order
             // $serviceOrder->delete();
-            
+
             // Option 2: Mark as cancelled (requires adding a status field to service_orders table)
             $serviceOrder->update([
-                'notes' => ($serviceOrder->notes ?? '') . " - CANCELLED: Transaction element deleted",
-                'notes_json' => []
+                'notes' => ($serviceOrder->notes ?? '').' - CANCELLED: Transaction element deleted',
+                'notes_json' => [],
             ]);
         }
     }

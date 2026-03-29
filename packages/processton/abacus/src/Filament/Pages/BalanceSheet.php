@@ -2,16 +2,16 @@
 
 namespace Processton\Abacus\Filament\Pages;
 
-use Processton\Abacus\Models\AbacusTransaction;
-use Processton\Abacus\Models\AbacusChartOfAccount;
-use Processton\Abacus\Models\AbacusYear;
-use Filament\Pages\Page;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Forms;
-use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Collection;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Processton\Abacus\Models\AbacusChartOfAccount;
+use Processton\Abacus\Models\AbacusTransaction;
+use Processton\Abacus\Models\AbacusYear;
 use Symfony\Component\HttpFoundation\Response;
 use UnitEnum;
 
@@ -22,16 +22,21 @@ class BalanceSheet extends Page implements HasForms
     // protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
 
     protected string $view = 'abacus::balance-sheet';
+
     protected static ?string $title = 'Balance Sheet';
 
     protected static UnitEnum|string|null $navigationGroup = 'Reporting';
+
     protected static ?int $navigationSort = 13;
 
     public ?int $yearId = null;
+
     public ?float $netProfit = null;
 
     public Collection $assets;
+
     public Collection $liabilities;
+
     public Collection $equity;
 
     public function mount(): void
@@ -56,7 +61,7 @@ class BalanceSheet extends Page implements HasForms
                     ->options(
                         AbacusYear::orderByDesc('start_date')->get()->map(
                             fn (AbacusYear $year) => [
-                                'label' => $year->start_date->format('Y') . ' - ' . $year->end_date->format('Y'),
+                                'label' => $year->start_date->format('Y').' - '.$year->end_date->format('Y'),
                                 'value' => $year->id,
                             ]
                         )->pluck('label', 'value')
@@ -86,7 +91,7 @@ class BalanceSheet extends Page implements HasForms
     {
         $incomeAccounts = AbacusChartOfAccount::where('base_type', 'income')->whereNotNull('parent_id')->get();
         $expenseAccounts = AbacusChartOfAccount::where('base_type', 'expense')->whereNotNull('parent_id')->get();
-        
+
         $incomeRows = $incomeAccounts->map(function ($account) {
             $query = AbacusTransaction::where('abacus_chart_of_account_id', $account->id);
 
@@ -95,7 +100,7 @@ class BalanceSheet extends Page implements HasForms
             }
 
             $credit = (clone $query)->where('entry_type', 'credit')->sum('amount');
-            $debit  = (clone $query)->where('entry_type', 'debit')->sum('amount');
+            $debit = (clone $query)->where('entry_type', 'debit')->sum('amount');
 
             $amount = $credit - $debit;
 
@@ -104,10 +109,9 @@ class BalanceSheet extends Page implements HasForms
                 'code' => $account->code,
                 'amount' => $amount > 0 ? $amount : 0, // show only positive income
             ];
-        })->filter(fn($row) => $row['amount'] > 0);
+        })->filter(fn ($row) => $row['amount'] > 0);
 
         // dd($this->incomeRows);
-
 
         $expenseRows = $expenseAccounts->map(function ($account) {
             $query = AbacusTransaction::where('abacus_chart_of_account_id', $account->id);
@@ -126,7 +130,7 @@ class BalanceSheet extends Page implements HasForms
                 'code' => $account->code,
                 'amount' => $amount > 0 ? $amount : 0, // avoid showing negative expenses
             ];
-        })->filter(fn($row) => $row['amount'] > 0);
+        })->filter(fn ($row) => $row['amount'] > 0);
 
         $totalIncome = $incomeRows->sum('amount');
         $totalExpense = $expenseRows->sum('amount');
@@ -134,14 +138,16 @@ class BalanceSheet extends Page implements HasForms
         return $totalIncome - $totalExpense;
     }
 
-    public function getChildrenIds($accountIds){
+    public function getChildrenIds($accountIds)
+    {
         $accounts = AbacusChartOfAccount::whereIn('id', $accountIds)->get();
         foreach ($accounts as $account) {
             $accountIds[] = $account->id;
-            if($account->children->count() > 0) {
+            if ($account->children->count() > 0) {
                 $accountIds = [...$accountIds, ...$this->getChildrenIds($account->children->pluck('id')->toArray())];
             }
         }
+
         return $accountIds;
     }
 
@@ -186,20 +192,20 @@ class BalanceSheet extends Page implements HasForms
     {
         // Get year information
         $year = $this->yearId ? AbacusYear::find($this->yearId) : null;
-        
+
         // Calculate totals
         $totalAssets = $this->assets->sum(function ($group) {
             return $group['children']->sum('amount');
         });
-        
+
         $totalLiabilities = $this->liabilities->sum(function ($group) {
             return $group['children']->sum('amount');
         });
-        
+
         $totalEquity = $this->equity->sum(function ($group) {
             return $group['children']->sum('amount');
         });
-        
+
         $data = [
             'assets' => $this->assets,
             'liabilities' => $this->liabilities,
@@ -212,20 +218,21 @@ class BalanceSheet extends Page implements HasForms
         ];
 
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->getDomPDF()->set_option("enable_php", true);
+        $pdf->getDomPDF()->set_option('enable_php', true);
         $pdf->loadView('abacus::balance-sheet-pdf', $data);
-        
-        $filename = 'balance-sheet-' . now()->format('Y-m-d') . '.pdf';
-        
+
+        $filename = 'balance-sheet-'.now()->format('Y-m-d').'.pdf';
+
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
         }, $filename, ['Content-Type' => 'application/pdf']);
     }
-// 
+
+    //
     public function streamPdf(): Response
     {
         $this->yearId = request()->input('yearId', $this->yearId);
-        
+
         // Get year information
         $year = $this->yearId ? AbacusYear::find($this->yearId) : null;
 
@@ -235,20 +242,20 @@ class BalanceSheet extends Page implements HasForms
         if ($this->assets->isEmpty() && $this->liabilities->isEmpty() && $this->equity->isEmpty()) {
             $this->generateReport();
         }
-        
+
         // Calculate totals
         $totalAssets = $this->assets->sum(function ($group) {
             return $group['children']->sum('amount');
         });
-        
+
         $totalLiabilities = $this->liabilities->sum(function ($group) {
             return $group['children']->sum('amount');
         });
-        
+
         $totalEquity = $this->equity->sum(function ($group) {
             return $group['children']->sum('amount');
         });
-        
+
         $data = [
             'assets' => $this->assets,
             'liabilities' => $this->liabilities,
@@ -263,12 +270,12 @@ class BalanceSheet extends Page implements HasForms
         // return view('abacus::balance-sheet-pdf', $data);
 
         $pdf = \App::make('dompdf.wrapper');
-        $pdf->getDomPDF()->set_option("enable_php", true);
+        $pdf->getDomPDF()->set_option('enable_php', true);
         $pdf->loadView('abacus::balance-sheet-pdf', $data)->setWarnings(true);
-        
+
         return response($pdf->output(), 200, [
             'Content-Type' => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="balance-sheet-' . now()->format('Y-m-d') . '.pdf"'
+            'Content-Disposition' => 'inline; filename="balance-sheet-'.now()->format('Y-m-d').'.pdf"',
         ]);
     }
 }

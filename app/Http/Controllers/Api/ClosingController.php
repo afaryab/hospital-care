@@ -20,11 +20,11 @@ class ClosingController extends Controller
             ->select(['id', 'ct_number', 'status', 'created_at'])
             ->latest('id');
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where('ct_number', 'like', "%{$search}%");
         }

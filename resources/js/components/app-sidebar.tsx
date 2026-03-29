@@ -11,7 +11,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { appointments, counter, counterListAll, receaveables, expenses, home, hospitalDentalQueue, hospitalEmergencyQueue, hospitalIndoorQueue, hospitalLaboratoryQueue, hospitalOpdQueue, hospitalRadiologyQueue, hospitalUltrasoundQueue, myCounterList, patientsRegister, register, transactionSearch, transactionEdit, transactionEditSearch, counterExpenseVouchersList } from '@/routes';
-import { type NavItem } from '@/types';
+import { type NavItem, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
 import { BookOpen, Folder, LucideHome, BookAIcon, LucideShoppingBasket, Calendar1, LucideWaypoints, ListTree, ChartLine, Cog, ListPlus, LucideListPlus, LucideBlinds } from 'lucide-react';
 import AppLogo from './app-logo';
@@ -19,11 +19,11 @@ import AppLogoIcon from './app-logo-icon';
 
 export function AppSidebar() {
 
-    const page = usePage();
+    const page = usePage<SharedData>();
 
     const { props } = page;
 
-    const { auth, routeName } = props;
+    const { auth, routeName } = props as any;
 
     const { user } = auth;
 

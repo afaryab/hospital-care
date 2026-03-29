@@ -25,6 +25,7 @@ class CaptivePortalService
     public function getEndpoint(): ?string
     {
         $endpoint = config('services.captive_portal.endpoint');
+
         return $endpoint ?: null;
     }
 
@@ -36,18 +37,19 @@ class CaptivePortalService
     /**
      * Authorize a client device with the captive portal.
      *
-     * @param string $mac MAC address of the client (e.g., AA:BB:CC:DD:EE:FF)
-     * @param int|null $duration seconds to authorize; defaults to configured duration
+     * @param  string  $mac  MAC address of the client (e.g., AA:BB:CC:DD:EE:FF)
+     * @param  int|null  $duration  seconds to authorize; defaults to configured duration
      */
     public function authorizeClient(string $mac, ?int $duration = null): void
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return;
         }
 
         $endpoint = $this->getEndpoint();
-        if (!$endpoint) {
+        if (! $endpoint) {
             Log::warning('Captive portal endpoint missing; skipping authorization.');
+
             return;
         }
 

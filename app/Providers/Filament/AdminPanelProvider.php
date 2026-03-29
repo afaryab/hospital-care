@@ -2,11 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use Andreia\FilamentUiSwitcher\FilamentUiSwitcherPlugin;
 use App\Filament\Admin\Widgets\AdminStatsOverview;
 use App\Filament\Admin\Widgets\MigrationStatsOverview;
 use App\Filament\Pages\Dashboard;
-use App\Filament\Resources\Users\UserResource;
-use App\Http\Middleware\AdminPanelAccess;
 use App\Services\Filament\FilamentThemeService;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -14,7 +13,6 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
@@ -31,14 +29,13 @@ class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
 
-
         $widgets = [
             AdminStatsOverview::class,
             // AccountWidget::class,
             // FilamentInfoWidget::class,
         ];
 
-        if(env('ENABLE_OLD_SYNC', false) !== false) {
+        if (env('ENABLE_OLD_SYNC', false) !== false) {
             $widgets[] = MigrationStatsOverview::class;
         }
 
@@ -52,8 +49,6 @@ class AdminPanelProvider extends PanelProvider
             ->authGuard('web')
             ->authPasswordBroker('users')
             ->viteTheme('resources/css/filament/theme.css')
-            ->colors(FilamentThemeService::getBrandColors())
-            ->font('Inter')
             ->discoverResources(in: app_path('Filament/Admin/Resources'), for: 'App\\Filament\\Admin\\Resources')
             ->discoverPages(in: app_path('Filament/Admin/Pages'), for: 'App\\Filament\\Admin\\Pages')
             // ->pages([
@@ -77,14 +72,17 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->plugins([
+                FilamentUiSwitcherPlugin::make()->withModeSwitcher(),
             ]);
     }
 
     public function boot(): void
     {
-        FilamentView::registerRenderHook(
-            PanelsRenderHook::HEAD_END,
-            fn (): string => FilamentThemeService::getCustomStyles()
-        );
+        // FilamentView::registerRenderHook(
+        //     PanelsRenderHook::HEAD_END,
+        //     fn (): string => FilamentThemeService::getCustomStyles()
+        // );
     }
 }

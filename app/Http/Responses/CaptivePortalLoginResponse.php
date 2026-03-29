@@ -27,7 +27,7 @@ class CaptivePortalLoginResponse implements LoginResponseContract
     {
         $mac = $request->session()->pull('captive.clientMac');
 
-        if (!$mac) {
+        if (! $mac) {
             return;
         }
 

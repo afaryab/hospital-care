@@ -2,9 +2,9 @@
 
 namespace Processton\Abacus\Filament\Resources\AbacusChartOfAccountResource\Pages;
 
-use Processton\Abacus\Filament\Resources\AbacusChartOfAccountResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use Processton\Abacus\Filament\Resources\AbacusChartOfAccountResource;
 
 class ListAbacusChartOfAccounts extends ListRecords
 {

@@ -7,6 +7,90 @@
 
 ---
 
+## Epic 0 — Foundation & Developer Experience
+
+> Infrastructure groundwork, tooling setup, and frontend component system that must be in place before feature development accelerates.
+
+### US-0.1 · Consolidated Migration Setup ✅ **High**
+**As a** developer, **I want** all database tables defined in a single ordered migration file (`0_setup`), **so that** fresh installs run one migration and the schema is always consistent.
+- **Acceptance Criteria:**
+  - Single `0_setup` migration creates all tables in dependency order.
+  - Running `php artisan migrate:fresh` on a clean database succeeds without errors.
+  - All subsequent migrations are incremental diffs on top of this baseline.
+
+### US-0.2 · Filament Check CI & GitHub PR Workflow 🔲 **High**
+**As a** developer, **I want** `laraveldaily/filament-check` integrated and a GitHub Actions workflow that runs it on every pull request, **so that** broken Filament resources are caught before merging.
+- **Acceptance Criteria:**
+  - `laraveldaily/filament-check` installed and configured.
+  - GitHub Actions PR workflow runs `php artisan filament:check` and fails the pipeline on errors.
+  - Workflow badge visible in README.
+
+### US-0.3 · Republish Filament View Resources 🔲 **Medium**
+**As a** developer, **I want** all published Filament views reset to their package defaults, **so that** any unintentional UI overrides are cleared and views stay in sync with Filament v4.
+- **Acceptance Criteria:**
+  - Run `php artisan vendor:publish --tag=filament-views --force` to overwrite stale views.
+  - Audit `resources/views/vendor/filament/` and remove files that are identical to upstream defaults.
+  - Confirm admin and accounts panels render without visual regressions.
+
+### US-0.4 · Filament UI Switcher Integration 🔲 **Low**
+**As a** developer, **I want** `andreia/filament-ui-switcher` configured in both Filament panels, **so that** users can switch between Filament UI themes from within the admin interface.
+- **Acceptance Criteria:**
+  - Package installed and plugin registered in `AdminPanelProvider` and `AccountsPanelProvider`.
+  - UI switcher control visible in panel navigation.
+  - Selected UI preference persists across page loads.
+
+### US-0.5 · Filament Panel Switch Integration 🔲 **Low**
+**As a** developer, **I want** `bezhansalleh/filament-panel-switch` configured, **so that** admin users can switch between the Admin and Accounts panels without navigating manually.
+- **Acceptance Criteria:**
+  - Package installed and plugin registered in both panel providers.
+  - Panel switcher widget visible in the panel topbar or sidebar.
+  - Only panels the authenticated user has access to are shown.
+
+### US-0.6 . Write Tests Improve Front end and backend Coverage 🔲 **Low**
+**As a** developer, **I want** test coverage at front end and backend is above than 40 % and update pr-test worflow to ensure 40% coverage.
+
+### US-0.7 · Tailwind CSS Class Audit & Update 🔲 **Medium**
+**As a** developer, **I want** all frontend templates and React components audited and updated to use current Tailwind CSS v4 utility classes, **so that** the UI is consistent and no deprecated or removed classes are used.
+- **Acceptance Criteria:**
+  - Search for deprecated Tailwind v3 class patterns and replace with v4 equivalents.
+  - Run `npm run build` with zero Tailwind warnings about unknown classes.
+  - Visual regression check on key pages: dashboard, patient register, counter view, transaction form.
+
+### US-0.8 · TypeScript Element Components per Domain Model 🔲 **High**
+**As a** developer, **I want** a standardised set of TypeScript/React element components created for each core domain model, **so that** UI is consistent, reusable, and decoupled from page-level logic.
+- **Acceptance Criteria:**
+  - Components created under `resources/js/elements/{domain}/` for each model listed below.
+  - Each component is typed with an interface matching the model's API shape.
+  - Components accept only their required props — no internal API calls.
+
+  | Domain | Required Elements |
+  |--------|------------------|
+  | **Patient** | `PatientSelectInput`, `PatientCard`, `PatientDetailedCard`, `PatientsListingTable`, `PatientTableElement`, `PatientAdvancedSearch`, `PatientListItem` |
+  | **Transaction** | `TransactionSelectInput`, `TransactionCard`, `TransactionDetailedCard`, `TransactionsListingTable`, `TransactionTableElement`, `TransactionListItem` |
+  | **Voucher** | `VoucherSelectInput`, `VoucherCard`, `VoucherDetailedCard`, `VouchersListingTable`, `VoucherTableElement`, `VoucherListItem` |
+  | **Service Order** | `ServiceOrderSelectInput`, `ServiceOrderCard`, `ServiceOrderDetailedCard`, `ServiceOrdersListingTable`, `ServiceOrderTableElement`, `ServiceOrderListItem` |
+  | **Closing** | `ClosingSelectInput`, `ClosingCard`, `ClosingDetailedCard`, `ClosingsListingTable`, `ClosingTableElement`, `ClosingListItem` |
+  | **Receivable** | `ReceivableCard`, `ReceivableDetailedCard`, `ReceivablesListingTable`, `ReceivableTableElement`, `ReceivableListItem` |
+
+### US-0.9 · Storybook Setup 🔲 **Medium**
+**As a** developer, **I want** Storybook configured for the React/TypeScript frontend, **so that** UI components can be developed and reviewed in isolation without running the full Laravel application.
+- **Acceptance Criteria:**
+  - `@storybook/react-vite` installed and `storybook` CLI available.
+  - `npm run storybook` launches Storybook at `localhost:6006`.
+  - Tailwind CSS v4 styles applied inside Storybook stories.
+  - A smoke-test story (`Button.stories.tsx`) renders correctly.
+  - `npm run build-storybook` produces a static output in `storybook-static/`.
+
+### US-0.10 · Register All Elements in Storybook 🔲 **Medium**
+**As a** developer, **I want** every element component from US-0.8 registered in Storybook with at least one story each, **so that** the component library is browsable and testable in isolation.
+- **Acceptance Criteria:**
+  - Each element component has a `*.stories.tsx` file alongside it.
+  - Each story provides at least one `Default` variant with realistic mock data.
+  - `npm run storybook` shows all elements grouped by domain in the sidebar.
+  - `npm run build-storybook` completes without TypeScript or build errors.
+
+---
+
 ## Epic 1 — Authentication & Account Security
 
 ### US-1.1 · Login ✅ **High**
@@ -1018,10 +1102,49 @@
 
 ---
 
+## BackLog
+
+> Unrefined stories and ideas not yet assigned to an epic. Items here are candidates for future sprints and require elaboration before implementation.
+
+### BL-1 · Multi-Language / Urdu Interface Support 🔲 **Low**
+**As a** hospital administrator, **I want** the frontend to support Urdu (RTL) alongside English, **so that** non-English-speaking staff can use the system comfortably.
+- **Notes:** Requires RTL Tailwind config, Laravel translation files, and Inertia locale switching.
+
+### BL-2 · Telemedicine / Video Consultation Module 🔲 **Low**
+**As a** doctor, **I want** to conduct video consultations with patients directly from the system, **so that** remote patients can receive care without visiting the hospital.
+- **Notes:** Requires WebRTC integration or third-party provider (e.g., Agora, Twilio). Consent and HIPAA implications must be reviewed first.
+
+### BL-3 · Patient Appointment Booking 🔲 **Medium**
+**As a** receptionist, **I want** to book future appointments for patients with specific doctors, **so that** patient flow is managed in advance and doctors' schedules are visible.
+- **Notes:** Needs calendar UI, availability configuration per doctor, and SMS/email appointment reminders.
+
+### BL-4 · SMS Notification Gateway 🔲 **Medium**
+**As a** system, **I want** to send SMS notifications to patients for appointment reminders, follow-ups, and billing confirmations, **so that** patient engagement is improved without requiring app installation.
+- **Notes:** Integrate with a Pakistani SMS gateway (e.g., Jazz, Telenor, Zong API).
+
+### BL-5 · Laboratory Information System (LIS) Integration 🔲 **Low**
+**As a** lab technician, **I want** test results to be imported directly from the laboratory equipment or LIS, **so that** manual data entry is eliminated and result accuracy improves.
+- **Notes:** Requires HL7 ORU message parsing or LIS vendor API.
+
+### BL-6 · Pharmacy Dispensing Module 🔲 **Medium**
+**As a** pharmacist, **I want** to dispense medicines directly against a doctor's prescription from within the system, **so that** dispensing is tracked, stock is deducted, and patient safety is enforced.
+- **Notes:** Depends on Epic 19 (Stock Tracking) and Epic 18 (Prescription Recording) being complete.
+
+### BL-7 · Government PHC Reporting API 🔲 **Low**
+**As a** hospital administrator, **I want** the system to automatically submit required monthly reports to the Punjab Healthcare Commission portal, **so that** compliance reporting is automated and submission errors are minimised.
+- **Notes:** Awaiting PHC API specification. Track PHC developer portal for updates.
+
+### BL-8 · OPD Patient Portal (Mobile App) 🔲 **Low**
+**As a** patient, **I want** a mobile application where I can view my treatment history, upcoming appointments, prescriptions, and outstanding bills, **so that** I can manage my healthcare from my phone.
+- **Notes:** React Native or Flutter app consuming the planned FHIR-ready API (US-15.8). Deferred until API layer is stable.
+
+---
+
 ## Summary
 
 | Epic | Stories | High | Medium | Low |
 |------|---------|------|--------|-----|
+| 0 — Foundation & Developer Experience | 9 | 3 | 4 | 2 |
 | 1 — Authentication | 7 | 3 | 3 | 1 |
 | 2 — User & Role Mgmt | 6 | 2 | 3 | 1 |
 | 3 — Patient Registration | 3 | 2 | 1 | 0 |
@@ -1044,4 +1167,5 @@
 | 20 — Asset Tracking | 6 | 1 | 3 | 2 |
 | 21 — User Tasking | 6 | 3 | 2 | 1 |
 | 22 — User Payroll | 6 | 3 | 3 | 0 |
-| **Total** | **137** | **64** | **57** | **11** |
+| BackLog | 8 | 0 | 3 | 5 |
+| **Total** | **154** | **67** | **63** | **18** |

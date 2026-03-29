@@ -31,23 +31,23 @@ class ExpenseVoucherController extends Controller
             ->with(['expCategory', 'serviceOrder', 'payedTo'])
             ->latest('id');
 
-        if (!empty($filters['vc_number'])) {
+        if (! empty($filters['vc_number'])) {
             $query->where('vc_number', 'like', "%{$filters['vc_number']}%");
         }
 
-        if (!empty($filters['exp_category_id'])) {
+        if (! empty($filters['exp_category_id'])) {
             $query->where('exp_category_id', $filters['exp_category_id']);
         }
 
-        if (!empty($filters['service_order_id'])) {
+        if (! empty($filters['service_order_id'])) {
             $query->where('service_order_id', $filters['service_order_id']);
         }
 
-        if (!empty($filters['payed_to'])) {
+        if (! empty($filters['payed_to'])) {
             $query->where('payed_to', $filters['payed_to']);
         }
 
-        if (!empty($filters['payed_to_name'])) {
+        if (! empty($filters['payed_to_name'])) {
             $query->where('payed_to_name', 'like', "%{$filters['payed_to_name']}%");
         }
 
@@ -59,17 +59,17 @@ class ExpenseVoucherController extends Controller
             $query->where('amount', '<=', $filters['amount_max']);
         }
 
-        if (!empty($filters['created_from'])) {
+        if (! empty($filters['created_from'])) {
             $query->whereDate('created_at', '>=', $filters['created_from']);
         }
 
-        if (!empty($filters['created_to'])) {
+        if (! empty($filters['created_to'])) {
             $query->whereDate('created_at', '<=', $filters['created_to']);
         }
 
         $exact = collect();
 
-        if (!empty($filters['vc_number'])) {
+        if (! empty($filters['vc_number'])) {
             $exact = ExpenseVoucher::query()
                 ->with(['expCategory', 'serviceOrder', 'payedTo'])
                 ->where('vc_number', $filters['vc_number'])
