@@ -104,9 +104,13 @@ jobs:
           docker exec test-runner php artisan filament:cache-components --no-interaction
           docker exec test-runner php artisan filament:clear-cached-components --no-interaction
 
+      # --- Filament static analysis ---
+      - name: Filacheck (Filament deprecated pattern scanner)
+        run: docker exec test-runner vendor/bin/filacheck
+
       # --- Backend checks ---
       - name: Run Pest tests with coverage
-        run: docker exec test-runner php artisan test --compact --coverage --min=5
+        run: docker exec test-runner php artisan test --compact --coverage --min=9
 
       - name: Run Pint (code style)
         run: docker exec test-runner vendor/bin/pint --test

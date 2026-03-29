@@ -97,7 +97,7 @@ class ReceptionResource extends Resource
                         ->label('Merge Receptions')
                         ->icon('heroicon-m-arrows-pointing-in')
                         ->color('warning')
-                        ->form([
+                        ->schema([
                             Select::make('primary_reception_id')
                                 ->label('Keep This Reception (Primary)')
                                 ->options(function ($livewire) {

@@ -9,6 +9,7 @@ use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard\Actions\FilterAction;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersAction;
+use Filament\Schemas\Components\Utilities\Set;
 
 class Dashboard extends BaseDashboard
 {
@@ -59,7 +60,7 @@ class Dashboard extends BaseDashboard
                         ])
                         ->default('last_7_days')
                         ->live()
-                        ->afterStateUpdated(function ($state, callable $set) {
+                        ->afterStateUpdated(function ($state, Set $set) {
                             $dates = $this->calculateDateRange($state);
                             $set('startDate', $dates['start']);
                             $set('endDate', $dates['end']);

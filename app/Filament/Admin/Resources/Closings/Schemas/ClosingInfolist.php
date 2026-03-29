@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\Closings\Schemas;
 use App\Models\Closing;
 use Filament\Infolists\Components\ViewEntry;
 use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 
 class ClosingInfolist
@@ -15,7 +16,7 @@ class ClosingInfolist
             ->components([
                 Tabs::make('Tabs')
                     ->tabs([
-                        Tabs\Tab::make('Summery')
+                        Tab::make('Summery')
                             ->schema([
                                 ViewEntry::make('closing_overview')
                                     ->label(false)
@@ -27,7 +28,7 @@ class ClosingInfolist
                                     ])
                                     ->columnSpanFull(),
                             ]),
-                        Tabs\Tab::make('Detailed Summery')
+                        Tab::make('Detailed Summery')
                             ->schema([
                                 ViewEntry::make('closing_overview')
                                     ->label(false)
@@ -39,7 +40,7 @@ class ClosingInfolist
                                     ])
                                     ->columnSpanFull(),
                             ]),
-                        Tabs\Tab::make('Services Report')
+                        Tab::make('Services Report')
                             ->schema([
                                 ViewEntry::make('services_report')
                                     ->label(false)
@@ -51,7 +52,7 @@ class ClosingInfolist
                                     ])
                                     ->columnSpanFull(),
                             ]),
-                        Tabs\Tab::make('Income Report')
+                        Tab::make('Income Report')
                             ->schema([
                                 ViewEntry::make('income_report')
                                     ->label(false)
@@ -63,7 +64,7 @@ class ClosingInfolist
                                     ])
                                     ->columnSpanFull(),
                             ]),
-                        Tabs\Tab::make('Expense Report')
+                        Tab::make('Expense Report')
                             ->schema([
                                 ViewEntry::make('expense_report')
                                     ->label(false)
@@ -75,7 +76,7 @@ class ClosingInfolist
                                     ])
                                     ->columnSpanFull(),
                             ]),
-                        Tabs\Tab::make('Receivables Report')
+                        Tab::make('Receivables Report')
                             ->schema([
                                 ViewEntry::make('receivables_report')
                                     ->label(false)

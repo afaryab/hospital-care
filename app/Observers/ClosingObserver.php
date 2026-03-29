@@ -29,16 +29,23 @@ class ClosingObserver
     }
 
     /**
+     * Handle the Closing "updating" event.
+     * Runs before the SQL update — allows us to revert the ct_number change.
+     */
+    public function updating(Closing $closing): void
+    {
+        // Prevent CT number from being manually changed after creation
+        if ($closing->isDirty('ct_number') && ! empty($closing->getOriginal('ct_number'))) {
+            $closing->ct_number = $closing->getOriginal('ct_number');
+        }
+    }
+
+    /**
      * Handle the Closing "updated" event.
      */
     public function updated(Closing $closing): void
     {
-        // Prevent CT number from being manually changed after creation
-        if ($closing->isDirty('ct_number') && ! empty($closing->getOriginal('ct_number'))) {
-            // If CT number was already set and someone is trying to change it, revert it
-            $closing->ct_number = $closing->getOriginal('ct_number');
-        }
-
+        //
     }
 
     /**

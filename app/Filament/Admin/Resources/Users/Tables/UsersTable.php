@@ -18,7 +18,7 @@ class UsersTable
                 ImageColumn::make('profile_img_path')
                     ->label('Avatar')
                     ->circular()
-                    ->size(50)
+                    ->imageSize(50)
                     ->defaultImageUrl('data:image/svg+xml;base64,'.base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50"><circle fill="#e5e7eb" cx="25" cy="25" r="25"/><text x="25" y="30" text-anchor="middle" fill="white" font-size="16" font-family="Arial, sans-serif">👤</text></svg>'))
                     ->toggleable(),
 
@@ -116,9 +116,9 @@ class UsersTable
                 Actions\EditAction::make()
                     ->color('warning'),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Actions\BulkActionGroup::make([
-                    Actions\Action::make('activate_users')
+                    Actions\BulkAction::make('activate_users')
                         ->label('Activate Selected')
                         ->icon('heroicon-o-lock-open')
                         ->color('success')
@@ -129,7 +129,7 @@ class UsersTable
                         ->action(fn ($records) => $records->each(fn ($record) => $record->update(['is_active' => true])))
                         ->successNotificationTitle('Selected users have been activated'),
 
-                    Actions\Action::make('block_users')
+                    Actions\BulkAction::make('block_users')
                         ->label('Block Selected')
                         ->icon('heroicon-o-lock-closed')
                         ->color('danger')

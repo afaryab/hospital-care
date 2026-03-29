@@ -117,7 +117,7 @@ class ClosingsTable
                     ->icon('heroicon-m-banknotes')
                     ->color('success')
                     ->visible(fn (Closing $record) => $record->status === 'CLOSED')
-                    ->form([
+                    ->schema([
                         TextInput::make('amount_received')
                             ->label('Amount Received')
                             ->numeric()

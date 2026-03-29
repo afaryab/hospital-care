@@ -29,16 +29,22 @@ class ExpenseVoucherObserver
     }
 
     /**
+     * Handle the ExpenseVoucher "updating" event.
+     * Runs before the SQL update — allows us to revert the vc_number change.
+     */
+    public function updating(ExpenseVoucher $expenseVoucher): void
+    {
+        // Prevent VC number from being manually changed after creation
+        if ($expenseVoucher->isDirty('vc_number') && ! empty($expenseVoucher->getOriginal('vc_number'))) {
+            $expenseVoucher->vc_number = $expenseVoucher->getOriginal('vc_number');
+        }
+    }
+
+    /**
      * Handle the ExpenseVoucher "updated" event.
      */
     public function updated(ExpenseVoucher $expenseVoucher): void
     {
-        // Prevent TR number from being manually changed after creation
-        if ($expenseVoucher->isDirty('vc_number') && ! empty($expenseVoucher->getOriginal('vc_number'))) {
-            // If TR number was already set and someone is trying to change it, revert it
-            $expenseVoucher->vc_number = $expenseVoucher->getOriginal('vc_number');
-        }
-
         // If amount is changed, store orinal amount in edited_amount field
         if ($expenseVoucher->isDirty('amount')) {
             $expenseVoucher->edited_amount = $expenseVoucher->getOriginal('amount');

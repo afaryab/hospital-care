@@ -21,6 +21,7 @@ class ExpenseVoucher extends Model
         'payed_to',
         'payed_to_name',
         'amount',
+        'edited_amount',
         'notes',
         'transaction_id',
         'transaction_element_id',

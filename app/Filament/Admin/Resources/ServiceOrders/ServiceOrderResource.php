@@ -97,7 +97,7 @@ class ServiceOrderResource extends Resource
             ])
             ->filters([
                 Filter::make('date_range')
-                    ->form([
+                    ->schema([
                         DatePicker::make('from')->default(now()->startOfMonth()),
                         DatePicker::make('until')->default(now()),
                     ])
