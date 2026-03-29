@@ -74,7 +74,7 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             ->plugins([
-                FilamentUiSwitcherPlugin::make()->withModeSwitcher(),
+                // FilamentUiSwitcherPlugin::make()->withModeSwitcher(),
             ]);
     }
 

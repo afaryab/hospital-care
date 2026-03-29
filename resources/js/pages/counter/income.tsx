@@ -32,7 +32,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { clsx } from 'clsx';
 import { LoaderCircle } from 'lucide-react';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 const CreatePatientPolicy = lazy(
     () => import('@/policy/create-patient-policy'),
@@ -895,101 +895,117 @@ function SelectDepartment({ openCounter, patient, departments }: any) {
     );
 }
 
+import AlertError from '@/components/alert-error';
+import { useForm } from '@inertiajs/react';
+
 function SelectPatient({ openCounter }: any) {
     const [patients, setPatients] = useState([]);
     const [exactMatch, setExactMatch] = useState([]);
 
+    // Inertia form for patient creation
+    const {
+        data,
+        setData,
+        post,
+        processing,
+        errors,
+        reset,
+        clearErrors,
+        wasSuccessful,
+    } = useForm({
+        cnic: '',
+        name: '',
+        contact: '',
+        age: '',
+        gender: '',
+    });
+
+    // For MR/CNIC search
     const [psInput, setPsInput] = useState<string>('');
-
-    const psNumberIsChanged = (val: string, unmasked: string) => {
-        console.log(val, unmasked);
-        setPsInput(val);
-    };
-
     const [patientCnic, setPatientCnic] = useState<string>('');
 
+    // Error state for sticky notification (for search errors)
+    const [apiError, setApiError] = useState<string | string[] | null>(null);
+
+    const psNumberIsChanged = (val: string, unmasked: string) => {
+        setPsInput(val);
+    };
     const patientCnicIsChanged = (val: string, unmasked: string) => {
-        console.log(val, unmasked);
         setPatientCnic(val);
     };
 
-    const [patientName, setPatientName] = useState<string>('');
-    const [patientContact, setPatientContact] = useState<string>('');
-    const [patientAge, setPatientAge] = useState<string>('');
-    const [patientGender, setPatientGender] = useState<string>('');
-
+    // Debounce patient search API calls
+    const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
     useEffect(() => {
-        fetchPatientsFromApi();
-    }, [
-        psInput,
-        patientCnic,
-        patientName,
-        patientContact,
-        patientAge,
-        patientGender,
-    ]);
+        if (debounceTimeout.current) {
+            clearTimeout(debounceTimeout.current);
+        }
+        debounceTimeout.current = setTimeout(() => {
+            fetchPatientsFromApi();
+            setApiError(null);
+            clearErrors();
+        }, 400); // 400ms debounce
+        return () => {
+            if (debounceTimeout.current) {
+                clearTimeout(debounceTimeout.current);
+            }
+        };
+    }, [psInput, patientCnic, data.name, data.contact, data.age, data.gender]);
 
     const fetchPatientsFromApi = async () => {
         try {
+            // Always get CSRF cookie before POST (Sanctum requirement)
+            await fetch('/sanctum/csrf-cookie', { credentials: 'include' });
             const response = await fetch('/api/patients', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                 },
                 body: JSON.stringify({
                     mr_number: psInput,
                     cnic_number: patientCnic,
-                    patient_name: patientName,
-                    patient_contact: patientContact,
-                    patient_age: patientAge,
-                    patient_gender: patientGender,
+                    patient_name: data.name,
+                    patient_contact: data.contact,
+                    patient_age: data.age,
+                    patient_gender: data.gender,
                 }),
+                credentials: 'include',
             });
-
             if (response.ok) {
-                const data = await response.json();
-                setPatients(data.data.possible);
-                setExactMatch(data.data.exact);
+                const res = await response.json();
+                setPatients(res.data.possible);
+                setExactMatch(res.data.exact);
+            } else {
+                let errorMsg = 'Failed to fetch patients.';
+                try {
+                    const err = await response.json();
+                    errorMsg = err.message || JSON.stringify(err.errors || err);
+                } catch {}
+                setApiError(errorMsg);
             }
-        } catch (error) {
-            console.error('Error fetching patients:', error);
+        } catch (error: any) {
+            setApiError(error?.message || 'Network error fetching patients.');
         }
     };
 
-    const createPatientInApi = async () => {
-        try {
-            const response = await fetch(apiPatientsStore().url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    cnic: patientCnic,
-                    name: patientName,
-                    contact: patientContact,
-                    age: patientAge,
-                    gender: patientGender,
-                }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                // Handle the response data as needed
-                console.log('Patient created successfully:', data);
-                window.location.href = counterSelectDepartment({
-                    pYear: data.data.year,
-                    pMonth: data.data.month,
-                    number: data.data.number,
-                }).url;
-            }
-        } catch (error) {
-            console.error('Error creating patient:', error);
-        }
+    // Patient creation via Inertia
+    const handleCreatePatient = () => {
+        post(apiPatientsStore().url, {
+            preserveScroll: true,
+            onSuccess: (page) => {
+                // Redirect to department selection
+                const d = page.props?.data || page.data;
+                if (d && d.data) {
+                    window.location.href = counterSelectDepartment({
+                        pYear: d.data.year,
+                        pMonth: d.data.month,
+                        number: d.data.number,
+                    }).url;
+                }
+            },
+        });
     };
-
-    useEffect(() => {
-        console.log(patients);
-    }, [patients]);
 
     return (
         <div className="grid h-full w-full grid-cols-2 divide-x divide-[#06df72]">
@@ -998,6 +1014,14 @@ function SelectPatient({ openCounter }: any) {
                     <h3 className="mb-2 text-3xl font-bold">
                         Select / Create Patient
                     </h3>
+                    {/* Sticky error notification for search errors */}
+                    {apiError && (
+                        <AlertError errors={[Array.isArray(apiError) ? apiError.join(' ') : apiError]} className="mb-2 sticky top-0 z-50" />
+                    )}
+                    {/* Sticky error notification for form errors */}
+                    {Object.keys(errors).length > 0 && (
+                        <AlertError errors={Object.values(errors).flat()} className="mb-2 sticky top-0 z-50" />
+                    )}
                     <div className="grid gap-2">
                         <Label htmlFor="mr_number">MR Number</Label>
                         <MaskInput
@@ -1015,7 +1039,6 @@ function SelectPatient({ openCounter }: any) {
                                 psNumberIsChanged(masked, unmasked)
                             }
                         />
-                        {/* <InputError message={errors.email} /> */}
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="cnic_number">CNIC Number</Label>
@@ -1034,7 +1057,6 @@ function SelectPatient({ openCounter }: any) {
                                 patientCnicIsChanged(masked, unmasked)
                             }
                         />
-                        {/* <InputError message={errors.email} /> */}
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="patient_name" required={true}>
@@ -1049,10 +1071,9 @@ function SelectPatient({ openCounter }: any) {
                             tabIndex={3}
                             autoComplete="false"
                             placeholder="Patient name"
-                            value={patientName}
-                            onChange={(e) => setPatientName(e.target.value)}
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
                         />
-                        {/* <InputError message={errors.email} /> */}
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="patient_contact" required={true}>
@@ -1066,16 +1087,13 @@ function SelectPatient({ openCounter }: any) {
                             autoFocus
                             tabIndex={3}
                             autoComplete="false"
-                            value={
-                                patientContact === '' ? '+92-' : patientContact
-                            }
+                            value={data.contact === '' ? '+92-' : data.contact}
                             mask="+99-999-9999999"
                             placeholder="+92-000-0000000"
                             onValueChange={({ masked, unmasked }) =>
-                                setPatientContact(masked)
+                                setData('contact', masked)
                             }
                         />
-                        {/* <InputError message={errors.email} /> */}
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="patient_age" required={true}>
@@ -1090,8 +1108,8 @@ function SelectPatient({ openCounter }: any) {
                             tabIndex={3}
                             autoComplete="false"
                             placeholder="Patient age"
-                            value={patientAge}
-                            onChange={(e) => setPatientAge(e.target.value)}
+                            value={data.age}
+                            onChange={(e) => setData('age', e.target.value)}
                         />
                     </div>
                     <div className="grid gap-2">
@@ -1110,10 +1128,8 @@ function SelectPatient({ openCounter }: any) {
                                     autoComplete="false"
                                     value={'m'}
                                     className="mr-2"
-                                    checked={patientGender === 'm'}
-                                    onChange={(e) =>
-                                        setPatientGender(e.target.value)
-                                    }
+                                    checked={data.gender === 'm'}
+                                    onChange={(e) => setData('gender', e.target.value)}
                                 />
                                 Male
                             </Label>
@@ -1128,10 +1144,8 @@ function SelectPatient({ openCounter }: any) {
                                     autoComplete="false"
                                     value={'f'}
                                     className="mr-2"
-                                    checked={patientGender === 'f'}
-                                    onChange={(e) =>
-                                        setPatientGender(e.target.value)
-                                    }
+                                    checked={data.gender === 'f'}
+                                    onChange={(e) => setData('gender', e.target.value)}
                                 />
                                 Female
                             </Label>
@@ -1146,22 +1160,15 @@ function SelectPatient({ openCounter }: any) {
                                     autoComplete="false"
                                     value={'t'}
                                     className="mr-2"
-                                    checked={patientGender === 't'}
-                                    onChange={(e) =>
-                                        setPatientGender(e.target.value)
-                                    }
+                                    checked={data.gender === 't'}
+                                    onChange={(e) => setData('gender', e.target.value)}
                                 />
                                 Transgender
                             </Label>
                         </div>
-                        {/* <InputError message={errors.email} /> */}
                     </div>
                     <Suspense
-                        fallback={
-                            <div className="text-xs text-gray-400">
-                                Loading policy…
-                            </div>
-                        }
+                        fallback={<div className="text-xs text-gray-400">Loading policy…</div>}
                     >
                         <CreatePatientPolicy className="text-xs text-gray-500" />
                     </Suspense>
@@ -1172,14 +1179,13 @@ function SelectPatient({ openCounter }: any) {
                     {exactMatch.length > 0 && (
                         <>
                             <h3>Exact Match found</h3>
-
                             {exactMatch.map((p) => (
                                 <PatientMiniCard
                                     patient={p}
-                                    tempAge={patientAge}
-                                    tempGender={patientGender}
-                                    tempContact={patientContact}
-                                    tempCnic={patientCnic}
+                                    tempAge={data.age}
+                                    tempGender={data.gender}
+                                    tempContact={data.contact}
+                                    tempCnic={data.cnic}
                                     className="w-full"
                                     link={
                                         counterSelectDepartment({
@@ -1192,18 +1198,16 @@ function SelectPatient({ openCounter }: any) {
                             ))}
                         </>
                     )}
-
                     {patients.length > 0 && (
                         <>
                             <h3>Possible Matches</h3>
-
                             {patients.map((p, i) => (
                                 <PatientMiniCard
                                     patient={p}
-                                    tempAge={patientAge}
-                                    tempGender={patientGender}
-                                    tempContact={patientContact}
-                                    tempCnic={patientCnic}
+                                    tempAge={data.age}
+                                    tempGender={data.gender}
+                                    tempContact={data.contact}
+                                    tempCnic={data.cnic}
                                     className="w-full"
                                     link={
                                         counterSelectDepartment({
@@ -1216,32 +1220,26 @@ function SelectPatient({ openCounter }: any) {
                             ))}
                         </>
                     )}
-
-                    {patientName &&
-                        patientContact &&
-                        patientAge &&
-                        patientGender && (
-                            <div className="flex cursor-default flex-col space-y-4 rounded-xl bg-[#1c398e] p-2 hover:bg-[#06df72] dark:bg-[#0a0a0a] dark:bg-[#262626]">
-                                <PatientMiniCard
-                                    patient={{
-                                        name: patientName,
-                                        gender: patientGender,
-                                        ps_number: psInput,
-                                        contact: patientContact,
-                                        cnic: patientCnic,
-                                        age: patientAge,
-                                    }}
-                                    className="w-full"
-                                />
-                                <div className="items-right justify-end">
-                                    <Button
-                                        onClick={() => createPatientInApi()}
-                                    >
-                                        <span>Create New Patient</span>
-                                    </Button>
-                                </div>
+                    {data.name && data.contact && data.age && data.gender && (
+                        <div className="flex cursor-default flex-col space-y-4 rounded-xl bg-[#1c398e] p-2 hover:bg-[#06df72] dark:bg-[#0a0a0a] dark:bg-[#262626]">
+                            <PatientMiniCard
+                                patient={{
+                                    name: data.name,
+                                    gender: data.gender,
+                                    ps_number: psInput,
+                                    contact: data.contact,
+                                    cnic: data.cnic,
+                                    age: data.age,
+                                }}
+                                className="w-full"
+                            />
+                            <div className="items-right justify-end">
+                                <Button onClick={handleCreatePatient} disabled={processing}>
+                                    <span>Create New Patient</span>
+                                </Button>
                             </div>
-                        )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

@@ -8,7 +8,7 @@ use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/lookup', [LookUpController::class, 'index'])->name('lookup');
 
     Route::post('/patients', [PateintController::class, 'index'])->name('api-patients-search');
