@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ServiceOrder extends Model
 {
@@ -25,12 +26,12 @@ class ServiceOrder extends Model
         'notes',
         'notes_json',
         'payee_type',
-        'payee_id'
+        'payee_id',
     ];
 
     protected $casts = [
         'notes_json' => 'json',
-        'is_composit' => 'boolean'
+        'is_composit' => 'boolean',
     ];
 
     protected $appends = [
@@ -45,18 +46,22 @@ class ServiceOrder extends Model
     {
         return $this->so_number_parts['year'] ?? null;
     }
+
     public function getMonthAttribute()
     {
         return $this->so_number_parts['month'] ?? null;
     }
+
     public function getNumberAttribute()
     {
         return $this->so_number_parts['number'] ?? null;
     }
+
     public function getDepartmentKeyAttribute()
     {
         return $this->so_number_parts['departmentKey'] ?? null;
     }
+
     public function getServiceNumberAttribute()
     {
         return $this->so_number_parts['serviceNumber'] ?? null;
@@ -113,7 +118,8 @@ class ServiceOrder extends Model
 
     /**
      * Get the payee of the service order (could be a patient, insurance company, etc.)
-     */ public function payee()
+     */
+    public function payee()
     {
         return $this->morphTo();
     }
@@ -123,31 +129,34 @@ class ServiceOrder extends Model
      */
     public static function generateServiceOrderNumber($type): string
     {
+        return DB::transaction(function () use ($type) {
+            $count = ServiceOrder::where('type', $type)
+                ->where('created_at', '>=', Carbon::now()->startOfMonth())
+                ->where('created_at', '<=', Carbon::now()->endOfMonth())
+                ->lockForUpdate()
+                ->count();
 
-        // Check how many service orders have been created this month where created_at is in the current month
-        $count = ServiceOrder::where('type', $type)->where('created_at', '>=', Carbon::now()->startOfMonth())
-            ->where('created_at', '<=', Carbon::now()->endOfMonth())
-            ->count();
+            $count += 1;
 
-        $count += 1; // Increment for the new service order
+            $count = str_pad($count, 8, '0', STR_PAD_LEFT);
 
-        // STRPAD the count to be 8 digits
-        $count = str_pad($count, 8, '0', STR_PAD_LEFT);
-        return  $count;
+            return $count;
+        });
     }
 
     public static function generateShortServiceOrderNumber($type): string
     {
+        return DB::transaction(function () use ($type) {
+            $count = ServiceOrder::where('type', $type)
+                ->lockForUpdate()
+                ->count();
 
-        // Check how many service orders have been created this month where created_at is in the current month
-        $count = ServiceOrder::where('type', $type)
-            ->count();
+            $count += 1;
 
-        $count += 1; // Increment for the new service order
+            $count = str_pad($count, 8, '0', STR_PAD_LEFT);
 
-        // STRPAD the count to be 8 digits
-        $count = str_pad($count, 8, '0', STR_PAD_LEFT);
-        return  $count;
+            return $count;
+        });
     }
 
     public function expenseVouchers(): BelongsToMany

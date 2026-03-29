@@ -40,7 +40,7 @@ class User extends Authenticatable implements FilamentUser
         'is_active',
         'banned_message',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     /**
@@ -68,7 +68,7 @@ class User extends Authenticatable implements FilamentUser
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
-    
+
     /**
      * Append the profiles attribute to the model's array form.
      *
@@ -84,7 +84,8 @@ class User extends Authenticatable implements FilamentUser
         });
     }
 
-    public function getProfilesAttribute(){
+    public function getProfilesAttribute()
+    {
 
         return [
             'admin' => $this->adminProfiles,
@@ -101,59 +102,112 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
-    public function adminProfiles(){
+    public function adminProfiles()
+    {
 
         return $this->hasMany(Administrator::class);
     }
 
-    public function accountantProfiles(){
+    public function accountantProfiles()
+    {
 
         return $this->hasMany(Accountant::class);
     }
 
-    public function receptionistProfiles(){
+    public function receptionistProfiles()
+    {
 
         return $this->hasMany(Receptionist::class);
     }
 
-    public function opdDoctorProfiles(){
+    public function opdDoctorProfiles()
+    {
 
         return $this->hasMany(OpdDoctor::class);
     }
 
-    public function indDoctorProfiles(){
+    public function indDoctorProfiles()
+    {
 
         return $this->hasMany(IndDoctor::class);
     }
 
-    public function emergencyDoctorProfiles(){
+    public function emergencyDoctorProfiles()
+    {
 
         return $this->hasMany(EmergencyDoctor::class);
     }
 
-    public function dentistProfiles(){
+    public function dentistProfiles()
+    {
 
         return $this->hasMany(Dentist::class);
     }
 
-    public function ultrasoundDoctorProfiles(){
+    public function ultrasoundDoctorProfiles()
+    {
 
         return $this->hasMany(UltrasoundDoctor::class);
     }
 
-    public function xrayTechnicianProfiles(){
+    public function xrayTechnicianProfiles()
+    {
 
         return $this->hasMany(XrayTechnician::class);
     }
 
-    public function nursingStaffProfiles(){
+    public function nursingStaffProfiles()
+    {
 
         return $this->hasMany(NursingStaff::class);
     }
 
-    public function patientManagerProfiles(){
+    public function patientManagerProfiles()
+    {
 
         return $this->hasMany(PatientManager::class);
+    }
+
+    // ─── Role helpers ────────────────────────────────────────────────────────
+
+    public function isAdmin(): bool
+    {
+        return $this->adminProfiles()->exists();
+    }
+
+    public function isAccountant(): bool
+    {
+        return $this->accountantProfiles()->exists();
+    }
+
+    public function isReceptionist(): bool
+    {
+        return $this->receptionistProfiles()->exists();
+    }
+
+    public function isAnyDoctor(): bool
+    {
+        return $this->opdDoctorProfiles()->exists()
+            || $this->indDoctorProfiles()->exists()
+            || $this->emergencyDoctorProfiles()->exists()
+            || $this->dentistProfiles()->exists()
+            || $this->ultrasoundDoctorProfiles()->exists()
+            || $this->xrayTechnicianProfiles()->exists();
+    }
+
+    public function isPatientManager(): bool
+    {
+        return $this->patientManagerProfiles()->exists();
+    }
+
+    public function hasAnyProfile(): bool
+    {
+        return $this->isAdmin()
+            || $this->isAccountant()
+            || $this->isReceptionist()
+            || $this->isAnyDoctor()
+            || $this->isPatientManager()
+            || $this->nursingStaffProfiles()->exists();
     }
 
     /**

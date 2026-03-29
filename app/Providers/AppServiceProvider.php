@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Closing;
 use App\Models\ExpenseVoucher;
 use App\Models\Patient;
 use App\Models\Transaction;
@@ -11,6 +12,9 @@ use App\Observers\ExpenseVoucherObserver;
 use App\Observers\PatientObserver;
 use App\Observers\TransactionElementObserver;
 use App\Observers\TransactionObserver;
+use App\Policies\ClosingPolicy;
+use App\Policies\PatientPolicy;
+use App\Policies\TransactionPolicy;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -41,5 +45,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('viewPulse', function (User $user) {
             return $user->adminProfiles()->count() > 0;
         });
+
+        Gate::policy(Closing::class, ClosingPolicy::class);
+        Gate::policy(Transaction::class, TransactionPolicy::class);
+        Gate::policy(Patient::class, PatientPolicy::class);
     }
 }
