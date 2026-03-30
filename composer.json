@@ -21,6 +21,7 @@
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
         "livewire/livewire": "^3",
+        "maatwebsite/excel": "^3.1",
         "mpdf/mpdf": "^8.2",
         "owenvoke/blade-fontawesome": "^3.0",
         "processton/abacus": "*",

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages\Reports;
 
+use App\Exports\ReceivablesReportExport;
 use App\Models\Panel;
 use App\Models\Receaveable;
 use Filament\Forms\Components\DatePicker;
@@ -14,6 +15,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Maatwebsite\Excel\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use UnitEnum;
 
 class ReceivablesReport extends Page implements Tables\Contracts\HasTable
@@ -33,7 +36,6 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
     public ?array $filters = [];
 
     public string $activeTab = 'general';
-
 
     public function mount(): void
     {
@@ -147,5 +149,25 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
     public function getPdfUrl(): string
     {
         return url('/reports/generic/receivables').'?'.http_build_query(array_filter($this->filters));
+    }
+
+    public function exportToExcel(): BinaryFileResponse
+    {
+        $from = $this->filters['from'] ?? now()->startOfMonth()->format('Y-m-d');
+        $until = $this->filters['until'] ?? now()->format('Y-m-d');
+
+        return (new ReceivablesReportExport($this->filters))
+            ->withFilename("receivables-report_{$from}_{$until}.xlsx")
+            ->download();
+    }
+
+    public function exportToCsv(): BinaryFileResponse
+    {
+        $from = $this->filters['from'] ?? now()->startOfMonth()->format('Y-m-d');
+        $until = $this->filters['until'] ?? now()->format('Y-m-d');
+
+        return (new ReceivablesReportExport($this->filters))
+            ->withFilename("receivables-report_{$from}_{$until}.csv")
+            ->download('', Excel::CSV);
     }
 }
