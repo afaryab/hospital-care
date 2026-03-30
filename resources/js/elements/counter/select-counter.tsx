@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/api-fetch';
 import { useEffect, useState } from 'react';
 
 import { Label } from '@/components/ui/label';
@@ -37,12 +38,8 @@ export default function SelectCounter({
         const load = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch('/api/closings/search', {
+                const response = await apiFetch('/api/closings/search', {
                     method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                    },
                     body: JSON.stringify({ limit: 100 }),
                 });
                 if (!response.ok) throw new Error('Failed to load counters');

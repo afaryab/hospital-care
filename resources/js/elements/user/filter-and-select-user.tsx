@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/api-fetch';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Input } from '@/components/ui/input';
@@ -58,12 +59,8 @@ export default function FilterAndSelectUser({
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/users/search', {
+            const response = await apiFetch('/api/users/search', {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({
                     name: searchQuery,
                     is_active: true,

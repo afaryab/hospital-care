@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/api-fetch';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -106,12 +107,8 @@ export default function FilterAndSelectTransaction({
         }
 
         try {
-            const response = await fetch('/api/transactions/search', {
+            const response = await apiFetch('/api/transactions/search', {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify(payload),
             });
 
