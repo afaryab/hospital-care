@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ExpenseCategory;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
 
@@ -12,6 +13,8 @@ class ExpenseCategorySeeder extends Seeder
      */
     public function run(): void
     {
+        // allow_petty_cash  → small, day-to-day, low-value disbursements from the petty cash box
+        // allow_voucher     → formal/large payments that require a signed expense voucher & approval
         $array = collect([
             [
                 'name' => 'Outdoor Doctors Payments',
@@ -19,6 +22,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => false,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Rent or mortgage payments',
@@ -26,6 +31,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Home office costs',
@@ -33,6 +40,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => true,
+                'allow_voucher' => false,
             ],
             [
                 'name' => 'Utilities',
@@ -40,6 +49,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => true,
+                'allow_voucher' => false,
             ],
             [
                 'name' => 'Furniture, equipment, and machinery',
@@ -47,13 +58,17 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Office supplies',
                 'type' => '',
-                'pay_doc' => '0',
-                'pay_others' => '1',
-                'pay_users' => '0',
+                'pay_doc' => false,
+                'pay_others' => true,
+                'pay_users' => false,
+                'allow_petty_cash' => true,
+                'allow_voucher' => false,
             ],
             [
                 'name' => 'Advertising and marketing',
@@ -61,6 +76,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Website and software expenses',
@@ -68,6 +85,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Entertainment',
@@ -75,20 +94,28 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => true,
+                'allow_voucher' => false,
             ],
             [
+                // Meals and small travel reimbursed from petty cash; larger travel advances use a voucher
                 'name' => 'Business meals and travel expenses',
                 'type' => '',
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => true,
+                'allow_voucher' => true,
             ],
             [
+                // Fuel / tolls → petty cash; major repairs → voucher
                 'name' => 'Vehicle expenses',
                 'type' => '',
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => true,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Payroll',
@@ -96,20 +123,26 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
-                'name' => 'Employee benefits ',
+                'name' => 'Employee benefits',
                 'type' => '',
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Taxes',
                 'type' => '',
                 'pay_doc' => true,
-                'pay_others' => '1',
-                'pay_users' => '1',
+                'pay_others' => true,
+                'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Business insurance',
@@ -117,6 +150,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Business licenses and permits',
@@ -124,6 +159,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Interest payments and bank fees',
@@ -131,13 +168,18 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
+                // Small annual memberships can go via petty cash; larger ones need a voucher
                 'name' => 'Membership fees',
                 'type' => '',
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => true,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Professional fees and business services',
@@ -145,6 +187,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Training and education',
@@ -152,6 +196,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Refund',
@@ -159,6 +205,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Purchase of Medical Equipments',
@@ -166,27 +214,38 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
+                // Small spare parts / consumables → petty cash; major repairs → voucher
                 'name' => 'Repair of Medical Equipments',
                 'type' => '',
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => true,
+                'allow_voucher' => true,
             ],
             [
+                // Minor fixes → petty cash; contractors / large works → voucher
                 'name' => 'Hospital Repair and Maintenance',
                 'type' => '',
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => true,
+                'allow_voucher' => true,
             ],
             [
+                // Bulk medicine purchases always go through a formal voucher
                 'name' => 'Medicine',
                 'type' => '',
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Electricity Bill',
@@ -194,6 +253,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Sui Gas Bill',
@@ -201,6 +262,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Wasa Bill',
@@ -208,6 +271,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Loan / Advance Salary',
@@ -215,6 +280,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'OTA Share',
@@ -222,6 +289,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Surgeon fee',
@@ -229,6 +298,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Anasthatic fee',
@@ -236,6 +307,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Pediatrician',
@@ -243,6 +316,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Lab',
@@ -250,6 +325,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Assistant',
@@ -257,6 +334,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Medicine',
@@ -264,13 +343,18 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
+                // Miscellaneous inpatient costs can be small (petty cash) or large (voucher)
                 'name' => 'Miscellaneous',
                 'type' => 'INPT',
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => true,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Oxygen',
@@ -278,6 +362,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => false,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'PTCL Bill',
@@ -285,6 +371,8 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
                 'name' => 'Dental Assistant Payments',
@@ -292,37 +380,47 @@ class ExpenseCategorySeeder extends Seeder
                 'pay_doc' => false,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
             [
+                // Dental consumables (gloves, impression material) can go via petty cash
                 'name' => 'Dental Expense',
                 'type' => '',
                 'pay_doc' => false,
                 'pay_others' => false,
                 'pay_users' => false,
-            ], [
+                'allow_petty_cash' => true,
+                'allow_voucher' => true,
+            ],
+            [
                 'name' => 'Inpatient Doctor Payment',
                 'type' => '',
                 'pay_doc' => true,
                 'pay_others' => true,
                 'pay_users' => true,
+                'allow_petty_cash' => false,
+                'allow_voucher' => true,
             ],
         ]);
 
-        $existingCategories = \App\Models\ExpenseCategory::pluck('name')->toArray();
-        $array = $array->filter(function ($item) use ($existingCategories) {
-            return ! in_array($item['name'], $existingCategories);
-        });
+        $existingCategories = ExpenseCategory::pluck('name')->toArray();
+        $array = $array->filter(fn ($item) => ! in_array($item['name'], $existingCategories));
+
         $records = [];
 
         foreach ($array as $item) {
-            $records[] = \App\Models\ExpenseCategory::firstOrCreate([
-                'name' => $item['name'],
-            ], [
-                'type' => $item['type'],
-                'pay_doc' => $item['pay_doc'],
-                'pay_others' => $item['pay_others'],
-                'pay_users' => $item['pay_users'],
-            ]);
+            $records[] = ExpenseCategory::firstOrCreate(
+                ['name' => $item['name']],
+                [
+                    'type' => $item['type'],
+                    'pay_doc' => $item['pay_doc'],
+                    'pay_others' => $item['pay_others'],
+                    'pay_users' => $item['pay_users'],
+                    'allow_petty_cash' => $item['allow_petty_cash'],
+                    'allow_voucher' => $item['allow_voucher'],
+                ],
+            );
         }
 
         Log::info('ExpenseCategorySeeder: Created '.count($records).' new categories');

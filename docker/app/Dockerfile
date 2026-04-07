@@ -33,7 +33,9 @@ RUN apk add --no-cache \
     make \
     dcron \
     nodejs \
-    npm
+    npm \
+    sqlite \
+    sqlite-dev
 
 # Clear cache
 RUN rm -rf /var/lib/apt/lists/*
@@ -75,8 +77,10 @@ COPY docker/app/default.conf /etc/nginx/conf.d/default.conf
 COPY docker/app/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/app/start.sh /start.sh
 
-# Create .htpasswd file
 RUN touch /etc/nginx/.htpasswd
+
+# Set CI=true for pnpm install
+ENV CI=true
 
 # Make start script executable
 RUN chmod +x /start.sh

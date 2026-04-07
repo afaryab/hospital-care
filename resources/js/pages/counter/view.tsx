@@ -26,7 +26,7 @@ import {
     printClosingStatement,
 } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import clsx from 'clsx';
 import {
     LucideChevronDown,
@@ -35,6 +35,7 @@ import {
     LucideX,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 function formatRelativeTime(input: string | Date): string {
     const date = typeof input === 'string' ? new Date(input) : input;
@@ -287,6 +288,50 @@ const CounterReportIframe = ({
 };
 
 const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
+    const { auth } = usePage().props as unknown as {
+        auth?: { user?: { profiles?: { admin?: unknown[] } } };
+    };
+    const isAdminUser = (auth?.user?.profiles?.admin?.length ?? 0) > 0;
+    const [refundingIds, setRefundingIds] = useState<number[]>([]);
+
+    const handleRefund = async (
+        transactionId: number,
+        transactionNumber: string,
+    ) => {
+        const confirmed = window.confirm(
+            `Refund ${transactionNumber}? This will mark it refunded and create a refund element.`,
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        setRefundingIds((prev) => [...prev, transactionId]);
+
+        try {
+            const response = await fetch(
+                `/api/transactions/${transactionId}/refund`,
+                {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                    },
+                },
+            );
+
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                toast.error(payload?.message ?? 'Unable to refund transaction.');
+                return;
+            }
+
+            router.reload({ only: ['openCounter'] });
+        } finally {
+            setRefundingIds((prev) => prev.filter((id) => id !== transactionId));
+        }
+    };
+
     const typeNorm = (t: string) => (t ?? '').toUpperCase();
 
     const sumByFilter = (filter: (tr: any) => boolean) =>
@@ -576,6 +621,11 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                                 PKR
                                                                             </span>
                                                                         )}
+                                                                    {el.receaveable_id && (
+                                                                        <span className="rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] text-green-700">
+                                                                            Receaveable ID: {el.receaveable_id} Payment
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                             ),
                                                         )}
@@ -821,6 +871,29 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                 </Link>
                                                             </DropdownMenuItem>
                                                         )}
+                                                        {isAdminUser &&
+                                                            transaction?.is_refunded ==
+                                                                0 &&
+                                                            transaction?.income_or_expense ===
+                                                                'INCOME' && (
+                                                                <DropdownMenuItem
+                                                                    disabled={refundingIds.includes(
+                                                                        transaction.id,
+                                                                    )}
+                                                                    onClick={() =>
+                                                                        handleRefund(
+                                                                            transaction.id,
+                                                                            transaction.tr_number,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    {refundingIds.includes(
+                                                                        transaction.id,
+                                                                    )
+                                                                        ? 'Refunding...'
+                                                                        : 'Refund'}
+                                                                </DropdownMenuItem>
+                                                            )}
                                                     </DropdownMenuContent>
                                                 </DropdownMenu>
                                             </td>

@@ -2,6 +2,8 @@
 
 Software meant to organize a hospital in every operation, compliant with international standards and Punjab Healthcare Commission guidelines. A dockerized distribution `ahmadfaryabkokab/hospital-care`, which hospitals can easily run on their servers. Each release publishes a cli tag `ahmadfaryabkokab/hospital-care:{version}-cli` and app tag `ahmadfaryabkokab/hospital-care:{version}`. The cli container is responsible for running schedules and granting SSH access for CLI operations.
 
+On local development ensure to run commands inside docker.
+
 ---
 
 ## 1. Project Overview

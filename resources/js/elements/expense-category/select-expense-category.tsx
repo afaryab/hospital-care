@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/api-fetch';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Label } from '@/components/ui/label';
@@ -16,6 +17,9 @@ export interface ExpenseCategoryOption {
     pay_doc?: boolean;
     pay_others?: boolean;
     pay_users?: boolean;
+    pay_patient?: boolean;
+    allow_petty_cash?: boolean;
+    allow_voucher?: boolean;
 }
 
 interface SearchResult {
@@ -61,12 +65,8 @@ export default function SelectExpenseCategory({
             setIsLoading(true);
 
             try {
-                const response = await fetch('/api/expense-categories/search', {
+                const response = await apiFetch('/api/expense-categories/search', {
                     method: 'POST',
-                    headers: {
-                        Accept: 'application/json',
-                        'Content-Type': 'application/json',
-                    },
                     body: JSON.stringify({ limit: 100 }),
                 });
 

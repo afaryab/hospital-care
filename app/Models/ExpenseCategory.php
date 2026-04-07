@@ -16,6 +16,9 @@ class ExpenseCategory extends Model
         'pay_doc',
         'pay_others',
         'pay_users',
+        'pay_patient',
+        'allow_petty_cash',
+        'allow_voucher',
         'created_at',
         'updated_at',
     ];
@@ -24,5 +27,8 @@ class ExpenseCategory extends Model
         'pay_doc' => 'boolean',
         'pay_others' => 'boolean',
         'pay_users' => 'boolean',
+        'pay_patient' => 'boolean',
+        'allow_petty_cash' => 'boolean',
+        'allow_voucher' => 'boolean',
     ];
 }

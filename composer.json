@@ -16,10 +16,12 @@
         "laravel/fortify": "^1.30",
         "laravel/framework": "^12.0",
         "laravel/pulse": "^1.5",
+        "laravel/sanctum": "^4.3",
         "laravel/telescope": "^5.15",
         "laravel/tinker": "^2.10.1",
         "laravel/wayfinder": "^0.1.9",
         "livewire/livewire": "^3",
+        "maatwebsite/excel": "^3.1",
         "mpdf/mpdf": "^8.2",
         "owenvoke/blade-fontawesome": "^3.0",
         "processton/abacus": "*",
@@ -107,7 +109,9 @@
     ],
     "extra": {
         "laravel": {
-            "dont-discover": ["laravel/telescope"]
+            "dont-discover": [
+                "troccoli/blade-health-icons"
+            ]
         }
     },
     "config": {

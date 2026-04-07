@@ -23,74 +23,13 @@ class ClosingInfolist
                                     ->view('filament.accounts.closings.infolists.closing-overview')
                                     ->viewData(fn (Closing $record) => [
                                         'closing' => $record,
-                                        'transactions' => $record->transactions(),
+                                        'transactions' => $record->transactions()->paginate(20),
                                         'printUrl' => self::buildMiniPrintUrl($record),
-                                    ])
-                                    ->columnSpanFull(),
-                            ]),
-                        Tab::make('Detailed Summery')
-                            ->schema([
-                                ViewEntry::make('closing_overview')
-                                    ->label(false)
-                                    ->view('filament.accounts.closings.infolists.closing-overview')
-                                    ->viewData(fn (Closing $record) => [
-                                        'closing' => $record,
-                                        'transactions' => $record->transactions(),
-                                        'printUrl' => self::buildPrintUrl($record),
-                                    ])
-                                    ->columnSpanFull(),
-                            ]),
-                        Tab::make('Services Report')
-                            ->schema([
-                                ViewEntry::make('services_report')
-                                    ->label(false)
-                                    ->view('filament.accounts.closings.infolists.closing-overview')
-                                    ->viewData(fn (Closing $record) => [
-                                        'closing' => $record,
-                                        'transactions' => $record->transactions(),
-                                        'printUrl' => self::buildReportUrl($record, 'services'),
-                                    ])
-                                    ->columnSpanFull(),
-                            ]),
-                        Tab::make('Income Report')
-                            ->schema([
-                                ViewEntry::make('income_report')
-                                    ->label(false)
-                                    ->view('filament.accounts.closings.infolists.closing-overview')
-                                    ->viewData(fn (Closing $record) => [
-                                        'closing' => $record,
-                                        'transactions' => $record->transactions(),
-                                        'printUrl' => self::buildReportUrl($record, 'income'),
-                                    ])
-                                    ->columnSpanFull(),
-                            ]),
-                        Tab::make('Expense Report')
-                            ->schema([
-                                ViewEntry::make('expense_report')
-                                    ->label(false)
-                                    ->view('filament.accounts.closings.infolists.closing-overview')
-                                    ->viewData(fn (Closing $record) => [
-                                        'closing' => $record,
-                                        'transactions' => $record->transactions(),
-                                        'printUrl' => self::buildReportUrl($record, 'expense'),
-                                    ])
-                                    ->columnSpanFull(),
-                            ]),
-                        Tab::make('Receivables Report')
-                            ->schema([
-                                ViewEntry::make('receivables_report')
-                                    ->label(false)
-                                    ->view('filament.accounts.closings.infolists.closing-overview')
-                                    ->viewData(fn (Closing $record) => [
-                                        'closing' => $record,
-                                        'transactions' => $record->transactions(),
-                                        'printUrl' => self::buildReportUrl($record, 'receivables'),
                                     ])
                                     ->columnSpanFull(),
                             ]),
                     ])
                     ->columnSpanFull(),
-
             ]);
     }
 

@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/api-fetch';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Input } from '@/components/ui/input';
@@ -61,12 +62,8 @@ export default function FilterAndSelectPatient({
         setIsLoading(true);
 
         try {
-            const response = await fetch('/api/patients', {
+            const response = await apiFetch('/api/patients', {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({
                     mr_number: searchQuery,
                     patient_name: searchQuery,

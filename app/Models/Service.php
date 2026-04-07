@@ -23,6 +23,7 @@ class Service extends Model
 
     protected $fillable = [
         'name',
+        'icon',
         'slug',
         'service_department_id',
         'charges',

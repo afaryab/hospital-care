@@ -91,20 +91,20 @@ class AppServiceProvider extends ServiceProvider
             $activity->saveQuietly();
         });
 
-        PanelSwitch::configureUsing(function (PanelSwitch $panelSwitch): void {
-            $panelSwitch
-                // ->visible(fn (): bool => (bool) auth()->user()?->adminProfiles()?->count())
-                ->panels(['admin', 'accounts'])
-                ->modalHeading('Switch Panel')
-                ->labels([
-                    'admin' => 'Admin',
-                    'accounts' => 'Accounts',
-                ])
-                ->icons([
-                    'admin' => 'heroicon-o-chart-pie',
-                    'accounts' => 'heroicon-o-calculator',
-                ]);
-        });
+        // PanelSwitch::configureUsing(function (PanelSwitch $panelSwitch): void {
+        //     $panelSwitch
+        //         // ->visible(fn (): bool => (bool) auth()->user()?->adminProfiles()?->count())
+        //         ->panels(['admin', 'accounts'])
+        //         ->modalHeading('Switch Panel')
+        //         ->labels([
+        //             'admin' => 'Admin',
+        //             'accounts' => 'Accounts',
+        //         ])
+        //         ->icons([
+        //             'admin' => 'heroicon-o-chart-pie',
+        //             'accounts' => 'heroicon-o-calculator',
+        //         ]);
+        // });
 
         Event::listen(Failed::class, function (Failed $event): void {
             app(BreachDetectionService::class)->recordFailedLogin(

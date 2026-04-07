@@ -24,6 +24,10 @@ test('guests are redirected to login when accessing counter open form', function
     $this->get(route('counter-open'))->assertRedirect(route('login'));
 });
 
+test('guests are redirected to login when accessing service orders overview', function () {
+    $this->get(route('service-orders-overview'))->assertRedirect(route('login'));
+});
+
 // --- Authenticated users can access routes ---
 
 test('authenticated user can access home route', function () {
@@ -64,5 +68,13 @@ test('authenticated user can access counter open form', function () {
 
     $this->actingAs($user)
         ->get(route('counter-open'))
+        ->assertOk();
+});
+
+test('authenticated user can access service orders overview', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('service-orders-overview'))
         ->assertOk();
 });

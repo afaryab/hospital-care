@@ -10,6 +10,8 @@ import {
 import AppLayout from '@/layouts/app-layout';
 import {
     counterExpense,
+    counterExpenseNewDoctorVoucher,
+    counterExpenseNewUserVoucher,
     counterExpenseNewVoucher,
     counterExpenseVouchersList,
     home,
@@ -83,65 +85,78 @@ export default function VouchersList() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Doctor Vouchers" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
-                <div className="flex flex-0 flex-row items-end gap-4 rounded-xl bg-[#1c398e] p-2 dark:bg-[#0a0a0a]">
-                    <div className="grid gap-2">
-                        <Label htmlFor="year">Year</Label>
-                        <Select
-                            value={year.toString()}
-                            onValueChange={(value) => setYear(value)}
-                        >
-                            <SelectTrigger id="year">
-                                <SelectValue placeholder="Select Year" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem key={0} value={'0'}>
-                                    All
-                                </SelectItem>
-                                {Array.from({ length: 10 }, (_, i) => {
-                                    const yearOption =
-                                        new Date().getFullYear() - i;
-                                    return (
-                                        <SelectItem
-                                            key={yearOption}
-                                            value={yearOption.toString()}
-                                        >
-                                            {yearOption}
-                                        </SelectItem>
-                                    );
-                                })}
-                            </SelectContent>
-                        </Select>
+                <div className="flex flex-0 flex-row items-end gap-4 rounded-xl bg-white p-2 dark:bg-[#0a0a0a]">
+                    <div className="flex flex-1 gap-2">
+                        <div className="grid gap-2">
+                            <Label htmlFor="year">Year</Label>
+                            <Select
+                                value={year.toString()}
+                                onValueChange={(value) => setYear(value)}
+                            >
+                                <SelectTrigger id="year">
+                                    <SelectValue placeholder="Select Year" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem key={0} value={'0'}>
+                                        All
+                                    </SelectItem>
+                                    {Array.from({ length: 10 }, (_, i) => {
+                                        const yearOption =
+                                            new Date().getFullYear() - i;
+                                        return (
+                                            <SelectItem
+                                                key={yearOption}
+                                                value={yearOption.toString()}
+                                            >
+                                                {yearOption}
+                                            </SelectItem>
+                                        );
+                                    })}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="month">Month</Label>
+                            <Select
+                                value={month.toString()}
+                                onValueChange={(value) => setMonth(value)}
+                            >
+                                <SelectTrigger id="month">
+                                    <SelectValue placeholder="Select Month" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="0">All</SelectItem>
+                                    <SelectItem value="01">January</SelectItem>
+                                    <SelectItem value="02">February</SelectItem>
+                                    <SelectItem value="03">March</SelectItem>
+                                    <SelectItem value="04">April</SelectItem>
+                                    <SelectItem value="05">May</SelectItem>
+                                    <SelectItem value="06">June</SelectItem>
+                                    <SelectItem value="07">July</SelectItem>
+                                    <SelectItem value="08">August</SelectItem>
+                                    <SelectItem value="09">September</SelectItem>
+                                    <SelectItem value="10">October</SelectItem>
+                                    <SelectItem value="11">November</SelectItem>
+                                    <SelectItem value="12">December</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="month">Month</Label>
-                        <Select
-                            value={month.toString()}
-                            onValueChange={(value) => setMonth(value)}
-                        >
-                            <SelectTrigger id="month">
-                                <SelectValue placeholder="Select Month" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="0">All</SelectItem>
-                                <SelectItem value="01">January</SelectItem>
-                                <SelectItem value="02">February</SelectItem>
-                                <SelectItem value="03">March</SelectItem>
-                                <SelectItem value="04">April</SelectItem>
-                                <SelectItem value="05">May</SelectItem>
-                                <SelectItem value="06">June</SelectItem>
-                                <SelectItem value="07">July</SelectItem>
-                                <SelectItem value="08">August</SelectItem>
-                                <SelectItem value="09">September</SelectItem>
-                                <SelectItem value="10">October</SelectItem>
-                                <SelectItem value="11">November</SelectItem>
-                                <SelectItem value="12">December</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="grid gap-2">
-                        <Link href={counterExpenseNewVoucher().url}>
+                    <div className="flex flex-0 flex-row items-end gap-2">
+                        
+                        <Link href={counterExpenseNewDoctorVoucher().url}>
                             <Button variant="secondary">
                                 + New Doctor Voucher
+                            </Button>
+                        </Link>
+                        <Link href={counterExpenseNewUserVoucher().url}>
+                            <Button variant="outline">
+                                + New User Voucher
+                            </Button>
+                        </Link>
+                        <Link href={counterExpenseNewVoucher().url}>
+                            <Button variant="outline">
+                                + New Voucher
                             </Button>
                         </Link>
                     </div>

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -202,6 +203,11 @@ class ServiceOrder extends Model
     public function transactionElements(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(TransactionElement::class, 'service_order_id');
+    }
+
+    public function treatmentRecord(): HasOne
+    {
+        return $this->hasOne(TreatmentRecord::class);
     }
 
     public function versions(): HasMany

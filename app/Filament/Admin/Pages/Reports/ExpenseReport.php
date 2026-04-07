@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Pages\Reports;
 
 use App\Enum\TransactionElementType;
+use App\Exports\ExpenseReportExport;
 use App\Models\Closing;
 use App\Models\ExpenseCategory;
 use App\Models\Reception;
@@ -17,6 +18,8 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Maatwebsite\Excel\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use UnitEnum;
 
 class ExpenseReport extends Page implements Tables\Contracts\HasTable
@@ -46,7 +49,12 @@ class ExpenseReport extends Page implements Tables\Contracts\HasTable
             'type' => null,
             'expense_category_id' => null,
         ];
+        // Always provide accounts key for view safety
+        $this->accounts = [];
     }
+
+    // Always provide accounts property for view safety
+    public array $accounts = [];
 
     public function filtersForm(Schema $schema): Schema
     {
@@ -150,5 +158,25 @@ class ExpenseReport extends Page implements Tables\Contracts\HasTable
     public function getPdfUrl(): string
     {
         return url('/reports/generic/expense').'?'.http_build_query(array_filter($this->filters));
+    }
+
+    public function exportToExcel(): BinaryFileResponse
+    {
+        $from = $this->filters['from'] ?? now()->startOfMonth()->format('Y-m-d');
+        $until = $this->filters['until'] ?? now()->format('Y-m-d');
+
+        return (new ExpenseReportExport($this->filters))
+            ->withFilename("expense-report_{$from}_{$until}.xlsx")
+            ->download();
+    }
+
+    public function exportToCsv(): BinaryFileResponse
+    {
+        $from = $this->filters['from'] ?? now()->startOfMonth()->format('Y-m-d');
+        $until = $this->filters['until'] ?? now()->format('Y-m-d');
+
+        return (new ExpenseReportExport($this->filters))
+            ->withFilename("expense-report_{$from}_{$until}.csv")
+            ->download('', Excel::CSV);
     }
 }

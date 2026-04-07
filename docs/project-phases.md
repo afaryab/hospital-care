@@ -1016,7 +1016,7 @@ tests/Feature/Admin/MergeReceptionsTest.php
 
 ---
 
-### Phase 3.9 — Excel/CSV Export for Reports 🔲
+### Phase 3.9 — Excel/CSV Export for Reports ✅
 
 > Ref: US-10.11
 

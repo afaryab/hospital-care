@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/api-fetch';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -123,12 +124,8 @@ export default function FilterAndSelectServiceOrder({
         }
 
         try {
-            const response = await fetch('/api/service-orders/search', {
+            const response = await apiFetch('/api/service-orders/search', {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify(payload),
             });
 

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { RadioInput } from '@/components/ui/input-radio';
 import { Label } from '@/components/ui/label';
 import { MaskInput } from '@/components/ui/mask-input';
+import { Spinner } from '@/components/ui/spinner';
 import {
     Select,
     SelectContent,
@@ -32,7 +33,8 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { clsx } from 'clsx';
 import { LoaderCircle } from 'lucide-react';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 const CreatePatientPolicy = lazy(
     () => import('@/policy/create-patient-policy'),
 );
@@ -257,7 +259,7 @@ function CollectPayment({
         setProcessing(true);
 
         if (recesitation && selectedServiceOrder === '') {
-            alert('Please enter MRI number for recesitation services.');
+            toast.error('Please enter MRI number for recesitation services.');
             setProcessing(false);
             return;
         }
@@ -287,9 +289,7 @@ function CollectPayment({
             };
 
             if (!validatedInput(billData)) {
-                alert(
-                    'Please fix the validation errors before generating the bill.',
-                );
+                toast.error('Please fix the validation errors before generating the bill.');
                 setProcessing(false);
                 return;
             }
@@ -327,7 +327,7 @@ function CollectPayment({
             });
         } catch (error) {
             console.error('Error generating bill:', error);
-            alert('Error generating bill. Please try again.');
+            toast.error('Error generating bill. Please try again.');
         }
     };
 
@@ -896,353 +896,429 @@ function SelectDepartment({ openCounter, patient, departments }: any) {
     );
 }
 
+import AlertError from '@/components/alert-error';
+import { apiFetch } from '@/lib/api-fetch';
+
+// Search params type — only committed values trigger the API
+type PatientSearchParams = {
+    mr_number: string;
+    cnic_number: string;
+    patient_name: string;
+    patient_contact: string;
+    patient_age: string;
+    patient_gender: string;
+    mri_number: string;
+    file_number: string;
+};
+
+const EMPTY_SEARCH: PatientSearchParams = {
+    mr_number: '',
+    cnic_number: '',
+    patient_name: '',
+    patient_contact: '',
+    patient_age: '',
+    patient_gender: '',
+    mri_number: '',
+    file_number: '',
+};
+
+// CNIC mask: 99999-9999999-9 → 15 chars when complete
+const CNIC_COMPLETE_LENGTH = 15;
+// Contact mask: +99-999-9999999 → 15 chars when complete
+const CONTACT_COMPLETE_LENGTH = 15;
+
 function SelectPatient({ openCounter }: any) {
     const [patients, setPatients] = useState([]);
     const [exactMatch, setExactMatch] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [apiError, setApiError] = useState<string | string[] | null>(null);
 
-    const [psInput, setPsInput] = useState<string>('');
+    // Committed search params — API fires only when this changes
+    const [searchParams, setSearchParams] = useState<PatientSearchParams>(EMPTY_SEARCH);
 
-    const psNumberIsChanged = (val: string, unmasked: string) => {
-        console.log(val, unmasked);
-        setPsInput(val);
-    };
+    // Raw field states (for form binding)
+    const [psInput, setPsInput] = useState('');
+    const [patientCnic, setPatientCnic] = useState('');
+    const [mriNumber, setMriNumber] = useState('');
+    const [fileNumber, setFileNumber] = useState('');
 
-    const [patientCnic, setPatientCnic] = useState<string>('');
+    // Form state for patient creation
+    const [formData, setFormDataState] = useState({ cnic: '', name: '', contact: '', age: '', gender: '' });
+    const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
+    const [creating, setCreating] = useState(false);
+    const setData = (field: string, val: string) => setFormDataState((d) => ({ ...d, [field]: val }));
+    const clearErrors = () => setFormErrors({});
 
-    const patientCnicIsChanged = (val: string, unmasked: string) => {
-        console.log(val, unmasked);
-        setPatientCnic(val);
-    };
-
-    const [patientName, setPatientName] = useState<string>('');
-    const [patientContact, setPatientContact] = useState<string>('');
-    const [patientAge, setPatientAge] = useState<string>('');
-    const [patientGender, setPatientGender] = useState<string>('');
-
+    // Fire API whenever committed search params change
     useEffect(() => {
-        fetchPatientsFromApi();
-    }, [
-        psInput,
-        patientCnic,
-        patientName,
-        patientContact,
-        patientAge,
-        patientGender,
-    ]);
+        const hasAnyInput = Object.values(searchParams).some((v) => v !== '');
+        fetchPatientsFromApi(searchParams, hasAnyInput);
+        setApiError(null);
+        clearErrors();
+    }, [searchParams]);
 
-    const fetchPatientsFromApi = async () => {
+    const fetchPatientsFromApi = useCallback(async (params: PatientSearchParams, hasInput: boolean) => {
+        setIsLoading(true);
         try {
-            const response = await fetch('/api/patients', {
+            const response = await apiFetch('/api/patients', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    mr_number: psInput,
-                    cnic_number: patientCnic,
-                    patient_name: patientName,
-                    patient_contact: patientContact,
-                    patient_age: patientAge,
-                    patient_gender: patientGender,
-                }),
+                body: JSON.stringify(params),
             });
-
             if (response.ok) {
-                const data = await response.json();
-                setPatients(data.data.possible);
-                setExactMatch(data.data.exact);
+                const res = await response.json();
+                setPatients(res.data.possible);
+                setExactMatch(res.data.exact);
+            } else {
+                const err = await response.json().catch(() => ({}));
+                setApiError(err.message || 'Failed to fetch patients.');
             }
-        } catch (error) {
-            console.error('Error fetching patients:', error);
+        } catch (error: any) {
+            setApiError(error?.message || 'Network error fetching patients.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    // ── Commit helpers ────────────────────────────────────────────────────────
+
+    // MR Number: commit on every change
+    const onMrNumberChange = (masked: string) => {
+        setPsInput(masked);
+        setSearchParams((p) => ({ ...p, mr_number: masked }));
+    };
+
+    // CNIC: commit only when complete (15 chars), clear when emptied
+    const onCnicChange = (masked: string, unmasked: string) => {
+        setPatientCnic(masked);
+        if (masked.length === CNIC_COMPLETE_LENGTH) {
+            setSearchParams((p) => ({ ...p, cnic_number: masked }));
+        } else if (masked === '') {
+            setSearchParams((p) => ({ ...p, cnic_number: '' }));
         }
     };
 
-    const createPatientInApi = async () => {
+    // Name: commit on blur
+    const onNameBlur = () => {
+        setSearchParams((p) => ({ ...p, patient_name: formData.name }));
+    };
+
+    // Contact: commit only when complete (15 chars), clear when below 5
+    const onContactChange = (masked: string) => {
+        setData('contact', masked);
+        if (masked.replace(/\D/g, '').length >= 11) {
+            setSearchParams((p) => ({ ...p, patient_contact: masked }));
+        } else if (masked.replace(/\D/g, '').length < 5) {
+            setSearchParams((p) => ({ ...p, patient_contact: '' }));
+        }
+    };
+
+    // Age: commit on blur
+    const onAgeBlur = () => {
+        setSearchParams((p) => ({ ...p, patient_age: formData.age }));
+    };
+
+    // Gender: commit immediately on selection
+    const onGenderChange = (val: string) => {
+        setData('gender', val);
+        setSearchParams((p) => ({ ...p, patient_gender: val }));
+    };
+
+    // MRI Number: commit on every change
+    const onMriNumberChange = (val: string) => {
+        setMriNumber(val);
+        setSearchParams((p) => ({ ...p, mri_number: val }));
+    };
+
+    // FILE Number: commit on every change
+    const onFileNumberChange = (val: string) => {
+        setFileNumber(val);
+        setSearchParams((p) => ({ ...p, file_number: val }));
+    };
+
+    // Patient creation via fetch (JSON) — Inertia post() sends X-Inertia header, not Accept: application/json
+    const handleCreatePatient = async () => {
+        setCreating(true);
+        setFormErrors({});
         try {
-            const response = await fetch(apiPatientsStore().url, {
+            const response = await apiFetch(apiPatientsStore().url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify({
-                    cnic: patientCnic,
-                    name: patientName,
-                    contact: patientContact,
-                    age: patientAge,
-                    gender: patientGender,
+                    name: formData.name,
+                    contact: formData.contact,
+                    cnic: formData.cnic || null,
+                    age: formData.age,
+                    gender: formData.gender,
                 }),
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                // Handle the response data as needed
-                console.log('Patient created successfully:', data);
+            const res = await response.json().catch(() => ({}));
+
+            if (response.status === 201) {
+                // Created — redirect to counter department selection
+                const patient = res.data;
                 window.location.href = counterSelectDepartment({
-                    pYear: data.data.year,
-                    pMonth: data.data.month,
-                    number: data.data.number,
+                    pYear: patient.year,
+                    pMonth: patient.month,
+                    number: patient.number,
                 }).url;
+            } else if (response.status === 409) {
+                // Duplicate found — surface in results
+                if (res.data) {
+                    setExactMatch(res.data.exact ?? []);
+                    setPatients(res.data.possible ?? []);
+                }
+                toast.warning(res.message || 'Possible duplicate patient found.');
+            } else if (response.status === 422) {
+                // Validation errors
+                setFormErrors(res.errors ?? {});
+            } else {
+                setApiError(res.message || 'Failed to create patient.');
             }
-        } catch (error) {
-            console.error('Error creating patient:', error);
+        } catch (error: any) {
+            setApiError(error?.message || 'Network error creating patient.');
+        } finally {
+            setCreating(false);
         }
     };
-
-    useEffect(() => {
-        console.log(patients);
-    }, [patients]);
 
     return (
         <div className="grid h-full w-full grid-cols-2 divide-x divide-[#06df72]">
+            {/* ── Left column: search / create form ── */}
             <div className="flex flex-col p-4 pr-8">
                 <div className="flex w-full flex-col space-y-4">
-                    <h3 className="mb-2 text-3xl font-bold">
-                        Select / Create Patient
-                    </h3>
+                    <h3 className="mb-2 text-3xl font-bold">Select / Create Patient</h3>
+
+                    {apiError && (
+                        <AlertError
+                            errors={[Array.isArray(apiError) ? apiError.join(' ') : apiError]}
+                            className="sticky top-0 z-50 mb-2"
+                        />
+                    )}
+                    {Object.keys(formErrors).length > 0 && (
+                        <AlertError
+                            errors={Object.values(formErrors).flat()}
+                            className="sticky top-0 z-50 mb-2"
+                        />
+                    )}
+
+                    {/* MR Number */}
                     <div className="grid gap-2">
                         <Label htmlFor="mr_number">MR Number</Label>
                         <MaskInput
                             id="mr_number"
                             type="text"
                             name="mr_number"
-                            required
+                            tabIndex={1}
                             autoFocus
-                            tabIndex={100}
                             autoComplete="false"
                             mask="aa/9999/99/999999"
                             placeholder="--/----/--/------"
                             value={psInput}
-                            onValueChange={({ masked, unmasked }) =>
-                                psNumberIsChanged(masked, unmasked)
-                            }
+                            onValueChange={({ masked }) => onMrNumberChange(masked)}
                         />
-                        {/* <InputError message={errors.email} /> */}
                     </div>
+
+                    {/* MRI Number */}
+                    <div className="grid gap-2">
+                        <Label htmlFor="mri_number">MRI Number (Service Order)</Label>
+                        <Input
+                            id="mri_number"
+                            type="text"
+                            name="mri_number"
+                            tabIndex={2}
+                            autoComplete="false"
+                            placeholder="e.g. OPD/2025/03/0001"
+                            value={mriNumber}
+                            onChange={(e) => onMriNumberChange(e.target.value)}
+                        />
+                    </div>
+
+                    {/* FILE Number */}
+                    <div className="grid gap-2">
+                        <Label htmlFor="file_number">File Number (SO Short)</Label>
+                        <Input
+                            id="file_number"
+                            type="text"
+                            name="file_number"
+                            tabIndex={3}
+                            autoComplete="false"
+                            placeholder="Short file number"
+                            value={fileNumber}
+                            onChange={(e) => onFileNumberChange(e.target.value)}
+                        />
+                    </div>
+
+                    {/* CNIC */}
                     <div className="grid gap-2">
                         <Label htmlFor="cnic_number">CNIC Number</Label>
                         <MaskInput
                             id="cnic_number"
                             type="text"
                             name="cnic_number"
-                            required
-                            autoFocus
-                            tabIndex={2}
+                            tabIndex={4}
                             autoComplete="false"
                             mask="99999-9999999-9"
                             placeholder="----- ------- -"
                             value={patientCnic}
-                            onValueChange={({ masked, unmasked }) =>
-                                patientCnicIsChanged(masked, unmasked)
-                            }
+                            onValueChange={({ masked, unmasked }) => onCnicChange(masked, unmasked)}
                         />
-                        {/* <InputError message={errors.email} /> */}
                     </div>
+
+                    {/* Patient Name — search on blur */}
                     <div className="grid gap-2">
-                        <Label htmlFor="patient_name" required={true}>
-                            Patient Name
-                        </Label>
+                        <Label htmlFor="patient_name" required={true}>Patient Name</Label>
                         <Input
                             id="patient_name"
                             type="text"
                             name="patient_name"
-                            required
-                            autoFocus
-                            tabIndex={3}
+                            tabIndex={5}
                             autoComplete="false"
                             placeholder="Patient name"
-                            value={patientName}
-                            onChange={(e) => setPatientName(e.target.value)}
+                            value={formData.name}
+                            onChange={(e) => setData('name', e.target.value)}
+                            onBlur={onNameBlur}
                         />
-                        {/* <InputError message={errors.email} /> */}
                     </div>
+
+                    {/* Contact — search when complete */}
                     <div className="grid gap-2">
-                        <Label htmlFor="patient_contact" required={true}>
-                            Patient Contact
-                        </Label>
+                        <Label htmlFor="patient_contact" required={true}>Patient Contact</Label>
                         <MaskInput
                             id="patient_contact"
                             type="text"
                             name="patient_contact"
-                            required
-                            autoFocus
-                            tabIndex={3}
+                            tabIndex={6}
                             autoComplete="false"
-                            value={
-                                patientContact === '' ? '+92-' : patientContact
-                            }
+                            value={formData.contact === '' ? '+92-' : formData.contact}
                             mask="+99-999-9999999"
                             placeholder="+92-000-0000000"
-                            onValueChange={({ masked, unmasked }) =>
-                                setPatientContact(masked)
-                            }
+                            onValueChange={({ masked }) => onContactChange(masked)}
                         />
-                        {/* <InputError message={errors.email} /> */}
                     </div>
+
+                    {/* Age — search on blur */}
                     <div className="grid gap-2">
-                        <Label htmlFor="patient_age" required={true}>
-                            Patient Age
-                        </Label>
+                        <Label htmlFor="patient_age" required={true}>Patient Age</Label>
                         <Input
                             id="patient_age"
                             type="number"
                             name="patient_age"
-                            required
-                            autoFocus
-                            tabIndex={3}
+                            tabIndex={7}
                             autoComplete="false"
                             placeholder="Patient age"
-                            value={patientAge}
-                            onChange={(e) => setPatientAge(e.target.value)}
+                            value={formData.age}
+                            onChange={(e) => setData('age', e.target.value)}
+                            onBlur={onAgeBlur}
                         />
                     </div>
+
+                    {/* Gender — search immediately */}
                     <div className="grid gap-2">
-                        <Label htmlFor="patient_gender" required={true}>
-                            Patient Gender
-                        </Label>
+                        <Label htmlFor="patient_gender" required={true}>Patient Gender</Label>
                         <div className="flex flex-row space-x-4">
-                            <Label htmlFor="patient_gender_m">
-                                <RadioInput
-                                    id="patient_gender_m"
-                                    type="radio"
-                                    name="patient_gender"
-                                    required
-                                    autoFocus
-                                    tabIndex={4}
-                                    autoComplete="false"
-                                    value={'m'}
-                                    className="mr-2"
-                                    checked={patientGender === 'm'}
-                                    onChange={(e) =>
-                                        setPatientGender(e.target.value)
-                                    }
-                                />
-                                Male
-                            </Label>
-                            <Label htmlFor="patient_gender_f">
-                                <RadioInput
-                                    id="patient_gender_f"
-                                    type="radio"
-                                    name="patient_gender"
-                                    required
-                                    autoFocus
-                                    tabIndex={4}
-                                    autoComplete="false"
-                                    value={'f'}
-                                    className="mr-2"
-                                    checked={patientGender === 'f'}
-                                    onChange={(e) =>
-                                        setPatientGender(e.target.value)
-                                    }
-                                />
-                                Female
-                            </Label>
-                            <Label htmlFor="patient_gender_t">
-                                <RadioInput
-                                    id="patient_gender_t"
-                                    type="radio"
-                                    name="patient_gender"
-                                    required
-                                    autoFocus
-                                    tabIndex={4}
-                                    autoComplete="false"
-                                    value={'t'}
-                                    className="mr-2"
-                                    checked={patientGender === 't'}
-                                    onChange={(e) =>
-                                        setPatientGender(e.target.value)
-                                    }
-                                />
-                                Transgender
-                            </Label>
+                            {(['m', 'f', 't'] as const).map((val, _, arr) => {
+                                const labels = { m: 'Male', f: 'Female', t: 'Transgender' };
+                                return (
+                                    <Label key={val} htmlFor={`patient_gender_${val}`}>
+                                        <RadioInput
+                                            id={`patient_gender_${val}`}
+                                            type="radio"
+                                            name="patient_gender"
+                                            tabIndex={8}
+                                            autoComplete="false"
+                                            value={val}
+                                            className="mr-2"
+                                            checked={formData.gender === val}
+                                            onChange={(e) => onGenderChange(e.target.value)}
+                                        />
+                                        {labels[val]}
+                                    </Label>
+                                );
+                            })}
                         </div>
-                        {/* <InputError message={errors.email} /> */}
                     </div>
-                    <Suspense
-                        fallback={
-                            <div className="text-xs text-gray-400">
-                                Loading policy…
-                            </div>
-                        }
-                    >
+
+                    <Suspense fallback={<div className="text-xs text-gray-400">Loading policy…</div>}>
                         <CreatePatientPolicy className="text-xs text-gray-500" />
                     </Suspense>
                 </div>
             </div>
+
+            {/* ── Right column: results ── */}
             <div className="flex flex-col space-y-4 p-4 pr-8">
                 <div className="flex w-full flex-col space-y-4">
-                    {exactMatch.length > 0 && (
-                        <>
-                            <h3>Exact Match found</h3>
 
-                            {exactMatch.map((p) => (
+                    {/* Loading indicator */}
+                    {isLoading && (
+                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <Spinner className="size-4" />
+                            <span>Searching patients…</span>
+                        </div>
+                    )}
+
+                    {!isLoading && exactMatch.length > 0 && (
+                        <>
+                            <h3>Exact Match</h3>
+                            {exactMatch.map((p: any) => (
                                 <PatientMiniCard
+                                    key={p.id}
                                     patient={p}
-                                    tempAge={patientAge}
-                                    tempGender={patientGender}
-                                    tempContact={patientContact}
-                                    tempCnic={patientCnic}
+                                    tempAge={formData.age}
+                                    tempGender={formData.gender}
+                                    tempContact={formData.contact}
+                                    tempCnic={formData.cnic}
                                     className="w-full"
-                                    link={
-                                        counterSelectDepartment({
-                                            pYear: p.year,
-                                            pMonth: p.month,
-                                            number: p.number,
-                                        }).url
-                                    }
+                                    link={counterSelectDepartment({ pYear: p.year, pMonth: p.month, number: p.number }).url}
                                 />
                             ))}
                         </>
                     )}
 
-                    {patients.length > 0 && (
+                    {!isLoading && patients.length > 0 && (
                         <>
                             <h3>Possible Matches</h3>
-
-                            {patients.map((p, i) => (
+                            {patients.map((p: any) => (
                                 <PatientMiniCard
+                                    key={p.id}
                                     patient={p}
-                                    tempAge={patientAge}
-                                    tempGender={patientGender}
-                                    tempContact={patientContact}
-                                    tempCnic={patientCnic}
+                                    tempAge={formData.age}
+                                    tempGender={formData.gender}
+                                    tempContact={formData.contact}
+                                    tempCnic={formData.cnic}
                                     className="w-full"
-                                    link={
-                                        counterSelectDepartment({
-                                            pYear: p.year,
-                                            pMonth: p.month,
-                                            number: p.number,
-                                        }).url
-                                    }
+                                    link={counterSelectDepartment({ pYear: p.year, pMonth: p.month, number: p.number }).url}
                                 />
                             ))}
                         </>
                     )}
 
-                    {patientName &&
-                        patientContact &&
-                        patientAge &&
-                        patientGender && (
-                            <div className="flex cursor-default flex-col space-y-4 rounded-xl bg-[#1c398e] p-2 hover:bg-[#06df72] dark:bg-[#0a0a0a] dark:bg-[#262626]">
-                                <PatientMiniCard
-                                    patient={{
-                                        name: patientName,
-                                        gender: patientGender,
-                                        ps_number: psInput,
-                                        contact: patientContact,
-                                        cnic: patientCnic,
-                                        age: patientAge,
-                                    }}
-                                    className="w-full"
-                                />
-                                <div className="items-right justify-end">
-                                    <Button
-                                        onClick={() => createPatientInApi()}
-                                    >
+                    {formData.name && (
+                        <div className="flex cursor-default flex-col space-y-4 rounded-xl bg-[#1c398e] p-2 hover:bg-[#06df72] dark:bg-[#0a0a0a] dark:bg-[#262626]">
+                            <PatientMiniCard
+                                patient={{
+                                    name: formData.name,
+                                    gender: formData.gender,
+                                    ps_number: psInput,
+                                    contact: formData.contact,
+                                    cnic: formData.cnic,
+                                    age: formData.age,
+                                }}
+                                className="w-full"
+                            />
+                            <div className="items-right justify-end">
+                                {!(formData.age && formData.gender) ? (
+                                    <Button disabled title="Age and gender are required to create a patient">
+                                        <span>Age &amp; gender required</span>
+                                    </Button>
+                                ) : (
+                                    <Button onClick={handleCreatePatient} disabled={creating}>
+                                        {creating && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                                         <span>Create New Patient</span>
                                     </Button>
-                                </div>
+                                )}
                             </div>
-                        )}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

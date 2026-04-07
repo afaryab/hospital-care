@@ -14,6 +14,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Filament\Support\Icons\Heroicon;
 
 class UserResource extends Resource
 {
@@ -21,7 +22,7 @@ class UserResource extends Resource
 
     protected static ?int $navigationSort = 1;
 
-    protected static string|BackedEnum|null $navigationIcon = 'healthicons-f-i-groups-perspective-crowd';
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
     public static function form(Schema $schema): Schema
     {

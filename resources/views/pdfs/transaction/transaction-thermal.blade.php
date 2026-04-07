@@ -193,6 +193,15 @@
         <!-- Header -->
         <div class="header">
             <h1>{{ $hospital_info['name'] }}</h1>
+            @if(!empty($hospital_info['address']))
+                <p>{{ $hospital_info['address'] }}</p>
+            @endif
+            @if(!empty($hospital_info['ntn']) || !empty($hospital_info['strn']))
+                <p>
+                    @if(!empty($hospital_info['ntn'])) NTN: {{ $hospital_info['ntn'] }} @endif
+                    @if(!empty($hospital_info['strn'])) | STRN: {{ $hospital_info['strn'] }} @endif
+                </p>
+            @endif
             <h2>Transaction Receipt: {{ $transaction->tr_number }}</h2>
         </div>
         <div class="header">
@@ -321,6 +330,12 @@
         <div class="footer">
             <p>Thank you for choosing {{ $hospital_info['name'] }}</p>    
             <p>Phone: {{ $hospital_info['phone'] }} | Email: {{ $hospital_info['email'] }}</p>
+            @if(!empty($hospital_info['ntn']) || !empty($hospital_info['strn']))
+                <p>
+                    @if(!empty($hospital_info['ntn'])) NTN: {{ $hospital_info['ntn'] }} @endif
+                    @if(!empty($hospital_info['strn'])) | STRN: {{ $hospital_info['strn'] }} @endif
+                </p>
+            @endif
             <p>Generated on {{ $generated_at->format('d/m/Y H:i:s') }}</p>
             <p>This is a computer-generated receipt and does not require a signature</p>
         </div>

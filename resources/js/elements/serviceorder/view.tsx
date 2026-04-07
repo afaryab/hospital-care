@@ -3,6 +3,7 @@ import { Checkbox as UICheckbox } from '@/components/ui/checkbox';
 import { Input as UIInput } from '@/components/ui/input';
 import { Label as UILabel } from '@/components/ui/label';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 const uid = () => `${Date.now()}_${Math.random().toString(16).slice(2)}`;
 
@@ -356,7 +357,7 @@ export default function EmergencyClinicalPerforma({
 
     const onPrint = () => {
         const id = serviceOrder?.id;
-        if (!id) return alert('Missing Service Order ID');
+        if (!id) { toast.error('Missing Service Order ID'); return; }
         const url = `/PRINT/SO/${id}`;
         window.open(url, '_blank', 'noopener,noreferrer');
     };

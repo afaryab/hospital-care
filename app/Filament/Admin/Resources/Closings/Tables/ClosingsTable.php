@@ -7,7 +7,6 @@ use App\Models\Closing;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -79,20 +78,31 @@ class ClosingsTable
             ->modifyQueryUsing(function (Builder $query) {
                 $query->orderByRaw("FIELD(status, 'CLOSED', 'OPEN', 'REPORTED')");
             })
-            ->groups([
-                Group::make('status')
-                    ->label('Status'),
+            ->filters([
+                SelectFilter::make('reception_id')
+                    ->label('Reception')
+                    ->relationship('reception', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All Receptions')
+                    ->columnSpanFull(),
+                SelectFilter::make('receptionist_id')
+                    ->label('Receptionist')
+                    ->relationship('receptionist', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All Receptionists')
+                    ->columnSpanFull(),
             ])
-            ->defaultGroup('status')
             ->filters([
                 SelectFilter::make('status')
                     ->label('Status')
-                    ->options(collect(CounterStatus::cases())
-                        ->mapWithKeys(fn (CounterStatus $status) => [$status->name => ucfirst(strtolower($status->name))])
-                        ->toArray()
-                    )
-                    ->placeholder('All Statuses')
-                    ->default(null)
+                    ->options([
+                        'CLOSED' => 'Closed (' . Closing::query()->where('status', 'CLOSED')->count() . ')',
+                        'OPEN' => 'Open (' . Closing::query()->where('status', 'OPEN')->count() . ')',
+                        'REPORTED' => 'Received (' . Closing::query()->where('status', 'REPORTED')->count() . ')',
+                    ])
+                    ->default('CLOSED')
                     ->columnSpanFull(),
                 SelectFilter::make('reception_id')
                     ->label('Reception')
@@ -111,7 +121,6 @@ class ClosingsTable
             ])
             ->recordActions([
                 ViewAction::make(),
-                EditAction::make(),
                 Action::make('report')
                     ->label('Report & Receive')
                     ->icon('heroicon-m-banknotes')

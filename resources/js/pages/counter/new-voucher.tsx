@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/api-fetch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -363,16 +364,9 @@ function VoucherDetailsForm({
                 };
                 if (filterClosingId)
                     body.closing_id = parseInt(filterClosingId, 10);
-                const response = await fetch(
+                const response = await apiFetch(
                     '/api/service-orders/completed-unpaid',
-                    {
-                        method: 'POST',
-                        headers: {
-                            Accept: 'application/json',
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(body),
-                    },
+                    { method: 'POST', body: JSON.stringify(body) },
                 );
                 if (!response.ok) throw new Error('Failed to fetch');
                 const data = await response.json();

@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Service;
-use App\Models\ServiceDepartment;
 
 test('service can be created with factory', function () {
     $service = Service::factory()->create();
@@ -33,4 +32,12 @@ test('service casts service_provider_types to json', function () {
     $service = Service::factory()->create(['service_provider_types' => $types]);
 
     expect($service->service_provider_types)->toBe($types);
+});
+
+test('service can store a health icon name', function () {
+    $service = Service::factory()->create([
+        'icon' => 'o-doctor-male',
+    ]);
+
+    expect($service->icon)->toBe('o-doctor-male');
 });

@@ -616,7 +616,7 @@ class WebController extends Controller
                     // Create receaveable for the remaining amount
                     $receaveableAmount = abs($validatedData['change_amount']);
 
-                    \App\Models\Receaveable::create([
+                    Receaveable::create([
                         'patient_id' => $validatedData['patient_id'],
                         'transaction_id' => $transaction->id,
                         'amount' => $receaveableAmount,
@@ -686,6 +686,7 @@ class WebController extends Controller
                 'income_or_expense' => 'INCOME',
                 'amount' => $validatedData['amount_to_collect'],
                 'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
+                'receaveable_id' => $receaveable->id,
             ]);
 
             $newTransactionElement = TransactionElement::create([
@@ -826,7 +827,7 @@ class WebController extends Controller
             return redirect(route('counter-open'));
         }
 
-        $receaveables = \App\Models\Receaveable::with('patient', 'transaction')->where('status', 'unpaid')->paginate();
+        $receaveables = Receaveable::with('patient', 'transaction')->where('status', 'unpaid')->paginate();
 
         return Inertia::render('counter/receaveables', [
             'openCounter' => $openCounter,
@@ -909,11 +910,14 @@ class WebController extends Controller
         //         'payed_to_other' => $payedToOtherInUrl,
         //     ]);
 
-        $expenseCategories = ExpenseCategory::whereNotIn('name', ['Outdoor Doctors Payments'])->get();
+        $expenseCategories = ExpenseCategory::query()
+            ->where('allow_petty_cash', true)
+            ->whereNotIn('name', ['Outdoor Doctors Payments'])
+            ->get();
 
         return Inertia::render('counter/expense', [
             'openCounter' => $openCounter,
-            'users' => \App\Models\User::all(),
+            'users' => User::all(),
             'categories' => $expenseCategories,
             'selected' => [
                 'type' => $paymentTypeInUrl,
@@ -923,6 +927,83 @@ class WebController extends Controller
                 'transaction' => $trnsaction,
                 'payed_to_other' => $payedToOtherInUrl,
                 'voucher' => $voucher,
+            ],
+        ]);
+    }
+
+    public function serviceOrdersOverview(Request $request)
+    {
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string', 'max:50'],
+            'service_order_id' => ['nullable', 'integer', 'exists:service_orders,id'],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $serviceOrdersQuery = ServiceOrder::query()
+            ->with([
+                'patient:id,name,ps_number',
+                'service:id,name,icon',
+                'doctor:id,name',
+            ])
+            ->withSum(['transactionElements as income_total' => function ($query) {
+                $query->where('income_or_expense', 'INCOME');
+            }], 'amount')
+            ->withSum(['transactionElements as expense_total' => function ($query) {
+                $query->where('income_or_expense', 'EXPENSE');
+            }], 'amount')
+            ->withSum('expenseVouchers as voucher_expense_total', 'amount')
+            ->latest('id');
+
+        if (! empty($filters['search'])) {
+            $search = $filters['search'];
+            $serviceOrdersQuery->where(function ($query) use ($search) {
+                $query->where('so_number', 'like', "%{$search}%")
+                    ->orWhereHas('patient', fn ($patientQuery) => $patientQuery->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('service', fn ($serviceQuery) => $serviceQuery->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('doctor', fn ($doctorQuery) => $doctorQuery->where('name', 'like', "%{$search}%"));
+            });
+        }
+
+        if (! empty($filters['status'])) {
+            $serviceOrdersQuery->where('status', $filters['status']);
+        }
+
+        $serviceOrders = $serviceOrdersQuery
+            ->paginate(20)
+            ->withQueryString();
+
+        $selectedServiceOrder = null;
+        if (! empty($filters['service_order_id'])) {
+            $selectedServiceOrder = ServiceOrder::query()
+                ->with([
+                    'patient:id,name,ps_number,contact,cnic',
+                    'service:id,name,icon',
+                    'doctor:id,name',
+                    'transactionElements.transaction:id,tr_number,created_at',
+                    'transactionElements.expenseCategory:id,name',
+                    'expenseVouchers:id,vc_number,exp_category_id,amount,payed_to,payed_to_name,created_at',
+                    'expenseVouchers.expCategory:id,name',
+                    'treatmentRecord:id,service_order_id,diagnosis_text,treatment_plan,outcome,treated_at,is_finalized',
+                    'treatmentRecord.treatingDoctor:id,name',
+                    'treatmentRecord.vitalSigns:id,treatment_record_id,temperature,blood_pressure_systolic,blood_pressure_diastolic,pulse_rate,respiratory_rate,oxygen_saturation,recorded_at',
+                ])
+                ->withSum(['transactionElements as income_total' => function ($query) {
+                    $query->where('income_or_expense', 'INCOME');
+                }], 'amount')
+                ->withSum(['transactionElements as expense_total' => function ($query) {
+                    $query->where('income_or_expense', 'EXPENSE');
+                }], 'amount')
+                ->withSum('expenseVouchers as voucher_expense_total', 'amount')
+                ->find($filters['service_order_id']);
+        }
+
+        return Inertia::render('service-orders/index', [
+            'serviceOrders' => $serviceOrders,
+            'selectedServiceOrder' => $selectedServiceOrder,
+            'filters' => [
+                'search' => $filters['search'] ?? '',
+                'status' => $filters['status'] ?? '',
             ],
         ]);
     }
@@ -1240,7 +1321,11 @@ class WebController extends Controller
     public function newVoucher()
     {
 
-        $expenseCategories = ExpenseCategory::where('pay_doc', true)->get();
+        $expenseCategories = ExpenseCategory::query()
+            ->where('allow_voucher', true)
+            ->where('pay_doc', false)
+            ->where('pay_users', false)
+            ->get();
 
         $users = User::where(function ($query) {
             $query->whereHas('opdDoctorProfiles')
@@ -1251,6 +1336,52 @@ class WebController extends Controller
         })->get();
 
         return Inertia::render('counter/new-voucher', [
+            'categories' => $expenseCategories,
+            'users' => $users,
+
+        ]);
+    }
+
+    public function newVoucherForDoctor()
+    {
+
+        $expenseCategories = ExpenseCategory::query()
+            ->where('allow_voucher', true)
+            ->where('pay_doc', true)
+            ->get();
+
+        $users = User::where(function ($query) {
+            $query->whereHas('opdDoctorProfiles')
+                ->orWhereHas('indDoctorProfiles')
+                ->orWhereHas('emergencyDoctorProfiles')
+                ->orWhereHas('dentistProfiles')
+                ->orWhereHas('ultrasoundDoctorProfiles');
+        })->get();
+
+        return Inertia::render('counter/new-doctor-voucher', [
+            'categories' => $expenseCategories,
+            'users' => $users,
+
+        ]);
+    }
+
+    public function newVoucherForUser()
+    {
+
+        $expenseCategories = ExpenseCategory::query()
+            ->where('allow_voucher', true)
+            ->where('pay_users', true)
+            ->get();
+
+        $users = User::where(function ($query) {
+            $query->whereHas('opdDoctorProfiles')
+                ->orWhereHas('indDoctorProfiles')
+                ->orWhereHas('emergencyDoctorProfiles')
+                ->orWhereHas('dentistProfiles')
+                ->orWhereHas('ultrasoundDoctorProfiles');
+        })->get();
+
+        return Inertia::render('counter/new-user-voucher', [
             'categories' => $expenseCategories,
             'users' => $users,
 
@@ -1270,6 +1401,12 @@ class WebController extends Controller
 
         $category = ExpenseCategory::findOrFail($validated['exp_category_id']);
         $serviceOrderIds = $validated['service_order_ids'] ?? [];
+
+        if (! $category->allow_voucher) {
+            return back()->withErrors([
+                'exp_category_id' => 'The selected expense category is not allowed for voucher payments.',
+            ]);
+        }
 
         if ($category->pay_doc && ! $category->pay_others && ! $category->pay_users && empty($serviceOrderIds)) {
             return back()->withErrors([

@@ -57,10 +57,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('TR', [WebController::class, 'transactionView'])->name('transaction-search');
     Route::get('TR/{tYear}/{tMonth}/{tDay}/{tNumber}', [WebController::class, 'transactionView'])->name('transaction-view');
 
+    Route::get('service-orders', [WebController::class, 'serviceOrdersOverview'])->name('service-orders-overview');
+
     Route::get('RECEAVEABLES', [WebController::class, 'receaveables'])->name('receaveables');
 
     Route::get('CT-EXP', [WebController::class, 'counterExpense'])->name('counter-expense');
     Route::get('CT-EXP-VOUCHER', [WebController::class, 'vouchersList'])->name('counter-expense-vouchers-list');
+    Route::get('CT-USER-EXP-VOUCHER/NEW', [WebController::class, 'newVoucherForUser'])->name('counter-expense-new-user-voucher');
+    Route::get('CT-DOCTOR-EXP-VOUCHER/NEW', [WebController::class, 'newVoucherForDoctor'])->name('counter-expense-new-doctor-voucher');
     Route::get('CT-EXP-VOUCHER/NEW', [WebController::class, 'newVoucher'])->name('counter-expense-new-voucher');
     Route::post('CT-EXP-VOUCHER/NEW', [WebController::class, 'storeVoucher'])->name('counter-expense-store-voucher');
 

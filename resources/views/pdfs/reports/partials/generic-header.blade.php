@@ -1,5 +1,11 @@
 {{-- Generic report header partial (not per-closing) --}}
 {{-- Variables: $report_title, $report_color, $from, $until, $generated_at, $filters (optional) --}}
+@php
+    $hospitalName = \App\Models\HospitalSetting::get('hospital_name', config('app.name'));
+    $hospitalAddress = \App\Models\HospitalSetting::get('hospital_address');
+    $hospitalNtn = \App\Models\HospitalSetting::get('hospital_ntn');
+    $hospitalStrn = \App\Models\HospitalSetting::get('hospital_strn');
+@endphp
 <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { color: #1f2937; font-family: Helvetica, Arial, sans-serif; font-size: 11px; line-height: 1.5; }
@@ -49,8 +55,8 @@
 <div class="page">
     <div class="report-header">
         <div class="report-header-left">
-            <div class="company-name">{{ config('app.name') }}</div>
-            <div class="company-sub">Hospital Management System</div>
+            <div class="company-name">{{ $hospitalName }}</div>
+            <div class="company-sub">{{ $hospitalAddress ?: 'Hospital Management System' }}</div>
         </div>
         <div class="report-header-right">
             <div class="report-title">{{ $report_title }}</div>
@@ -67,6 +73,16 @@
             <div class="info-cell">
                 <span class="info-label">Generated</span><br>
                 <span class="info-value">{{ $generated_at->format('d M Y, H:i') }}</span>
+            </div>
+        </div>
+        <div class="info-grid-row">
+            <div class="info-cell">
+                <span class="info-label">NTN</span><br>
+                <span class="info-value">{{ $hospitalNtn ?: '-' }}</span>
+            </div>
+            <div class="info-cell">
+                <span class="info-label">STRN</span><br>
+                <span class="info-value">{{ $hospitalStrn ?: '-' }}</span>
             </div>
         </div>
     </div>

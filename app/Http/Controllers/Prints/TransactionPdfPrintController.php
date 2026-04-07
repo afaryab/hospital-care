@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Prints;
 
 use App\Http\Controllers\Controller;
+use App\Models\HospitalSetting;
 use App\Models\Transaction;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -48,10 +49,12 @@ class TransactionPdfPrintController extends Controller
             'variant' => $variant,
             'generated_at' => Carbon::now(),
             'hospital_info' => [
-                'name' => config('app.name', 'Hospital Management System'),
-                'address' => config('hospital.address', 'Hospital Address'),
-                'phone' => config('hospital.phone', '+1-234-567-8900'),
-                'email' => config('hospital.email', 'info@hospital.com'),
+                'name' => HospitalSetting::get('hospital_name', config('app.name', 'Hospital Management System')),
+                'address' => HospitalSetting::get('hospital_address', config('hospital.address', 'Hospital Address')),
+                'phone' => HospitalSetting::get('hospital_phone', config('hospital.phone', '+1-234-567-8900')),
+                'email' => HospitalSetting::get('hospital_email', config('hospital.email', 'info@hospital.com')),
+                'ntn' => HospitalSetting::get('hospital_ntn'),
+                'strn' => HospitalSetting::get('hospital_strn'),
             ],
         ];
         // Select the appropriate view based on variant
@@ -148,10 +151,12 @@ class TransactionPdfPrintController extends Controller
             'variant' => $variant,
             'generated_at' => Carbon::now(),
             'hospital_info' => [
-                'name' => config('app.name', 'Hospital Management System'),
-                'address' => config('hospital.address', 'Hospital Address'),
-                'phone' => config('hospital.phone', '+1-234-567-8900'),
-                'email' => config('hospital.email', 'info@hospital.com'),
+                'name' => HospitalSetting::get('hospital_name', config('app.name', 'Hospital Management System')),
+                'address' => HospitalSetting::get('hospital_address', config('hospital.address', 'Hospital Address')),
+                'phone' => HospitalSetting::get('hospital_phone', config('hospital.phone', '+1-234-567-8900')),
+                'email' => HospitalSetting::get('hospital_email', config('hospital.email', 'info@hospital.com')),
+                'ntn' => HospitalSetting::get('hospital_ntn'),
+                'strn' => HospitalSetting::get('hospital_strn'),
             ],
         ];
 

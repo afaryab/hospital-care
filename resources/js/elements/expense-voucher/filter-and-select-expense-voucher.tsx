@@ -1,3 +1,4 @@
+import { apiFetch } from '@/lib/api-fetch';
 import { useEffect, useMemo, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -129,12 +130,8 @@ export default function FilterAndSelectExpenseVoucher({
         }
 
         try {
-            const response = await fetch('/api/expense-vouchers/search', {
+            const response = await apiFetch('/api/expense-vouchers/search', {
                 method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify(payload),
             });
 

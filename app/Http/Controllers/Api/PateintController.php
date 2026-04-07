@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Patient;
+use App\Models\ServiceOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 
 class PateintController extends Controller
 {
@@ -15,70 +18,176 @@ class PateintController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Patient::query()->orderBy('created_at', 'DESC')->where('id', '!=', null);
+            $query = Patient::query()->latest('created_at');
 
-            $exactMatches = [];
+            $exactMatches = collect();
 
-            // Check if the request have MR Number
+            // MR Number — DB-level prefix search on ps_number
             $mrNumber = $request->get('mr_number', false);
 
             if ($mrNumber) {
                 if (Str::length($mrNumber) === 17) {
-                    $exactMatches[] = Patient::where(['ps_number' => $mrNumber])->first();
+                    $exactPatient = Patient::where('ps_number', $mrNumber)->first();
+
+                    if ($exactPatient) {
+                        $exactMatches->push($exactPatient);
+                    }
                 }
 
                 $query->where('ps_number', 'LIKE', "{$mrNumber}%");
             }
 
+            // CNIC — hash lookup first; decrypt-scan fallback for legacy rows without hash
             $cnicNumber = $request->get('cnic_number', false);
 
-            if ($cnicNumber) {
-                if (Str::length($cnicNumber) === 15) {
-                    $exactMatches[] = Patient::where(['cnic' => $cnicNumber])->first();
+            if ($cnicNumber && Str::length($cnicNumber) === 15) {
+                $normalizedCnic = strtoupper(trim((string) $cnicNumber));
+                $cnicHash = hash('sha256', $normalizedCnic);
+
+                $cnicMatches = Patient::where('cnic_hash', $cnicHash)->get();
+
+                // Fallback: scan patients that have cnic but no hash yet (legacy data)
+                if ($cnicMatches->isEmpty()) {
+                    $legacyMatch = Patient::whereNotNull('cnic')
+                        ->where('cnic', '!=', '')
+                        ->whereNull('cnic_hash')
+                        ->select(['id', 'cnic'])
+                        ->get()
+                        ->first(fn (Patient $p): bool => strtoupper(trim((string) $p->cnic)) === $normalizedCnic);
+
+                    // Opportunistically backfill the hash so next search is fast
+                    if ($legacyMatch) {
+                        Patient::where('id', $legacyMatch->id)->update(['cnic_hash' => $cnicHash]);
+                        $cnicMatches = collect([$legacyMatch->fresh()]);
+                    }
                 }
 
-                $query->where('cnic', 'LIKE', "{$cnicNumber}%");
+                if ($cnicMatches->isNotEmpty()) {
+                    foreach ($cnicMatches as $p) {
+                        if (! $exactMatches->contains('id', $p->id)) {
+                            $exactMatches->push($p);
+                        }
+                    }
+                    $query->whereIn('id', $cnicMatches->pluck('id')->all());
+                } else {
+                    $query->whereIn('id', [0]);
+                }
             }
 
+            // Name — DB-level LIKE search
             $patientName = $request->get('patient_name', false);
 
             if ($patientName) {
-                $query->where(function ($query) use ($patientName) {
-                    $query->where('name', 'LIKE', "{$patientName}%")
-                        ->orWhere('name', 'LIKE', "%{$patientName}%")
-                        ->orWhere('name', 'LIKE', "%{$patientName}");
-                });
+                $query->where('name', 'LIKE', "%{$patientName}%");
             }
 
+            // Contact — hash lookup first; decrypt-scan fallback for legacy rows without hash
+            // Multiple patients can share the same contact (family members), so collect all matches
             $patientContact = $request->get('patient_contact', false);
 
             if ($patientContact) {
-                $query->orWhere('contact', 'LIKE', "{$patientContact}%");
+                $normalizedContact = preg_replace('/\D+/', '', (string) $patientContact) ?: '';
+
+                if ($normalizedContact !== '') {
+                    $contactHash = hash('sha256', $normalizedContact);
+                    $contactMatches = Patient::where('contact_hash', $contactHash)->get();
+
+                    // Fallback: scan patients without contact_hash (legacy data)
+                    if ($contactMatches->isEmpty()) {
+                        $legacyMatch = Patient::whereNotNull('contact')
+                            ->where('contact', '!=', '')
+                            ->whereNull('contact_hash')
+                            ->select(['id', 'contact'])
+                            ->get()
+                            ->first(function (Patient $p) use ($normalizedContact): bool {
+                                $digits = preg_replace('/\D+/', '', (string) $p->contact) ?: '';
+
+                                return $digits === $normalizedContact;
+                            });
+
+                        if ($legacyMatch) {
+                            Patient::where('id', $legacyMatch->id)->update(['contact_hash' => $contactHash]);
+                            $contactMatches = collect([$legacyMatch->fresh()]);
+                        }
+                    }
+
+                    if ($contactMatches->isNotEmpty()) {
+                        foreach ($contactMatches as $p) {
+                            if (! $exactMatches->contains('id', $p->id)) {
+                                $exactMatches->push($p);
+                            }
+                        }
+                        $query->whereIn('id', $contactMatches->pluck('id')->all());
+                    } else {
+                        $query->whereIn('id', [0]);
+                    }
+                }
             }
 
+            // Gender — DB-level exact match
             $patientGender = $request->get('patient_gender', false);
 
             if ($patientGender) {
-                $query->orWhere('gender', $patientGender);
+                $query->where('gender', $patientGender);
             }
 
-            if (count($exactMatches) > 0) {
-                $query->whereNotIn('id', array_map(function ($item) {
-                    return $item;
-                }, collect($exactMatches)->pluck('id')->toArray()));
+            // MRI Number — search so_number in service_orders, return associated patient
+            $mriNumber = $request->get('mri_number', false);
+
+            if ($mriNumber) {
+                $serviceOrders = ServiceOrder::where('so_number', 'LIKE', "{$mriNumber}%")
+                    ->with('patient')
+                    ->limit(5)
+                    ->get();
+
+                foreach ($serviceOrders as $so) {
+                    if ($so->patient && ! $exactMatches->contains('id', $so->patient->id)) {
+                        $exactMatches->push($so->patient);
+                    }
+                }
             }
 
-            return response()->json([
-                'data' => [
-                    'exact' => $exactMatches,
-                    'possible' => $query->limit(7)->get(),
-                ],
-            ]);
+            // FILE Number — search so_short in service_orders, return associated patient
+            $fileNumber = $request->get('file_number', false);
+
+            if ($fileNumber) {
+                $serviceOrders = ServiceOrder::where('so_short', 'LIKE', "{$fileNumber}%")
+                    ->with('patient')
+                    ->limit(5)
+                    ->get();
+
+                foreach ($serviceOrders as $so) {
+                    if ($so->patient && ! $exactMatches->contains('id', $so->patient->id)) {
+                        $exactMatches->push($so->patient);
+                    }
+                }
+            }
+
+            if ($exactMatches->isNotEmpty()) {
+                $query->whereNotIn('id', $exactMatches->pluck('id')->all());
+            }
+
+            $data = [
+                'exact' => $exactMatches->values(),
+                'possible' => $query->limit(7)->get(),
+            ];
+
+            if ($request->wantsJson()) {
+                return response()->json(['data' => $data]);
+            }
+
+            return Inertia::render('patient', ['patients' => $data]);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while fetching patients.',
-                'error' => $e->getMessage(),
-            ], 500);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'An error occurred while fetching patients.',
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine(),
+                ], 500);
+            }
+
+            return back()->withErrors(['error' => 'An error occurred while fetching patients.']);
         }
     }
 
@@ -125,24 +234,35 @@ class PateintController extends Controller
                     $selectedPatient = $duplicates->firstWhere('id', $selectedPatientId);
 
                     if ($selectedPatient) {
-                        return response()->json([
-                            'message' => 'Existing patient selected',
-                            'warning' => true,
-                            'used_existing' => true,
-                            'data' => $selectedPatient,
-                        ]);
+                        if ($request->wantsJson()) {
+                            return response()->json([
+                                'message' => 'Existing patient selected',
+                                'warning' => true,
+                                'used_existing' => true,
+                                'data' => $selectedPatient,
+                            ]);
+                        }
+
+                        return redirect()->route('patients-register-ps-number', $selectedPatient->ps_number_parts);
                     }
                 }
 
-                return response()->json([
-                    'message' => 'Possible duplicate patient found',
-                    'warning' => true,
-                    'can_proceed' => true,
-                    'data' => [
-                        'exact' => $duplicates->take(3)->values(),
-                        'possible' => $duplicates->values(),
-                    ],
-                ], 409);
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'message' => 'Possible duplicate patient found',
+                        'warning' => true,
+                        'can_proceed' => true,
+                        'data' => [
+                            'exact' => $duplicates->take(3)->values(),
+                            'possible' => $duplicates->values(),
+                        ],
+                    ], 409);
+                }
+
+                return back()->with([
+                    'warning' => 'Possible duplicate patient found.',
+                    'duplicates' => $duplicates->values(),
+                ]);
             }
 
             if ($request->get('age', false)) {
@@ -153,25 +273,46 @@ class PateintController extends Controller
 
             unset($validated['force_create'], $validated['selected_patient_id']);
 
+            // Normalise nullable encrypted fields — empty string would cause a
+            // DecryptException on read because '' is not a valid encrypted payload.
+            foreach (['cnic', 'address', 'emergency_contact'] as $nullable) {
+                if (isset($validated[$nullable]) && $validated[$nullable] === '') {
+                    $validated[$nullable] = null;
+                }
+            }
+
             $patient = Patient::create([
                 ...$validated,
             ]);
 
-            return response()->json([
-                'message' => 'Patient created successfully',
-                'data' => $patient,
-            ], 201);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Patient created successfully',
+                    'data' => $patient,
+                ], 201);
+            }
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return redirect()->route('patients-register-ps-number', $patient->ps_number_parts);
+
+        } catch (ValidationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+
+            return back()->withErrors($e->errors())->withInput();
+
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An error occurred while creating the patient',
-                'error' => $e->getMessage(),
-            ], 500);
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => 'An error occurred while creating the patient',
+                    'error' => $e->getMessage(),
+                ], 500);
+            }
+
+            return back()->withErrors(['error' => 'An error occurred while creating the patient.'])->withInput();
         }
     }
 
@@ -189,23 +330,16 @@ class PateintController extends Controller
     public function update($id, Request $request)
     {
         $patient = Patient::findOrFail($id);
-        // dd($request->all());
 
         $data = $request->validate([
-            // 'cnic' => 'nullable|string|size:15|unique:patients,cnic,'.$patient->id,
             'contact' => 'required|string|max:20',
             'age' => 'required|integer|min:0',
-            // 'address' => 'nullable|string|max:500',
-            // 'emergency_contact' => 'nullable|string|max:20',
-            // 'blood_group' => 'nullable|string|max:5',
             'gender' => 'in:m,f,t',
         ]);
 
         $patient->contact = $data['contact'];
 
         $birthDate = now()->subYears(intval($request->get('age')));
-        // Get age in days
-
         $patient->age_days = $birthDate->diffInDays(now());
 
         if ($request->get('cnic', false)) {
@@ -230,17 +364,18 @@ class PateintController extends Controller
 
         $patient->save();
 
-        return response()->json([
-            'message' => 'Patient updated successfully',
-            'data' => $patient,
-        ], 200);
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Patient updated successfully',
+                'data' => $patient,
+            ]);
+        }
+
+        return redirect()->route('patients-register-ps-number', $patient->ps_number_parts);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Patient $patient)
-    {
-        //
-    }
+    public function destroy(Patient $patient): void {}
 }

@@ -27,7 +27,7 @@ class ServiceDepartmentResource extends Resource
 
     protected static string|UnitEnum|null $navigationGroup = 'Services';
 
-    protected static string|BackedEnum|null $navigationIcon = 'healthicons-o-ambulatory-clinic';
+    // protected static string|BackedEnum|null $navigationIcon = 'healthicons-f-hospital';
 
     public static function form(Schema $schema): Schema
     {

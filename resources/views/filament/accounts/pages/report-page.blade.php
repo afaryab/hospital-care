@@ -9,6 +9,26 @@
                         Apply Filters
                     </x-filament::button>
                 </div>
+                <div class="mt-3 flex flex-col gap-2">
+                    <x-filament::button
+                        wire:click="exportToExcel"
+                        size="sm"
+                        color="success"
+                        icon="heroicon-m-arrow-down-tray"
+                        class="w-full"
+                    >
+                        Export Excel
+                    </x-filament::button>
+                    <x-filament::button
+                        wire:click="exportToCsv"
+                        size="sm"
+                        color="gray"
+                        icon="heroicon-m-arrow-down-tray"
+                        class="w-full"
+                    >
+                        Export CSV
+                    </x-filament::button>
+                </div>
             </form>
         </div>
 
@@ -34,7 +54,7 @@
 
             <div class="mt-4">
                 @if($activeTab === 'general')
-                    {{ $this->table }}
+                    {{ ($accounts ?? $this->table) }}
                 @else
                     <div class="rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden" style="height: 80vh;">
                         <iframe
