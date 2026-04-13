@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -45,9 +46,9 @@ class Patient extends Model
     protected function casts(): array
     {
         return [
-            'cnic' => 'encrypted',
-            'contact' => 'encrypted',
-            'address' => 'encrypted',
+            'cnic' => SafeEncrypted::class,
+            'contact' => SafeEncrypted::class,
+            'address' => SafeEncrypted::class,
         ];
     }
 
