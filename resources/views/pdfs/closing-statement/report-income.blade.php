@@ -28,7 +28,10 @@
             @foreach($transactions['income'] as $transaction)
                 @foreach($transaction['elements'] as $element)
                     @php $counter++; @endphp
-                    <tr @if($transaction['has_receaveable']) style="background: #faf5ff;" @endif>
+                    <tr
+                        @if($transaction['has_receaveable']) style="background: #faf5ff;" @endif
+                        @if($transaction['is_refunded']) style="text-decoration: line-through; opacity: 0.55; background: #fef2f2;" @endif
+                    >
                         <td>{{ $counter }}</td>
                         <td>{{ $element['created_at']->format('H:i') }}</td>
                         <td>
@@ -50,6 +53,9 @@
                                 };
                             @endphp
                             <span class="badge {{ $badgeClass }}">{{ $transaction['type'] }}</span>
+                            @if($transaction['is_refunded'])
+                                <span class="badge badge-red" style="margin-left: 2px;">REFUNDED</span>
+                            @endif
                         </td>
                         <td class="amount">{{ number_format($element['amount'], 2) }}</td>
                     </tr>

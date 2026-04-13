@@ -32,6 +32,7 @@ import {
     LucideChevronDown,
     LucideChevronUp,
     LucidePrinter,
+    LucideTriangleAlert,
     LucideX,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -396,6 +397,20 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                         'VOUCHER-PAY';
                                     const isRefunded =
                                         transaction.is_refunded == 1;
+                                    const isDiscount =
+                                        transaction.elements?.some(
+                                            (el: any) =>
+                                                el.expense_category?.type ===
+                                                'DISC',
+                                        );
+                                    const linkedTrNumber =
+                                        (isDiscount || transaction.elements?.some((el: any) => el.expense_category?.type === 'RFND'))
+                                            ? transaction.elements?.find(
+                                                  (el: any) =>
+                                                      el.refunded_transaction
+                                                          ?.tr_number,
+                                              )?.refunded_transaction?.tr_number ?? null
+                                            : null;
 
                                     return (
                                         <tr
@@ -404,6 +419,8 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                 'border-b transition-colors hover:bg-gray-50/80 dark:border-gray-600 dark:hover:bg-gray-800/50',
                                                 isRefunded &&
                                                     'line-through opacity-50',
+                                                isDiscount &&
+                                                    'bg-yellow-50/60 dark:bg-yellow-900/20',
                                             )}
                                         >
                                             {/* Row number with colored left border */}
@@ -413,9 +430,12 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                     isIncome &&
                                                         'border-l-green-500',
                                                     isExpense &&
+                                                        !isDiscount &&
                                                         'border-l-red-500',
                                                     isVoucherPay &&
                                                         'border-l-orange-500',
+                                                    isDiscount &&
+                                                        'border-l-yellow-500',
                                                 )}
                                             >
                                                 {openCounter.transactions
@@ -431,6 +451,22 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                     <span className="ml-1 rounded bg-red-100 px-1 text-[10px] font-semibold text-red-600">
                                                         REFUNDED
                                                     </span>
+                                                )}
+                                                {isDiscount && (
+                                                    <span className="ml-1.5 inline-flex items-center gap-0.5 rounded border border-yellow-400 bg-yellow-100 px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-yellow-800 dark:border-yellow-600 dark:bg-yellow-900/50 dark:text-yellow-300">
+                                                        <LucideTriangleAlert className="h-2.5 w-2.5" />
+                                                        DISCOUNTED
+                                                    </span>
+                                                )}
+                                                {linkedTrNumber && (
+                                                    <div className="mt-0.5">
+                                                        <span className="text-[10px] text-gray-400">
+                                                            {isDiscount ? 'For:' : 'Ref:'}
+                                                        </span>{' '}
+                                                        <span className="font-mono text-[10px] font-medium text-gray-600 dark:text-gray-300">
+                                                            {linkedTrNumber}
+                                                        </span>
+                                                    </div>
                                                 )}
                                             </td>
 
@@ -770,7 +806,10 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                             'text-green-700 dark:text-green-400',
                                                         (isExpense ||
                                                             isVoucherPay) &&
+                                                            !isDiscount &&
                                                             'text-red-600 dark:text-red-400',
+                                                        isDiscount &&
+                                                            'text-yellow-700 dark:text-yellow-400',
                                                     )}
                                                 >
                                                     {isIncome ? '+' : '-'}

@@ -229,7 +229,7 @@ class WebController extends Controller
 
         $ctNumber = 'CT/'.$ctYear.'/'.$ctMonth.'/'.$ctNumber;
 
-        $openCounter = Closing::with('transactions', 'transactions.receaveable', 'transactions.receaveable.patient', 'transactions.receaveable.panel', 'transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceRecestation', 'transactions.elements.serviceOrder', 'transactions.elements.expenseCategory', 'transactions.elements.expVoucher', 'transactions.elements.doctor')->where('ct_number', $ctNumber)->first();
+        $openCounter = Closing::with('transactions', 'transactions.receaveable', 'transactions.receaveable.patient', 'transactions.receaveable.panel', 'transactions.patient', 'transactions.elements', 'transactions.patient', 'transactions.elements.service', 'transactions.elements.serviceRecestation', 'transactions.elements.serviceOrder', 'transactions.elements.expenseCategory', 'transactions.elements.expVoucher', 'transactions.elements.doctor', 'transactions.elements.refundedTransaction')->where('ct_number', $ctNumber)->first();
 
         if (! $openCounter) {
             return redirect(route('counter-open'));
@@ -422,11 +422,13 @@ class WebController extends Controller
 
                 $expenseCategory = ExpenseCategory::find($expenseData['category_id']);
 
-                $isRefund = $expenseCategory->name == 'Refund';
+                $isRefund = $expenseCategory->type == 'RFND' || $expenseCategory->name == 'Refund';
+
+                $isDiscount = $expenseCategory->type == 'DISC' || $expenseCategory->name == 'Discount';
 
                 $isDoctorFilePayment = $expenseCategory->name == 'Inpatient Doctor Payment';
 
-                if ($isRefund && empty($expenseData['transaction_id'])) {
+                if (($isRefund || $isDiscount) && empty($expenseData['transaction_id'])) {
                     $array = $request->validate([
                         'transaction_id' => 'required|exists:transactions,id',
                     ]);
@@ -442,32 +444,13 @@ class WebController extends Controller
                     $expenseData['file_number'] = $array['file_number'];
                 }
 
-                if ($isRefund) {
+                if ($isRefund || $isDiscount) {
 
                     $refundedTransaction = Transaction::find($expenseData['transaction_id']);
 
                     if (! $refundedTransaction) {
                         $refundedTransaction = Transaction::where('tr_number', $expenseData['transaction_id'])->first();
                     }
-
-                    // $relatedServiceOrderId = TransactionElement::query()
-                    //     ->where('transaction_id', $refundedTransaction->id)
-                    //     ->whereNotNull('service_order_id')
-                    //     ->value('service_order_id');
-
-                    // if (! $relatedServiceOrderId) {
-                    //     return back()->withErrors(['transaction_id' => 'Refund is only allowed for transactions linked to an open service order.']);
-                    // }
-
-                    // $relatedServiceOrder = ServiceOrder::find($relatedServiceOrderId);
-
-                    // $isServiceOrderOpen = $relatedServiceOrder
-                    //     && in_array(strtolower((string) $relatedServiceOrder->status), ['open', 'in-progress'], true)
-                    //     && is_null($relatedServiceOrder->closed_at);
-
-                    // if (! $isServiceOrderOpen) {
-                    //     return back()->withErrors(['transaction_id' => 'Refund is not allowed because the related service order is closed.']);
-                    // }
                 }
 
                 if ($isDoctorFilePayment) {
@@ -506,14 +489,38 @@ class WebController extends Controller
                         'income_or_expense' => 'EXPENSE',
                         'expense_category_id' => $expenseData['category_id'] ?? null,
                         'amount' => $expenseData['amount'],
-                        'refunded_transaction_id' => $isRefund ? $refundedTransaction->id : null,
+                        'refunded_transaction_id' => ($isRefund || $isDiscount) ? ($refundedTransaction->id ?? null) : null,
                         'expense_service_order_id' => $isDoctorFilePayment ? $ServiceOrderExp->id : null,
                     ]);
 
                     if ($isRefund && $refundedTransaction) {
-
                         $refundedTransaction->is_refunded = 1;
                         $refundedTransaction->save();
+                    }
+
+                    // Adjust receivable when discounting or refunding a transaction that has an unpaid receivable
+                    if (($isRefund || $isDiscount) && ! empty($refundedTransaction)) {
+                        $refundedTransaction->load('receaveable');
+                        $receaveable = $refundedTransaction->receaveable;
+
+                        if ($receaveable && ! in_array($receaveable->status, ['PAID', 'cancelled'], true)) {
+                            $newAmount = max(0, $receaveable->amount - $expenseData['amount']);
+
+                            $receaveable->amount = $newAmount;
+
+                            if ($newAmount <= 0) {
+                                $hasPaymentTransactions = Transaction::where('receaveable_id', $receaveable->id)->exists();
+
+                                if ($hasPaymentTransactions) {
+                                    $receaveable->delete();
+                                } else {
+                                    $receaveable->status = 'cancelled';
+                                    $receaveable->save();
+                                }
+                            } else {
+                                $receaveable->save();
+                            }
+                        }
                     }
 
                 } catch (\Exception $e) {

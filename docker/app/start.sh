@@ -18,6 +18,12 @@ if [ -f "/var/www/html/artisan" ]; then
     php artisan optimize:clear 2>/dev/null || true
 fi
 
+if [ -f "/var/www/html/package.json" ]; then
+    echo "Running pnpm build..."
+    pnpm install 2>/dev/null || true
+    pnpm build 2>/dev/null || true
+fi
+
 # Create log directories for supervisor
 mkdir -p /var/log/supervisor
 

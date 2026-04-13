@@ -112,4 +112,9 @@ class TransactionElement extends Model
     {
         return $this->belongsTo(ExpenseVoucher::class, 'exp_voucher_id');
     }
+
+    public function refundedTransaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class, 'refunded_transaction_id');
+    }
 }

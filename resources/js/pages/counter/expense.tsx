@@ -222,6 +222,15 @@ export default function CounterExpense() {
                 `Refund for patient: ${transaction.patient.name}`,
             );
         }
+
+        if (
+            normalizeCategoryName(selectedExpenseCategory) === 'discount' &&
+            transaction?.patient?.name
+        ) {
+            setPettyCashDescription(
+                `Discount for patient: ${transaction.patient.name}`,
+            );
+        }
     };
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -426,9 +435,12 @@ export default function CounterExpense() {
                                                     </div>
                                                 ))}
                                     </div>
-                                    {normalizeCategoryName(
+                                    {(normalizeCategoryName(
                                         selectedExpenseCategory,
-                                    ) === 'refund' && (
+                                    ) === 'refund' ||
+                                        normalizeCategoryName(
+                                            selectedExpenseCategory,
+                                        ) === 'discount') && (
                                         <div className="w-full max-w-sm">
                                             <FilterAndSelectTransaction
                                                 value={pettyCashTransactionId}
@@ -439,7 +451,13 @@ export default function CounterExpense() {
                                                     handleRefundTransactionSelect
                                                 }
                                                 label="Transaction"
-                                                placeholder="Find refunded transaction"
+                                                placeholder={
+                                                    normalizeCategoryName(
+                                                        selectedExpenseCategory,
+                                                    ) === 'discount'
+                                                        ? 'Find discounted transaction'
+                                                        : 'Find refunded transaction'
+                                                }
                                             />
                                             {pettyCashErrors.length > 0 &&
                                                 pettyCashErrors

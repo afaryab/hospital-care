@@ -40,7 +40,7 @@ ENV SENTRY_RELEASE=${SENTRY_RELEASE} \
 # group that gets removed afterwards — keeps build tools out of the final image.
 RUN apk add --no-cache \
         bash curl git unzip zip \
-        libpng libxml2 oniguruma icu-libs freetype libjpeg-turbo libzip \
+        libpng libxml2 oniguruma icu-libs freetype libjpeg-turbo nodejs npm libzip \
         supervisor nginx apache2-utils dcron \
     && apk add --no-cache --virtual .build-deps \
         libpng-dev libxml2-dev oniguruma-dev icu-dev freetype-dev \
@@ -50,7 +50,8 @@ RUN apk add --no-cache \
     && pecl install redis \
     && docker-php-ext-enable redis \
     && apk del .build-deps \
-    && rm -rf /tmp/pear
+    && rm -rf /tmp/pear \
+    && npm install -g pnpm
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/custom-php.ini

@@ -35,6 +35,7 @@ class ClosingStatementPdfPrintController extends Controller
             'transactions.elements.patient',
             'transactions.elements.service',
             'transactions.elements.doctor',
+            'transactions.elements.expenseCategory',
         ];
 
         if ($report === 'receivables' || $report === 'income') {
@@ -157,6 +158,8 @@ class ClosingStatementPdfPrintController extends Controller
                     'patient_ps_number' => $element->patient?->ps_number,
                     'service_name' => $element->service?->name ?? 'N/A',
                     'doctor_name' => $element->doctor?->name,
+                    'expense_category_name' => $element->expenseCategory?->name,
+                    'expense_category_type' => $element->expenseCategory?->type,
                     'created_at' => $element->created_at,
                 ];
 
@@ -437,6 +440,7 @@ class ClosingStatementPdfPrintController extends Controller
                     $expenses[] = [
                         'transaction_number' => $transaction->tr_number,
                         'category_name' => $categoryName,
+                        'category_type' => $element->expenseCategory?->type ?? null,
                         'voucher_number' => $element->expVoucher?->vc_number,
                         'paid_to' => $element->expVoucher?->payedTo?->name,
                         'amount' => $element->amount,

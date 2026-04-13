@@ -209,6 +209,15 @@ class ExpenseCategorySeeder extends Seeder
                 'allow_voucher' => true,
             ],
             [
+                'name' => 'Discount',
+                'type' => 'DISC',
+                'pay_doc' => true,
+                'pay_others' => true,
+                'pay_users' => true,
+                'allow_petty_cash' => true,
+                'allow_voucher' => false,
+            ],
+            [
                 'name' => 'Purchase of Medical Equipments',
                 'type' => '',
                 'pay_doc' => false,

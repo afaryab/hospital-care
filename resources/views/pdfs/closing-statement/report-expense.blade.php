@@ -26,19 +26,24 @@
         </thead>
         <tbody>
             @foreach($expenses as $idx => $expense)
-            <tr>
+            @php $isDiscount = ($expense['category_type'] ?? '') === 'DISC'; @endphp
+            <tr @if($isDiscount) style="background: #fefce8;" @endif>
                 <td>{{ $idx + 1 }}</td>
                 <td>{{ \Carbon\Carbon::parse($expense['created_at'])->format('H:i') }}</td>
                 <td>
-                    <span class="badge {{ $expense['income_or_expense'] === 'VOUCHER-PAY' ? 'badge-orange' : 'badge-red' }}">
-                        {{ $expense['income_or_expense'] === 'VOUCHER-PAY' ? 'Voucher' : 'Expense' }}
-                    </span>
+                    @if($isDiscount)
+                        <span class="badge" style="background: #fef9c3; color: #854d0e;">Discount</span>
+                    @else
+                        <span class="badge {{ $expense['income_or_expense'] === 'VOUCHER-PAY' ? 'badge-orange' : 'badge-red' }}">
+                            {{ $expense['income_or_expense'] === 'VOUCHER-PAY' ? 'Voucher' : 'Expense' }}
+                        </span>
+                    @endif
                 </td>
-                <td>{{ $expense['category_name'] }}</td>
+                <td @if($isDiscount) style="color: #854d0e; font-weight: 700;" @endif>{{ $expense['category_name'] }}</td>
                 <td class="text-bold">{{ $expense['paid_to'] ?? '-' }}</td>
                 <td><span class="mono">{{ $expense['voucher_number'] ?? '-' }}</span></td>
                 <td style="max-width: 100px; overflow: hidden;">{{ \Illuminate\Support\Str::limit($expense['notes'] ?? '-', 40) }}</td>
-                <td class="amount">{{ number_format($expense['amount'], 2) }}</td>
+                <td class="amount" @if($isDiscount) style="color: #854d0e;" @endif>{{ number_format($expense['amount'], 2) }}</td>
             </tr>
             @endforeach
         </tbody>

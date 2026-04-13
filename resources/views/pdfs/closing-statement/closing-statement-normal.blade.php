@@ -82,22 +82,32 @@
         <thead>
             <tr>
                 <th style="width: 42px;">Time</th>
-                <th>Description</th>
+                <th>Category / Description</th>
                 <th class="amount" style="width: 80px;">Amount</th>
             </tr>
         </thead>
         <tbody>
             @foreach($transactions['expense'] as $transaction)
                 @foreach($transaction['elements'] as $element)
-                <tr>
+                @php $isDiscount = ($element['expense_category_type'] ?? '') === 'DISC'; @endphp
+                <tr @if($isDiscount) style="background: #fefce8;" @endif>
                     <td>{{ \Carbon\Carbon::parse($element['created_at'])->format('H:i') }}</td>
                     <td>
-                        {{ $element['type'] }}
+                        @if($element['expense_category_name'])
+                            <span @if($isDiscount) style="color: #854d0e; font-weight: 700;" @endif>
+                                {{ $element['expense_category_name'] }}
+                            </span>
+                            @if($isDiscount)
+                                <span class="badge" style="background: #fef9c3; color: #854d0e; margin-left: 4px;">DISCOUNT</span>
+                            @endif
+                        @else
+                            {{ $element['type'] }}
+                        @endif
                         @if($element['patient_name'])
                             — {{ $element['patient_name'] }}
                         @endif
                     </td>
-                    <td class="amount">{{ number_format($element['amount'], 2) }}</td>
+                    <td class="amount" @if($isDiscount) style="color: #854d0e;" @endif>{{ number_format($element['amount'], 2) }}</td>
                 </tr>
                 @endforeach
             @endforeach
