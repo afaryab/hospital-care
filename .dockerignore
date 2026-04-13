@@ -1,0 +1,51 @@
+# PHP/Composer dependencies (reinstalled during build)
+/vendor/
+
+# Node/JS dependencies (reinstalled in frontend build stage)
+/node_modules/
+
+# Pre-built frontend assets (rebuilt in frontend build stage)
+/public/build/
+/public/storage
+
+# Version control
+/.git/
+/.gitignore
+/.gitattributes
+
+# Environment files (injected at runtime)
+/.env
+/.env.backup
+/.env.production
+!/.env.example
+
+# Laravel bootstrap cache (regenerated at build/startup; host version may include dev packages)
+/bootstrap/cache/
+
+# Runtime storage (created at build/startup)
+/storage/logs/
+/storage/debugbar/
+/storage/app/public/
+
+# IDE and editor files
+/.idea/
+/.vscode/
+/.phpstorm.meta.php
+/_ide_helper.php
+/_ide_helper_models.php
+
+# Test artifacts
+/.phpunit.cache/
+/.phpunit.result.cache
+
+# Tests (not needed in production images)
+/tests/
+
+# Storybook output
+/storybook-static/
+
+# Documentation
+/docs/
+
+# Docker Compose files (only needed outside the image)
+/docker-compose*.yml
