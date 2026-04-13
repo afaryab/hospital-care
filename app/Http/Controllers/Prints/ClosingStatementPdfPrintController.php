@@ -102,6 +102,8 @@ class ClosingStatementPdfPrintController extends Controller
         $editedCount = 0;
         $receaveableCount = 0;
 
+        $incomeByPaymentMethod = [];
+
         $pannelBills = [];
 
         foreach ($closing->transactions as $transaction) {
@@ -165,6 +167,7 @@ class ClosingStatementPdfPrintController extends Controller
             if ($transaction->income_or_expense === 'INCOME') {
                 $incomeTransactions[] = $transactionData;
                 $totalIncome += $transaction->amount;
+                $incomeByPaymentMethod[$transaction->type] = ($incomeByPaymentMethod[$transaction->type] ?? 0) + $transaction->amount;
             } else {
                 $expenseTransactions[] = $transactionData;
                 $totalExpense += $transaction->amount;
@@ -206,6 +209,7 @@ class ClosingStatementPdfPrintController extends Controller
                 'total_expense' => $totalExpense,
                 'net_amount' => $netAmount,
                 'by_type' => $transactonTypesTotals,
+                'income_by_payment_method' => $incomeByPaymentMethod,
                 'refund_count' => $refundCount,
                 'transactions_count' => count($closing->transactions),
                 'edited_count' => $editedCount,

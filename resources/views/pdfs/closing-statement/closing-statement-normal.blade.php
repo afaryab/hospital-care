@@ -111,6 +111,33 @@
     </table>
     @endif
 
+    {{-- Income by Payment Method --}}
+    @if(!empty($totals['income_by_payment_method']))
+    <div class="section-title">Income by Payment Method</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Payment Method</th>
+                <th class="amount" style="width: 120px;">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($totals['income_by_payment_method'] as $method => $amount)
+            <tr>
+                <td>{{ ucwords(strtolower(str_replace('_', ' ', $method))) }}</td>
+                <td class="amount">{{ number_format($amount, 2) }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td class="text-right">Total Income</td>
+                <td class="amount">{{ number_format($totals['total_income'], 2) }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    @endif
+
     {{-- Summary --}}
     <div class="section-title">Summary</div>
     <table>
@@ -125,18 +152,6 @@
         <tr class="total-row">
             <td>Net Amount</td>
             <td class="amount">{{ number_format($totals['net_amount'], 2) }}</td>
-        </tr>
-        <tr>
-            <td>Cash Amount</td>
-            <td class="amount">{{ number_format($closing['closing_amount_cash'], 2) }}</td>
-        </tr>
-        <tr>
-            <td>Card Amount</td>
-            <td class="amount">{{ number_format($closing['closing_amount_card'], 2) }}</td>
-        </tr>
-        <tr>
-            <td>Cheque Amount</td>
-            <td class="amount">{{ number_format($closing['closing_amount_cheque'], 2) }}</td>
         </tr>
     </table>
 
