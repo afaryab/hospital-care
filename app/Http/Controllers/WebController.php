@@ -19,6 +19,7 @@ use App\Models\Transaction;
 use App\Models\TransactionElement;
 use App\Models\User;
 use App\Services\BreachDetectionService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1006,6 +1007,18 @@ class WebController extends Controller
                 'status' => $filters['status'] ?? '',
             ],
         ]);
+    }
+
+    public function updateServiceOrderStatus(Request $request, ServiceOrder $serviceOrder): RedirectResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:OPEN,CLOSED,IN-PROGRESS'],
+        ]);
+
+        $serviceOrder->status = $validated['status'];
+        $serviceOrder->save();
+
+        return back();
     }
 
     public function opdQueue()

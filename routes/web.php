@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Migration\ImportController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
+use App\Http\Controllers\Prints\ServiceOrderPdfPrintController;
 use App\Http\Controllers\Prints\TransactionPdfPrintController;
+use App\Http\Controllers\Reports\GenericReportPdfController;
 use App\Http\Controllers\Reports\IncomeCashFlowReportController;
 use App\Http\Controllers\WebController;
 use Illuminate\Support\Facades\Route;
@@ -58,6 +60,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('TR/{tYear}/{tMonth}/{tDay}/{tNumber}', [WebController::class, 'transactionView'])->name('transaction-view');
 
     Route::get('service-orders', [WebController::class, 'serviceOrdersOverview'])->name('service-orders-overview');
+    Route::patch('service-orders/{serviceOrder}/status', [WebController::class, 'updateServiceOrderStatus'])->name('service-orders.update-status');
 
     Route::get('RECEAVEABLES', [WebController::class, 'receaveables'])->name('receaveables');
 
@@ -104,7 +107,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('download-transaction');
 
     // Service Order PDF (stream)
-    Route::get('PRINT/SO/{id}', [\App\Http\Controllers\Prints\ServiceOrderPdfPrintController::class, 'stream'])
+    Route::get('PRINT/SO/{id}', [ServiceOrderPdfPrintController::class, 'stream'])
         ->name('print-serviceorder');
 
     /**
@@ -113,17 +116,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports/income-cash-flow', [IncomeCashFlowReportController::class, 'generate'])
         ->name('reports.income-cash-flow');
 
-    Route::get('reports/generic/income', [\App\Http\Controllers\Reports\GenericReportPdfController::class, 'income'])
+    Route::get('reports/generic/income', [GenericReportPdfController::class, 'income'])
         ->name('reports.generic.income');
-    Route::get('reports/generic/expense', [\App\Http\Controllers\Reports\GenericReportPdfController::class, 'expense'])
+    Route::get('reports/generic/expense', [GenericReportPdfController::class, 'expense'])
         ->name('reports.generic.expense');
-    Route::get('reports/generic/receivables', [\App\Http\Controllers\Reports\GenericReportPdfController::class, 'receivables'])
+    Route::get('reports/generic/receivables', [GenericReportPdfController::class, 'receivables'])
         ->name('reports.generic.receivables');
-    Route::get('reports/generic/services', [\App\Http\Controllers\Reports\GenericReportPdfController::class, 'services'])
+    Route::get('reports/generic/services', [GenericReportPdfController::class, 'services'])
         ->name('reports.generic.services');
-    Route::get('reports/generic/service-orders', [\App\Http\Controllers\Reports\GenericReportPdfController::class, 'serviceOrders'])
+    Route::get('reports/generic/service-orders', [GenericReportPdfController::class, 'serviceOrders'])
         ->name('reports.generic.service-orders');
-    Route::get('reports/generic/service-order/{id}', [\App\Http\Controllers\Reports\GenericReportPdfController::class, 'serviceOrder'])
+    Route::get('reports/generic/service-order/{id}', [GenericReportPdfController::class, 'serviceOrder'])
         ->name('reports.generic.service-order');
 
 });

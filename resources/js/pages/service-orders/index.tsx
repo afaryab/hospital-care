@@ -118,6 +118,8 @@ export default function ServiceOrdersOverview() {
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
+    const [newStatus, setNewStatus] = useState<string>('');
+    const [updatingStatus, setUpdatingStatus] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -163,6 +165,7 @@ export default function ServiceOrdersOverview() {
     };
 
     const openServiceOrder = (serviceOrderId: number) => {
+        setNewStatus('');
         router.get(
             '/service-orders',
             {
@@ -173,6 +176,26 @@ export default function ServiceOrdersOverview() {
             {
                 preserveState: true,
                 replace: true,
+            },
+        );
+    };
+
+    const changeStatus = () => {
+        if (!selectedServiceOrder || !newStatus) {
+            return;
+        }
+
+        setUpdatingStatus(true);
+
+        router.patch(
+            `/service-orders/${selectedServiceOrder.id}/status`,
+            { status: newStatus },
+            {
+                preserveState: false,
+                onFinish: () => {
+                    setUpdatingStatus(false);
+                    setNewStatus('');
+                },
             },
         );
     };
@@ -321,6 +344,33 @@ export default function ServiceOrdersOverview() {
                                     <p className="text-sm text-gray-600">
                                         Doctor: {selectedServiceOrder.doctor?.name ?? '-'}
                                     </p>
+                                    <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold uppercase text-gray-700">
+                                        {selectedServiceOrder.status}
+                                    </span>
+                                </div>
+
+                                <div className="space-y-2 border-b pb-3">
+                                    <h3 className="text-sm font-semibold text-gray-900">Change Status</h3>
+                                    <Select value={newStatus || 'none'} onValueChange={(v) => setNewStatus(v === 'none' ? '' : v)}>
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select new status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="none" disabled>
+                                                Select new status
+                                            </SelectItem>
+                                            <SelectItem value="OPEN">OPEN</SelectItem>
+                                            <SelectItem value="IN-PROGRESS">IN-PROGRESS</SelectItem>
+                                            <SelectItem value="CLOSED">CLOSED</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <Button
+                                        className="w-full"
+                                        disabled={!newStatus || updatingStatus}
+                                        onClick={changeStatus}
+                                    >
+                                        {updatingStatus ? 'Updating…' : 'Update Status'}
+                                    </Button>
                                 </div>
 
                                 <div className="grid grid-cols-1 gap-2 text-sm">
