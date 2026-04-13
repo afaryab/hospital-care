@@ -449,24 +449,24 @@ class WebController extends Controller
                         $refundedTransaction = Transaction::where('tr_number', $expenseData['transaction_id'])->first();
                     }
 
-                    $relatedServiceOrderId = TransactionElement::query()
-                        ->where('transaction_id', $refundedTransaction->id)
-                        ->whereNotNull('service_order_id')
-                        ->value('service_order_id');
+                    // $relatedServiceOrderId = TransactionElement::query()
+                    //     ->where('transaction_id', $refundedTransaction->id)
+                    //     ->whereNotNull('service_order_id')
+                    //     ->value('service_order_id');
 
-                    if (! $relatedServiceOrderId) {
-                        return back()->withErrors(['transaction_id' => 'Refund is only allowed for transactions linked to an open service order.']);
-                    }
+                    // if (! $relatedServiceOrderId) {
+                    //     return back()->withErrors(['transaction_id' => 'Refund is only allowed for transactions linked to an open service order.']);
+                    // }
 
-                    $relatedServiceOrder = ServiceOrder::find($relatedServiceOrderId);
+                    // $relatedServiceOrder = ServiceOrder::find($relatedServiceOrderId);
 
-                    $isServiceOrderOpen = $relatedServiceOrder
-                        && in_array(strtolower((string) $relatedServiceOrder->status), ['open', 'in-progress'], true)
-                        && is_null($relatedServiceOrder->closed_at);
+                    // $isServiceOrderOpen = $relatedServiceOrder
+                    //     && in_array(strtolower((string) $relatedServiceOrder->status), ['open', 'in-progress'], true)
+                    //     && is_null($relatedServiceOrder->closed_at);
 
-                    if (! $isServiceOrderOpen) {
-                        return back()->withErrors(['transaction_id' => 'Refund is not allowed because the related service order is closed.']);
-                    }
+                    // if (! $isServiceOrderOpen) {
+                    //     return back()->withErrors(['transaction_id' => 'Refund is not allowed because the related service order is closed.']);
+                    // }
                 }
 
                 if ($isDoctorFilePayment) {
