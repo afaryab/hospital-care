@@ -83,6 +83,7 @@ type PageProps = {
     filters: {
         search?: string;
         status?: string;
+        type?: string;
     };
 };
 
@@ -118,6 +119,7 @@ export default function ServiceOrdersOverview() {
 
     const [search, setSearch] = useState(filters.search ?? '');
     const [status, setStatus] = useState(filters.status ?? '');
+    const [activeTab, setActiveTab] = useState(filters.type ?? '');
     const [newStatus, setNewStatus] = useState<string>('');
     const [updatingStatus, setUpdatingStatus] = useState(false);
 
@@ -149,6 +151,7 @@ export default function ServiceOrdersOverview() {
             {
                 search: search || undefined,
                 status: status || undefined,
+                type: activeTab || undefined,
                 service_order_id: selectedServiceOrder?.id,
             },
             {
@@ -161,7 +164,22 @@ export default function ServiceOrdersOverview() {
     const clearFilters = () => {
         setSearch('');
         setStatus('');
+        setActiveTab('');
         router.get('/service-orders', {}, { preserveState: false, replace: true });
+    };
+
+    const switchTab = (type: string) => {
+        setActiveTab(type);
+        setNewStatus('');
+        router.get(
+            '/service-orders',
+            {
+                type: type || undefined,
+                search: search || undefined,
+                status: status || undefined,
+            },
+            { preserveState: true, replace: true },
+        );
     };
 
     const openServiceOrder = (serviceOrderId: number) => {
@@ -171,6 +189,7 @@ export default function ServiceOrdersOverview() {
             {
                 search: search || undefined,
                 status: status || undefined,
+                type: activeTab || undefined,
                 service_order_id: serviceOrderId,
             },
             {
@@ -205,6 +224,31 @@ export default function ServiceOrdersOverview() {
             <Head title="Service Orders" />
 
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
+                {/* Department tabs */}
+                <div className="flex flex-wrap gap-1 rounded-xl bg-white px-4 pt-3 pb-1 dark:bg-neutral-950">
+                    {[
+                        { label: 'General', value: '' },
+                        { label: 'OPD', value: 'OPD' },
+                        { label: 'Indoor', value: 'IND' },
+                        { label: 'Emergency', value: 'EMG' },
+                        { label: 'Dental', value: 'DNT' },
+                        { label: 'Laboratory', value: 'LAB' },
+                        { label: 'Ultrasound', value: 'ULT' },
+                        { label: 'Radiology', value: 'RAD' },
+                    ].map((tab) => (
+                        <button
+                            key={tab.value}
+                            onClick={() => switchTab(tab.value)}
+                            className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
+                                activeTab === tab.value
+                                    ? 'bg-[#1c398e] text-white'
+                                    : 'text-[#1c398e] hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-neutral-800'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
                 <div className="grid gap-4 rounded-xl bg-white p-4 text-[#1c398e] dark:bg-neutral-950 lg:grid-cols-3">
                     <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="service-order-search">Search</Label>
@@ -212,7 +256,7 @@ export default function ServiceOrdersOverview() {
                             id="service-order-search"
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
-                            placeholder="SO number, patient, service, doctor"
+                            placeholder="SO number, SO short, PS number, doctor, reception, TR number"
                         />
                     </div>
                     <div className="space-y-2">

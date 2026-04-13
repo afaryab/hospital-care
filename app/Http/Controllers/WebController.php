@@ -937,6 +937,7 @@ class WebController extends Controller
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'max:50'],
+            'type' => ['nullable', 'string', 'in:OPD,IND,EMG,DNT,LAB,ULT,RAD'],
             'service_order_id' => ['nullable', 'integer', 'exists:service_orders,id'],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
@@ -960,14 +961,26 @@ class WebController extends Controller
             $search = $filters['search'];
             $serviceOrdersQuery->where(function ($query) use ($search) {
                 $query->where('so_number', 'like', "%{$search}%")
-                    ->orWhereHas('patient', fn ($patientQuery) => $patientQuery->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('service', fn ($serviceQuery) => $serviceQuery->where('name', 'like', "%{$search}%"))
-                    ->orWhereHas('doctor', fn ($doctorQuery) => $doctorQuery->where('name', 'like', "%{$search}%"));
+                    ->orWhere('so_short', 'like', "%{$search}%")
+                    ->orWhereHas('patient', fn ($patientQuery) => $patientQuery
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('ps_number', 'like', "%{$search}%")
+                    )
+                    ->orWhereHas('doctor', fn ($doctorQuery) => $doctorQuery->where('name', 'like', "%{$search}%"))
+                    ->orWhereIn('service_recestation_id', ServiceRecestation::query()
+                        ->where('name', 'like', "%{$search}%")
+                        ->pluck('id')
+                    )
+                    ->orWhereHas('transactionElements.transaction', fn ($trQuery) => $trQuery->where('tr_number', 'like', "%{$search}%"));
             });
         }
 
         if (! empty($filters['status'])) {
             $serviceOrdersQuery->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['type'])) {
+            $serviceOrdersQuery->where('type', $filters['type']);
         }
 
         $serviceOrders = $serviceOrdersQuery
@@ -1005,6 +1018,7 @@ class WebController extends Controller
             'filters' => [
                 'search' => $filters['search'] ?? '',
                 'status' => $filters['status'] ?? '',
+                'type' => $filters['type'] ?? '',
             ],
         ]);
     }
