@@ -154,3 +154,44 @@ test('partial cnic input does not exclude patients without cnic', function () {
     expect($names)->toContain('Ahmad Ali')
         ->and($names)->toContain('No CNIC Patient');
 });
+
+// ─── Name search ordering (prefix-first) ─────────────────────────────────────
+
+test('patient name search returns prefix matches before contains matches', function () {
+    Patient::factory()->create(['name' => 'Ahmad Farooq']);
+    Patient::factory()->create(['name' => 'Muhammad Ahmad']);
+
+    $response = $this->postJson(route('api-patients-search'), [
+        'patient_name' => 'Ahmad',
+    ])->assertOk();
+
+    $possible = $response->json('data.possible');
+    $names = collect($possible)->pluck('name')->values()->all();
+
+    // Prefix match ("Ahmad Farooq") should come before contains match ("Muhammad Ahmad")
+    expect($names)->toContain('Ahmad Farooq')
+        ->and($names)->toContain('Muhammad Ahmad')
+        ->and(array_search('Ahmad Farooq', $names))->toBeLessThan(array_search('Muhammad Ahmad', $names));
+});
+
+// ─── Age search filter ───────────────────────────────────────────────────────
+
+test('patient search filters out patients whose age is far outside the requested range', function () {
+    // 25-year-old patient: age_days ≈ 25 * 365 = 9125
+    Patient::factory()->create(['name' => 'Young Patient', 'age_days' => '9125']);
+    // 80-year-old patient: age_days ≈ 80 * 365 = 29200
+    Patient::factory()->create(['name' => 'Old Patient', 'age_days' => '29200']);
+
+    $response = $this->postJson(route('api-patients-search'), [
+        'patient_name' => 'Patient',
+        'patient_age' => '25',
+    ])->assertOk();
+
+    $possible = $response->json('data.possible');
+    $names = collect($possible)->pluck('name');
+
+    // The 25-year-old is within ±10 years of 25
+    expect($names)->toContain('Young Patient');
+    // The 80-year-old is outside ±10 years of 25
+    expect($names)->not->toContain('Old Patient');
+});

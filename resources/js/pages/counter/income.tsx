@@ -932,6 +932,7 @@ function SelectPatient({ openCounter }: any) {
     const [exactMatch, setExactMatch] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [apiError, setApiError] = useState<string | string[] | null>(null);
+    const [hasSearched, setHasSearched] = useState(false);
 
     // Committed search params — API fires only when this changes
     const [searchParams, setSearchParams] = useState<PatientSearchParams>(EMPTY_SEARCH);
@@ -941,6 +942,12 @@ function SelectPatient({ openCounter }: any) {
     const [patientCnic, setPatientCnic] = useState('');
     const [mriNumber, setMriNumber] = useState('');
     const [fileNumber, setFileNumber] = useState('');
+
+    // Debounce refs — one per text field that fires on every keystroke
+    const mrDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const mriDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const fileDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Form state for patient creation
     const [formData, setFormDataState] = useState({ cnic: '', name: '', contact: '', age: '', gender: '' });
@@ -952,12 +959,20 @@ function SelectPatient({ openCounter }: any) {
     // Fire API whenever committed search params change
     useEffect(() => {
         const hasAnyInput = Object.values(searchParams).some((v) => v !== '');
+        if (hasAnyInput) {
+            setHasSearched(true);
+        }
         fetchPatientsFromApi(searchParams, hasAnyInput);
         setApiError(null);
-        clearErrors();
     }, [searchParams]);
 
     const fetchPatientsFromApi = useCallback(async (params: PatientSearchParams, hasInput: boolean) => {
+        if (!hasInput) {
+            setPatients([]);
+            setExactMatch([]);
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         try {
             const response = await apiFetch('/api/patients', {
@@ -981,58 +996,104 @@ function SelectPatient({ openCounter }: any) {
 
     // ── Commit helpers ────────────────────────────────────────────────────────
 
-    // MR Number: commit on every change
+    // MR Number: debounced commit (was: every keystroke → API on each char)
     const onMrNumberChange = (masked: string) => {
         setPsInput(masked);
-        setSearchParams((p) => ({ ...p, mr_number: masked }));
+        if (mrDebounceRef.current) clearTimeout(mrDebounceRef.current);
+        mrDebounceRef.current = setTimeout(() => {
+            setSearchParams((p) => {
+                if (p.mr_number === masked) return p;
+                return { ...p, mr_number: masked };
+            });
+        }, 400);
     };
 
     // CNIC: commit only when complete (15 chars), clear when emptied
     const onCnicChange = (masked: string, unmasked: string) => {
         setPatientCnic(masked);
         if (masked.length === CNIC_COMPLETE_LENGTH) {
-            setSearchParams((p) => ({ ...p, cnic_number: masked }));
+            setSearchParams((p) => {
+                if (p.cnic_number === masked) return p;
+                return { ...p, cnic_number: masked };
+            });
         } else if (masked === '') {
-            setSearchParams((p) => ({ ...p, cnic_number: '' }));
+            setSearchParams((p) => {
+                if (p.cnic_number === '') return p;
+                return { ...p, cnic_number: '' };
+            });
         }
     };
 
-    // Name: commit on blur
-    const onNameBlur = () => {
-        setSearchParams((p) => ({ ...p, patient_name: formData.name }));
+    // Name: live debounced search (was: on-blur only)
+    const onNameChange = (val: string) => {
+        setData('name', val);
+        if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
+        nameDebounceRef.current = setTimeout(() => {
+            setSearchParams((p) => {
+                const next = val.trim().length >= 2 ? val.trim() : '';
+                if (p.patient_name === next) return p;
+                return { ...p, patient_name: next };
+            });
+        }, 400);
     };
 
-    // Contact: commit only when complete (15 chars), clear when below 5
+    // Contact: commit only when complete (11+ digits), clear when below 5
+    // Use reference equality check to avoid unnecessary re-renders
     const onContactChange = (masked: string) => {
         setData('contact', masked);
-        if (masked.replace(/\D/g, '').length >= 11) {
-            setSearchParams((p) => ({ ...p, patient_contact: masked }));
-        } else if (masked.replace(/\D/g, '').length < 5) {
-            setSearchParams((p) => ({ ...p, patient_contact: '' }));
+        const digits = masked.replace(/\D/g, '').length;
+        if (digits >= 11) {
+            setSearchParams((p) => {
+                if (p.patient_contact === masked) return p;
+                return { ...p, patient_contact: masked };
+            });
+        } else if (digits < 5) {
+            setSearchParams((p) => {
+                if (p.patient_contact === '') return p;
+                return { ...p, patient_contact: '' };
+            });
         }
     };
 
     // Age: commit on blur
     const onAgeBlur = () => {
-        setSearchParams((p) => ({ ...p, patient_age: formData.age }));
+        setSearchParams((p) => {
+            if (p.patient_age === formData.age) return p;
+            return { ...p, patient_age: formData.age };
+        });
     };
 
     // Gender: commit immediately on selection
     const onGenderChange = (val: string) => {
         setData('gender', val);
-        setSearchParams((p) => ({ ...p, patient_gender: val }));
+        setSearchParams((p) => {
+            if (p.patient_gender === val) return p;
+            return { ...p, patient_gender: val };
+        });
     };
 
-    // MRI Number: commit on every change
+    // MRI Number: debounced commit (was: every keystroke → API on each char)
     const onMriNumberChange = (val: string) => {
         setMriNumber(val);
-        setSearchParams((p) => ({ ...p, mri_number: val }));
+        if (mriDebounceRef.current) clearTimeout(mriDebounceRef.current);
+        mriDebounceRef.current = setTimeout(() => {
+            setSearchParams((p) => {
+                if (p.mri_number === val) return p;
+                return { ...p, mri_number: val };
+            });
+        }, 400);
     };
 
-    // FILE Number: commit on every change
+    // FILE Number: debounced commit (was: every keystroke → API on each char)
     const onFileNumberChange = (val: string) => {
         setFileNumber(val);
-        setSearchParams((p) => ({ ...p, file_number: val }));
+        if (fileDebounceRef.current) clearTimeout(fileDebounceRef.current);
+        fileDebounceRef.current = setTimeout(() => {
+            setSearchParams((p) => {
+                if (p.file_number === val) return p;
+                return { ...p, file_number: val };
+            });
+        }, 400);
     };
 
     // Patient creation via fetch (JSON) — Inertia post() sends X-Inertia header, not Accept: application/json
@@ -1084,25 +1145,19 @@ function SelectPatient({ openCounter }: any) {
     return (
         <div className="grid h-full w-full grid-cols-2 divide-x divide-[#06df72]">
             {/* ── Left column: search / create form ── */}
-            <div className="flex flex-col p-4 pr-8">
+            <div className="flex flex-col overflow-y-auto p-4 pr-8">
                 <div className="flex w-full flex-col space-y-4">
                     <h3 className="mb-2 text-3xl font-bold">Select / Create Patient</h3>
 
                     {apiError && (
                         <AlertError
                             errors={[Array.isArray(apiError) ? apiError.join(' ') : apiError]}
-                            className="sticky top-0 z-50 mb-2"
-                        />
-                    )}
-                    {Object.keys(formErrors).length > 0 && (
-                        <AlertError
-                            errors={Object.values(formErrors).flat()}
-                            className="sticky top-0 z-50 mb-2"
+                            className="mb-2"
                         />
                     )}
 
                     {/* MR Number */}
-                    <div className="grid gap-2">
+                    <div className="grid gap-1">
                         <Label htmlFor="mr_number">MR Number</Label>
                         <MaskInput
                             id="mr_number"
@@ -1119,7 +1174,7 @@ function SelectPatient({ openCounter }: any) {
                     </div>
 
                     {/* MRI Number */}
-                    <div className="grid gap-2">
+                    <div className="grid gap-1">
                         <Label htmlFor="mri_number">MRI Number (Service Order)</Label>
                         <Input
                             id="mri_number"
@@ -1134,7 +1189,7 @@ function SelectPatient({ openCounter }: any) {
                     </div>
 
                     {/* FILE Number */}
-                    <div className="grid gap-2">
+                    <div className="grid gap-1">
                         <Label htmlFor="file_number">File Number (SO Short)</Label>
                         <Input
                             id="file_number"
@@ -1149,7 +1204,7 @@ function SelectPatient({ openCounter }: any) {
                     </div>
 
                     {/* CNIC */}
-                    <div className="grid gap-2">
+                    <div className="grid gap-1">
                         <Label htmlFor="cnic_number">CNIC Number</Label>
                         <MaskInput
                             id="cnic_number"
@@ -1164,8 +1219,8 @@ function SelectPatient({ openCounter }: any) {
                         />
                     </div>
 
-                    {/* Patient Name — search on blur */}
-                    <div className="grid gap-2">
+                    {/* Patient Name — live debounced search */}
+                    <div className="grid gap-1">
                         <Label htmlFor="patient_name" required={true}>Patient Name</Label>
                         <Input
                             id="patient_name"
@@ -1175,13 +1230,13 @@ function SelectPatient({ openCounter }: any) {
                             autoComplete="false"
                             placeholder="Patient name"
                             value={formData.name}
-                            onChange={(e) => setData('name', e.target.value)}
-                            onBlur={onNameBlur}
+                            onChange={(e) => onNameChange(e.target.value)}
                         />
+                        <InputError message={formErrors.name?.[0]} />
                     </div>
 
                     {/* Contact — search when complete */}
-                    <div className="grid gap-2">
+                    <div className="grid gap-1">
                         <Label htmlFor="patient_contact" required={true}>Patient Contact</Label>
                         <MaskInput
                             id="patient_contact"
@@ -1194,10 +1249,11 @@ function SelectPatient({ openCounter }: any) {
                             placeholder="+92-000-0000000"
                             onValueChange={({ masked }) => onContactChange(masked)}
                         />
+                        <InputError message={formErrors.contact?.[0]} />
                     </div>
 
                     {/* Age — search on blur */}
-                    <div className="grid gap-2">
+                    <div className="grid gap-1">
                         <Label htmlFor="patient_age" required={true}>Patient Age</Label>
                         <Input
                             id="patient_age"
@@ -1210,13 +1266,14 @@ function SelectPatient({ openCounter }: any) {
                             onChange={(e) => setData('age', e.target.value)}
                             onBlur={onAgeBlur}
                         />
+                        <InputError message={formErrors.age?.[0]} />
                     </div>
 
                     {/* Gender — search immediately */}
-                    <div className="grid gap-2">
+                    <div className="grid gap-1">
                         <Label htmlFor="patient_gender" required={true}>Patient Gender</Label>
                         <div className="flex flex-row space-x-4">
-                            {(['m', 'f', 't'] as const).map((val, _, arr) => {
+                            {(['m', 'f', 't'] as const).map((val) => {
                                 const labels = { m: 'Male', f: 'Female', t: 'Transgender' };
                                 return (
                                     <Label key={val} htmlFor={`patient_gender_${val}`}>
@@ -1236,6 +1293,7 @@ function SelectPatient({ openCounter }: any) {
                                 );
                             })}
                         </div>
+                        <InputError message={formErrors.gender?.[0]} />
                     </div>
 
                     <Suspense fallback={<div className="text-xs text-gray-400">Loading policy…</div>}>
@@ -1245,20 +1303,23 @@ function SelectPatient({ openCounter }: any) {
             </div>
 
             {/* ── Right column: results ── */}
-            <div className="flex flex-col space-y-4 p-4 pr-8">
-                <div className="flex w-full flex-col space-y-4">
-
-                    {/* Loading indicator */}
-                    {isLoading && (
+            <div className="flex flex-col overflow-y-auto p-4 pr-8">
+                {/* Loading bar — fixed height slot so layout never shifts */}
+                <div className="mb-3 flex h-6 items-center">
+                    {isLoading ? (
                         <div className="flex items-center gap-2 text-sm text-gray-500">
                             <Spinner className="size-4" />
                             <span>Searching patients…</span>
                         </div>
-                    )}
+                    ) : null}
+                </div>
 
+                <div className="flex w-full flex-col space-y-4">
                     {!isLoading && exactMatch.length > 0 && (
                         <>
-                            <h3>Exact Match</h3>
+                            <h3 className="text-sm font-semibold text-teal-700">
+                                Exact Match ({exactMatch.length})
+                            </h3>
                             {exactMatch.map((p: any) => (
                                 <PatientMiniCard
                                     key={p.id}
@@ -1267,7 +1328,7 @@ function SelectPatient({ openCounter }: any) {
                                     tempGender={formData.gender}
                                     tempContact={formData.contact}
                                     tempCnic={formData.cnic}
-                                    className="w-full"
+                                    className="w-full border-l-4 border-teal-500"
                                     link={counterSelectDepartment({ pYear: p.year, pMonth: p.month, number: p.number }).url}
                                 />
                             ))}
@@ -1276,7 +1337,9 @@ function SelectPatient({ openCounter }: any) {
 
                     {!isLoading && patients.length > 0 && (
                         <>
-                            <h3>Possible Matches</h3>
+                            <h3 className="text-sm font-semibold text-orange-600">
+                                Possible Matches ({patients.length})
+                            </h3>
                             {patients.map((p: any) => (
                                 <PatientMiniCard
                                     key={p.id}
@@ -1290,6 +1353,19 @@ function SelectPatient({ openCounter }: any) {
                                 />
                             ))}
                         </>
+                    )}
+
+                    {!isLoading && hasSearched && exactMatch.length === 0 && patients.length === 0 && (
+                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-10 text-center text-gray-400">
+                            <p className="text-sm font-medium">No patients found</p>
+                            <p className="mt-1 text-xs">Fill in the name below and click &quot;Create New Patient&quot; to register a new patient.</p>
+                        </div>
+                    )}
+
+                    {!hasSearched && !isLoading && (
+                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-10 text-center text-gray-300">
+                            <p className="text-sm">Start typing to search for existing patients</p>
+                        </div>
                     )}
 
                     {formData.name && (
