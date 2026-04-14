@@ -943,11 +943,14 @@ function SelectPatient({ openCounter }: any) {
     const [mriNumber, setMriNumber] = useState('');
     const [fileNumber, setFileNumber] = useState('');
 
-    // Debounce refs — one per text field that fires on every keystroke
-    const mrDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const mriDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const fileDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    const nameDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // Single map for all debounce timers; cleared on unmount
+    const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+    useEffect(() => {
+        return () => {
+            Object.values(debounceTimers.current).forEach(clearTimeout);
+        };
+    }, []);
 
     // Form state for patient creation
     const [formData, setFormDataState] = useState({ cnic: '', name: '', contact: '', age: '', gender: '' });
@@ -955,6 +958,23 @@ function SelectPatient({ openCounter }: any) {
     const [creating, setCreating] = useState(false);
     const setData = (field: string, val: string) => setFormDataState((d) => ({ ...d, [field]: val }));
     const clearErrors = () => setFormErrors({});
+
+    // Helper: update a single search param only if its value has changed
+    const commitParam = useCallback((key: keyof PatientSearchParams, value: string) => {
+        setSearchParams((p) => {
+            if (p[key] === value) return p;
+            return { ...p, [key]: value };
+        });
+    }, []);
+
+    // Helper: debounce-then-commit a search param
+    const debouncedCommit = useCallback(
+        (field: string, key: keyof PatientSearchParams, value: string, delay = 400) => {
+            if (debounceTimers.current[field]) clearTimeout(debounceTimers.current[field]);
+            debounceTimers.current[field] = setTimeout(() => commitParam(key, value), delay);
+        },
+        [commitParam],
+    );
 
     // Fire API whenever committed search params change
     useEffect(() => {
@@ -999,101 +1019,58 @@ function SelectPatient({ openCounter }: any) {
     // MR Number: debounced commit (was: every keystroke → API on each char)
     const onMrNumberChange = (masked: string) => {
         setPsInput(masked);
-        if (mrDebounceRef.current) clearTimeout(mrDebounceRef.current);
-        mrDebounceRef.current = setTimeout(() => {
-            setSearchParams((p) => {
-                if (p.mr_number === masked) return p;
-                return { ...p, mr_number: masked };
-            });
-        }, 400);
+        debouncedCommit('mr', 'mr_number', masked);
     };
 
     // CNIC: commit only when complete (15 chars), clear when emptied
     const onCnicChange = (masked: string, unmasked: string) => {
         setPatientCnic(masked);
         if (masked.length === CNIC_COMPLETE_LENGTH) {
-            setSearchParams((p) => {
-                if (p.cnic_number === masked) return p;
-                return { ...p, cnic_number: masked };
-            });
+            commitParam('cnic_number', masked);
         } else if (masked === '') {
-            setSearchParams((p) => {
-                if (p.cnic_number === '') return p;
-                return { ...p, cnic_number: '' };
-            });
+            commitParam('cnic_number', '');
         }
     };
 
     // Name: live debounced search (was: on-blur only)
     const onNameChange = (val: string) => {
         setData('name', val);
-        if (nameDebounceRef.current) clearTimeout(nameDebounceRef.current);
-        nameDebounceRef.current = setTimeout(() => {
-            setSearchParams((p) => {
-                const next = val.trim().length >= 2 ? val.trim() : '';
-                if (p.patient_name === next) return p;
-                return { ...p, patient_name: next };
-            });
-        }, 400);
+        const next = val.trim().length >= 2 ? val.trim() : '';
+        debouncedCommit('name', 'patient_name', next);
     };
 
     // Contact: commit only when complete (11+ digits), clear when below 5
-    // Use reference equality check to avoid unnecessary re-renders
     const onContactChange = (masked: string) => {
         setData('contact', masked);
         const digits = masked.replace(/\D/g, '').length;
         if (digits >= 11) {
-            setSearchParams((p) => {
-                if (p.patient_contact === masked) return p;
-                return { ...p, patient_contact: masked };
-            });
+            commitParam('patient_contact', masked);
         } else if (digits < 5) {
-            setSearchParams((p) => {
-                if (p.patient_contact === '') return p;
-                return { ...p, patient_contact: '' };
-            });
+            commitParam('patient_contact', '');
         }
     };
 
     // Age: commit on blur
     const onAgeBlur = () => {
-        setSearchParams((p) => {
-            if (p.patient_age === formData.age) return p;
-            return { ...p, patient_age: formData.age };
-        });
+        commitParam('patient_age', formData.age);
     };
 
     // Gender: commit immediately on selection
     const onGenderChange = (val: string) => {
         setData('gender', val);
-        setSearchParams((p) => {
-            if (p.patient_gender === val) return p;
-            return { ...p, patient_gender: val };
-        });
+        commitParam('patient_gender', val);
     };
 
     // MRI Number: debounced commit (was: every keystroke → API on each char)
     const onMriNumberChange = (val: string) => {
         setMriNumber(val);
-        if (mriDebounceRef.current) clearTimeout(mriDebounceRef.current);
-        mriDebounceRef.current = setTimeout(() => {
-            setSearchParams((p) => {
-                if (p.mri_number === val) return p;
-                return { ...p, mri_number: val };
-            });
-        }, 400);
+        debouncedCommit('mri', 'mri_number', val);
     };
 
     // FILE Number: debounced commit (was: every keystroke → API on each char)
     const onFileNumberChange = (val: string) => {
         setFileNumber(val);
-        if (fileDebounceRef.current) clearTimeout(fileDebounceRef.current);
-        fileDebounceRef.current = setTimeout(() => {
-            setSearchParams((p) => {
-                if (p.file_number === val) return p;
-                return { ...p, file_number: val };
-            });
-        }, 400);
+        debouncedCommit('file', 'file_number', val);
     };
 
     // Patient creation via fetch (JSON) — Inertia post() sends X-Inertia header, not Accept: application/json
