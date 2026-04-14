@@ -11,4 +11,5 @@ enum ServiceOrderStatus
     case REVIEWED;
     case REFERRED;
     case CANCELLED;
+    case REFUNDED;
 }

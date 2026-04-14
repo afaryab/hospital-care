@@ -1,8 +1,8 @@
 @props(['src', 'title', 'showVariant' => false])
 
-<div class="flex flex-col gap-4 py-2" x-data="{{ $showVariant ? "{ variant: 'normal', get iframeSrc() { return '{$src}' + '?variant=' + this.variant } }" : '' }}">
+<div class="flex flex-col gap-4 py-2" style="height: calc(100vh - 220px);" x-data="{{ $showVariant ? "{ variant: 'normal', get iframeSrc() { return '{$src}' + '?variant=' + this.variant } }" : '' }}">
     @if($showVariant)
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 shrink-0">
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Print Version</label>
             <select
                 x-model="variant"
@@ -15,13 +15,15 @@
         <iframe
             :src="iframeSrc"
             title="{{ $title }}"
-            class="h-[700px] w-full rounded border"
+            class="w-full rounded border flex-1 min-h-0"
+            style="height: 100%;"
         ></iframe>
     @else
         <iframe
             src="{{ $src }}"
             title="{{ $title }}"
-            class="h-[700px] w-full rounded border"
+            class="w-full rounded border flex-1 min-h-0"
+            style="height: 100%;"
         ></iframe>
     @endif
 </div>

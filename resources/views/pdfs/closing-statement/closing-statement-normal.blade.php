@@ -149,20 +149,63 @@
     @endif
 
     {{-- Summary --}}
+    @php
+        $cashIncome = $totals['income_by_payment_method']['CASH'] ?? 0;
+        $chequeIncome = $totals['income_by_payment_method']['CHEQUE'] ?? 0;
+        $bankTransferIncome = $totals['income_by_payment_method']['BANK_TRANSFER'] ?? 0;
+        $cardIncome = $totals['income_by_payment_method']['CARD'] ?? 0;
+        $netCash = $cashIncome - $totals['total_expense'];
+        $receivablesTotal = 0;
+        $receivablesCount = 0;
+        foreach(array_merge($transactions['income'], $transactions['expense']) as $tr) {
+            if (!empty($tr['has_receaveable']) && $tr['receaveable_amount'] > 0) {
+                $receivablesTotal += $tr['receaveable_amount'];
+                $receivablesCount++;
+            }
+        }
+    @endphp
     <div class="section-title">Summary</div>
     <table>
         <tr>
-            <td>Total Income</td>
-            <td class="amount" style="width: 120px;">{{ number_format($totals['total_income'], 2) }}</td>
+            <td>Cash Income</td>
+            <td class="amount" style="width: 120px; color: #065f46;">{{ number_format($cashIncome, 2) }}</td>
         </tr>
+        @if($chequeIncome > 0)
         <tr>
-            <td>Total Expenses</td>
-            <td class="amount">{{ number_format($totals['total_expense'], 2) }}</td>
+            <td>Cheque Income</td>
+            <td class="amount" style="color: #065f46;">{{ number_format($chequeIncome, 2) }}</td>
+        </tr>
+        @endif
+        @if($bankTransferIncome > 0)
+        <tr>
+            <td>Bank Transfer Income</td>
+            <td class="amount" style="color: #065f46;">{{ number_format($bankTransferIncome, 2) }}</td>
+        </tr>
+        @endif
+        @if($cardIncome > 0)
+        <tr>
+            <td>Card Income</td>
+            <td class="amount" style="color: #065f46;">{{ number_format($cardIncome, 2) }}</td>
+        </tr>
+        @endif
+        <tr>
+            <td>Expense Paid</td>
+            <td class="amount" style="color: #991b1b;">{{ number_format($totals['total_expense'], 2) }}</td>
         </tr>
         <tr class="total-row">
-            <td>Net Amount</td>
+            <td>Net Total</td>
             <td class="amount">{{ number_format($totals['net_amount'], 2) }}</td>
         </tr>
+        <tr style="background: #eff6ff;">
+            <td>Net Cash <span class="text-muted" style="font-size: 9px;">(Cash Income − Expenses)</span></td>
+            <td class="amount" style="color: #1d4ed8;">{{ number_format($netCash, 2) }}</td>
+        </tr>
+        @if($receivablesTotal > 0)
+        <tr style="background: #faf5ff;">
+            <td>Receivables <span class="text-muted" style="font-size: 9px;">({{ $receivablesCount }} items)</span></td>
+            <td class="amount" style="color: #7c3aed;">{{ number_format($receivablesTotal, 2) }}</td>
+        </tr>
+        @endif
     </table>
 
     @include('pdfs.closing-statement.partials.report-footer', ['report_title' => $report_title])
