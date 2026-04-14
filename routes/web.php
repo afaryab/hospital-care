@@ -128,6 +128,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('reports.generic.service-orders');
     Route::get('reports/generic/service-order/{id}', [GenericReportPdfController::class, 'serviceOrder'])
         ->name('reports.generic.service-order');
+    Route::get('reports/generic/service-performance', [GenericReportPdfController::class, 'servicePerformance'])
+        ->name('reports.generic.service-performance');
+    Route::get('reports/generic/service-provider', [GenericReportPdfController::class, 'serviceProvider'])
+        ->name('reports.generic.service-provider');
 
 });
 

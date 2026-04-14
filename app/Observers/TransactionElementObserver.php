@@ -75,7 +75,6 @@ class TransactionElementObserver
                 'service_id' => $transactionElement->service_id,
                 'service_recestation_id' => $transactionElement->service_recestation_id,
                 'doctor_id' => $transactionElement->doctor_id,
-                'notes_json' => [],
             ]);
         }
     }

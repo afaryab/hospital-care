@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\ServiceOrder;
 use App\Models\Transaction;
 
 class TransactionObserver
@@ -53,6 +54,20 @@ class TransactionObserver
             $transaction->edited_amount = $transaction->getOriginal('amount');
             $transaction->saveQuietly(); // Save without triggering observer again
             $transaction->updateCounter();
+        }
+
+        // When a transaction is marked as refunded, update linked service orders
+        if ($transaction->isDirty('is_refunded') && $transaction->is_refunded) {
+            $serviceOrderIds = $transaction->elements()
+                ->whereNotNull('service_order_id')
+                ->pluck('service_order_id')
+                ->unique()
+                ->filter();
+
+            if ($serviceOrderIds->isNotEmpty()) {
+                ServiceOrder::whereIn('id', $serviceOrderIds)
+                    ->update(['status' => 'refunded']);
+            }
         }
     }
 

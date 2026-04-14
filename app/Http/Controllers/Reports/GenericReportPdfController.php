@@ -8,6 +8,7 @@ use App\Models\Receaveable;
 use App\Models\ServiceOrder;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -364,5 +365,105 @@ class GenericReportPdfController extends Controller
         }
 
         return $filters;
+    }
+
+    public function servicePerformance(Request $request): Response
+    {
+        $from = $request->date('from') ?? now()->startOfMonth();
+        $until = $request->date('until') ?? now();
+
+        $query = ServiceOrder::query()
+            ->whereDate('service_orders.created_at', '>=', $from)
+            ->whereDate('service_orders.created_at', '<=', $until)
+            ->with(['patient', 'service', 'doctor']);
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+        if ($request->filled('service_id')) {
+            $query->where('service_id', $request->input('service_id'));
+        }
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->input('doctor_id'));
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->get();
+
+        foreach ($orders as $order) {
+            $order->income_total = $order->transactionElements()
+                ->where('income_or_expense', 'INCOME')->sum('amount');
+            $order->voucher_total = $order->expenseVouchers->sum('amount');
+        }
+
+        $totalIncome = $orders->sum('income_total');
+        $totalExpense = $orders->sum('voucher_total');
+
+        // Group by type/department
+        $byDepartment = $orders->groupBy('type')->map(fn ($group) => [
+            'count' => $group->count(),
+            'income' => $group->sum('income_total'),
+            'expense' => $group->sum('voucher_total'),
+        ]);
+
+        return $this->renderPdf('pdfs.reports.generic-service-performance', [
+            'orders' => $orders,
+            'total_income' => $totalIncome,
+            'total_expense' => $totalExpense,
+            'by_department' => $byDepartment,
+            'from' => Carbon::parse($from),
+            'until' => Carbon::parse($until),
+            'generated_at' => now(),
+            'filters' => $this->describeFilters($request, ['type', 'status', 'service_id', 'doctor_id']),
+        ], 'service-performance-report');
+    }
+
+    public function serviceProvider(Request $request): Response
+    {
+        $from = $request->date('from') ?? now()->startOfMonth();
+        $until = $request->date('until') ?? now();
+
+        $query = ServiceOrder::query()
+            ->whereDate('service_orders.created_at', '>=', $from)
+            ->whereDate('service_orders.created_at', '<=', $until)
+            ->with(['patient', 'service', 'doctor', 'expenseVouchers.expCategory']);
+
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->input('doctor_id'));
+        }
+        if ($request->filled('service_id')) {
+            $query->where('service_id', $request->input('service_id'));
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->get();
+
+        foreach ($orders as $order) {
+            $order->income_total = $order->transactionElements()
+                ->where('income_or_expense', 'INCOME')->sum('amount');
+            $order->voucher_total = $order->expenseVouchers->sum('amount');
+        }
+
+        $provider = $request->filled('doctor_id')
+            ? User::find($request->input('doctor_id'))
+            : null;
+
+        $totalIncome = $orders->sum('income_total');
+        $totalExpense = $orders->sum('voucher_total');
+
+        return $this->renderPdf('pdfs.reports.generic-service-provider', [
+            'orders' => $orders,
+            'provider' => $provider,
+            'total_income' => $totalIncome,
+            'total_expense' => $totalExpense,
+            'from' => Carbon::parse($from),
+            'until' => Carbon::parse($until),
+            'generated_at' => now(),
+            'filters' => $this->describeFilters($request, ['doctor_id', 'service_id', 'status']),
+        ], 'service-provider-report');
     }
 }
