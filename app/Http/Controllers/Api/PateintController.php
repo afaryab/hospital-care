@@ -18,7 +18,7 @@ class PateintController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = Patient::query()->latest('created_at');
+            $query = Patient::query()->orderBy('created_at', 'desc');
 
             $exactMatches = collect();
 
@@ -74,11 +74,14 @@ class PateintController extends Controller
                 }
             }
 
-            // Name — DB-level LIKE search
+            // Name — DB-level LIKE search with prefix-first ordering
             $patientName = $request->get('patient_name', false);
 
             if ($patientName) {
-                $query->where('name', 'LIKE', "%{$patientName}%");
+                $query->where('name', 'LIKE', "%{$patientName}%")
+                    ->reorder()
+                    ->orderByRaw('CASE WHEN `name` LIKE ? THEN 0 ELSE 1 END', ["{$patientName}%"])
+                    ->orderBy('created_at', 'desc');
             }
 
             // Contact — hash lookup first; decrypt-scan fallback for legacy rows without hash
@@ -129,6 +132,17 @@ class PateintController extends Controller
 
             if ($patientGender) {
                 $query->where('gender', $patientGender);
+            }
+
+            // Age — filter by approximate age range (±10 years) using age_days
+            $patientAge = $request->get('patient_age', false);
+
+            if ($patientAge && is_numeric($patientAge) && (int) $patientAge > 0) {
+                $ageYears = (int) $patientAge;
+                $minDays = max(0, ($ageYears - 10) * 365);
+                $maxDays = ($ageYears + 10) * 365;
+                // Use arithmetic coercion (+0) for cross-database numeric cast of the string column
+                $query->whereRaw('(age_days + 0) BETWEEN ? AND ?', [$minDays, $maxDays]);
             }
 
             // MRI Number — search so_number in service_orders, return associated patient
