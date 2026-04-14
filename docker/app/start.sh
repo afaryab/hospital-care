@@ -8,14 +8,15 @@ cd /var/www/html
 # Ensure proper permissions
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
+mkdir -p /var/www/html/storage/app/pdf-tmp
 
 # Run Laravel optimizations and migrations if artisan exists
 if [ -f "/var/www/html/artisan" ]; then
     echo "Running Laravel optimizations..."
+    php artisan optimize:clear 2>/dev/null || true
     php artisan config:cache 2>/dev/null || true
     php artisan route:cache 2>/dev/null || true
     php artisan view:cache 2>/dev/null || true
-    php artisan optimize:clear 2>/dev/null || true
 fi
 
 if [ -f "/var/www/html/package.json" ]; then

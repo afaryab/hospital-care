@@ -15,6 +15,9 @@ class ExpenseVoucherInfolist
             ->components([
                 Section::make('Expense Voucher Information')
                     ->schema([
+                        TextEntry::make('status')
+                            ->badge()
+                            ->color(fn (string $state): string => $state === 'payed' ? 'success' : 'warning'),
                         TextEntry::make('vc_number')
                             ->label('Voucher Number'),
                         TextEntry::make('expCategory.name')

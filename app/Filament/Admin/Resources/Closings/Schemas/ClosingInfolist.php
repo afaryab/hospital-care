@@ -16,7 +16,7 @@ class ClosingInfolist
             ->components([
                 Tabs::make('Tabs')
                     ->tabs([
-                        Tab::make('Summery')
+                        Tab::make('Summary')
                             ->schema([
                                 ViewEntry::make('closing_overview')
                                     ->label(false)
@@ -25,6 +25,66 @@ class ClosingInfolist
                                         'closing' => $record,
                                         'transactions' => $record->transactions()->paginate(20),
                                         'printUrl' => self::buildMiniPrintUrl($record),
+                                    ])
+                                    ->columnSpanFull(),
+                            ]),
+                        Tab::make('Print')
+                            ->schema([
+                                ViewEntry::make('print_iframe')
+                                    ->label(false)
+                                    ->view('filament.admin.closings.infolists.report-iframe')
+                                    ->viewData(fn (Closing $record) => [
+                                        'src' => self::buildPrintUrl($record) ?? '',
+                                        'title' => 'Closing Statement',
+                                        'showVariant' => true,
+                                    ])
+                                    ->columnSpanFull(),
+                            ]),
+                        Tab::make('Income Report')
+                            ->schema([
+                                ViewEntry::make('income_report_iframe')
+                                    ->label(false)
+                                    ->view('filament.admin.closings.infolists.report-iframe')
+                                    ->viewData(fn (Closing $record) => [
+                                        'src' => self::buildReportUrl($record, 'income') ?? '',
+                                        'title' => 'Income Report',
+                                        'showVariant' => false,
+                                    ])
+                                    ->columnSpanFull(),
+                            ]),
+                        Tab::make('Expense Report')
+                            ->schema([
+                                ViewEntry::make('expense_report_iframe')
+                                    ->label(false)
+                                    ->view('filament.admin.closings.infolists.report-iframe')
+                                    ->viewData(fn (Closing $record) => [
+                                        'src' => self::buildReportUrl($record, 'expense') ?? '',
+                                        'title' => 'Expense Report',
+                                        'showVariant' => false,
+                                    ])
+                                    ->columnSpanFull(),
+                            ]),
+                        Tab::make('Receivables Report')
+                            ->schema([
+                                ViewEntry::make('receivables_report_iframe')
+                                    ->label(false)
+                                    ->view('filament.admin.closings.infolists.report-iframe')
+                                    ->viewData(fn (Closing $record) => [
+                                        'src' => self::buildReportUrl($record, 'receivables') ?? '',
+                                        'title' => 'Receivables Report',
+                                        'showVariant' => false,
+                                    ])
+                                    ->columnSpanFull(),
+                            ]),
+                        Tab::make('Services Report')
+                            ->schema([
+                                ViewEntry::make('services_report_iframe')
+                                    ->label(false)
+                                    ->view('filament.admin.closings.infolists.report-iframe')
+                                    ->viewData(fn (Closing $record) => [
+                                        'src' => self::buildReportUrl($record, 'services') ?? '',
+                                        'title' => 'Services Report',
+                                        'showVariant' => false,
                                     ])
                                     ->columnSpanFull(),
                             ]),

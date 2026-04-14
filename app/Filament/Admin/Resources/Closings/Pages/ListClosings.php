@@ -3,33 +3,34 @@
 namespace App\Filament\Admin\Resources\Closings\Pages;
 
 use App\Filament\Admin\Resources\Closings\ClosingResource;
+use App\Models\Closing;
 use Filament\Resources\Pages\ListRecords;
 use Filament\Schemas\Components\Tabs\Tab;
-// Removed widget import
+use Illuminate\Database\Eloquent\Builder;
 
 class ListClosings extends ListRecords
 {
     protected static string $resource = ClosingResource::class;
 
-
-
-
     public function getTabs(): array
     {
+        $counts = Closing::query()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
         return [
-            Tab::make('CLOSED')
-                ->label(__('Closed') . ' (' . \App\Models\Closing::where('status', 'CLOSED')->count() . ')'),
-            Tab::make('OPEN')
-                ->label(__('Open') . ' (' . \App\Models\Closing::where('status', 'OPEN')->count() . ')'),
-            Tab::make('REPORTED')
-                ->label(__('Received') . ' (' . \App\Models\Closing::where('status', 'REPORTED')->count() . ')'),
+            'CLOSED' => Tab::make('Closed ('.($counts['CLOSED'] ?? 0).')')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'CLOSED')),
+            'OPEN' => Tab::make('Open ('.($counts['OPEN'] ?? 0).')')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'OPEN')),
+            'REPORTED' => Tab::make('Received ('.($counts['REPORTED'] ?? 0).')')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'REPORTED')),
         ];
     }
 
-    protected function getTableQuery(): \Illuminate\Database\Eloquent\Builder
+    public function getDefaultActiveTab(): string|int|null
     {
-        $query = parent::getTableQuery();
-        $status = $this->activeTab ?? 'CLOSED';
-        return $query->where('status', $status);
+        return 'CLOSED';
     }
 }

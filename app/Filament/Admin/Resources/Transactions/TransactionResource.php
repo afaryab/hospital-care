@@ -5,12 +5,13 @@ namespace App\Filament\Admin\Resources\Transactions;
 use App\Filament\Admin\Resources\Transactions\Pages\EditTransaction;
 use App\Filament\Admin\Resources\Transactions\Pages\ListTransactions;
 use App\Filament\Admin\Resources\Transactions\Pages\ViewTransaction;
+use App\Filament\Admin\Resources\Transactions\Schemas\TransactionForm;
+use App\Filament\Admin\Resources\Transactions\Schemas\TransactionInfolist;
 use App\Models\Closing;
 use App\Models\Patient;
 use App\Models\Transaction;
 use BackedEnum;
 use Filament\Forms\Components\DatePicker;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -30,6 +31,16 @@ class TransactionResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowsRightLeft;
 
     protected static ?string $navigationLabel = 'Transactions';
+
+    public static function form(Schema $schema): Schema
+    {
+        return TransactionForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return TransactionInfolist::configure($schema);
+    }
 
     public static function table(Table $table): Table
     {
@@ -92,27 +103,6 @@ class TransactionResource extends Resource
             ])
             ->defaultSort('id', 'desc')
             ->recordUrl(fn (Transaction $record): string => static::getUrl('view', ['record' => $record]));
-    }
-
-    public static function infolist(Schema $schema): Schema
-    {
-        return $schema->components([
-            TextEntry::make('tr_number')->label('TR Number')->copyable(),
-            TextEntry::make('patient.name')->label('Patient'),
-            TextEntry::make('closing.ct_number')->label('Closing'),
-            TextEntry::make('type')->badge(),
-            TextEntry::make('income_or_expense')->label('Direction')->badge(),
-            TextEntry::make('amount')->numeric(2),
-            TextEntry::make('is_refunded')->label('Refunded')->badge()->formatStateUsing(fn (bool $state): string => $state ? 'Yes' : 'No'),
-            TextEntry::make('elements_summary')
-                ->label('Elements')
-                ->state(fn (Transaction $record): string => $record->elements()
-                    ->latest('id')
-                    ->get()
-                    ->map(fn ($element): string => sprintf('%s (%s) %.2f', (string) $element->type, (string) $element->income_or_expense, (float) $element->amount))
-                    ->implode(', '))
-                ->placeholder('No transaction elements found.'),
-        ]);
     }
 
     public static function getPages(): array

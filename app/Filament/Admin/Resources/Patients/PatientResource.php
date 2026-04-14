@@ -2,8 +2,10 @@
 
 namespace App\Filament\Admin\Resources\Patients;
 
+use App\Filament\Admin\Resources\Patients\Pages\EditPatient;
 use App\Filament\Admin\Resources\Patients\Pages\ListPatients;
 use App\Filament\Admin\Resources\Patients\Pages\ViewPatient;
+use App\Filament\Admin\Resources\Patients\Schemas\PatientForm;
 use App\Models\Patient;
 use App\Models\Receaveable;
 use App\Models\TreatmentRecord;
@@ -24,6 +26,11 @@ class PatientResource extends Resource
     protected static ?int $navigationSort = 3;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
+
+    public static function form(Schema $schema): Schema
+    {
+        return PatientForm::configure($schema);
+    }
 
     public static function table(Table $table): Table
     {
@@ -143,6 +150,7 @@ class PatientResource extends Resource
         return [
             'index' => ListPatients::route('/'),
             'view' => ViewPatient::route('/{record}'),
+            'edit' => EditPatient::route('/{record}/edit'),
         ];
     }
 }

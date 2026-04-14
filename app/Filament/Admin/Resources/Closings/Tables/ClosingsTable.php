@@ -12,9 +12,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class ClosingsTable
 {
@@ -75,35 +73,8 @@ class ClosingsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->modifyQueryUsing(function (Builder $query) {
-                $query->orderByRaw("FIELD(status, 'CLOSED', 'OPEN', 'REPORTED')");
-            })
+            ->defaultSort('id', 'desc')
             ->filters([
-                SelectFilter::make('reception_id')
-                    ->label('Reception')
-                    ->relationship('reception', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->placeholder('All Receptions')
-                    ->columnSpanFull(),
-                SelectFilter::make('receptionist_id')
-                    ->label('Receptionist')
-                    ->relationship('receptionist', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->placeholder('All Receptionists')
-                    ->columnSpanFull(),
-            ])
-            ->filters([
-                SelectFilter::make('status')
-                    ->label('Status')
-                    ->options([
-                        'CLOSED' => 'Closed (' . Closing::query()->where('status', 'CLOSED')->count() . ')',
-                        'OPEN' => 'Open (' . Closing::query()->where('status', 'OPEN')->count() . ')',
-                        'REPORTED' => 'Received (' . Closing::query()->where('status', 'REPORTED')->count() . ')',
-                    ])
-                    ->default('CLOSED')
-                    ->columnSpanFull(),
                 SelectFilter::make('reception_id')
                     ->label('Reception')
                     ->relationship('reception', 'name')
