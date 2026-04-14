@@ -12,6 +12,7 @@ use App\Models\Service;
 use App\Models\ServiceDepartment;
 use App\Models\Transaction;
 use App\Models\User;
+use Carbon\Carbon;
 use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,8 +27,8 @@ class AdminStatsOverview extends StatsOverviewWidget
 
     public function getStats(): array
     {
-        $startDate = $this->pageFilters['startDate'] ?? null;
-        $endDate = $this->pageFilters['endDate'] ?? null;
+        $startDate = $this->pageFilters['startDate'] ?? Carbon::now()->startOfMonth();
+        $endDate = $this->pageFilters['endDate'] ?? Carbon::now();
 
         return [
             $this->getUserStats($startDate, $endDate),

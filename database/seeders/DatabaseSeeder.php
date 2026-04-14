@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             StockCategorySeeder::class,
             AssetCategorySeeder::class,
             RolesAndPermissionsSeeder::class,
+            PaymentMethodSeeder::class,
         ]);
     }
 }

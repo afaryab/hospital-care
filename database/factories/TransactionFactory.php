@@ -39,4 +39,12 @@ class TransactionFactory extends Factory
             'income_or_expense' => 'EXPENSE',
         ]);
     }
+
+    public function administrative(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'closing_id' => null,
+            'type' => 'ADMIN',
+        ]);
+    }
 }

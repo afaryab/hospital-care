@@ -290,10 +290,14 @@
 **As an** administrator, **I want** to list, view, and manage all transactions from the admin panel, **so that** I have centralized access to financial records.
 
 ### US-5.6 · Select Payment Method ✅ **High**
-**As a** receptionist, **I want** to select a payment method (cash, card, or cheque) when recording a transaction, constrained by the reception's allowed payment flags, **so that** the payment is recorded correctly and policy is enforced.
+**As a** receptionist, **I want** to select a payment method (cash, card, cheque, bank transfer, panel) from a database-driven list when recording a transaction, constrained by the reception's allowed payment flags, **so that** the payment is recorded correctly and policy is enforced.
 - **Acceptance Criteria:**
-  - Only payment methods enabled on the reception (`is_cash_allowed`, `is_cheques_allowed`, `is_card_allowed`) are selectable.
-  - If only one method is allowed, it is preselected.
+  - Payment methods are stored in the `payment_methods` table (not hardcoded).
+  - Seeded methods: CASH, CHEQUE, CARD, BANK_TRANSFER, PANEL.
+  - Only payment methods enabled on the reception are selectable.
+  - If `payables` is set on the payment method, user must select the payable record (bank account or panel).
+  - If `id_required` is true, user must provide a reference number; if false, reference is optional.
+  - Multiple reference numbers can be entered comma-separated.
 
 ### US-5.7 · Split Payment Across Methods ✅ **Medium**
 **As a** receptionist, **I want** to split a transaction's payment across multiple methods (e.g., part cash, part card), **so that** the actual payment breakdown is accurately recorded.
@@ -301,6 +305,29 @@
   - Multiple payment method fields are available on the transaction form.
   - Sum of amounts across methods must equal the total transaction amount.
   - Closing tracks separate totals per payment method (`closing_amount_*` fields).
+
+### US-5.9 · Payment Methods Admin CRUD ✅ **Medium**
+**As an** administrator, **I want** to manage payment methods via a Filament resource, **so that** the available payment options can be configured without code changes.
+- **Acceptance Criteria:**
+  - Admin can create, view, and edit payment methods (name, slug, id_required, payables).
+  - `payables` dropdown (bank_account or panel) is disabled after creation — immutable.
+  - Default methods (CASH, CHEQUE, CARD, BANK_TRANSFER, PANEL) are seeded via `PaymentMethodSeeder`.
+
+### US-5.10 · Administrative Transactions ✅ **High**
+**As an** administrator, **I want** to record standalone expense or income transactions that are not tied to any counter closing, **so that** operational costs (utility bills, bank charges, petty cash reimbursements) are captured in the system with full payment method flexibility.
+- **Acceptance Criteria:**
+  - Admin can create a transaction (`income_or_expense` = EXPENSE or INCOME) without selecting a closing.
+  - Front-end counter always pays expenses in CASH (no change); this is admin-only.
+  - Admin can select any configured payment method (CASH, CHEQUE, CARD, BANK_TRANSFER, PANEL).
+  - If the payment method has `payables` set, admin must select the linked account/panel.
+  - If the payment method has `id_required`, reference number is required.
+  - Expense category is required when direction is EXPENSE.
+  - Patient association is optional.
+  - TR number is auto-assigned by `TransactionObserver` on creation.
+  - `type` is set to `ADMIN` to distinguish from counter transactions.
+  - `closing_id` is always `NULL` for administrative transactions.
+  - Separate Filament resource at `/admin/administrative-transactions` lists only these records (finance group).
+  - Admin can list, view, edit, and delete administrative transactions.
 
 ### US-5.8 · View Patient History During Transaction Creation ✅ **Medium**
 **As a** receptionist, **I want** to see a patient's prior transactions and outstanding receivables inline when selecting them for a new income transaction, **so that** I can make informed decisions (e.g., collect a pending amount).
@@ -447,11 +474,12 @@
 ### US-9.4 · Manage Expense Categories ✅ **Medium**
 **As an** administrator, **I want** to create and edit expense categories with payment rules (pay to doctors, others, users), **so that** expenses are properly classified.
 
-### US-9.5 · Manage Panels 🔲 **Medium**
-**As an** administrator, **I want** to create, edit, and deactivate insurance/corporate panels, **so that** panel-based billing is configurable.
+### US-9.5 · Manage Panels ✅ **Medium**
+**As an** administrator, **I want** to create, edit, and deactivate insurance/corporate panels, and view their outstanding receivables, paid receivables, and panel cheques, **so that** panel-based billing is configurable and trackable.
 - **Acceptance Criteria:**
   - Filament resource with active/inactive toggle.
-  - Pending panel payments visible.
+  - View page has tabs: Pending Receivables, Paid, Cheques.
+  - Admin can record a panel cheque (cheque number, bank account, amount, due date, linked receivable) from the panel view page.
 
 ### US-9.6 · Hospital Settings 🔲 **Medium**
 **As an** administrator, **I want** to configure hospital-wide settings (name, logo, address, contact info), **so that** printed documents and headers reflect the correct organization details.
@@ -517,6 +545,20 @@
   - Export button on each report page alongside the PDF button.
   - Exported file includes all filtered data with column headers.
   - File name includes report type and date range.
+
+### US-10.12 · Bank Payment Reports ✅ **Medium**
+**As an** administrator, **I want** to generate PDF reports for pending bank payments (unlinked bank transactions) and received bank payments (linked to transactions), **so that** I can reconcile bank statements against recorded transactions.
+- **Acceptance Criteria:**
+  - **Pending:** Shows unlinked bank transaction credits in a date range, filtered by bank account. Blue accent. Route: `reports/bank-payments/pending`.
+  - **Received:** Shows linked bank transaction credits with TR number and patient name. Green accent. Route: `reports/bank-payments/received`.
+  - Both reports use standard PDF format with hospital header/footer.
+
+### US-10.13 · Panel Payment Reports ✅ **Medium**
+**As an** administrator, **I want** to generate a PDF report of pending panel cheques, **so that** I can track outstanding cheque payments from insurance/corporate panels.
+- **Acceptance Criteria:**
+  - Shows pending panel cheques in a date range, filtered by panel.
+  - Columns: Panel, Cheque Number, Bank Account, Due Date, Amount, Notes.
+  - Purple accent. Route: `reports/panel-payments/pending`.
 
 ---
 
@@ -1102,6 +1144,57 @@
 
 ---
 
+## Epic 23 — Bank Accounts & Panel Cheques
+
+> Manage bank accounts, import bank statements, track panel cheques, and auto-link bank transactions to recorded payments.
+
+### US-23.1 · Manage Bank Accounts ✅ **High**
+**As an** administrator, **I want** to create and manage bank accounts with full details (name, bank name, account number, IBAN, branch code), **so that** the system knows which bank accounts are available for bank transfers and panel cheque recording.
+- **Acceptance Criteria:**
+  - Filament resource for bank accounts with activate/deactivate toggle.
+  - Lists bank accounts with transaction count.
+
+### US-23.2 · Import Bank Statement ✅ **High**
+**As an** administrator, **I want** to upload a CSV or Excel bank statement to a bank account, **so that** bank transaction history is available for reconciliation.
+- **Acceptance Criteria:**
+  - Upload action on the Bank Transactions list page.
+  - Accepts CSV and Excel files.
+  - Flexible column mapping: date/transaction_date, debit/withdrawal, credit/deposit, reference/ref/txn_id.
+  - Duplicate prevention: same `bank_account_id` + `reference_number` is not imported twice.
+  - Queued import to handle large files.
+
+### US-23.3 · Manage Bank Transactions ✅ **Medium**
+**As an** administrator, **I want** to list and filter bank transactions by bank account and link status, **so that** I can see which transactions have been matched to system records.
+- **Acceptance Criteria:**
+  - Filament resource with filterable list.
+  - Filter by bank account and linked/unlinked status.
+  - Linked transaction column shows the linked TR number.
+
+### US-23.4 · Auto-Link Bank Transactions ✅ **High**
+**As the** system, **I want** to automatically match bank transactions to recorded income transactions by amount and reference number, **so that** reconciliation happens without manual effort.
+- **Acceptance Criteria:**
+  - Artisan command `bank:link-transactions` runs hourly.
+  - Matches unlinked credits to transactions where `amount == credit` AND `reference_number LIKE %bank_ref%` or `notes LIKE %bank_ref%`.
+  - `--dry-run` flag previews matches without saving.
+  - `withoutOverlapping()` prevents concurrent runs.
+
+### US-23.5 · Record Panel Cheque ✅ **High**
+**As an** administrator, **I want** to record a cheque payment issued by a panel (insurance/corporate), linked to a bank account and optionally to a pending receivable, **so that** panel payments are tracked status-by-status.
+- **Acceptance Criteria:**
+  - Panel cheque can be created from both the PanelCheque resource and the Panel view page.
+  - Fields: cheque number, amount, bank account, due date, linked receivable, notes.
+  - Status: pending → received → bounced.
+  - Received date captured when status is changed to received.
+
+### US-23.6 · Panel Cheque Management ✅ **Medium**
+**As an** administrator, **I want** to list, filter, and manage all panel cheques, **so that** I can track which cheques are pending, received, or bounced.
+- **Acceptance Criteria:**
+  - Filament resource with filterable list.
+  - Filter by panel and status.
+  - Status badge with color coding (pending=amber, received=green, bounced=red).
+
+---
+
 ## BackLog
 
 > Unrefined stories and ideas not yet assigned to an epic. Items here are candidates for future sprints and require elaboration before implementation.
@@ -1149,12 +1242,12 @@
 | 2 — User & Role Mgmt | 6 | 2 | 3 | 1 |
 | 3 — Patient Registration | 3 | 2 | 1 | 0 |
 | 4 — Counter Operations | 8 | 4 | 3 | 1 |
-| 5 — Income Transactions | 8 | 4 | 4 | 0 |
+| 5 — Income Transactions | 9 | 4 | 5 | 0 |
 | 6 — Expense Management | 6 | 3 | 3 | 0 |
 | 7 — Receivables | 3 | 2 | 1 | 0 |
 | 8 — Service Orders & Queues | 7 | 4 | 3 | 0 |
 | 9 — Services & Config | 6 | 3 | 3 | 0 |
-| 10 — Reports & Analytics | 11 | 4 | 3 | 4 |
+| 10 — Reports & Analytics | 13 | 4 | 5 | 4 |
 | 11 — Prints | 4 | 0 | 4 | 0 |
 | 12 — Accounts Panel | 2 | 0 | 2 | 0 |
 | 13 — Patient Portal | 3 | 0 | 3 | 0 |
@@ -1167,5 +1260,6 @@
 | 20 — Asset Tracking | 6 | 1 | 3 | 2 |
 | 21 — User Tasking | 6 | 3 | 2 | 1 |
 | 22 — User Payroll | 6 | 3 | 3 | 0 |
+| 23 — Bank Accounts & Panel Cheques | 6 | 3 | 3 | 0 |
 | BackLog | 8 | 0 | 3 | 5 |
-| **Total** | **154** | **67** | **63** | **18** |
+| **Total** | **163** | **70** | **72** | **18** |

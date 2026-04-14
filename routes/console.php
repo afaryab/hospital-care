@@ -17,6 +17,8 @@ Schedule::command('app:close-old-service-orders')->everyFiveSeconds()->runInBack
 
 Schedule::command('telescope:prune')->daily();
 
+Schedule::command('bank:link-transactions')->hourly()->runInBackground()->withoutOverlapping();
+
 Schedule::command('backup:run')
     ->dailyAt('01:00')
     ->runInBackground()

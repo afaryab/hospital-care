@@ -5,10 +5,12 @@ namespace App\Filament\Admin\Resources\Panels;
 use App\Filament\Admin\Resources\Panels\Pages\CreatePanel;
 use App\Filament\Admin\Resources\Panels\Pages\EditPanel;
 use App\Filament\Admin\Resources\Panels\Pages\ListPanels;
+use App\Filament\Admin\Resources\Panels\Pages\ViewPanel;
 use App\Models\Panel;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
@@ -64,6 +66,7 @@ class PanelResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
             ]);
@@ -74,6 +77,7 @@ class PanelResource extends Resource
         return [
             'index' => ListPanels::route('/'),
             'create' => CreatePanel::route('/create'),
+            'view' => ViewPanel::route('/{record}'),
             'edit' => EditPanel::route('/{record}/edit'),
         ];
     }

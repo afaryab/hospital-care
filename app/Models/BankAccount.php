@@ -2,18 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-class Panel extends Model
+class BankAccount extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'name',
-        'code',
+        'bank_name',
+        'account_number',
+        'branch_code',
+        'iban',
         'is_active',
     ];
 
@@ -24,9 +24,9 @@ class Panel extends Model
         ];
     }
 
-    public function receaveables(): HasMany
+    public function bankTransactions(): HasMany
     {
-        return $this->hasMany(Receaveable::class, 'panel_id');
+        return $this->hasMany(BankTransaction::class);
     }
 
     public function panelCheques(): HasMany

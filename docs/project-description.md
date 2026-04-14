@@ -67,7 +67,13 @@ Every record in the system is addressable via a hierarchical URL that progressiv
 | `/admin/service-orders` | Service orders resource |
 | `/admin/expense-vouchers` | Expense vouchers resource |
 | `/admin/users` | Users resource |
-| `/admin/reports/{type}` | Report pages (income, expense, receivables, services) |
+| `/admin/panels` | Panels resource (list, CRUD, View with Pending/Paid/Cheques tabs) |
+| `/admin/payment-methods` | Payment methods resource — Finance group |
+| `/admin/bank-accounts` | Bank accounts resource with CSV/Excel statement import — Finance group |
+| `/admin/bank-transactions` | Bank transactions resource (imported + manual) — Finance group |
+| `/admin/panel-cheques` | Panel cheques resource (record, track status) — Finance group |
+| `/admin/administrative-transactions` | Administrative transactions (expenses/income without a counter closing) — Finance group |
+| `/admin/reports/{type}` | Report pages (income, expense, receivables, services, bank payments, panel payments) |
 
 **Accounts Panel (Filament):**
 | URL | Content |
@@ -175,7 +181,7 @@ Every record in the system is addressable via a hierarchical URL that progressiv
 ### Not Yet Implemented (Planned)
 - **Patients** Filament Resource — Patient view with tabs for all relations (service orders, payments)
 - **Transaction** Filament Resource
-- **Panels** Filament Resource — With pending panel payments
+- **Panels** Filament Resource — With pending panel payments, View page with Pending Receivables / Paid / Cheques tabs *(partially implemented — CRUD + view done; full receivable collection UI pending)*
 - **Activity Dashboard** — Activity tracking based on records being created, with line charts
 - **Operations Dashboard** — Service order stats with line/donut charts by department/service
 - **Sales Dashboard** — Incoming transaction stats with group bar chart
@@ -195,14 +201,14 @@ Every record in the system is addressable via a hierarchical URL that progressiv
 
 ## 2. Data Models
 
-### Core Models (14)
+### Core Models (18)
 
 | Model | Key Fields | Relationships |
 |-------|-----------|---------------|
 | **User** | name, username, email, mobile, password, is_active | Has many role profiles (admin, accountant, receptionist, opd_doctor, ind_doctor, emergency_doctor, dentist, ultrasound_doctor, xray_technician, nursing_staff, patient_manager) |
 | **Patient** | ps_number, name, gender, age_*, address, guardian, contact, cnic | hasMany transactions, service orders (treatments), receivables |
 | **ServiceOrder** | type, token, so_number, patient_id, service_id, doctor_id, notes_json, is_composit | belongsTo creator, patient, service, doctor; morphTo payee |
-| **Transaction** | tr_number, closing_id, patient_id, panel_id, income_or_expense, amount, is_refunded, exp_voucher_id | belongsTo closing, patient |
+| **Transaction** | tr_number, closing_id (nullable — null = Administrative Transaction), patient_id, panel_id, payment_method_id, payable_type, payable_id, reference_number, income_or_expense, amount, is_refunded, expense_category_id, exp_voucher_id | belongsTo closing (nullable), patient, paymentMethod, expenseCategory; morphTo payable (BankAccount or Panel) |
 | **TransactionElement** | transaction_id, service_order_id, type, income_or_expense, amount, service_id, doctor_id | belongsTo transaction, service, doctor, patient, expenseCategory |
 | **Closing** | ct_number, reception_id, receptionist_id, status, opening_amount, closing_amount_*, expense_payed | belongsTo reception; hasMany transactions |
 | **ExpenseVoucher** | vc_number, exp_category_id, service_order_id, amount, payed_to | belongsTo expenseCategory, serviceOrder, transaction |
@@ -211,8 +217,12 @@ Every record in the system is addressable via a hierarchical URL that progressiv
 | **ServiceRecestation** | name, slug, charges, tax_rate, service_provider_types | — |
 | **Reception** | name, allowed_departments, is_allowed_to_pay_voucher, is_cash_allowed, is_cheques_allowed, is_card_allowed | hasMany closings |
 | **Receaveable** | patient_id, panel_id, amount, due_date, status | belongsTo patient, transaction, panel; hasOneThrough serviceOrder |
-| **Panel** | name, code, is_active | — |
+| **Panel** | name, code, is_active | hasMany panelCheques; morphMany transactions, transactionElements |
 | **ExpenseCategory** | name, type, pay_doc, pay_others, pay_users | — |
+| **PaymentMethod** | name, slug, id_required, payables | — (slug values: CASH, CHEQUE, CARD, BANK_TRANSFER, PANEL) |
+| **BankAccount** | name, bank_name, account_number, branch_code, iban, is_active | hasMany bankTransactions, panelCheques; morphMany transactions, transactionElements |
+| **BankTransaction** | bank_account_id, transaction_date, description, debit, credit, balance, reference_number, linked_transaction_id | belongsTo bankAccount, linkedTransaction |
+| **PanelCheque** | panel_id, bank_account_id, cheque_number, amount, due_date, status, received_at, notes, linked_receaveable_id | belongsTo panel, bankAccount |
 
 ### Role/Profile Models (11)
 Administrator, Accountant, Receptionist, OpdDoctor, IndDoctor, EmergencyDoctor, Dentist, UltrasoundDoctor, XrayTechnician, NursingStaff, PatientManager
@@ -221,15 +231,17 @@ Administrator, Accountant, Receptionist, OpdDoctor, IndDoctor, EmergencyDoctor, 
 - **Image** — Polymorphic file attachment (owner_id, path, file_type, file_size)
 - **InstanceVariable** — Generic key-value storage
 
-### Enums (5)
+### Enums (5 + 1 deprecated)
 
-| Enum | Values |
-|------|--------|
-| **CounterStatus** | OPEN, CLOSED, REPORTED |
-| **ExpenseVoucherStatus** | PENDING, PAYED |
-| **PaymentMethods** | CASH, CARD, CHEQUE |
-| **ServiceOrderStatus** | OPEN, CLOSED |
-| **TransactionElementType** | OPD, IND, EMG, LAB, RAD, DNT, ULT, PETTY_CASH, VOUCHER_PAY, IND_EXP |
+| Enum | Values | Notes |
+|------|--------|-------|
+| **CounterStatus** | OPEN, CLOSED, REPORTED | — |
+| **ExpenseVoucherStatus** | PENDING, PAYED | — |
+| **PaymentMethods** | CASH, CARD, CHEQUE | **Deprecated** — superseded by `payment_methods` DB table. Legacy enum kept for backward compatibility only. |
+| **ServiceOrderStatus** | OPEN, CLOSED | — |
+| **TransactionElementType** | OPD, IND, EMG, LAB, RAD, DNT, ULT, PETTY_CASH, VOUCHER_PAY, IND_EXP | — |
+
+> **Payment Methods** are now stored in the `payment_methods` table with fields: `id`, `name`, `slug` (CAPITALIZED), `id_required` (bool), `payables` (nullable string: `bank_account` or `panel`). Seeded with: CASH, CHEQUE, CARD, BANK_TRANSFER, PANEL via `PaymentMethodSeeder`.
 
 ### Observers (5)
 - **PatientObserver** — Assigns PS number (`PS/{year}/{month}/{sequence}`)
@@ -237,6 +249,14 @@ Administrator, Accountant, Receptionist, OpdDoctor, IndDoctor, EmergencyDoctor, 
 - **TransactionObserver** — Assigns TR number (`TR/{year}/{month}/{sequence}`)
 - **TransactionElementObserver** — Post-creation processing
 - **ExpenseVoucherObserver** — Assigns VC number
+
+### Seeders
+- **ExpenseCategorySeeder** — Default expense categories
+- **ServicesAndDepartmentsSeeder** — Default service departments and services
+- **PaymentMethodSeeder** — Seeds CASH, CHEQUE, CARD, BANK_TRANSFER, PANEL using `updateOrCreate` by slug
+
+### Artisan Commands (Scheduled)
+- **`bank:link-transactions`** — Matches unlinked `BankTransaction` credits to `Transaction` records by amount + reference number similarity. Runs hourly (`--dry-run` flag available for preview without saving).
 
 ---
 
@@ -339,7 +359,7 @@ Routes follow the hierarchical URL resolution pattern (see §1). Each route pref
 | `/ACC-CT-ALL` | `/ACCOUNTS/CT` | All closings (accountant) |
 
 **Print Routes:** `/PRINT/{RecordType}/{year}/{month}/{...}/{number}`
-**Report Routes:** `/reports/{type}` (income-cash-flow, generic/income, generic/expense, etc.)
+**Report Routes:** `/reports/{type}` — income-cash-flow, generic/income, generic/expense, generic/receivables, generic/services, generic/service-orders, generic/service-order/{id}, generic/service-performance, generic/service-provider, **bank-payments/pending**, **bank-payments/received**, **panel-payments/pending**
 
 ### API Routes (routes/api.php)
 - `/lookup`, `/patients`, `/expense-vouchers`, `/expense-categories`, `/users`, `/transactions`, `/service-orders`, `/closings`
