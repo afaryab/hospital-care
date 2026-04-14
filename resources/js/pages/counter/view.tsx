@@ -1099,6 +1099,31 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                 </td>
                                 <td colSpan={3}></td>
                             </tr>
+                            <tr className="bg-blue-50/50 dark:bg-gray-700">
+                                <td
+                                    colSpan={5}
+                                    className="px-3 py-2 text-right font-medium text-gray-500"
+                                >
+                                    Net Cash{' '}
+                                    <span className="text-[10px] font-normal text-gray-400">
+                                        (Cash Income − Expenses)
+                                    </span>
+                                </td>
+                                <td className="px-3 py-2 text-right font-mono font-semibold text-blue-700">
+                                    {(
+                                        incomeByType('CASH') -
+                                        sumByFilter(
+                                            (tr: any) =>
+                                                tr.income_or_expense ===
+                                                'EXPENSE',
+                                        )
+                                    ).toLocaleString()}{' '}
+                                    <span className="font-normal text-gray-400">
+                                        PKR
+                                    </span>
+                                </td>
+                                <td colSpan={3}></td>
+                            </tr>
                             <tr className="bg-purple-50/50 dark:bg-gray-700">
                                 <td
                                     colSpan={5}
