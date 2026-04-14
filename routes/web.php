@@ -4,8 +4,10 @@ use App\Http\Controllers\Migration\ImportController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
 use App\Http\Controllers\Prints\ServiceOrderPdfPrintController;
 use App\Http\Controllers\Prints\TransactionPdfPrintController;
+use App\Http\Controllers\Reports\BankPaymentReportController;
 use App\Http\Controllers\Reports\GenericReportPdfController;
 use App\Http\Controllers\Reports\IncomeCashFlowReportController;
+use App\Http\Controllers\Reports\PanelPaymentReportController;
 use App\Http\Controllers\WebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -132,6 +134,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('reports.generic.service-performance');
     Route::get('reports/generic/service-provider', [GenericReportPdfController::class, 'serviceProvider'])
         ->name('reports.generic.service-provider');
+
+    // Bank & panel payment reports
+    Route::get('reports/bank-payments/pending', [BankPaymentReportController::class, 'pending'])
+        ->name('reports.bank-payments.pending');
+    Route::get('reports/bank-payments/received', [BankPaymentReportController::class, 'received'])
+        ->name('reports.bank-payments.received');
+    Route::get('reports/panel-payments/pending', [PanelPaymentReportController::class, 'pending'])
+        ->name('reports.panel-payments.pending');
 
 });
 

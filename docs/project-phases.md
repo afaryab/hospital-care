@@ -90,9 +90,9 @@ These migrations and models already exist and are functional.
 
 **Existing Observers:** `PatientObserver`, `ClosingObserver`, `TransactionObserver`, `TransactionElementObserver`, `ExpenseVoucherObserver`
 
-**Existing Enums (PHP):** `CounterStatus`, `ExpenseVoucherStatus`, `PaymentMethods`, `ServiceOrderStatus`, `TransactionElementType`
+**Existing Enums (PHP):** `CounterStatus`, `ExpenseVoucherStatus`, `PaymentMethods` *(deprecated — replaced by `payment_methods` table)*, `ServiceOrderStatus`, `TransactionElementType`
 
-**Existing Seeders:** `DatabaseSeeder`, `ExpenseCategorySeeder`, `ServicesAndDepartmentsSeeder`
+**Existing Seeders:** `DatabaseSeeder`, `ExpenseCategorySeeder`, `ServicesAndDepartmentsSeeder`, `PaymentMethodSeeder`
 
 ---
 
@@ -673,7 +673,177 @@ tests/Feature/Models/SalaryAdvanceTest.php
 
 ---
 
-### Phase 1.10 — Package Installation for New Features ✅
+### Phase 1.10 — Payment Methods, Bank Accounts & Panel Cheques ✅
+
+> Ref: US-5.9, US-9.5, US-10.12, US-10.13, US-23.1–US-23.6
+> Branch: `feature/payment-methods-bank-accounts`
+
+Replaces the hardcoded `PaymentMethods` PHP enum with a proper DB-backed table and adds four new entities for finance tracking.
+
+#### New Tables
+
+**`payment_methods`**
+```
+├── id
+├── name (string) — display name
+├── slug (string, unique) — CASH | CHEQUE | CARD | BANK_TRANSFER | PANEL
+├── id_required (boolean, default false) — whether a reference number is required
+├── payables (string, nullable) — 'bank_account' | 'panel' — if set, user must pick a payable
+├── timestamps
+```
+
+**`bank_accounts`**
+```
+├── id
+├── name (string) — alias/nickname
+├── bank_name (string)
+├── account_number (string)
+├── branch_code (string, nullable)
+├── iban (string, nullable)
+├── is_active (boolean, default true)
+├── timestamps
+```
+
+**`bank_transactions`**
+```
+├── id
+├── bank_account_id (FK → bank_accounts)
+├── transaction_date (date)
+├── description (text, nullable)
+├── debit (decimal 12,2, nullable)
+├── credit (decimal 12,2, nullable)
+├── balance (decimal 12,2, nullable)
+├── reference_number (string, nullable, indexed)
+├── linked_transaction_id (FK → transactions, nullable) — auto-linked by cron
+├── timestamps
+```
+
+**`panel_cheques`**
+```
+├── id
+├── panel_id (FK → panels)
+├── bank_account_id (FK → bank_accounts)
+├── cheque_number (string)
+├── amount (decimal 12,2)
+├── due_date (date, nullable)
+├── status (string) — pending | received | bounced
+├── received_at (datetime, nullable)
+├── notes (text, nullable)
+├── linked_receaveable_id (FK → receaveables, nullable)
+├── timestamps
+```
+
+**`transactions` table changes** (delta migration + setup migration updated):
+- Added `payment_method_id` (FK → payment_methods, nullable)
+- Added `payable_type` + `payable_id` (nullableMorphs — BankAccount or Panel)
+- Added `reference_number` (string, nullable) — comma-separated reference numbers
+
+#### New Models
+- **`PaymentMethod`** — `getPayableModelClass()` helper returns `BankAccount::class` or `Panel::class`
+- **`BankAccount`** — morphMany transactions, transactionElements; hasMany bankTransactions, panelCheques
+- **`BankTransaction`** — belongsTo bankAccount, linkedTransaction; date + decimal casts
+- **`PanelCheque`** — belongsTo panel, bankAccount; status: pending/received/bounced
+
+#### Updated Models
+- **`Transaction`** — Added `payment_method_id`, `payable_type`, `payable_id`, `reference_number` to fillable; added `paymentMethod()` and `payable()` morph relationships
+- **`Panel`** — Added `panelCheques()` HasMany; `transactions()` and `transactionElements()` MorphMany
+
+#### Seeder
+- **`PaymentMethodSeeder`** — `updateOrCreate` by slug: CASH (no ref, no payable), CHEQUE (id_required, no payable), CARD (no ref, no payable), BANK_TRANSFER (id_required, payables=bank_account), PANEL (optional ref, payables=panel)
+
+#### Imports
+- **`BankStatementImport`** (`app/Imports/BankStatementImport.php`) — Maatwebsite Excel v3, implements `ToCollection`, `WithHeadingRow`, `SkipsEmptyRows`, `ShouldQueue`. Chunk size 500. Prevents duplicates via `updateOrCreate` on `[bank_account_id, reference_number]`. Handles Excel serial date format, currency-stripped amounts, flexible column mapping (date/transaction_date, debit/withdrawal, credit/deposit, reference/ref/txn_id).
+
+#### Filament Resources (Admin Panel — Finance navigation group)
+- **PaymentMethodResource** (`/admin/payment-methods`) — CRUD; `payables` dropdown (bank_account/panel) is disabled after creation to prevent changes
+- **BankAccountResource** (`/admin/bank-accounts`) — CRUD
+- **BankTransactionResource** (`/admin/bank-transactions`) — CRUD + `ListBankTransactions` page has `uploadStatement` header action (FileUpload CSV/Excel + bank_account_id select → `Excel::import(new BankStatementImport(...))`)
+- **PanelChequeResource** (`/admin/panel-cheques`) — CRUD; status filter; linked receivable selector filtered by panel
+
+#### Panel View Update
+- **`ViewPanel`** page (`/admin/panels/{record}`) — extended from `ViewRecord` with infolist Tabs:
+  1. **Pending Receivables** — outstanding/partial receaveables for this panel
+  2. **Paid** — paid receaveables
+  3. **Cheques** — panel cheques with status badges and record cheque action
+- Header action `recordCheque` — form to add a new panel cheque (bank_account, cheque_number, amount, due_date, linked receivable)
+
+#### Artisan Command
+- **`bank:link-transactions`** (signature: `bank:link-transactions {--dry-run}`) — chunks unlinked BankTransactions (has credit, has reference_number), matches to Transaction by `amount == credit` AND `reference_number LIKE %ref%` OR `notes LIKE %ref%`. Updates `linked_transaction_id`. Scheduled `hourly()` with `withoutOverlapping()` in `routes/console.php`.
+
+#### PDF Reports
+- **`BankPaymentReportController`** — `pending()` (unlinked credits, blue accent PDF) and `received()` (linked credits with TR#/patient, green accent PDF); routes: `reports/bank-payments/pending`, `reports/bank-payments/received`
+- **`PanelPaymentReportController`** — `pending()` (pending panel cheques, purple accent PDF); route: `reports/panel-payments/pending`
+- Views: `resources/views/pdfs/reports/bank-payments-pending.blade.php`, `bank-payments-received.blade.php`, `panel-payments-pending.blade.php`
+
+#### Feature Tests
+```
+tests/Feature/Models/PaymentMethodTest.php
+- test payment method can be created with required fields
+- test slug is unique
+- test getPayableModelClass returns BankAccount for bank_account payables
+- test getPayableModelClass returns Panel for panel payables
+
+tests/Feature/Models/BankAccountTest.php
+- test bank account can be created
+- test bank account has many bank transactions
+- test bank account morph many transactions
+
+tests/Feature/Models/BankTransactionTest.php
+- test bank transaction can be imported via BankStatementImport
+- test duplicate reference_number for same bank_account is not duplicated
+- test linked_transaction_id is null until bank:link-transactions runs
+
+tests/Feature/Commands/LinkBankTransactionsTest.php
+- test command links transaction when amount and reference match
+- test dry-run flag does not save changes
+- test already-linked transactions are skipped
+
+tests/Feature/Reports/BankPaymentReportTest.php
+- test pending bank payments PDF renders
+- test received bank payments PDF renders
+
+tests/Feature/Reports/PanelPaymentReportTest.php
+- test pending panel payments PDF renders
+```
+
+---
+
+### Phase 1.12 — Administrative Transactions ✅
+
+> Admin-only transactions that bypass the counter/closing system. These are `Transaction` records where `closing_id IS NULL`.
+
+**Business Rule:** Front-end (counter) always pays expenses in CASH and links them to an open closing. Administrators need to record standalone expenses or income (e.g., utility bills, bank charges, petty cash) that are not tied to any specific counter session.
+
+**DB Change:**
+- `closing_id` on `transactions` table made **nullable** via migration `2026_04_14_220945_make_closing_id_nullable_on_transactions_table.php`
+
+**Model Changes (`Transaction`):**
+- `expenseCategory()` BelongsTo relationship added
+- `closing_id` is now nullable at DB level
+
+**Factory:**
+- `TransactionFactory::administrative()` state: sets `closing_id = null`, `type = 'ADMIN'`
+- `PaymentMethodFactory` created (new)
+
+**Filament Resource (`/admin/administrative-transactions` — Finance navigation group):**
+- `AdministrativeTransactionResource` — query scoped to `whereNull('closing_id')`; full CRUD (Create, List, View, Edit)
+- `AdministrativeTransactionForm` — fields: `income_or_expense` (default EXPENSE), `expense_category_id` (conditional on EXPENSE), `patient_id` (optional), `amount`, `payment_method_id`, `payable_id` (conditional morph), `reference_number` (conditional on `id_required`), `notes`
+- `CreateAdministrativeTransaction` — sets `closing_id = null`, `type = 'ADMIN'`, `created_by = auth()->id()`, resolves `payable_type` from payment method
+- `EditAdministrativeTransaction` — enforces `closing_id = null`, resolves `payable_type`
+
+**Tests:** `tests/Feature/Finance/AdministrativeTransactionTest.php`
+```
+- test admin can list administrative transactions (excludes counter transactions)
+- test admin can create an administrative expense transaction
+- test admin can view an administrative transaction
+- test admin can edit an administrative transaction notes
+- test creating administrative transaction requires amount and payment method
+- test administrative transactions list filters by direction
+```
+
+---
+
+### Phase 1.11 — Package Installation for New Features ✅
 
 > Install required packages before the models that depend on them.
 
@@ -2123,7 +2293,7 @@ tests/Feature/Prints/ServiceOrderPrintTest.php
 
 | Phase | Description | Tasks | Status |
 |-------|-------------|-------|--------|
-| **1** | Database Structure | 10 sub-phases | Partially ✅ (1.2 done) |
+| **1** | Database Structure | 11 sub-phases | Partially ✅ (1.2, 1.10 done) |
 | **2** | Compliance & Security | 7 sub-phases | 🔲 |
 | **3** | Core Feature Enhancements | 9 sub-phases | 🔲 |
 | **4** | URL Resolution Architecture | 6 sub-phases | 🔲 |

@@ -32,6 +32,10 @@ class Transaction extends Model
         'panel_id',
         'receaveable_id',
         'type',
+        'payment_method_id',
+        'payable_type',
+        'payable_id',
+        'reference_number',
         'income_or_expense',
         'amount',
         'amount_alphabetical',
@@ -132,6 +136,21 @@ class Transaction extends Model
     public function panel()
     {
         return $this->belongsTo(Panel::class, 'panel_id');
+    }
+
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class);
+    }
+
+    public function expenseCategory()
+    {
+        return $this->belongsTo(ExpenseCategory::class);
+    }
+
+    public function payable()
+    {
+        return $this->morphTo();
     }
 
     public function refundBy(User $user): void

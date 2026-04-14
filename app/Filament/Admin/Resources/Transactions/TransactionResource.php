@@ -21,6 +21,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 
 class TransactionResource extends Resource
 {
@@ -53,8 +54,7 @@ class TransactionResource extends Resource
                     ->sortable(),
                 TextColumn::make('patient.name')
                     ->label('Patient')
-                    ->searchable()
-                    ->sortable(),
+                    ->searchable(),
                 TextColumn::make('closing.ct_number')
                     ->label('Closing')
                     ->toggleable(),
@@ -83,8 +83,8 @@ class TransactionResource extends Resource
                         DatePicker::make('until'),
                     ])
                     ->query(fn (Builder $query, array $data): Builder => $query
-                        ->when($data['from'] ?? null, fn (Builder $innerQuery, $date) => $innerQuery->whereDate('created_at', '>=', $date))
-                        ->when($data['until'] ?? null, fn (Builder $innerQuery, $date) => $innerQuery->whereDate('created_at', '<=', $date))),
+                        ->when($data['from'] ?? null, fn (Builder $q, $date) => $q->where('created_at', '>=', Carbon::parse($date)->startOfDay()))
+                        ->when($data['until'] ?? null, fn (Builder $q, $date) => $q->where('created_at', '<=', Carbon::parse($date)->endOfDay()))),
                 SelectFilter::make('type')
                     ->options(fn () => Transaction::query()->select('type')->distinct()->pluck('type', 'type')->toArray()),
                 SelectFilter::make('income_or_expense')
@@ -94,12 +94,23 @@ class TransactionResource extends Resource
                     ]),
                 SelectFilter::make('patient_id')
                     ->label('Patient')
-                    ->options(fn () => Patient::query()->orderBy('name')->pluck('name', 'id')->toArray())
-                    ->searchable(),
+                    ->searchable()
+                    ->getSearchResultsUsing(fn (string $search): array => Patient::query()
+                        ->where('name', 'like', "%{$search}%")
+                        ->limit(30)
+                        ->pluck('name', 'id')
+                        ->toArray())
+                    ->getOptionLabelUsing(fn ($value): ?string => Patient::find($value)?->name),
                 SelectFilter::make('closing_id')
                     ->label('Closing')
-                    ->options(fn () => Closing::query()->orderByDesc('id')->pluck('ct_number', 'id')->toArray())
-                    ->searchable(),
+                    ->searchable()
+                    ->getSearchResultsUsing(fn (string $search): array => Closing::query()
+                        ->where('ct_number', 'like', "%{$search}%")
+                        ->orderByDesc('id')
+                        ->limit(30)
+                        ->pluck('ct_number', 'id')
+                        ->toArray())
+                    ->getOptionLabelUsing(fn ($value): ?string => Closing::find($value)?->ct_number),
             ])
             ->defaultSort('id', 'desc')
             ->recordUrl(fn (Transaction $record): string => static::getUrl('view', ['record' => $record]));
