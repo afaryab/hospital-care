@@ -54,7 +54,7 @@ class AdminPanelProvider extends PanelProvider
             // ->pages([
             //     // Dashboard::class
             // ])
-            // ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
             ->widgets($widgets)
             ->resources([
                 // Resources will be auto-discovered from Admin/Resources
