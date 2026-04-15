@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\IndDoctorController;
 use App\Http\Controllers\Migration\ImportController;
+use App\Http\Controllers\OpdDoctorController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
 use App\Http\Controllers\Prints\ServiceOrderPdfPrintController;
 use App\Http\Controllers\Prints\TransactionPdfPrintController;
@@ -80,6 +81,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('appointments', [WebController::class, 'counter'])->name('appointments');
     Route::get('expenses', [WebController::class, 'counter'])->name('expenses');
+
+    /**
+     * OPD Doctor routes
+     */
+    Route::get('OPD', [OpdDoctorController::class, 'index'])->name('opd-dashboard');
+    Route::get('OPD/search', [OpdDoctorController::class, 'search'])->name('opd-search');
+    Route::get('OPD/{id}', [OpdDoctorController::class, 'show'])->name('opd-patient');
 
     /**
      * IND Doctor routes
