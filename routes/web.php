@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\IndDoctorController;
 use App\Http\Controllers\Migration\ImportController;
 use App\Http\Controllers\OpdDoctorController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
@@ -87,6 +88,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('OPD', [OpdDoctorController::class, 'index'])->name('opd-dashboard');
     Route::get('OPD/search', [OpdDoctorController::class, 'search'])->name('opd-search');
     Route::get('OPD/{id}', [OpdDoctorController::class, 'show'])->name('opd-patient');
+
+    /**
+     * IND Doctor routes
+     */
+    Route::get('IND', [IndDoctorController::class, 'index'])->name('ind-dashboard');
+    Route::get('IND/{id}', [IndDoctorController::class, 'show'])->name('ind-patient');
 
     /**
      * Hospital Routes

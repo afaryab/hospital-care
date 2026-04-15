@@ -20,7 +20,9 @@ import {
     hospitalOpdQueue,
     hospitalRadiologyQueue,
     hospitalUltrasoundQueue,
+    indDashboard,
     myCounterList,
+    opdDashboard,
     patientsRegister,
     receaveables,
     transactionEditSearch,
@@ -30,6 +32,7 @@ import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
     BookAIcon,
+    BriefcaseMedical,
     ChartLine,
     Cog,
     ListTree,
@@ -179,6 +182,34 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     )}
+                    {haveOPDDoctorProfile && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url.startsWith('/OPD')}
+                                tooltip={{ children: 'OPD Dashboard' }}
+                            >
+                                <Link href={opdDashboard().url} prefetch>
+                                    <BriefcaseMedical />
+                                    <span>OPD</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
+                    {haveIndoorDoctorProfile && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url.startsWith('/IND')}
+                                tooltip={{ children: 'Indoor Dashboard' }}
+                            >
+                                <Link href={indDashboard().url} prefetch>
+                                    <BriefcaseMedical />
+                                    <span>IND</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
                 </SidebarMenu>
                 {haveReceptionistProfile && (
                     <SidebarMenu className="px-2">
@@ -308,7 +339,7 @@ export function AppSidebar() {
                 )}
                 <SidebarMenu className="px-2">
                     <span className="sidebar-menu-label text-sm text-[#06df72]">
-                        Departments
+                        Queue
                     </span>
                     {(haveReceptionistProfile ||
                         haveAdminProfile ||
