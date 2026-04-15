@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\ExpenseCategoryController;
 use App\Http\Controllers\Api\ExpenseVoucherController;
 use App\Http\Controllers\Api\IndController;
 use App\Http\Controllers\Api\LookUpController;
+use App\Http\Controllers\Api\OpdController;
 use App\Http\Controllers\Api\PateintController;
 use App\Http\Controllers\Api\ServiceOrderController;
 use App\Http\Controllers\Api\TransactionController;
@@ -35,4 +36,11 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/ind/service-orders/{serviceOrder}/discharge', [IndController::class, 'discharge'])->name('api-ind-discharge');
     Route::post('/ind/service-orders/{serviceOrder}/treatment-record', [IndController::class, 'saveTreatmentRecord'])->name('api-ind-save-treatment');
     Route::patch('/ind/service-orders/{serviceOrder}/status', [IndController::class, 'updateStatus'])->name('api-ind-update-status');
+
+    // OPD Doctor API routes
+    Route::post('/opd/search', [OpdController::class, 'search'])->name('api-opd-search');
+    Route::get('/opd/my-queue', [OpdController::class, 'myQueue'])->name('api-opd-my-queue');
+    Route::post('/opd/service-orders/{serviceOrder}/treatment-record', [OpdController::class, 'saveTreatmentRecord'])->name('api-opd-save-treatment');
+    Route::patch('/opd/service-orders/{serviceOrder}/status', [OpdController::class, 'updateStatus'])->name('api-opd-update-status');
+    Route::post('/closings/search', [ClosingController::class, 'index'])->name('api-closings-search');
 });
