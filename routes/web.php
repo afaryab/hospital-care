@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\IndDoctorController;
 use App\Http\Controllers\Migration\ImportController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
 use App\Http\Controllers\Prints\ServiceOrderPdfPrintController;
@@ -79,6 +80,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('appointments', [WebController::class, 'counter'])->name('appointments');
     Route::get('expenses', [WebController::class, 'counter'])->name('expenses');
+
+    /**
+     * IND Doctor routes
+     */
+    Route::get('IND', [IndDoctorController::class, 'index'])->name('ind-dashboard');
+    Route::get('IND/{id}', [IndDoctorController::class, 'show'])->name('ind-patient');
 
     /**
      * Hospital Routes
