@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\ExpenseVouchers\Tables;
 
+use App\Enum\ExpenseVoucherStatus;
 use App\Models\ExpenseVoucher;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -22,6 +23,9 @@ class ExpenseVouchersTable
                     ->label('Voucher Number')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => $state === 'payed' ? 'success' : 'warning'),
                 TextColumn::make('expCategory.name')
                     ->label('Expense Category')
                     ->searchable()
@@ -46,12 +50,28 @@ class ExpenseVouchersTable
                 TextColumn::make('amount')
                     ->numeric(decimalPlaces: 2)
                     ->sortable(),
+                TextColumn::make('transaction.tr_number')
+                    ->label('Transaction')
+                    ->placeholder('Not paid')
+                    ->toggleable(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options(collect(ExpenseVoucherStatus::cases())
+                        ->mapWithKeys(fn (ExpenseVoucherStatus $s) => [$s->value => ucfirst($s->value)])
+                        ->toArray())
+                    ->query(function (Builder $query, array $data): Builder {
+                        return match ($data['value'] ?? null) {
+                            'payed' => $query->whereNotNull('transaction_id')->whereNotNull('transaction_element_id'),
+                            'pending' => $query->where(fn (Builder $q) => $q->whereNull('transaction_id')->orWhereNull('transaction_element_id')),
+                            default => $query,
+                        };
+                    }),
                 SelectFilter::make('exp_category_id')
                     ->label('Expense Category')
                     ->relationship('expCategory', 'name')

@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\Closings\Tables;
 
 use App\Enum\CounterStatus;
 use App\Models\Closing;
+use App\Services\AbacusClosingService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -112,8 +113,20 @@ class ClosingsTable
                             'status' => CounterStatus::REPORTED,
                             'cash_recieving_time' => now(),
                             'reported_by' => auth()->id(),
-
                         ]);
+
+                        if (AbacusClosingService::isAutoMapEnabled()) {
+                            try {
+                                $service = new AbacusClosingService;
+                                $service->createEntriesForClosing($record);
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Abacus mapping failed')
+                                    ->body($e->getMessage())
+                                    ->warning()
+                                    ->send();
+                            }
+                        }
 
                         Notification::make()
                             ->title('Closing reported')

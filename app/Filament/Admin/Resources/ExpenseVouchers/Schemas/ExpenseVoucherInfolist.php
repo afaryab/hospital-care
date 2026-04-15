@@ -39,6 +39,22 @@ class ExpenseVoucherInfolist
                             ->dateTime(),
                     ])
                     ->columns(2),
+
+                Section::make('Payment Transaction')
+                    ->schema([
+                        TextEntry::make('transaction.tr_number')
+                            ->label('Transaction Number'),
+                        TextEntry::make('transaction.closing.ct_number')
+                            ->label('Closing'),
+                        TextEntry::make('transactionElement.amount')
+                            ->label('Paid Amount')
+                            ->numeric(decimalPlaces: 2),
+                        TextEntry::make('transaction.created_at')
+                            ->label('Paid At')
+                            ->dateTime(),
+                    ])
+                    ->columns(2)
+                    ->visible(fn (ExpenseVoucher $record): bool => $record->status === 'payed'),
             ]);
     }
 }

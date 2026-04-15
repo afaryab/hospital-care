@@ -3,10 +3,13 @@
 namespace Processton\Abacus\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class AbacusIncoming extends Model
 {
     protected $fillable = [
+        'source_type',
+        'source_id',
         'reference',
         'date',
         'description',
@@ -17,6 +20,11 @@ class AbacusIncoming extends Model
         'date' => 'date',
         'amount' => 'decimal:2',
     ];
+
+    public function source(): MorphTo
+    {
+        return $this->morphTo();
+    }
 
     public function transactions()
     {

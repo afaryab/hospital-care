@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Receptionist extends Model
 {
@@ -12,5 +13,16 @@ class Receptionist extends Model
     protected $fillable = [
         'user_id',
         'authority',
+        'reception_id',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function reception(): BelongsTo
+    {
+        return $this->belongsTo(Reception::class);
+    }
 }

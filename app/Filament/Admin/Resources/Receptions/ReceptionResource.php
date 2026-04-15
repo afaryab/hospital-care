@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\Receptions;
 
 use App\Filament\Admin\Resources\Receptions\Pages\ManageReceptions;
 use App\Models\Reception;
+use App\Models\ServiceDepartment;
 use BackedEnum;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
@@ -40,13 +41,10 @@ class ReceptionResource extends Resource
                 Select::make('allowed_departments')
                     ->multiple()
                     ->options(function () {
-                        return \App\Models\ServiceDepartment::pluck('name', 'slug')->toArray();
+                        return ServiceDepartment::pluck('name', 'slug')->toArray();
                     }),
                 Toggle::make('is_allowed_to_pay_voucher'),
                 Toggle::make('is_allowed_to_pay_from_petty_cash'),
-                Toggle::make('is_cash_allowed'),
-                Toggle::make('is_cheques_allowed'),
-                Toggle::make('is_card_allowed'),
             ]);
     }
 

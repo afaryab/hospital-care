@@ -156,9 +156,17 @@ class WebController extends Controller
                 'ctNumber' => $openCounter->number,
             ]));
         } else {
+            $receptionIds = $request->user()
+                ->receptionistProfiles()
+                ->whereNotNull('reception_id')
+                ->pluck('reception_id');
+
+            $receptions = $receptionIds->isNotEmpty()
+                ? Reception::whereIn('id', $receptionIds)->get()
+                : Reception::all();
 
             return Inertia::render('counter/open', [
-                'recptions' => Reception::all(),
+                'recptions' => $receptions,
             ]);
         }
     }
@@ -346,6 +354,16 @@ class WebController extends Controller
             $request->validate([
                 'type' => 'required|in:EXP,VOUCHER-PAY',
             ]);
+
+            $reception = $openCounter->reception;
+
+            if ($request->get('type') == 'VOUCHER-PAY' && $reception && ! $reception->is_allowed_to_pay_voucher) {
+                return back()->withErrors(['message' => 'This reception is not allowed to pay vouchers.']);
+            }
+
+            if ($request->get('type') == 'EXP' && $reception && ! $reception->is_allowed_to_pay_from_petty_cash) {
+                return back()->withErrors(['message' => 'This reception is not allowed to pay from petty cash.']);
+            }
 
             if ($request->get('type') == 'VOUCHER-PAY') {
                 $expenseVData = $request->validate([
@@ -564,6 +582,12 @@ class WebController extends Controller
 
             $isRecesitation = Str::startsWith($validatedData['department_key'], 'RECES-');
             $departmentKey = $isRecesitation ? Str::replaceFirst('RECES-', '', $validatedData['department_key']) : $validatedData['department_key'];
+
+            // Enforce allowed_departments for this reception
+            $reception = $openCounter->reception;
+            if ($reception && ! empty($reception->allowed_departments) && ! in_array($departmentKey, $reception->allowed_departments)) {
+                return back()->withErrors(['message' => "This reception is not allowed to process transactions for the {$departmentKey} department."]);
+            }
 
             if ($isRecesitation) {
                 // Validate service_order_id
@@ -1001,9 +1025,11 @@ class WebController extends Controller
                     'patient:id,name,ps_number,contact,cnic',
                     'service:id,name,icon',
                     'doctor:id,name',
-                    'transactionElements.transaction:id,tr_number,created_at',
+                    'transactionElements.transaction:id,tr_number,created_at,type',
                     'transactionElements.expenseCategory:id,name',
-                    'expenseVouchers:id,vc_number,exp_category_id,amount,payed_to,payed_to_name,created_at',
+                    'transactionElements.serviceRecestation:id,name',
+                    'transactionElements.expVoucher:id,vc_number',
+                    'expenseVouchers:id,vc_number,exp_category_id,amount,payed_to,payed_to_name,status,created_at',
                     'expenseVouchers.expCategory:id,name',
                     'treatmentRecord:id,service_order_id,diagnosis_text,treatment_plan,outcome,treated_at,is_finalized',
                     'treatmentRecord.treatingDoctor:id,name',
@@ -1017,6 +1043,22 @@ class WebController extends Controller
                 }], 'amount')
                 ->withSum('expenseVouchers as voucher_expense_total', 'amount')
                 ->find($filters['service_order_id']);
+
+            // Load receivables for the selected service order
+            if ($selectedServiceOrder) {
+                $incomeTransactionIds = $selectedServiceOrder->transactionElements
+                    ->where('income_or_expense', 'INCOME')
+                    ->pluck('transaction_id')
+                    ->unique()
+                    ->filter();
+
+                $selectedServiceOrder->setRelation(
+                    'receivables',
+                    Receaveable::whereIn('transaction_id', $incomeTransactionIds)
+                        ->with(['patient:id,name', 'panel:id,name', 'transaction:id,tr_number'])
+                        ->get()
+                );
+            }
         }
 
         return Inertia::render('service-orders/index', [

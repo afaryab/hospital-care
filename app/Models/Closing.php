@@ -5,7 +5,9 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Support\Facades\DB;
+use Processton\Abacus\Models\AbacusIncoming;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -116,5 +118,10 @@ class Closing extends Model
     public function reportedBy()
     {
         return $this->belongsTo(User::class, 'reported_by');
+    }
+
+    public function abacusIncoming(): MorphOne
+    {
+        return $this->morphOne(AbacusIncoming::class, 'source');
     }
 }

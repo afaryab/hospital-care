@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Pages;
 use App\Models\HospitalSetting;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -37,6 +38,7 @@ class HospitalSettings extends Page implements HasForms
             'email' => HospitalSetting::get('hospital_email'),
             'ntn' => HospitalSetting::get('hospital_ntn'),
             'strn' => HospitalSetting::get('hospital_strn'),
+            'abacus_auto_map_accounts' => (bool) HospitalSetting::get('abacus_auto_map_accounts', false),
         ]);
     }
 
@@ -70,6 +72,9 @@ class HospitalSettings extends Page implements HasForms
                 TextInput::make('strn')
                     ->label('STRN')
                     ->maxLength(100),
+                Toggle::make('abacus_auto_map_accounts')
+                    ->label('Auto Map Accounts (Abacus)')
+                    ->helperText('When enabled, receiving a closing statement will automatically create Abacus accounting entries.'),
             ])
             ->statePath('data');
     }
@@ -85,11 +90,11 @@ class HospitalSettings extends Page implements HasForms
         HospitalSetting::set('hospital_email', $state['email'] ?? null);
         HospitalSetting::set('hospital_ntn', $state['ntn'] ?? null);
         HospitalSetting::set('hospital_strn', $state['strn'] ?? null);
+        HospitalSetting::set('abacus_auto_map_accounts', $state['abacus_auto_map_accounts'] ?? false);
 
         Notification::make()
             ->title('Hospital settings saved successfully.')
             ->success()
             ->send();
     }
-
 }

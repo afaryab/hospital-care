@@ -8,7 +8,10 @@ use App\Models\IndDoctor;
 use App\Models\OpdDoctor;
 use App\Models\Service;
 use App\Models\ServiceDepartment;
+use App\Models\ServiceRecestation;
+use App\Models\UltrasoundDoctor;
 use App\Models\User;
+use App\Models\XrayTechnician;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -183,7 +186,7 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 'charges' => '1300',
                 'have_service_provider' => '1',
                 'service_provider_types' => [
-                    OpdDoctor::class,
+                    UltrasoundDoctor::class,
                 ],
                 'is_composit_service' => '0',
                 'is_featured' => '0',
@@ -1622,7 +1625,9 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 'service_department_id' => $emergencyDepartment->id,
                 'charges' => '1500',
                 'have_service_provider' => '0',
-                'service_provider_types' => [],
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
                 'is_composit_service' => '0',
                 'is_featured' => '0',
                 'generate_service_order' => '0',
@@ -1885,6 +1890,318 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 'is_featured' => '1',
                 'generate_service_order' => '1',
             ],
+            [
+                'slug' => 'chest-xray',
+                'name' => 'Chest X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'skull-xray',
+                'name' => 'Skull X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'spine-xray',
+                'name' => 'Spine X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'cervical-spine-xray',
+                'name' => 'Cervical Spine X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'lumbar-spine-xray',
+                'name' => 'Lumbar Spine X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'pelvis-xray',
+                'name' => 'Pelvis X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'abdomen-xray',
+                'name' => 'Abdomen X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'hand-xray',
+                'name' => 'Hand X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'wrist-xray',
+                'name' => 'Wrist X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'elbow-xray',
+                'name' => 'Elbow X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'shoulder-xray',
+                'name' => 'Shoulder X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'knee-xray',
+                'name' => 'Knee X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'ankle-xray',
+                'name' => 'Ankle X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'foot-xray',
+                'name' => 'Foot X-Ray',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    XrayTechnician::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'abdomen-ultrasound',
+                'name' => 'Abdomen Ultrasound',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    UltrasoundDoctor::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'pelvis-ultrasound',
+                'name' => 'Pelvis Ultrasound',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    UltrasoundDoctor::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'obstetric-ultrasound',
+                'name' => 'Obstetric Ultrasound',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    UltrasoundDoctor::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'transvaginal-ultrasound',
+                'name' => 'Transvaginal Ultrasound',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    UltrasoundDoctor::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'renal-ultrasound',
+                'name' => 'Renal (Kidney) Ultrasound',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    UltrasoundDoctor::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'thyroid-ultrasound',
+                'name' => 'Thyroid Ultrasound',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    UltrasoundDoctor::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'breast-ultrasound',
+                'name' => 'Breast Ultrasound',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    UltrasoundDoctor::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'scrotal-ultrasound',
+                'name' => 'Scrotal Ultrasound',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    UltrasoundDoctor::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'soft-tissue-ultrasound',
+                'name' => 'Soft Tissue Ultrasound',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    UltrasoundDoctor::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
+            [
+                'slug' => 'doppler-ultrasound',
+                'name' => 'Doppler Ultrasound',
+                'service_department_id' => $emergencyDepartment->id,
+                'charges' => '1500',
+                'have_service_provider' => 1,
+                'service_provider_types' => [
+                    UltrasoundDoctor::class,
+                ],
+                'is_composit_service' => '0',
+                'is_featured' => '0',
+                'generate_service_order' => '1',
+            ],
         ]);
 
         $services = $services->map(function ($service) {
@@ -1920,6 +2237,19 @@ class ServicesAndDepartmentsSeeder extends Seeder
                 'is_featured' => $service['is_featured'],
                 'generate_service_order' => $service['generate_service_order'],
             ]);
+
+            if ($emergencyDepartment->id == $service['service_department_id']) {
+
+                ServiceRecestation::firstOrCreate([
+                    'service_department_id' => $emergencyDepartment->id,
+                    'name' => $service['name'],
+                ], [
+                    'charges' => $service['charges'],
+                    'charges_include_tax' => 1,
+                    'tax_rate' => 0,
+                    'created_by' => $createdByUserId,
+                ]);
+            }
         }
 
         Log::info('Seeded '.count($records).' services.');
