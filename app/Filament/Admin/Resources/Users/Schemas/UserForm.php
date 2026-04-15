@@ -89,6 +89,12 @@ class UserForm
                             ])
                             ->default('assistant')
                             ->required(),
+                        Select::make('reception_id')
+                            ->label('Reception')
+                            ->relationship('reception', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->nullable(),
                     ])
                     ->addActionLabel('Add Receptionist Profile')
                     ->collapsible()

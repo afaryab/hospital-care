@@ -23,6 +23,7 @@ class ViewServiceOrder extends ViewRecord
             Section::make('Service Order')
                 ->schema([
                     TextEntry::make('so_number')->label('SO#')->copyable(),
+                    TextEntry::make('so_short')->label('Short#')->copyable(),
                     TextEntry::make('patient.name')->label('Patient'),
                     TextEntry::make('service.name')->label('Service'),
                     TextEntry::make('doctor.name')->label('Provider'),
@@ -45,6 +46,28 @@ class ViewServiceOrder extends ViewRecord
                         ->state(fn ($record) => TransactionElement::where('service_order_id', $record->id)
                             ->where('income_or_expense', 'INCOME')
                             ->with(['transaction', 'patient'])
+                            ->orderBy('created_at')
+                            ->get()),
+                ]),
+
+            Section::make('Recestation Charges')
+                ->schema([
+                    ViewEntry::make('recestation_elements')
+                        ->view('filament.admin.resources.service-orders.recestation-table')
+                        ->state(fn ($record) => TransactionElement::where('service_order_id', $record->id)
+                            ->where('type', 'RECES-IND')
+                            ->with(['transaction', 'patient', 'serviceRecestation'])
+                            ->orderBy('created_at')
+                            ->get()),
+                ]),
+
+            Section::make('Expense Transactions')
+                ->schema([
+                    ViewEntry::make('expense_elements')
+                        ->view('filament.admin.resources.service-orders.expense-table')
+                        ->state(fn ($record) => TransactionElement::where('service_order_id', $record->id)
+                            ->where('income_or_expense', 'EXPENSE')
+                            ->with(['transaction', 'expenseCategory', 'expVoucher'])
                             ->orderBy('created_at')
                             ->get()),
                 ]),

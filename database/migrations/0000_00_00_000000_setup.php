@@ -404,7 +404,7 @@ return new class extends Migration
             $table->id();
             $table->string('tr_number')->unique();
             $table->integer('old_id')->nullable();
-            $table->foreignId('closing_id')->constrained('closings')->onDelete('cascade');
+            $table->foreignId('closing_id')->nullable()->constrained('closings')->onDelete('cascade');
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
             $table->foreignId('patient_id')->nullable()->constrained('patients')->onDelete('cascade');
             $table->foreignId('receaveable_id')->nullable()->constrained('receaveables');

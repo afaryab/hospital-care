@@ -144,6 +144,14 @@ class ServiceOrder extends Model
     }
 
     /**
+     * Get the recestation service associated with the service order.
+     */
+    public function serviceRecestation(): BelongsTo
+    {
+        return $this->belongsTo(ServiceRecestation::class);
+    }
+
+    /**
      * Get the doctor assigned to the service order.
      */
     public function doctor(): BelongsTo
@@ -200,7 +208,7 @@ class ServiceOrder extends Model
             ->withTimestamps();
     }
 
-    public function transactionElements(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function transactionElements(): HasMany
     {
         return $this->hasMany(TransactionElement::class, 'service_order_id');
     }

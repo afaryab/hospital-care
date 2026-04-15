@@ -55,6 +55,8 @@ class ChartOfAccountsSeeder extends Seeder
 
             // EXPENSES
             ['code' => '5000', 'name' => 'Expenses', 'base_type' => 'expense', 'is_group' => true],
+            ['code' => '5010', 'name' => 'Refunds', 'base_type' => 'expense', 'type' => 'refunds', 'parent' => '5000'],
+            ['code' => '5020', 'name' => 'Discounts', 'base_type' => 'expense', 'type' => 'discounts', 'parent' => '5000'],
             ['code' => '5100', 'name' => 'Cost of Goods Sold (COGS)', 'base_type' => 'expense', 'type' => 'cogs', 'parent' => '5000'],
             ['code' => '5200', 'name' => 'Salaries & Wages', 'base_type' => 'expense', 'type' => 'salaries', 'parent' => '5000'],
             ['code' => '5300', 'name' => 'Rent Expense', 'base_type' => 'expense', 'type' => 'rent', 'parent' => '5000'],

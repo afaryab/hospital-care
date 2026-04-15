@@ -15,9 +15,6 @@ class ReceptionFactory extends Factory
             'name' => fake()->words(2, true).' Reception',
             'is_allowed_to_pay_voucher' => false,
             'is_allowed_to_pay_from_petty_cash' => false,
-            'is_cash_allowed' => true,
-            'is_cheques_allowed' => false,
-            'is_card_allowed' => false,
         ];
     }
 }
