@@ -41,7 +41,7 @@ use Processton\Abacus\Models\AbacusTransaction;
 class SyncOldHIMS extends Command
 {
     protected $signature = 'app:sync-old-hims
-        {--entity= : Specific entity to sync (users,services,receptions,panels,patients,expense-categories,closings,transactions,vouchers,treatments,abacus-closings,all)}
+        {--entity= : Specific entity to sync (users,services,receptions,panels,patients,expense-categories,by-closings,closings,transactions,vouchers,treatments,abacus-closings,all)}
         {--reset : Reset sync cursors for the specified entity}
         {--batch-size=2000 : Number of records per batch}
         {--dry-run : Preview what would be synced without making changes}';
@@ -77,18 +77,21 @@ class SyncOldHIMS extends Command
     protected int $batchSize;
 
     // Entity sync order — dependencies first
+    // Vouchers run before by-closings so that VOUCHER-PAY transactions always find a
+    // pre-migrated voucher via old_id; on-demand creation in enrichExpenseTransaction()
+    // is just a fallback for any edge cases.
+    // 'by-closings' replaces the old separate closings/transactions/abacus-closings passes:
+    // it processes one closing at a time, migrating its transactions (with on-demand patient
+    // creation) and Abacus entries before moving to the next closing.
     protected array $entityOrder = [
         'receptions',
         'users',
         'services',
         'panels',
-        'patients',
         'expense-categories',
-        'closings',
-        'transactions',
         'vouchers',
+        'by-closings',
         'treatments',
-        'abacus-closings',
     ];
 
     public function info($string, $verbosity = null): void
@@ -137,6 +140,11 @@ class SyncOldHIMS extends Command
         // Preload reference data caches
         $this->preloadCaches();
 
+        // All entities that syncEntity() can handle (superset of entityOrder)
+        $allEntities = array_unique(array_merge($this->entityOrder, [
+            'patients', 'closings', 'transactions', 'abacus-closings',
+        ]));
+
         if ($entity === 'all') {
             foreach ($this->entityOrder as $e) {
                 $this->syncEntity($e);
@@ -145,8 +153,8 @@ class SyncOldHIMS extends Command
             $entities = explode(',', $entity);
             foreach ($entities as $e) {
                 $e = trim($e);
-                if (! in_array($e, $this->entityOrder)) {
-                    $this->error("Unknown entity: {$e}. Valid: ".implode(', ', $this->entityOrder));
+                if (! in_array($e, $allEntities)) {
+                    $this->error("Unknown entity: {$e}. Valid: ".implode(', ', $allEntities));
 
                     return 1;
                 }
@@ -258,6 +266,7 @@ class SyncOldHIMS extends Command
             'panels' => $this->syncPanels(),
             'patients' => $this->syncPatients(),
             'expense-categories' => $this->syncExpenseCategories(),
+            'by-closings' => $this->syncByClosings(),
             'closings' => $this->syncClosings(),
             'transactions' => $this->syncTransactions(),
             'vouchers' => $this->syncVouchers(),
@@ -278,6 +287,7 @@ class SyncOldHIMS extends Command
         $cursor = $this->getCursor('users');
         $processed = 0;
         $skipped = 0;
+        $total = $this->oldCount('aauth_users');
 
         DB::connection('secondary')
             ->table('aauth_users')
@@ -362,7 +372,7 @@ class SyncOldHIMS extends Command
             });
 
         $this->setCursor('users', $cursor);
-        $this->info("Users sync done: {$processed} new, {$skipped} skipped");
+        $this->syncDone('users', $processed, $skipped, $total);
     }
 
     protected function insertUserProfiles(object $user): void
@@ -405,6 +415,9 @@ class SyncOldHIMS extends Command
     protected function syncServices(): void
     {
         $cursor = $this->getCursor('services');
+        $migrated = 0;
+        $skipped = 0;
+        $total = 0;
 
         $serviceTypes = [
             ['key' => 'OPD', 'table' => 'opd_services'],
@@ -417,6 +430,8 @@ class SyncOldHIMS extends Command
         ];
 
         foreach ($serviceTypes as $st) {
+            $total += $this->oldCount($st['table']);
+
             $department = $this->serviceDeptCache[$st['key']] ?? null;
             if (! $department) {
                 $this->warn("Service department {$st['key']} not found in seeded data — skipping.");
@@ -431,7 +446,7 @@ class SyncOldHIMS extends Command
                 ->table($st['table'])
                 ->where('id', '>', $lastSynced)
                 ->orderBy('id')
-                ->chunk($this->batchSize, function ($services) use ($department, $st, &$lastSynced) {
+                ->chunk($this->batchSize, function ($services) use ($department, $st, &$lastSynced, &$migrated, &$skipped) {
                     foreach ($services as $service) {
                         // Match by old_id or by name+department
                         $exists = Service::where('old_id', $service->id)
@@ -451,7 +466,10 @@ class SyncOldHIMS extends Command
                                         ->where('service_department_id', $department->id)
                                         ->update(['old_id' => $service->id]);
                                 }
+                                $skipped++;
                             }
+                        } else {
+                            $skipped++;
                         }
 
                         if (! $exists && ! $this->dryRun) {
@@ -481,6 +499,7 @@ class SyncOldHIMS extends Command
                                 'created_at' => $service->created_on,
                                 'updated_at' => now(),
                             ]);
+                            $migrated++;
                         }
 
                         $lastSynced = $service->id;
@@ -539,7 +558,7 @@ class SyncOldHIMS extends Command
             }
         });
 
-        $this->info('Services sync done. Cache: '.count($this->serviceCache).' services, '.count($this->serviceRecestationCache).' recestations');
+        $this->syncDone('services', $migrated, $skipped, $total);
     }
 
     // =========================================================================
@@ -551,6 +570,7 @@ class SyncOldHIMS extends Command
         $cursor = $this->getCursor('receptions');
         $merged = 0;
         $created = 0;
+        $total = $this->oldCount('reception_counters');
 
         DB::connection('secondary')
             ->table('reception_counters')
@@ -597,7 +617,7 @@ class SyncOldHIMS extends Command
                 $this->setCursor('receptions', $cursor);
             });
 
-        $this->info("Receptions sync done: {$created} created, {$merged} merged by name.");
+        $this->syncDone('receptions', $created, $merged, $total);
     }
 
     // =========================================================================
@@ -607,15 +627,20 @@ class SyncOldHIMS extends Command
     protected function syncPanels(): void
     {
         $cursor = $this->getCursor('panels');
+        $processed = 0;
+        $skipped = 0;
+        $total = $this->oldCount('panel_companies', ['is_deleted' => 0]);
 
         DB::connection('secondary')
             ->table('panel_companies')
             ->where('id', '>', $cursor)
             ->where('is_deleted', 0)
             ->orderBy('id')
-            ->chunk($this->batchSize, function ($panels) use (&$cursor) {
+            ->chunk($this->batchSize, function ($panels) use (&$cursor, &$processed, &$skipped) {
                 foreach ($panels as $panel) {
-                    if (! Panel::where('id', $panel->id)->exists() && ! $this->dryRun) {
+                    if (Panel::where('id', $panel->id)->exists()) {
+                        $skipped++;
+                    } elseif (! $this->dryRun) {
                         Panel::insertOrIgnore([
                             'id' => $panel->id,
                             'name' => $panel->name,
@@ -626,13 +651,14 @@ class SyncOldHIMS extends Command
                         ]);
 
                         $this->panelCache[$panel->id] = (object) ['id' => $panel->id, 'name' => $panel->name];
+                        $processed++;
                     }
                     $cursor = $panel->id;
                 }
                 $this->setCursor('panels', $cursor);
             });
 
-        $this->info('Panels sync done.');
+        $this->syncDone('panels', $processed, $skipped, $total);
     }
 
     // =========================================================================
@@ -644,6 +670,7 @@ class SyncOldHIMS extends Command
         $cursor = $this->getCursor('patients');
         $processed = 0;
         $skipped = 0;
+        $total = $this->oldCount('patients');
 
         DB::connection('secondary')
             ->table('patients')
@@ -718,7 +745,7 @@ class SyncOldHIMS extends Command
             });
 
         $this->setCursor('patients', $cursor);
-        $this->info("Patients sync done: {$processed} new, {$skipped} skipped");
+        $this->syncDone('patients', $processed, $skipped, $total);
     }
 
     // =========================================================================
@@ -728,12 +755,15 @@ class SyncOldHIMS extends Command
     protected function syncExpenseCategories(): void
     {
         $cursor = $this->getCursor('expense-categories');
+        $processed = 0;
+        $skipped = 0;
+        $total = $this->oldCount('expenses_categories');
 
         DB::connection('secondary')
             ->table('expenses_categories')
             ->where('id', '>', $cursor)
             ->orderBy('id')
-            ->chunk($this->batchSize, function ($categories) use (&$cursor) {
+            ->chunk($this->batchSize, function ($categories) use (&$cursor, &$processed, &$skipped) {
                 foreach ($categories as $cat) {
                     // Match by old_id or by name to seeded data
                     $existing = ExpenseCategory::where('old_id', $cat->id)->first();
@@ -743,7 +773,10 @@ class SyncOldHIMS extends Command
                             // Link seeded category to old_id
                             $existing->update(['old_id' => $cat->id]);
                             $this->expenseCategoryCache[$cat->id] = $existing;
+                            $processed++;
                         }
+                    } else {
+                        $skipped++;
                     }
 
                     if (! $existing && ! $this->dryRun) {
@@ -757,8 +790,7 @@ class SyncOldHIMS extends Command
                             'pay_patient' => false,
                         ]);
                         $this->expenseCategoryCache[$cat->id] = $newCat;
-                    } elseif ($existing) {
-                        $this->expenseCategoryCache[$cat->id] = $existing;
+                        $processed++;
                     }
 
                     $cursor = $cat->id;
@@ -766,77 +798,107 @@ class SyncOldHIMS extends Command
                 $this->setCursor('expense-categories', $cursor);
             });
 
-        $this->info('Expense categories sync done.');
+        $this->syncDone('expense-categories', $processed, $skipped, $total);
     }
 
     // =========================================================================
-    // 7. Closings
+    // 7. By-Closings — closing-by-closing migration (replaces separate
+    //    closings / transactions / abacus-closings passes)
+    // =========================================================================
+
+    protected function syncByClosings(): void
+    {
+        $cursor = $this->getCursor('by-closings');
+        $processedClosings = 0;
+        $skippedClosings = 0;
+        $processedTransactions = 0;
+        $totalClosings = $this->oldCount('reception_counters_closings');
+        $totalTransactions = $this->oldCount('reception_counters_closings_transactions');
+        $service = new AbacusClosingService;
+
+        DB::connection('secondary')
+            ->table('reception_counters_closings')
+            ->where('id', '>', $cursor)
+            ->orderBy('id')
+            ->each(function ($oldClosing) use (&$cursor, &$processedClosings, &$processedTransactions, $service , &$skippedClosings) {
+                // 1. Migrate the closing record
+                $newClosing = $this->migrateClosing($oldClosing);
+
+                $trCount = 0;
+
+                // 2. Migrate every transaction that belongs to this closing
+                DB::connection('secondary')
+                    ->table('reception_counters_closings_transactions')
+                    ->where('counter_id', $oldClosing->id)
+                    ->orderBy('id')
+                    ->each(function ($tr) use ($newClosing, &$trCount) {
+                        if (Transaction::where('old_id', $tr->id)->exists()) {
+                            return;
+                        }
+
+                        if (! $this->dryRun) {
+                            try {
+                                $this->migrateTransaction($tr, $newClosing?->id);
+                                $trCount++;
+                            } catch (\Exception $e) {
+                                MigrationLog::logError('transactions', 'reception_counters_closings_transactions', $tr->id, $e->getMessage());
+                                $this->warn("Transaction {$tr->id} error: ".$e->getMessage());
+                            }
+                        }
+                    });
+
+                // 3. Create Abacus double-entry for this closing
+                if ($newClosing && ! $this->dryRun) {
+                    try {
+                        $service->createEntriesForClosing($newClosing);
+                    } catch (\Exception $e) {
+                        MigrationLog::logError('abacus-closings', 'closings', $newClosing->id, $e->getMessage());
+                        $this->warn("Abacus closing {$newClosing->id} error: ".$e->getMessage());
+                    }
+                }
+
+                if ($newClosing) {
+                    $processedClosings++;
+                } else {
+                    $skippedClosings ++;
+                }
+                $processedTransactions += $trCount;
+
+                $cursor = $oldClosing->id;
+                $this->setCursor('by-closings', $cursor);
+
+                $label = $newClosing ? $newClosing->ct_number : 'skipped';
+                $this->info("Closing {$oldClosing->id} [{$label}]: {$trCount} transactions (cursor: {$cursor})");
+            });
+
+        $this->syncDone('closings', $processedClosings, $skippedClosings, $totalClosings);
+        $this->syncDone('transactions', $processedTransactions, 0, $totalTransactions);
+    }
+
+    // =========================================================================
+    // 8. Closings (standalone pass — kept for --entity=closings backward compat)
     // =========================================================================
 
     protected function syncClosings(): void
     {
         $cursor = $this->getCursor('closings');
         $processed = 0;
+        $skipped = 0;
+        $total = $this->oldCount('reception_counters_closings');
 
         DB::connection('secondary')
             ->table('reception_counters_closings')
             ->where('id', '>', $cursor)
             ->orderBy('id')
-            ->chunk($this->batchSize, function ($closings) use (&$cursor, &$processed) {
+            ->chunk($this->batchSize, function ($closings) use (&$cursor, &$processed, &$skipped) {
                 foreach ($closings as $closing) {
-                    if (Closing::where('old_id', $closing->id)->orWhere('id', $closing->id)->exists()) {
-                        $cursor = $closing->id;
-
-                        continue;
+                    $alreadyExists = Closing::where('old_id', $closing->id)->exists();
+                    $new = $this->migrateClosing($closing);
+                    if ($alreadyExists) {
+                        $skipped++;
+                    } elseif ($new) {
+                        $processed++;
                     }
-
-                    if (! $this->dryRun) {
-                        try {
-                            $createdDate = Carbon::parse($closing->created_on);
-                            $ctNumber = $this->generateCtNumber($createdDate);
-
-                            $receptionId = $this->oldReceptionIdMap[$closing->reception_id] ?? ($this->receptionCache[$closing->reception_id]->id ?? null);
-                            $userId = $this->userCache[$closing->user_id]->id ?? null;
-
-                            // Ensure FK references exist
-                            if (! $receptionId || ! $userId) {
-                                MigrationLog::logSkipped('closings', 'reception_counters_closings', $closing->id,
-                                    'Missing reception_id ('.$closing->reception_id.') or user_id ('.$closing->user_id.')');
-                                $cursor = $closing->id;
-
-                                continue;
-                            }
-
-                            $newClosing = new Closing;
-                            $newClosing->id = $closing->id;
-                            $newClosing->old_id = $closing->id;
-                            $newClosing->reception_id = $receptionId;
-                            $newClosing->receptionist_id = $userId;
-                            $newClosing->ct_number = $ctNumber;
-                            $newClosing->status = $closing->status === 'CLOSED' ? CounterStatus::REPORTED : CounterStatus::OPEN;
-                            $newClosing->opening_amount = $closing->opening_amount ?? 0;
-                            $newClosing->closing_amount = $closing->closing_amount ?? 0;
-                            $newClosing->closing_amount_cash = $closing->closing_amount_cash ?? 0;
-                            $newClosing->closing_amount_cheque = 0;
-                            $newClosing->closing_amount_card = ($closing->closing_amount_card ?? 0) + ($closing->closing_amount_creditcard ?? 0);
-                            $newClosing->expense_payed = $closing->expense_payed ?? 0;
-                            $newClosing->amount_received = $closing->closing_amount ?? 0;
-                            $newClosing->closed_at = $closing->cash_recieving_time;
-                            $newClosing->cash_recieving_time = $closing->cash_recieving_time;
-                            $newClosing->reported_by = $userId;
-                            $newClosing->created_at = $closing->created_on;
-                            $newClosing->updated_at = $closing->modified_on ?? now();
-                            $newClosing->saveQuietly();
-
-                            $this->closingCache[$closing->id] = $newClosing;
-                            $processed++;
-
-                        } catch (\Exception $e) {
-                            MigrationLog::logError('closings', 'reception_counters_closings', $closing->id, $e->getMessage());
-                            $this->warn("Closing {$closing->id} error: ".$e->getMessage());
-                        }
-                    }
-
                     $cursor = $closing->id;
                 }
 
@@ -845,7 +907,67 @@ class SyncOldHIMS extends Command
             });
 
         $this->setCursor('closings', $cursor);
-        $this->info("Closings sync done: {$processed} new");
+        $this->syncDone('closings', $processed, $skipped, $total);
+    }
+
+    protected function migrateClosing(object $closing): ?Closing
+    {
+        // Return existing record if already migrated
+        $existing = Closing::where('old_id', $closing->id)->orWhere('id', $closing->id)->first();
+        if ($existing) {
+            $this->closingCache[$closing->id] = $existing;
+
+            return $existing;
+        }
+
+        if ($this->dryRun) {
+            return null;
+        }
+
+        try {
+            $createdDate = Carbon::parse($closing->created_on);
+            $ctNumber = $this->generateCtNumber($createdDate);
+
+            $receptionId = $this->oldReceptionIdMap[$closing->reception_id] ?? ($this->receptionCache[$closing->reception_id]->id ?? null);
+            $userId = $this->userCache[$closing->user_id]->id ?? null;
+
+            if (! $receptionId || ! $userId) {
+                MigrationLog::logSkipped('closings', 'reception_counters_closings', $closing->id,
+                    'Missing reception_id ('.$closing->reception_id.') or user_id ('.$closing->user_id.')');
+
+                return null;
+            }
+
+            $newClosing = new Closing;
+            $newClosing->id = $closing->id;
+            $newClosing->old_id = $closing->id;
+            $newClosing->reception_id = $receptionId;
+            $newClosing->receptionist_id = $userId;
+            $newClosing->ct_number = $ctNumber;
+            $newClosing->status = $closing->status === 'CLOSED' ? CounterStatus::REPORTED : CounterStatus::OPEN;
+            $newClosing->opening_amount = $closing->opening_amount ?? 0;
+            $newClosing->closing_amount = $closing->closing_amount ?? 0;
+            $newClosing->closing_amount_cash = $closing->closing_amount_cash ?? 0;
+            $newClosing->closing_amount_cheque = 0;
+            $newClosing->closing_amount_card = ($closing->closing_amount_card ?? 0) + ($closing->closing_amount_creditcard ?? 0);
+            $newClosing->expense_payed = $closing->expense_payed ?? 0;
+            $newClosing->amount_received = $closing->closing_amount ?? 0;
+            $newClosing->closed_at = $closing->cash_recieving_time;
+            $newClosing->cash_recieving_time = $closing->cash_recieving_time;
+            $newClosing->reported_by = $userId;
+            $newClosing->created_at = $closing->created_on;
+            $newClosing->updated_at = $closing->modified_on ?? now();
+            $newClosing->saveQuietly();
+
+            $this->closingCache[$closing->id] = $newClosing;
+
+            return $newClosing;
+        } catch (\Exception $e) {
+            MigrationLog::logError('closings', 'reception_counters_closings', $closing->id, $e->getMessage());
+            $this->warn("Closing {$closing->id} error: ".$e->getMessage());
+
+            return null;
+        }
     }
 
     protected function generateCtNumber(Carbon $date): string
@@ -863,21 +985,17 @@ class SyncOldHIMS extends Command
     {
         $cursor = $this->getCursor('transactions');
         $processed = 0;
-
-        // Get total counts for progress
-        $totalOld = DB::connection('secondary')
-            ->table('reception_counters_closings_transactions')
-            ->count();
-        $totalNew = Transaction::count();
-        $this->info("Transaction progress: {$totalNew}/{$totalOld} (".($totalOld > 0 ? round(($totalNew / $totalOld) * 100, 1) : 0).'%)');
+        $skipped = 0;
+        $total = $this->oldCount('reception_counters_closings_transactions');
 
         DB::connection('secondary')
             ->table('reception_counters_closings_transactions')
             ->where('id', '>', $cursor)
             ->orderBy('id')
-            ->chunk($this->batchSize, function ($transactions) use (&$cursor, &$processed) {
+            ->chunk($this->batchSize, function ($transactions) use (&$cursor, &$processed, &$skipped) {
                 foreach ($transactions as $tr) {
                     if (Transaction::where('old_id', $tr->id)->exists()) {
+                        $skipped++;
                         $cursor = $tr->id;
 
                         continue;
@@ -901,10 +1019,10 @@ class SyncOldHIMS extends Command
             });
 
         $this->setCursor('transactions', $cursor);
-        $this->info("Transactions sync done: {$processed} new");
+        $this->syncDone('transactions', $processed, $skipped, $total);
     }
 
-    protected function migrateTransaction(object $tr): void
+    protected function migrateTransaction(object $tr, ?int $knownClosingId = null): void
     {
         $isExpense = $tr->income_or_expence !== 'INCOME';
         $createdAt = Carbon::parse($tr->created_on);
@@ -912,8 +1030,8 @@ class SyncOldHIMS extends Command
         // Generate TR number
         $trNumber = $this->generateTrNumber($createdAt);
 
-        // Resolve closing — if not in cache, try to find or create it on-the-fly
-        $closingId = $this->resolveClosingId($tr->counter_id);
+        // Use the pre-resolved closing ID when available (by-closings flow), otherwise look it up
+        $closingId = $knownClosingId ?? $this->resolveClosingId($tr->counter_id);
         $userId = $this->userCache[$tr->user_id]->id ?? null;
         $patientId = $this->resolvePatientId($tr->patient_id);
 
@@ -1196,14 +1314,17 @@ class SyncOldHIMS extends Command
     {
         $cursor = $this->getCursor('vouchers');
         $processed = 0;
+        $skipped = 0;
+        $total = $this->oldCount('expense_vouchers');
 
         DB::connection('secondary')
             ->table('expense_vouchers')
             ->where('id', '>', $cursor)
             ->orderBy('id')
-            ->chunk($this->batchSize, function ($vouchers) use (&$cursor, &$processed) {
+            ->chunk($this->batchSize, function ($vouchers) use (&$cursor, &$processed, &$skipped) {
                 foreach ($vouchers as $voucher) {
                     if (ExpenseVoucher::where('old_id', $voucher->id)->exists()) {
+                        $skipped++;
                         $cursor = $voucher->id;
 
                         continue;
@@ -1238,7 +1359,7 @@ class SyncOldHIMS extends Command
             });
 
         $this->setCursor('vouchers', $cursor);
-        $this->info("Vouchers sync done: {$processed} new");
+        $this->syncDone('vouchers', $processed, $skipped, $total);
     }
 
     // =========================================================================
@@ -1262,6 +1383,7 @@ class SyncOldHIMS extends Command
             $cursorKey = "treatments_{$tt['type']}_{$tt['table']}";
             $cursor = $this->getCursor($cursorKey);
             $processed = 0;
+            $skipped = 0;
 
             // Check if table exists in old DB
             try {
@@ -1272,23 +1394,27 @@ class SyncOldHIMS extends Command
                 continue;
             }
 
+            $total = $this->oldCount($tt['table']);
+
             DB::connection('secondary')
                 ->table($tt['table'])
                 ->where('id', '>', $cursor)
                 ->orderBy('id')
-                ->chunk($this->batchSize, function ($treatments) use ($tt, &$cursor, &$processed, $cursorKey) {
+                ->chunk($this->batchSize, function ($treatments) use ($tt, &$cursor, &$processed, &$skipped, $cursorKey) {
                     foreach ($treatments as $treatment) {
                         $patientId = $this->resolvePatientId($treatment->{$tt['patient_col']});
 
                         if (! $patientId) {
+                            $skipped++;
                             $cursor = $treatment->id;
 
                             continue;
                         }
 
-                        // Check if a service order already exists for this treatment
-                        $soShort = strtoupper($tt['type']).'_TR/'.$treatment->id;
+                        // so_short = {DEPT_KEY}/{padded_departmental_sequence}
+                        $soShort = strtoupper($tt['type']).'/'.str_pad($treatment->id, 8, '0', STR_PAD_LEFT);
                         if (ServiceOrder::where('so_short', $soShort)->exists()) {
+                            $skipped++;
                             $cursor = $treatment->id;
 
                             continue;
@@ -1338,7 +1464,7 @@ class SyncOldHIMS extends Command
                 });
 
             $this->setCursor($cursorKey, $cursor);
-            $this->info("{$tt['table']} sync done: {$processed} new service orders");
+            $this->syncDone($tt['table'], $processed, $skipped, $total);
         }
     }
 
@@ -1440,7 +1566,8 @@ class SyncOldHIMS extends Command
     {
         return match (strtoupper($status)) {
             'OPEN', 'ACTIVE' => ServiceOrderStatus::OPEN->name,
-            'CLOSED', 'DISCHARGED' => ServiceOrderStatus::CLOSED->name,
+            // DISCHARGED is the inpatient-specific terminal state — maps to CLOSED
+            'CLOSED', 'DISCHARGED', 'DISCHARGE' => ServiceOrderStatus::CLOSED->name,
             'IN_PROGRESS', 'IN-PROGRESS' => ServiceOrderStatus::IN_PROGRESS->name,
             'TREATED' => ServiceOrderStatus::TREATED->name,
             'CANCELLED' => ServiceOrderStatus::CANCELLED->name,
@@ -1470,7 +1597,58 @@ class SyncOldHIMS extends Command
             return $patient->id;
         }
 
-        return null;
+        // On-demand migration from old DB (used in by-closings flow)
+        $oldPatient = DB::connection('secondary')
+            ->table('patients')
+            ->where('id', $id)
+            ->first();
+
+        if (! $oldPatient) {
+            return null;
+        }
+
+        try {
+            $createdAt = Carbon::parse($oldPatient->created_on);
+            $year = $createdAt->format('Y');
+            $month = $createdAt->format('m');
+            $existingCount = Patient::where('ps_number', 'like', "PS/{$year}/{$month}/%")->count();
+            $psNumber = "PS/{$year}/{$month}/".str_pad($existingCount + 1, 4, '0', STR_PAD_LEFT);
+
+            $contact = $this->validatePhoneNumber($oldPatient->patient_contact_mobile)
+                ? $this->formatPhoneNumber($oldPatient->patient_contact_mobile)
+                : null;
+
+            $cnic = $this->validateCnic($oldPatient->patient_cnic)
+                ? $this->formatCnic($oldPatient->patient_cnic)
+                : null;
+
+            $address = is_string($oldPatient->patient_address) ? $oldPatient->patient_address : null;
+
+            $newPatient = new Patient;
+            $newPatient->id = $oldPatient->id;
+            $newPatient->ps_number = $psNumber;
+            $newPatient->name = $oldPatient->pateint_name;
+            $newPatient->gender = $oldPatient->gender;
+            $newPatient->age_group = $oldPatient->age_group ?: null;
+            $newPatient->age_days = $oldPatient->age_days ?: null;
+            $newPatient->age_dob = $this->sanitizeDate($oldPatient->age_dob);
+            $newPatient->address = $address;
+            $newPatient->guardian = $oldPatient->guardian;
+            $newPatient->relation = $oldPatient->relation;
+            $newPatient->contact = $contact;
+            $newPatient->cnic = $cnic;
+            $newPatient->created_at = $oldPatient->created_on;
+            $newPatient->updated_at = $oldPatient->modified_on ?? now();
+            $newPatient->saveQuietly();
+
+            $this->patientCache[$id] = $newPatient;
+
+            return $newPatient->id;
+        } catch (\Exception $e) {
+            MigrationLog::logError('patients', 'patients', $id, $e->getMessage());
+
+            return null;
+        }
     }
 
     protected function resolveClosingId(?int $id): ?int
@@ -1706,12 +1884,28 @@ class SyncOldHIMS extends Command
                 $this->info("Abacus closings batch: +{$processed} processed, {$skipped} skipped");
             });
 
-        $this->info("Abacus closings sync done: {$processed} processed, {$skipped} skipped");
+        $this->syncDone('abacus-closings', $processed, $skipped, Closing::count());
     }
 
     // =========================================================================
-    // Summary
+    // Summary helpers
     // =========================================================================
+
+    protected function syncDone(string $entity, int $migrated, int $skipped, int $total): void
+    {
+        $left = max(0, $total - $migrated - $skipped);
+        $this->info("{$entity}: {$migrated} migrated · {$skipped} skipped · {$left} left / {$total} total");
+    }
+
+    protected function oldCount(string $table, array $where = []): int
+    {
+        $q = DB::connection('secondary')->table($table);
+        foreach ($where as $col => $val) {
+            $q->where($col, $val);
+        }
+
+        return (int) $q->count();
+    }
 
     protected function printSyncSummary(): void
     {
