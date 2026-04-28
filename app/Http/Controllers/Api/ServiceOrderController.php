@@ -27,7 +27,11 @@ class ServiceOrderController extends Controller
             ->latest('id');
 
         if (! empty($filters['so_number'])) {
-            $query->where('so_number', 'like', "%{$filters['so_number']}%");
+            $term = $filters['so_number'];
+            $query->where(function ($q) use ($term) {
+                $q->where('so_number', 'like', "%{$term}%")
+                    ->orWhere('so_short', 'like', "%{$term}%");
+            });
         }
 
         if (! empty($filters['patient_id'])) {
@@ -57,9 +61,12 @@ class ServiceOrderController extends Controller
         $exact = collect();
 
         if (! empty($filters['so_number'])) {
+            $term = $filters['so_number'];
             $exact = ServiceOrder::query()
                 ->with(['patient', 'doctor', 'service'])
-                ->where('so_number', $filters['so_number'])
+                ->where(function ($q) use ($term) {
+                    $q->where('so_number', $term)->orWhere('so_short', $term);
+                })
                 ->get();
 
             if ($exact->isNotEmpty()) {
@@ -178,6 +185,7 @@ class ServiceOrderController extends Controller
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('so_number', 'like', "%{$search}%")
+                    ->orWhere('so_short', 'like', "%{$search}%")
                     ->orWhereHas('patient', fn ($pq) => $pq->where('name', 'like', "%{$search}%"));
             });
         }

@@ -2241,6 +2241,7 @@ class ServicesAndDepartmentsSeeder extends Seeder
             if ($emergencyDepartment->id == $service['service_department_id']) {
 
                 ServiceRecestation::firstOrCreate([
+                    'slug' => $service['slug'],
                     'service_department_id' => $emergencyDepartment->id,
                     'name' => $service['name'],
                 ], [

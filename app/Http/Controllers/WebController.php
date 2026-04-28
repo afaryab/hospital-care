@@ -82,7 +82,9 @@ class WebController extends Controller
 
             $soNumber = 'PS/'.$year.'/'.$month.'/'.$number.'/'.$departmentKey.'/'.$serviceNumber;
 
-            $serviceOrder = ServiceOrder::where('so_number', $soNumber)->firstOrFail();
+            $serviceOrder = ServiceOrder::where('so_number', $soNumber)
+                ->orWhere('so_short', $soNumber)
+                ->firstOrFail();
 
         }
 
@@ -474,7 +476,10 @@ class WebController extends Controller
                 if ($isDoctorFilePayment) {
                     $ServiceOrderExp = ServiceOrder::find($expenseData['file_number']);
                     if (! $ServiceOrderExp) {
-                        $ServiceOrderExp = ServiceOrder::where('so_number', $expenseData['file_number'])->first();
+                        $fileNumber = $expenseData['file_number'];
+                        $ServiceOrderExp = ServiceOrder::where('so_number', $fileNumber)
+                            ->orWhere('so_short', $fileNumber)
+                            ->first();
                     }
                 }
 
