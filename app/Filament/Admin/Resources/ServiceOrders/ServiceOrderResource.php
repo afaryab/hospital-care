@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\ServiceOrders;
 use App\Filament\Admin\Resources\ServiceOrders\Pages\ListServiceOrders;
 use App\Filament\Admin\Resources\ServiceOrders\Pages\ViewServiceOrder;
 use App\Models\Service;
+use App\Models\ServiceDepartment;
 use App\Models\ServiceOrder;
 use App\Models\User;
 use BackedEnum;
@@ -42,7 +43,7 @@ class ServiceOrderResource extends Resource
                     // eliminate N+1 queries (3 relations × page size = 150 queries).
                     ->with([
                         'patient:id,name',
-                        'service:id,name',
+                        'service:id,name,service_department_id',
                         'doctor:id,name',
                     ])
                     ->withSum(['transactionElements as income_total' => function ($q) {
@@ -62,24 +63,53 @@ class ServiceOrderResource extends Resource
             ->persistSortInSession()
             ->columns([
                 TextColumn::make('created_at')
-                    ->label('Date')
-                    ->dateTime('d M Y')
+                    ->label('Date & Time')
+                    ->dateTime('d M Y H:i')
                     ->sortable(),
                 TextColumn::make('so_number')
-                    ->label('Service Order')
+                    ->label('SO#')
                     ->searchable()
                     ->sortable()
-                    ->description(fn (ServiceOrder $record): string => collect([
-                        $record->patient?->name,
-                        $record->service?->name,
-                        $record->doctor?->name,
-                    ])->filter()->implode(' · '))
+                    ->copyable()
+                    ->fontFamily('mono')
                     ->wrap(),
+                TextColumn::make('patient.name')
+                    ->label('Patient')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('service.name')
+                    ->label('Service')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('type')
+                    ->label('Department')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'OPD' => 'info',
+                        'IND' => 'purple',
+                        'EMG' => 'danger',
+                        'DNT' => 'warning',
+                        'PTH', 'LAB' => 'gray',
+                        'ULT' => 'success',
+                        'XRAY', 'RAD' => 'orange',
+                        default => 'gray',
+                    })
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('doctor.name')
+                    ->label('Provider')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(),
                 TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'closed' => 'success',
                         'open' => 'warning',
+                        'refunded' => 'danger',
+                        'cancelled' => 'gray',
+                        'treated' => 'info',
                         default => 'gray',
                     })
                     ->sortable(),
@@ -108,6 +138,7 @@ class ServiceOrderResource extends Resource
             ])
             ->filters([
                 Filter::make('date_range')
+                    ->label('Date Range')
                     ->schema([
                         DatePicker::make('from')->default(now()->startOfMonth()),
                         DatePicker::make('until')->default(now()),
@@ -116,22 +147,44 @@ class ServiceOrderResource extends Resource
                         ->when($data['from'] ?? null, fn (Builder $q, $date) => $q->whereDate('service_orders.created_at', '>=', $date))
                         ->when($data['until'] ?? null, fn (Builder $q, $date) => $q->whereDate('service_orders.created_at', '<=', $date))
                     ),
+                SelectFilter::make('type')
+                    ->label('Department')
+                    ->options(fn () => ServiceDepartment::orderBy('name')->pluck('name', 'slug'))
+                    ->searchable(),
                 SelectFilter::make('status')
-                    ->options(['open' => 'Open', 'closed' => 'Closed']),
+                    ->options([
+                        'open' => 'Open',
+                        'closed' => 'Closed',
+                        'treated' => 'Treated',
+                        'cancelled' => 'Cancelled',
+                        'refunded' => 'Refunded',
+                    ]),
                 SelectFilter::make('service_id')
                     ->label('Service')
-                    ->options(fn () => Service::pluck('name', 'id'))
+                    ->options(fn () => Service::orderBy('name')->pluck('name', 'id'))
                     ->searchable(),
                 SelectFilter::make('doctor_id')
                     ->label('Provider')
-                    ->options(fn () => User::whereHas('opdDoctorProfiles')->pluck('name', 'id'))
+                    ->options(fn () => User::query()
+                        ->where(fn ($q) => $q
+                            ->whereHas('opdDoctorProfiles')
+                            ->orWhereHas('indDoctorProfiles')
+                            ->orWhereHas('emergencyDoctorProfiles')
+                            ->orWhereHas('dentistProfiles')
+                            ->orWhereHas('ultrasoundDoctorProfiles')
+                            ->orWhereHas('xrayTechnicianProfiles')
+                        )
+                        ->orderBy('name')
+                        ->pluck('name', 'id'))
                     ->searchable(),
             ])
             ->groups([
+                Group::make('type')->label('Department'),
                 Group::make('service.name')->label('Service'),
                 Group::make('doctor.name')->label('Provider'),
                 Group::make('status')->label('Status'),
             ])
+            ->defaultGroup('type')
             ->striped()
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(25)
