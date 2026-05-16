@@ -14,7 +14,7 @@ class OutstandingReceivablesStats extends ChartWidget
 
     protected ?string $description = 'Patients with the highest unpaid receivable amounts';
 
-    protected static ?int $sort = 6;
+    protected static ?int $sort = 8;
 
     protected int|string|array $columnSpan = 3;
 

@@ -5,10 +5,12 @@ namespace App\Filament\Admin\Pages;
 use App\Filament\Admin\Concerns\HasDashboardDateFilters;
 use App\Filament\Admin\Widgets\Patient\AgeGroupDistributionChart;
 use App\Filament\Admin\Widgets\Patient\GenderDistributionChart;
+use App\Filament\Admin\Widgets\Patient\NewVsReturningChart;
 use App\Filament\Admin\Widgets\Patient\OutstandingReceivablesStats;
 use App\Filament\Admin\Widgets\Patient\PatientDemographicsStats;
 use App\Filament\Admin\Widgets\Patient\PatientsByDepartmentChart;
 use App\Filament\Admin\Widgets\Patient\RegistrationTrendChart;
+use App\Filament\Admin\Widgets\Patient\ReturningPatientsStats;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Support\Icons\Heroicon;
 
@@ -34,6 +36,8 @@ class PatientAnalytics extends BaseDashboard
     {
         return [
             PatientDemographicsStats::class,
+            ReturningPatientsStats::class,
+            NewVsReturningChart::class,
             RegistrationTrendChart::class,
             GenderDistributionChart::class,
             PatientsByDepartmentChart::class,

@@ -16,7 +16,7 @@ class AgeGroupDistributionChart extends ChartWidget
 
     protected ?string $description = 'Patients grouped by age range in the selected period';
 
-    protected static ?int $sort = 5;
+    protected static ?int $sort = 7;
 
     protected int|string|array $columnSpan = 3;
 

@@ -16,7 +16,7 @@ class RegistrationTrendChart extends ChartWidget
 
     protected ?string $description = 'Daily new patient registrations in the selected period';
 
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 4;
 
     protected int|string|array $columnSpan = 'full';
 

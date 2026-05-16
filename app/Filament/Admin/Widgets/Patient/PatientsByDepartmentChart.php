@@ -16,7 +16,7 @@ class PatientsByDepartmentChart extends ChartWidget
 
     protected ?string $description = 'Service orders placed per department in the selected period';
 
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 6;
 
     protected int|string|array $columnSpan = 4;
 

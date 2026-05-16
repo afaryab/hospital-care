@@ -16,7 +16,7 @@ class GenderDistributionChart extends ChartWidget
 
     protected ?string $description = 'Patient gender breakdown in the selected period';
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 5;
 
     protected int|string|array $columnSpan = 2;
 
