@@ -4,7 +4,6 @@ namespace App\Filament\Admin\Concerns;
 
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard\Actions\FilterAction;
 use Filament\Pages\Dashboard\Concerns\HasFiltersAction;
@@ -61,9 +60,6 @@ trait HasDashboardDateFilters
                         ->label('End Date')
                         ->visible(fn ($get) => $get('dateRange') === 'custom')
                         ->default(Carbon::now()),
-
-                    Hidden::make('computed_startDate'),
-                    Hidden::make('computed_endDate'),
                 ]),
         ];
     }

@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Widgets\History;
 
 use App\Models\ExpenseVoucher;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Cache;
 
 class ExpensesByYearChart extends ChartWidget
 {
@@ -21,35 +22,37 @@ class ExpensesByYearChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = ExpenseVoucher::query()
-            ->selectRaw('YEAR(created_at) as year, SUM(amount) as total, COUNT(*) as count')
-            ->groupBy('year')
-            ->orderBy('year')
-            ->get();
+        return Cache::remember('dashboard.history.expenses_by_year', 3600, function () {
+            $data = ExpenseVoucher::query()
+                ->selectRaw('YEAR(created_at) as year, SUM(amount) as total, COUNT(*) as count')
+                ->groupBy('year')
+                ->orderBy('year')
+                ->get();
 
-        return [
-            'datasets' => [
-                [
-                    'label' => 'Expense Amount (PKR)',
-                    'data' => $data->pluck('total')->toArray(),
-                    'backgroundColor' => 'rgba(239, 68, 68, 0.7)',
-                    'borderColor' => 'rgba(239, 68, 68, 1)',
-                    'borderWidth' => 2,
-                    'yAxisID' => 'y',
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'Expense Amount (PKR)',
+                        'data' => $data->pluck('total')->toArray(),
+                        'backgroundColor' => 'rgba(239, 68, 68, 0.7)',
+                        'borderColor' => 'rgba(239, 68, 68, 1)',
+                        'borderWidth' => 2,
+                        'yAxisID' => 'y',
+                    ],
+                    [
+                        'label' => 'Voucher Count',
+                        'data' => $data->pluck('count')->toArray(),
+                        'borderColor' => 'rgba(234, 179, 8, 1)',
+                        'backgroundColor' => 'rgba(234, 179, 8, 0)',
+                        'borderWidth' => 2,
+                        'type' => 'line',
+                        'tension' => 0.4,
+                        'yAxisID' => 'y1',
+                    ],
                 ],
-                [
-                    'label' => 'Voucher Count',
-                    'data' => $data->pluck('count')->toArray(),
-                    'borderColor' => 'rgba(234, 179, 8, 1)',
-                    'backgroundColor' => 'rgba(234, 179, 8, 0)',
-                    'borderWidth' => 2,
-                    'type' => 'line',
-                    'tension' => 0.4,
-                    'yAxisID' => 'y1',
-                ],
-            ],
-            'labels' => $data->pluck('year')->toArray(),
-        ];
+                'labels' => $data->pluck('year')->toArray(),
+            ];
+        });
     }
 
     protected function getType(): string

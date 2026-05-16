@@ -23,7 +23,7 @@ class AdminStatsOverview extends StatsOverviewWidget
 
     protected static ?int $sort = 1;
 
-    protected ?string $pollingInterval = '10s';
+    protected ?string $pollingInterval = null;
 
     public function getStats(): array
     {
@@ -127,26 +127,21 @@ class AdminStatsOverview extends StatsOverviewWidget
     public function getCounterStats($startDate = null, $endDate = null): StatsOverviewWidget\Stat
     {
 
-        $totalCollection = Closing::sum('closing_amount') - Closing::sum('opening_amount');
-        $totalClosings = Closing::count();
+        $allTimeTotals = Closing::selectRaw(
+            'SUM(closing_amount) - SUM(opening_amount) as net, COUNT(*) as total_closings'
+        )->first();
+        $totalCollection = $allTimeTotals->net ?? 0;
+        $totalClosings = $allTimeTotals->total_closings ?? 0;
         $totalOpenings = Closing::where('status', CounterStatus::OPEN)->count();
         $receptions = Reception::count();
 
-        $totalCollectionThisDuration = (
-            Closing::query()
-                ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-                ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
-                ->sum('closing_amount')
-        ) - (
-            Closing::query()
-                ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-                ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
-                ->sum('opening_amount')
-        );
-        $totalClosingsThisDuration = Closing::query()
+        $periodTotals = Closing::query()
             ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
             ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
-            ->count();
+            ->selectRaw('SUM(closing_amount) - SUM(opening_amount) as net, COUNT(*) as total_closings')
+            ->first();
+        $totalCollectionThisDuration = $periodTotals->net ?? 0;
+        $totalClosingsThisDuration = $periodTotals->total_closings ?? 0;
         $totalOpeningsThisDuration = Closing::query()
             ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
             ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))

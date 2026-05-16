@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Widgets\History;
 
 use App\Models\Transaction;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Cache;
 
 class RevenueByYearChart extends ChartWidget
 {
@@ -21,41 +22,37 @@ class RevenueByYearChart extends ChartWidget
 
     protected function getData(): array
     {
-        $revenue = Transaction::query()
-            ->where('income_or_expense', 'INCOME')
-            ->selectRaw('YEAR(created_at) as year, SUM(amount) as total')
-            ->groupBy('year')
-            ->orderBy('year')
-            ->pluck('total', 'year');
+        return Cache::remember('dashboard.history.revenue_by_year', 3600, function () {
+            $rows = Transaction::query()
+                ->selectRaw(
+                    "YEAR(created_at) as year,
+                     SUM(CASE WHEN income_or_expense = 'INCOME' THEN amount ELSE 0 END) as revenue,
+                     SUM(CASE WHEN income_or_expense = 'EXPENSE' THEN amount ELSE 0 END) as expenses"
+                )
+                ->groupBy('year')
+                ->orderBy('year')
+                ->get();
 
-        $expenses = Transaction::query()
-            ->where('income_or_expense', 'EXPENSE')
-            ->selectRaw('YEAR(created_at) as year, SUM(amount) as total')
-            ->groupBy('year')
-            ->orderBy('year')
-            ->pluck('total', 'year');
-
-        $years = $revenue->keys()->merge($expenses->keys())->unique()->sort()->values();
-
-        return [
-            'datasets' => [
-                [
-                    'label' => 'Revenue',
-                    'data' => $years->map(fn ($y) => $revenue->get($y, 0))->values()->toArray(),
-                    'backgroundColor' => 'rgba(34, 197, 94, 0.7)',
-                    'borderColor' => 'rgba(34, 197, 94, 1)',
-                    'borderWidth' => 2,
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'Revenue',
+                        'data' => $rows->pluck('revenue')->toArray(),
+                        'backgroundColor' => 'rgba(34, 197, 94, 0.7)',
+                        'borderColor' => 'rgba(34, 197, 94, 1)',
+                        'borderWidth' => 2,
+                    ],
+                    [
+                        'label' => 'Expenses',
+                        'data' => $rows->pluck('expenses')->toArray(),
+                        'backgroundColor' => 'rgba(239, 68, 68, 0.7)',
+                        'borderColor' => 'rgba(239, 68, 68, 1)',
+                        'borderWidth' => 2,
+                    ],
                 ],
-                [
-                    'label' => 'Expenses',
-                    'data' => $years->map(fn ($y) => $expenses->get($y, 0))->values()->toArray(),
-                    'backgroundColor' => 'rgba(239, 68, 68, 0.7)',
-                    'borderColor' => 'rgba(239, 68, 68, 1)',
-                    'borderWidth' => 2,
-                ],
-            ],
-            'labels' => $years->toArray(),
-        ];
+                'labels' => $rows->pluck('year')->toArray(),
+            ];
+        });
     }
 
     protected function getType(): string

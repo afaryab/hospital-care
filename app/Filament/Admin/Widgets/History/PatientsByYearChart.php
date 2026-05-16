@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Widgets\History;
 
 use App\Models\Patient;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Facades\Cache;
 
 class PatientsByYearChart extends ChartWidget
 {
@@ -21,25 +22,27 @@ class PatientsByYearChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = Patient::query()
-            ->selectRaw('YEAR(created_at) as year, COUNT(*) as count')
-            ->groupBy('year')
-            ->orderBy('year')
-            ->get();
+        return Cache::remember('dashboard.history.patients_by_year', 3600, function () {
+            $data = Patient::query()
+                ->selectRaw('YEAR(created_at) as year, COUNT(*) as count')
+                ->groupBy('year')
+                ->orderBy('year')
+                ->get();
 
-        return [
-            'datasets' => [
-                [
-                    'label' => 'New Patients',
-                    'data' => $data->pluck('count')->toArray(),
-                    'backgroundColor' => 'rgba(99, 102, 241, 0.8)',
-                    'borderColor' => 'rgba(99, 102, 241, 1)',
-                    'borderWidth' => 2,
-                    'tension' => 0.4,
+            return [
+                'datasets' => [
+                    [
+                        'label' => 'New Patients',
+                        'data' => $data->pluck('count')->toArray(),
+                        'backgroundColor' => 'rgba(99, 102, 241, 0.8)',
+                        'borderColor' => 'rgba(99, 102, 241, 1)',
+                        'borderWidth' => 2,
+                        'tension' => 0.4,
+                    ],
                 ],
-            ],
-            'labels' => $data->pluck('year')->toArray(),
-        ];
+                'labels' => $data->pluck('year')->toArray(),
+            ];
+        });
     }
 
     protected function getType(): string

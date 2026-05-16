@@ -41,16 +41,13 @@ class FinancialKPIStats extends StatsOverviewWidget
 
         $netIncome = $grossRevenue - $totalExpenses;
 
-        $cashCollected = Closing::query()
+        $closingTotals = Closing::query()
             ->when($startDate, fn (Builder $q) => $q->whereDate('created_at', '>=', $startDate))
             ->when($endDate, fn (Builder $q) => $q->whereDate('created_at', '<=', $endDate))
-            ->sum('closing_amount_cash');
-
-        $cardChequeCollected = Closing::query()
-            ->when($startDate, fn (Builder $q) => $q->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $q) => $q->whereDate('created_at', '<=', $endDate))
-            ->selectRaw('SUM(closing_amount_cheque) + SUM(closing_amount_card) as total')
-            ->value('total') ?? 0;
+            ->selectRaw('SUM(closing_amount_cash) as cash, SUM(closing_amount_cheque + closing_amount_card) as card_cheque')
+            ->first();
+        $cashCollected = $closingTotals->cash ?? 0;
+        $cardChequeCollected = $closingTotals->card_cheque ?? 0;
 
         $refunds = Transaction::query()
             ->where('is_refunded', true)
