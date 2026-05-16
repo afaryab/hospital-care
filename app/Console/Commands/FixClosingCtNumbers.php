@@ -12,19 +12,73 @@ class FixClosingCtNumbers extends Command
 {
     protected $signature = 'app:fix-closing-ct-numbers
         {--dry-run : Preview what would change without writing to DB}
-        {--chunk=500 : Number of rows per update batch}';
+        {--chunk=500 : Number of rows per update batch}
+        {--skip-sync : Skip the closing sync phase and only reassign CT numbers}';
 
-    protected $description = 'Reassign CT numbers for all closings using cash_recieving_time as the closing date';
+    protected $description = 'Sync last month\'s closings from old HIMS, then reassign all CT numbers';
 
     public function handle(): int
     {
         $dryRun = (bool) $this->option('dry-run');
         $chunk = (int) $this->option('chunk');
+        $skipSync = (bool) $this->option('skip-sync');
 
+        // ── Phase 1: Sync last month's closings from old HIMS ────────────────
+        if (! $skipSync) {
+            $this->syncLatestClosings($dryRun);
+        }
+
+        // ── Phase 2: Reassign CT numbers for every closing ───────────────────
+        $this->newLine();
+        $this->info('═══ Phase 2: Reassigning CT numbers ═══');
+
+        return $this->reassignCtNumbers($dryRun, $chunk);
+    }
+
+    protected function syncLatestClosings(bool $dryRun): void
+    {
+        $this->info('═══ Phase 1: Syncing last month\'s closings from old HIMS ═══');
+
+        if (env('ENABLE_OLD_SYNC') !== 'hims') {
+            $this->warn('ENABLE_OLD_SYNC is not set to "hims" — skipping sync.');
+            $this->warn('Add ENABLE_OLD_SYNC=hims to .env to enable closing sync.');
+
+            return;
+        }
+
+        try {
+            DB::connection('secondary')->getPdo();
+        } catch (\Exception $e) {
+            $this->warn('Secondary DB not reachable — skipping sync: '.$e->getMessage());
+
+            return;
+        }
+
+        $base = ['--batch-size' => 500];
+        if ($dryRun) {
+            $base['--dry-run'] = true;
+        }
+
+        // Step A — brand-new closings (IDs beyond the by-closings cursor).
+        $this->call('app:sync-old-hims', array_merge($base, ['--entity' => 'by-closings']));
+
+        // Step B — new transactions added to already-migrated closings
+        // (open counters that kept accumulating transactions since the last sync).
+        $this->newLine();
+        $this->info('─── Syncing new transactions on existing closings ───');
+        $result = $this->call('app:sync-old-hims', array_merge($base, ['--entity' => 'recent-transactions']));
+
+        if ($result !== 0) {
+            $this->warn('Sync finished with warnings (see output above). Proceeding to CT number phase.');
+        }
+    }
+
+    protected function reassignCtNumbers(bool $dryRun, int $chunk): int
+    {
         $this->info('Loading all closings ordered by closing date...');
 
-        // Load every closing sorted by when the counter was actually closed,
-        // falling back to created_at for records with no cash_recieving_time.
+        // Sort by actual closing time so numbers are assigned in the order
+        // the counter was physically closed, not when it was opened.
         $closings = Closing::query()
             ->orderByRaw('COALESCE(cash_recieving_time, created_at) ASC, id ASC')
             ->get(['id', 'ct_number', 'cash_recieving_time', 'created_at']);
@@ -32,8 +86,8 @@ class FixClosingCtNumbers extends Command
         $total = $closings->count();
         $this->info("Reviewing {$total} closings...");
 
-        // Build new CT numbers entirely in memory — O(n) counter increments,
-        // no DB round-trip per closing.
+        // Build new CT numbers entirely in memory — one counter per Y/m key,
+        // zero DB round-trips per closing.
         $counters = [];
         $updates = [];      // [id => ['old' => ..., 'new' => ...]]
         $monthSummary = []; // [Y/m => change count]
@@ -59,7 +113,6 @@ class FixClosingCtNumbers extends Command
             return 0;
         }
 
-        // Month-by-month summary
         $this->newLine();
         $this->info("Found {$changeCount} closings that need correction:");
         $this->table(
@@ -72,7 +125,6 @@ class FixClosingCtNumbers extends Command
         );
 
         if ($dryRun) {
-            $this->newLine();
             $preview = collect($updates)
                 ->take(20)
                 ->map(fn ($u, $id) => [$id, $u['old'], $u['new']])
@@ -93,15 +145,14 @@ class FixClosingCtNumbers extends Command
         $this->info('Applying corrections...');
 
         DB::transaction(function () use ($updates, $chunk) {
-            // Phase 1 — stamp a unique temp prefix so the reassignment cannot
-            // hit a duplicate-key conflict mid-flight.
+            // Phase A — stamp temp IDs to avoid unique-key conflicts mid-flight.
             foreach (array_chunk(array_keys($updates), $chunk) as $ids) {
                 DB::table('closings')
                     ->whereIn('id', $ids)
                     ->update(['ct_number' => DB::raw("CONCAT('TMP/', id)")]);
             }
 
-            // Phase 2 — write the correct CT numbers.
+            // Phase B — write the correct CT numbers.
             foreach (array_chunk($updates, $chunk, true) as $batch) {
                 foreach ($batch as $id => $change) {
                     DB::table('closings')

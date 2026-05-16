@@ -41,10 +41,11 @@ use Processton\Abacus\Models\AbacusTransaction;
 class SyncOldHIMS extends Command
 {
     protected $signature = 'app:sync-old-hims
-        {--entity= : Specific entity to sync (users,services,receptions,panels,patients,expense-categories,by-closings,closings,transactions,vouchers,treatments,abacus-closings,all)}
+        {--entity= : Specific entity to sync (users,services,receptions,panels,patients,expense-categories,by-closings,closings,transactions,vouchers,treatments,abacus-closings,recent-transactions,all)}
         {--reset : Reset sync cursors for the specified entity}
         {--batch-size=2000 : Number of records per batch}
-        {--dry-run : Preview what would be synced without making changes}';
+        {--dry-run : Preview what would be synced without making changes}
+        {--since= : ISO date — only used by recent-transactions (default: 1 month ago)}';
 
     protected $description = 'Incremental data sync from old HIMS database (hospital_care_analytics) to new schema';
 
@@ -152,7 +153,7 @@ class SyncOldHIMS extends Command
 
         // All entities that syncEntity() can handle (superset of entityOrder)
         $allEntities = array_unique(array_merge($this->entityOrder, [
-            'patients', 'closings', 'transactions', 'abacus-closings',
+            'patients', 'closings', 'transactions', 'abacus-closings', 'recent-transactions',
         ]));
 
         if ($entity === 'all') {
@@ -282,6 +283,7 @@ class SyncOldHIMS extends Command
             'vouchers' => $this->syncVouchers(),
             'treatments' => $this->syncTreatments(),
             'abacus-closings' => $this->syncAbacusClosings(),
+            'recent-transactions' => $this->syncRecentTransactions(),
         };
 
         $elapsed = round(microtime(true) - $startTime, 2);
@@ -1513,6 +1515,69 @@ class SyncOldHIMS extends Command
         }
 
         return empty($notes) ? null : $notes;
+    }
+
+    // =========================================================================
+    // 11b. Recent Transactions — new transactions added to already-migrated
+    //      closings (open counters that received more transactions since the
+    //      last full sync). Scoped to closings created within --since window.
+    // =========================================================================
+
+    protected function syncRecentTransactions(): void
+    {
+        $since = $this->option('since')
+            ? Carbon::parse($this->option('since'))
+            : Carbon::now()->subMonth();
+
+        $this->info("Syncing new transactions for closings since {$since->toDateString()}...");
+
+        $processed = 0;
+        $skipped = 0;
+
+        // Fetch only closings within the window from the old DB.
+        DB::connection('secondary')
+            ->table('reception_counters_closings')
+            ->where('created_on', '>=', $since)
+            ->orderBy('id')
+            ->each(function ($oldClosing) use (&$processed, &$skipped) {
+                // Only process closings that are already in the new DB.
+                // Brand-new closings (id > by-closings cursor) are handled by
+                // syncByClosings(); skip them here to avoid double-migration.
+                $newClosing = Closing::where('old_id', $oldClosing->id)->first();
+
+                if (! $newClosing) {
+                    return;
+                }
+
+                DB::connection('secondary')
+                    ->table('reception_counters_closings_transactions')
+                    ->where('counter_id', $oldClosing->id)
+                    ->orderBy('id')
+                    ->each(function ($tr) use ($newClosing, &$processed, &$skipped) {
+                        if (Transaction::where('old_id', $tr->id)->exists()) {
+                            $skipped++;
+
+                            return;
+                        }
+
+                        if (! $this->dryRun) {
+                            try {
+                                $this->migrateTransaction($tr, $newClosing->id);
+                                $processed++;
+                            } catch (\Exception $e) {
+                                MigrationLog::logError(
+                                    'recent-transactions',
+                                    'reception_counters_closings_transactions',
+                                    $tr->id,
+                                    $e->getMessage()
+                                );
+                                $this->warn("Transaction {$tr->id} error: ".$e->getMessage());
+                            }
+                        }
+                    });
+            });
+
+        $this->syncDone('recent-transactions', $processed, $skipped, 0);
     }
 
     // =========================================================================
