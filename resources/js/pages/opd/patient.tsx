@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import Icd10Picker from '@/components/ui/icd10-picker';
 import AppLayout from '@/layouts/app-layout';
 import { opdDashboard, opdPatient, apiOpdSaveTreatment, apiOpdUpdateStatus } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
@@ -46,6 +47,7 @@ interface TreatmentRecordData {
     history_of_present_illness?: string;
     examination_findings?: Record<string, string>;
     diagnosis_code?: string;
+    icd10_code_id?: number | null;
     diagnosis_text?: string;
     treatment_plan?: string;
     prescriptions?: Prescription[];
@@ -165,6 +167,7 @@ export default function OpdPatient() {
     const [hpi, setHpi] = useState(existingRecord?.history_of_present_illness ?? '');
     const [diagnosisCode, setDiagnosisCode] = useState(existingRecord?.diagnosis_code ?? '');
     const [diagnosisText, setDiagnosisText] = useState(existingRecord?.diagnosis_text ?? '');
+    const [icd10CodeId, setIcd10CodeId] = useState<number | null>(existingRecord?.icd10_code_id ?? null);
     const [treatmentPlan, setTreatmentPlan] = useState(existingRecord?.treatment_plan ?? '');
     const [followUpDate, setFollowUpDate] = useState(existingRecord?.follow_up_date ?? '');
     const [outcome, setOutcome] = useState(existingRecord?.outcome ?? '');
@@ -212,6 +215,7 @@ export default function OpdPatient() {
             history_of_present_illness: hpi,
             examination_findings: examFindings,
             diagnosis_code: diagnosisCode,
+            icd10_code_id: icd10CodeId,
             diagnosis_text: diagnosisText,
             treatment_plan: treatmentPlan,
             prescriptions: prescriptions.filter((p) => p.drug_name.trim()),
@@ -489,13 +493,18 @@ export default function OpdPatient() {
                     <FormSection icon={<FileText className="h-4 w-4 text-indigo-500" />} title="Diagnosis">
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-500">ICD Code</label>
-                                <input
-                                    disabled={isFinalized}
+                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                    ICD-10 Code
+                                </label>
+                                <Icd10Picker
                                     value={diagnosisCode}
-                                    onChange={(e) => setDiagnosisCode(e.target.value)}
-                                    placeholder="e.g. J06.9"
+                                    disabled={isFinalized}
+                                    placeholder="Search code or diagnosis…"
                                     className={inputClass(isFinalized)}
+                                    onSelect={(code, description) => {
+                                        setDiagnosisCode(code);
+                                        setDiagnosisText(description);
+                                    }}
                                 />
                             </div>
                             <div className="sm:col-span-2">
@@ -504,7 +513,7 @@ export default function OpdPatient() {
                                     disabled={isFinalized}
                                     value={diagnosisText}
                                     onChange={(e) => setDiagnosisText(e.target.value)}
-                                    placeholder="e.g. Acute upper respiratory infection"
+                                    placeholder="Auto-filled from ICD-10 selection or type manually"
                                     className={inputClass(isFinalized)}
                                 />
                             </div>

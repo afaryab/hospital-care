@@ -214,20 +214,12 @@ function CollectPayment({
     const [selectedServiceOrder, setSelectedServiceOrder] = useState<string>();
     const [processing, setProcessing] = useState<boolean>(false);
 
-    console.log(services);
-
     const [formData, setFormData] = useState<any>({
         total: 0,
         items: [],
     });
 
     const calculateChange = () => {
-        console.log(
-            'Calculating change with amountPaid:',
-            amountPaid,
-            'and total:',
-            formData.total,
-        );
         return amountPaid - formData.total;
     };
 
@@ -295,9 +287,7 @@ function CollectPayment({
             }
 
             router.post(transactionStore().url, billData, {
-                onSuccess: (response) => {
-                    console.log('Bill generated successfully:', response);
-
+                onSuccess: () => {
                     // Create a simple success message with PDF options
                     // const now = response.url;
                     // const year = ;
@@ -321,9 +311,7 @@ function CollectPayment({
                     const errorMessages = Object.values(errors).flat();
                     setProcessing(false);
                 },
-                onFinish: () => {
-                    console.log('Request completed');
-                },
+                onFinish: () => {},
             });
         } catch (error) {
             console.error('Error generating bill:', error);
@@ -400,15 +388,12 @@ function CollectPayment({
                 const itemQuantity = 1;
                 const itemTotal = itemQuantity * itemCharges;
                 totalCharges += itemTotal;
-                console.log(sl);
 
                 // Flat providers array
                 const providerUsers = flattenObject(
                     providers,
                     sl?.service_provider_types || [],
                 );
-
-                console.log('Providers for service ', serviceId, providerUsers);
 
                 return {
                     serviceId: sl?.id || '',
@@ -441,8 +426,6 @@ function CollectPayment({
     const [isRecesitation, setIsRecestitation] = useState<boolean>(false);
 
     useEffect(() => {
-        console.log(departmentKey);
-
         // If depatmentKey is recesitation type then remove RECES- prefix
         let departmentKeyCleaned = departmentKey;
         if (departmentKey && departmentKey.startsWith('RECES-')) {
@@ -457,10 +440,6 @@ function CollectPayment({
     }, [departmentKey]);
 
     const [changeAmount, setChangeAmount] = useState<any>(0);
-
-    useEffect(() => {
-        console.log('Recesitation:', isRecesitation);
-    }, [isRecesitation]);
 
     useEffect(() => {
         setChangeAmount(calculateChange());
@@ -1412,8 +1391,6 @@ function BillItemsEditableTableRow({
         setQ(quantity);
         setC(charges);
     }, [quantity, charges]);
-
-    console.log(providers);
 
     return (
         <>

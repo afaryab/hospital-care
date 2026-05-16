@@ -26,9 +26,6 @@ export default function ServiceOrdersList() {
     const { serviceOrdersByService, services } =
         usePage<opdQueuePageProps>().props;
 
-    console.log('serviceOrdersByService', serviceOrdersByService);
-    console.log('services', services);
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="OPD Hospital Queue" />
@@ -65,12 +62,7 @@ export default function ServiceOrdersList() {
                                                     o.status.toLowerCase() ===
                                                     'open',
                                             )}
-                                            onViewAll={() =>
-                                                console.log(
-                                                    'View all for service',
-                                                    serviceId,
-                                                )
-                                            }
+                                            onViewAll={undefined}
                                         />
                                     </div>
                                 );
@@ -89,7 +81,6 @@ function cn(...classes) {
 
 function TokenCard({ item, variant = 'open', minify }) {
     const isNow = variant === 'in-progress';
-    console.log('TokenCard', { item, variant, isNow });
     return (
         <div
             className={cn(
@@ -205,12 +196,6 @@ function OPDQueueSlider({
     countersOpen: number;
     onViewAll?: () => void;
 }) {
-    console.log('OPDQueueSlider', {
-        serviceName,
-        nowServing,
-        waiting,
-        countersOpen,
-    });
     const scrollerRef = useRef(null);
     const nowCardRef = useRef(null);
 

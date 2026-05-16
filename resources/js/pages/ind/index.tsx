@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { indDashboard, indPatient, apiIndWardSnapshot, apiIndAssignBed } from '@/routes';
+import { indDashboard, indPatient, apiIndWardSnapshot, apiIndAssignBed, apiIndSearch } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { clsx } from 'clsx';
@@ -178,7 +178,7 @@ export default function IndDashboard() {
             const json = await res.json();
             setWards(json.data ?? []);
         } catch {
-            // silently fail
+            if (!silent) toast.error('Failed to load ward snapshot');
         } finally {
             setRefreshing(false);
         }
@@ -193,7 +193,7 @@ export default function IndDashboard() {
         if (!q.trim()) { setSearchResults(null); return; }
         setSearching(true);
         try {
-            const res = await fetch('/api/ind/search', {
+            const res = await fetch(apiIndSearch().url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -203,11 +203,11 @@ export default function IndDashboard() {
                 },
                 body: JSON.stringify({ q }),
             });
-            if (!res.ok) { setSearching(false); return; }
+            if (!res.ok) { setSearching(false); toast.error('Search failed'); return; }
             const json = await res.json();
             setSearchResults(json.data);
         } catch {
-            // ignore
+            toast.error('Network error — search unavailable');
         } finally {
             setSearching(false);
         }

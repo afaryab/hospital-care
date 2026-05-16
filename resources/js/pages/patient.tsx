@@ -55,8 +55,6 @@ export default function PatientView() {
         });
     }
 
-    console.log(patientData);
-
     const explodedPsid = patientData?.ps_number.split('/');
 
     return (

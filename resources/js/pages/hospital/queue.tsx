@@ -1,3 +1,4 @@
+import TablePagination from '@/components/ui/table-pagination';
 import AppLayout from '@/layouts/app-layout';
 import { counter, counterView, home } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
@@ -125,127 +126,12 @@ export default function ServiceOrdersList() {
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colSpan={4} className="text-right">
-                                    {(() => {
-                                        const current =
-                                            serviceOrders.current_page;
-                                        const last = serviceOrders.last_page;
-
-                                        function buildRange(
-                                            curr: number,
-                                            lastPage: number,
-                                        ) {
-                                            if (lastPage <= 7) {
-                                                return Array.from(
-                                                    { length: lastPage },
-                                                    (_, i) => i + 1,
-                                                ) as (number | '...')[];
-                                            }
-
-                                            const delta = 1; // show current +/- delta
-                                            const range: number[] = [];
-                                            for (
-                                                let i = Math.max(
-                                                    2,
-                                                    curr - delta,
-                                                );
-                                                i <=
-                                                Math.min(
-                                                    lastPage - 1,
-                                                    curr + delta,
-                                                );
-                                                i++
-                                            ) {
-                                                range.push(i);
-                                            }
-
-                                            const pages: (number | '...')[] = [
-                                                1,
-                                            ];
-                                            if (range.length && range[0] > 2)
-                                                pages.push('...');
-                                            pages.push(...range);
-                                            if (
-                                                range.length &&
-                                                range[range.length - 1] <
-                                                    lastPage - 1
-                                            )
-                                                pages.push('...');
-                                            pages.push(lastPage);
-                                            return pages;
-                                        }
-
-                                        const pages = buildRange(current, last);
-
-                                        const makeHref = (page: number) =>
-                                            `?page=${page}`;
-
-                                        return (
-                                            <nav className="flex items-center justify-center gap-2 py-2">
-                                                {/* Prev */}
-                                                {current > 1 ? (
-                                                    <a
-                                                        href={makeHref(
-                                                            current - 1,
-                                                        )}
-                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
-                                                        aria-label="Previous page"
-                                                    >
-                                                        ‹
-                                                    </a>
-                                                ) : (
-                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400">
-                                                        ‹
-                                                    </span>
-                                                )}
-
-                                                {/* Page items */}
-                                                {pages.map((p, idx) =>
-                                                    p === '...' ? (
-                                                        <span
-                                                            key={`dots-${idx}`}
-                                                            className="px-3 py-1 text-gray-500"
-                                                        >
-                                                            …
-                                                        </span>
-                                                    ) : p === current ? (
-                                                        <span
-                                                            key={p}
-                                                            aria-current="page"
-                                                            className="rounded bg-[#06df72] px-3 py-1 font-medium text-white dark:bg-neutral-800"
-                                                        >
-                                                            {p}
-                                                        </span>
-                                                    ) : (
-                                                        <a
-                                                            key={p}
-                                                            href={makeHref(p)}
-                                                            className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
-                                                        >
-                                                            {p}
-                                                        </a>
-                                                    ),
-                                                )}
-
-                                                {/* Next */}
-                                                {current < last ? (
-                                                    <a
-                                                        href={makeHref(
-                                                            current + 1,
-                                                        )}
-                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
-                                                        aria-label="Next page"
-                                                    >
-                                                        ›
-                                                    </a>
-                                                ) : (
-                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400">
-                                                        ›
-                                                    </span>
-                                                )}
-                                            </nav>
-                                        );
-                                    })()}
+                                <td colSpan={4}>
+                                    <TablePagination
+                                        currentPage={serviceOrders.current_page}
+                                        lastPage={serviceOrders.last_page}
+                                        makeHref={(page) => `?page=${page}`}
+                                    />
                                 </td>
                             </tr>
                         </tfoot>

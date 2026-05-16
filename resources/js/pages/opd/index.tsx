@@ -1,5 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import { opdDashboard, opdPatient, opdSearch, apiOpdMyQueue, apiOpdUpdateStatus } from '@/routes';
+import { opdDashboard, opdPatient, opdSearch, apiOpdMyQueue, apiOpdUpdateStatus, apiOpdSearch } from '@/routes';
 import { type BreadcrumbItem, type ServiceOrder } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { clsx } from 'clsx';
@@ -126,7 +126,7 @@ export default function OpdDashboard() {
             setOrders(json.data ?? []);
             setStats(json.stats ?? stats);
         } catch {
-            // silently fail — queue will refresh on next poll
+            toast.error('Queue refresh failed');
         }
     }, []);
 
@@ -142,7 +142,7 @@ export default function OpdDashboard() {
         }
         setSearching(true);
         try {
-            const res = await fetch('/api/opd/search', {
+            const res = await fetch(apiOpdSearch().url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -152,11 +152,11 @@ export default function OpdDashboard() {
                 },
                 body: JSON.stringify({ q }),
             });
-            if (!res.ok) { setSearching(false); return; }
+            if (!res.ok) { setSearching(false); toast.error('Search failed'); return; }
             const json = await res.json();
             setSearchResults(json.data);
         } catch {
-            // ignore
+            toast.error('Network error — search unavailable');
         } finally {
             setSearching(false);
         }

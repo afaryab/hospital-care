@@ -40,8 +40,6 @@ export default function ReveaveablesList() {
 
     const { receaveables } = usePage<PageProps>().props;
 
-    console.log(receaveables);
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Receaveables - Counter" />

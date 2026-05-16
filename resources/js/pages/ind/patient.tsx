@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import Icd10Picker from '@/components/ui/icd10-picker';
 import AppLayout from '@/layouts/app-layout';
 import { indDashboard, indPatient, apiIndSaveTreatment, apiIndAssignBed, apiIndDischarge, apiIndUpdateStatus } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
@@ -81,6 +82,7 @@ interface TreatmentRecordData {
     history_of_present_illness?: string;
     examination_findings?: Record<string, string>;
     diagnosis_code?: string;
+    icd10_code_id?: number | null;
     diagnosis_text?: string;
     treatment_plan?: string;
     prescriptions?: Prescription[];
@@ -192,6 +194,7 @@ export default function IndPatient() {
     const [chiefComplaint, setChiefComplaint] = useState(existingRecord?.chief_complaint ?? '');
     const [hpi, setHpi] = useState(existingRecord?.history_of_present_illness ?? '');
     const [diagnosisCode, setDiagnosisCode] = useState(existingRecord?.diagnosis_code ?? '');
+    const [icd10CodeId, setIcd10CodeId] = useState<number | null>(existingRecord?.icd10_code_id ?? null);
     const [diagnosisText, setDiagnosisText] = useState(existingRecord?.diagnosis_text ?? '');
     const [treatmentPlan, setTreatmentPlan] = useState(existingRecord?.treatment_plan ?? '');
     const [followUpDate, setFollowUpDate] = useState(existingRecord?.follow_up_date ?? '');
@@ -244,6 +247,7 @@ export default function IndPatient() {
             history_of_present_illness: hpi,
             examination_findings: examFindings,
             diagnosis_code: diagnosisCode,
+            icd10_code_id: icd10CodeId,
             diagnosis_text: diagnosisText,
             treatment_plan: treatmentPlan,
             prescriptions: prescriptions.filter((p) => p.drug_name.trim()),
@@ -539,14 +543,22 @@ export default function IndPatient() {
                     <FormSection icon={<FileText className="h-4 w-4 text-violet-500" />} title="Diagnosis">
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-500">ICD Code</label>
-                                <input disabled={isFinalized} value={diagnosisCode} onChange={(e) => setDiagnosisCode(e.target.value)}
-                                    placeholder="e.g. K80.0" className={inputClass(isFinalized)} />
+                                <label className="mb-1 block text-xs font-medium text-slate-500">ICD-10 Code</label>
+                                <Icd10Picker
+                                    value={diagnosisCode}
+                                    disabled={isFinalized}
+                                    placeholder="Search code or diagnosis…"
+                                    className={inputClass(isFinalized)}
+                                    onSelect={(code, description) => {
+                                        setDiagnosisCode(code);
+                                        setDiagnosisText(description);
+                                    }}
+                                />
                             </div>
                             <div className="sm:col-span-3">
                                 <label className="mb-1 block text-xs font-medium text-slate-500">Diagnosis</label>
                                 <input disabled={isFinalized} value={diagnosisText} onChange={(e) => setDiagnosisText(e.target.value)}
-                                    placeholder="e.g. Acute cholecystitis with cholelithiasis" className={inputClass(isFinalized)} />
+                                    placeholder="Auto-filled from ICD-10 selection or type manually" className={inputClass(isFinalized)} />
                             </div>
                         </div>
                     </FormSection>

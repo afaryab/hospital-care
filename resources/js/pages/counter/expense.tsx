@@ -120,7 +120,6 @@ export default function CounterExpense() {
             return;
         }
         // TODO: Implement voucher payment logic
-        console.log('Paying voucher:', selectedVoucher);
 
         // Prepare form data for submission
         const paymentData = {
@@ -130,8 +129,6 @@ export default function CounterExpense() {
             income_or_expense: 'EXPENSE',
             type: 'VOUCHER-PAY',
         };
-
-        console.log('Payment Data:', paymentData);
 
         // POST paymentData to server...
         // POST paymentData to server with error handling
@@ -166,7 +163,6 @@ export default function CounterExpense() {
             return;
         }
         // TODO: Implement petty cash payment logic
-        console.log('Paying petty cash:', pettyCashAmount);
 
         // Prepare form data for submission
         const paymentData = {
@@ -182,7 +178,6 @@ export default function CounterExpense() {
             type: 'EXP',
         };
 
-        console.log('Payment Data:', paymentData);
         setProcessingPettyCashPayment(true);
         // POST paymentData to server...
         router.post(transactionStore().url, paymentData, {

@@ -53,7 +53,17 @@ export interface Patient {
     gender: 'm' | 'f' | 't' | 'o';
     contact: string;
     cnic: string;
-    age: number;
+    /** Computed age in years — may be absent; prefer formatPatientAge() */
+    age?: number;
+    /** ISO date string — present when DOB is known */
+    age_dob?: string | null;
+    /** Age expressed in days — used for infants when DOB is unknown */
+    age_days?: number | null;
+    /** Freeform age group label e.g. "Adult", "Infant" */
+    age_group?: string | null;
+    address?: string | null;
+    guardian?: string | null;
+    relation?: string | null;
     treatments: ServiceOrder[];
     transactions: Transaction[];
     receaveables: Receaveable[];
