@@ -80,7 +80,12 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
     {
         return $table
             ->query(function (): Builder {
-                $query = Receaveable::query();
+                $query = Receaveable::query()
+                    ->with([
+                        'transaction:id,tr_number',
+                        'patient:id,name',
+                        'panel:id,name',
+                    ]);
 
                 if ($this->filters['from'] ?? null) {
                     $query->whereDate('receaveables.created_at', '>=', $this->filters['from']);
@@ -97,7 +102,10 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
 
                 return $query;
             })
+            ->deferLoading()
             ->defaultSort('created_at', 'desc')
+            ->persistFiltersInSession()
+            ->persistSortInSession()
             ->columns([
                 TextColumn::make('created_at')
                     ->label('Date')
@@ -143,7 +151,7 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
             ])
             ->striped()
             ->paginated([25, 50, 100])
-            ->defaultPaginationPageOption(50);
+            ->defaultPaginationPageOption(25);
     }
 
     public function getPdfUrl(): string

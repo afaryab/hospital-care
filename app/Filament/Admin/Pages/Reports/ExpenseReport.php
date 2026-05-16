@@ -89,7 +89,15 @@ class ExpenseReport extends Page implements Tables\Contracts\HasTable
     {
         return $table
             ->query(function (): Builder {
-                $query = TransactionElement::query()->where('income_or_expense', 'EXPENSE');
+                $query = TransactionElement::query()
+                    ->where('income_or_expense', 'EXPENSE')
+                    ->with([
+                        'transaction:id,tr_number,closing_id',
+                        'transaction.closing:id,ct_number',
+                        'expenseCategory:id,name',
+                        'expVoucher:id,vc_number,payed_to',
+                        'expVoucher.payedTo:id,name',
+                    ]);
 
                 if ($this->filters['from'] ?? null) {
                     $query->whereDate('transaction_elements.created_at', '>=', $this->filters['from']);
@@ -109,7 +117,10 @@ class ExpenseReport extends Page implements Tables\Contracts\HasTable
 
                 return $query;
             })
+            ->deferLoading()
             ->defaultSort('created_at', 'desc')
+            ->persistFiltersInSession()
+            ->persistSortInSession()
             ->columns([
                 TextColumn::make('created_at')
                     ->label('Date')
@@ -152,7 +163,7 @@ class ExpenseReport extends Page implements Tables\Contracts\HasTable
             ])
             ->striped()
             ->paginated([25, 50, 100])
-            ->defaultPaginationPageOption(50);
+            ->defaultPaginationPageOption(25);
     }
 
     public function getPdfUrl(): string

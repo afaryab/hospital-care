@@ -12,7 +12,6 @@ use Filament\Forms\Components\Select;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Tables;
-use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
@@ -103,14 +102,17 @@ class ServiceProviderReport extends Page implements Tables\Contracts\HasTable
                         $q->where('income_or_expense', 'INCOME');
                     }], 'amount')
                     ->withSum(['expenseVouchers as voucher_total'], 'amount')
-                    ->with(['patient', 'service'])
+                    ->with(['patient:id,name', 'service:id,name'])
                     ->when($this->filters['from'] ?? null, fn (Builder $q, $date) => $q->whereDate('service_orders.created_at', '>=', $date))
                     ->when($this->filters['until'] ?? null, fn (Builder $q, $date) => $q->whereDate('service_orders.created_at', '<=', $date))
                     ->when($this->filters['doctor_id'] ?? null, fn (Builder $q, $id) => $q->where('doctor_id', $id))
                     ->when($this->filters['service_id'] ?? null, fn (Builder $q, $id) => $q->where('service_id', $id))
                     ->when($this->filters['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status));
             })
+            ->deferLoading()
             ->defaultSort('created_at', 'desc')
+            ->persistFiltersInSession()
+            ->persistSortInSession()
             ->columns([
                 TextColumn::make('created_at')
                     ->label('Date')
@@ -150,15 +152,13 @@ class ServiceProviderReport extends Page implements Tables\Contracts\HasTable
                     ->numeric(2)
                     ->sortable()
                     ->placeholder('0.00')
-                    ->color('success')
-                    ->summarize(Sum::make()->numeric(2)->label('Total Income')),
+                    ->color('success'),
                 TextColumn::make('voucher_total')
                     ->label('Expenses Paid to Provider')
                     ->numeric(2)
                     ->sortable()
                     ->placeholder('0.00')
-                    ->color('danger')
-                    ->summarize(Sum::make()->numeric(2)->label('Total Provider Expenses')),
+                    ->color('danger'),
             ])
             ->groups([
                 Group::make('service.name')->label('Service'),
@@ -167,7 +167,7 @@ class ServiceProviderReport extends Page implements Tables\Contracts\HasTable
             ])
             ->striped()
             ->paginated([25, 50, 100])
-            ->defaultPaginationPageOption(50);
+            ->defaultPaginationPageOption(25);
     }
 
     public function getPdfUrl(): string

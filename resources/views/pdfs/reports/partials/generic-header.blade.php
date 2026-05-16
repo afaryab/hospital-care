@@ -85,4 +85,18 @@
                 <span class="info-value">{{ $hospitalStrn ?: '-' }}</span>
             </div>
         </div>
+        @if(!empty($filters))
+        <div class="info-grid-row">
+            <div class="info-cell" colspan="2" style="width:100%;">
+                <span class="info-label">Active Filters</span><br>
+                <span class="info-value">
+                    @foreach($filters as $key => $value)
+                        <span style="margin-right:8px;">
+                            <strong>{{ ucwords(str_replace('_', ' ', $key)) }}:</strong> {{ $value }}
+                        </span>
+                    @endforeach
+                </span>
+            </div>
+        </div>
+        @endif
     </div>

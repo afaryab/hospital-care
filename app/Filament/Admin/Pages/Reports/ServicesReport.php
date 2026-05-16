@@ -102,7 +102,16 @@ class ServicesReport extends Page implements Tables\Contracts\HasTable
                                 $q2->where('income_or_expense', 'EXPENSE')
                                     ->whereNotNull('exp_voucher_id');
                             });
-                    });
+                    })
+                    ->with([
+                        'transaction:id,tr_number',
+                        'service:id,name,service_department_id',
+                        'service.department:id,name',
+                        'doctor:id,name',
+                        'expVoucher:id,payed_to',
+                        'expVoucher.payedTo:id,name',
+                        'patient:id,name',
+                    ]);
 
                 if ($this->filters['from'] ?? null) {
                     $query->whereDate('transaction_elements.created_at', '>=', $this->filters['from']);
@@ -125,7 +134,10 @@ class ServicesReport extends Page implements Tables\Contracts\HasTable
 
                 return $query;
             })
+            ->deferLoading()
             ->defaultSort('created_at', 'desc')
+            ->persistFiltersInSession()
+            ->persistSortInSession()
             ->columns([
                 TextColumn::make('created_at')
                     ->label('Date')
@@ -180,7 +192,7 @@ class ServicesReport extends Page implements Tables\Contracts\HasTable
             ])
             ->striped()
             ->paginated([25, 50, 100])
-            ->defaultPaginationPageOption(50);
+            ->defaultPaginationPageOption(25);
     }
 
     public function getPdfUrl(): string

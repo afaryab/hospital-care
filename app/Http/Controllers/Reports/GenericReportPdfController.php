@@ -263,7 +263,10 @@ class GenericReportPdfController extends Controller
         $query = ServiceOrder::query()
             ->whereDate('service_orders.created_at', '>=', $from)
             ->whereDate('service_orders.created_at', '<=', $until)
-            ->with(['patient', 'service', 'doctor', 'expenseVouchers']);
+            ->with(['patient:id,name', 'service:id,name', 'doctor:id,name', 'expenseVouchers'])
+            ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
+            ->withSum(['expenseVouchers as voucher_total'], 'amount')
+            ->withSum(['expenseVouchers as paid_total' => fn ($q) => $q->where('status', 'payed')], 'amount');
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -276,15 +279,6 @@ class GenericReportPdfController extends Controller
         }
 
         $orders = $query->orderBy('created_at', 'desc')->get();
-
-        // Compute aggregated totals per order
-        foreach ($orders as $order) {
-            $order->income_total = $order->transactionElements()
-                ->where('income_or_expense', 'INCOME')->sum('amount');
-            $order->voucher_total = $order->expenseVouchers->sum('amount');
-            $order->paid_total = $order->expenseVouchers
-                ->filter(fn ($v) => $v->status === 'payed')->sum('amount');
-        }
 
         return $this->renderPdf('pdfs.reports.generic-service-orders', [
             'orders' => $orders,
@@ -375,7 +369,9 @@ class GenericReportPdfController extends Controller
         $query = ServiceOrder::query()
             ->whereDate('service_orders.created_at', '>=', $from)
             ->whereDate('service_orders.created_at', '<=', $until)
-            ->with(['patient', 'service', 'doctor']);
+            ->with(['patient:id,name', 'service:id,name', 'doctor:id,name'])
+            ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
+            ->withSum('expenseVouchers as voucher_total', 'amount');
 
         if ($request->filled('type')) {
             $query->where('type', $request->input('type'));
@@ -391,12 +387,6 @@ class GenericReportPdfController extends Controller
         }
 
         $orders = $query->orderBy('created_at', 'desc')->get();
-
-        foreach ($orders as $order) {
-            $order->income_total = $order->transactionElements()
-                ->where('income_or_expense', 'INCOME')->sum('amount');
-            $order->voucher_total = $order->expenseVouchers->sum('amount');
-        }
 
         $totalIncome = $orders->sum('income_total');
         $totalExpense = $orders->sum('voucher_total');
@@ -428,7 +418,9 @@ class GenericReportPdfController extends Controller
         $query = ServiceOrder::query()
             ->whereDate('service_orders.created_at', '>=', $from)
             ->whereDate('service_orders.created_at', '<=', $until)
-            ->with(['patient', 'service', 'doctor', 'expenseVouchers.expCategory']);
+            ->with(['patient:id,name', 'service:id,name', 'doctor:id,name', 'expenseVouchers.expCategory'])
+            ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
+            ->withSum('expenseVouchers as voucher_total', 'amount');
 
         if ($request->filled('doctor_id')) {
             $query->where('doctor_id', $request->input('doctor_id'));
@@ -441,12 +433,6 @@ class GenericReportPdfController extends Controller
         }
 
         $orders = $query->orderBy('created_at', 'desc')->get();
-
-        foreach ($orders as $order) {
-            $order->income_total = $order->transactionElements()
-                ->where('income_or_expense', 'INCOME')->sum('amount');
-            $order->voucher_total = $order->expenseVouchers->sum('amount');
-        }
 
         $provider = $request->filled('doctor_id')
             ? User::find($request->input('doctor_id'))
