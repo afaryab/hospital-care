@@ -7,7 +7,7 @@ RUN apk add --no-cache nodejs npm libzip \
     && apk add --no-cache --virtual .build-deps libzip-dev \
     && docker-php-ext-install zip \
     && apk del .build-deps \
-    && npm install -g pnpm
+    && npm install -g pnpm@9
 ENV CI=true
 WORKDIR /build
 # Composer deps (vendor needed so artisan can bootstrap)
@@ -51,7 +51,7 @@ RUN apk add --no-cache \
     && docker-php-ext-enable redis \
     && apk del .build-deps \
     && rm -rf /tmp/pear \
-    && npm install -g pnpm
+    && npm install -g pnpm@9
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/custom-php.ini
