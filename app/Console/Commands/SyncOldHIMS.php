@@ -70,6 +70,16 @@ class SyncOldHIMS extends Command
 
     protected array $panelCache = [];
 
+    // In-memory sequence counters — keyed by date prefix (Y/m or Y/m/d).
+    // Initialized lazily (once per distinct key) to avoid COUNT queries per record.
+    protected array $ctCounters = [];
+
+    protected array $trCounters = [];
+
+    protected array $vcCounters = [];
+
+    protected array $psCounters = [];
+
     protected string $batchId;
 
     protected bool $dryRun = false;
@@ -688,12 +698,7 @@ class SyncOldHIMS extends Command
                     if (! $this->dryRun) {
                         try {
                             $createdAt = Carbon::parse($patient->created_on);
-
-                            // Generate PS number based on creation date
-                            $year = $createdAt->format('Y');
-                            $month = $createdAt->format('m');
-                            $existingCount = Patient::where('ps_number', 'like', "PS/{$year}/{$month}/%")->count();
-                            $psNumber = "PS/{$year}/{$month}/".str_pad($existingCount + 1, 4, '0', STR_PAD_LEFT);
+                            $psNumber = $this->generatePsNumber($createdAt);
 
                             $contact = $this->validatePhoneNumber($patient->patient_contact_mobile)
                                 ? $this->formatPhoneNumber($patient->patient_contact_mobile)
@@ -820,7 +825,7 @@ class SyncOldHIMS extends Command
             ->table('reception_counters_closings')
             ->where('id', '>', $cursor)
             ->orderBy('id')
-            ->each(function ($oldClosing) use (&$cursor, &$processedClosings, &$processedTransactions, $service , &$skippedClosings) {
+            ->each(function ($oldClosing) use (&$cursor, &$processedClosings, &$processedTransactions, $service, &$skippedClosings) {
                 // 1. Migrate the closing record
                 $newClosing = $this->migrateClosing($oldClosing);
 
@@ -860,7 +865,7 @@ class SyncOldHIMS extends Command
                 if ($newClosing) {
                     $processedClosings++;
                 } else {
-                    $skippedClosings ++;
+                    $skippedClosings++;
                 }
                 $processedTransactions += $trCount;
 
@@ -925,8 +930,10 @@ class SyncOldHIMS extends Command
         }
 
         try {
-            $createdDate = Carbon::parse($closing->created_on);
-            $ctNumber = $this->generateCtNumber($createdDate);
+            // Use closing date (cash received) for CT number — a counter opened Jan 31
+            // and closed Feb 2 belongs to February, not January.
+            $closingDate = Carbon::parse($closing->cash_recieving_time ?? $closing->created_on);
+            $ctNumber = $this->generateCtNumber($closingDate);
 
             $receptionId = $this->oldReceptionIdMap[$closing->reception_id] ?? ($this->receptionCache[$closing->reception_id]->id ?? null);
             $userId = $this->userCache[$closing->user_id]->id ?? null;
@@ -968,13 +975,6 @@ class SyncOldHIMS extends Command
 
             return null;
         }
-    }
-
-    protected function generateCtNumber(Carbon $date): string
-    {
-        $countInMonth = Closing::where('ct_number', 'like', 'CT/'.$date->format('Y/m').'/%')->count();
-
-        return 'CT/'.$date->format('Y/m/').str_pad($countInMonth + 1, 4, '0', STR_PAD_LEFT);
     }
 
     // =========================================================================
@@ -1516,23 +1516,48 @@ class SyncOldHIMS extends Command
     }
 
     // =========================================================================
-    // Number generation helpers
+    // Number generation helpers — counters initialized once per key from DB,
+    // then incremented in-memory to avoid a COUNT query per generated number.
     // =========================================================================
+
+    protected function generateCtNumber(Carbon $date): string
+    {
+        $key = $date->format('Y/m');
+        if (! isset($this->ctCounters[$key])) {
+            $this->ctCounters[$key] = Closing::where('ct_number', 'like', "CT/{$key}/%")->count();
+        }
+
+        return 'CT/'.$key.'/'.str_pad(++$this->ctCounters[$key], 4, '0', STR_PAD_LEFT);
+    }
 
     protected function generateTrNumber(Carbon $date): string
     {
-        $prefix = 'TR/'.$date->format('Y/m/d');
-        $count = Transaction::where('tr_number', 'like', $prefix.'/%')->count();
+        $key = $date->format('Y/m/d');
+        if (! isset($this->trCounters[$key])) {
+            $this->trCounters[$key] = Transaction::where('tr_number', 'like', "TR/{$key}/%")->count();
+        }
 
-        return $prefix.'/'.str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+        return 'TR/'.$key.'/'.str_pad(++$this->trCounters[$key], 4, '0', STR_PAD_LEFT);
     }
 
     protected function generateVcNumber(Carbon $date): string
     {
-        $prefix = 'VC/'.$date->format('Y/m');
-        $count = ExpenseVoucher::where('vc_number', 'like', $prefix.'/%')->count();
+        $key = $date->format('Y/m');
+        if (! isset($this->vcCounters[$key])) {
+            $this->vcCounters[$key] = ExpenseVoucher::where('vc_number', 'like', "VC/{$key}/%")->count();
+        }
 
-        return $prefix.'/'.str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+        return 'VC/'.$key.'/'.str_pad(++$this->vcCounters[$key], 4, '0', STR_PAD_LEFT);
+    }
+
+    protected function generatePsNumber(Carbon $date): string
+    {
+        $key = $date->format('Y/m');
+        if (! isset($this->psCounters[$key])) {
+            $this->psCounters[$key] = Patient::where('ps_number', 'like', "PS/{$key}/%")->count();
+        }
+
+        return 'PS/'.$key.'/'.str_pad(++$this->psCounters[$key], 4, '0', STR_PAD_LEFT);
     }
 
     // =========================================================================
@@ -1609,10 +1634,7 @@ class SyncOldHIMS extends Command
 
         try {
             $createdAt = Carbon::parse($oldPatient->created_on);
-            $year = $createdAt->format('Y');
-            $month = $createdAt->format('m');
-            $existingCount = Patient::where('ps_number', 'like', "PS/{$year}/{$month}/%")->count();
-            $psNumber = "PS/{$year}/{$month}/".str_pad($existingCount + 1, 4, '0', STR_PAD_LEFT);
+            $psNumber = $this->generatePsNumber($createdAt);
 
             $contact = $this->validatePhoneNumber($oldPatient->patient_contact_mobile)
                 ? $this->formatPhoneNumber($oldPatient->patient_contact_mobile)
@@ -1686,7 +1708,7 @@ class SyncOldHIMS extends Command
             return null;
         }
 
-        $ctNumber = $this->generateCtNumber(Carbon::parse($oldClosing->created_on));
+        $ctNumber = $this->generateCtNumber(Carbon::parse($oldClosing->cash_recieving_time ?? $oldClosing->created_on));
 
         $newClosing = new Closing;
         $newClosing->id = $oldClosing->id;
