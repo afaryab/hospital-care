@@ -2,6 +2,8 @@
 
 namespace App\Filament\Admin\Resources\ServiceOrders;
 
+use App\Filament\Admin\Resources\ServiceOrders\Pages\ListServiceOrders;
+use App\Filament\Admin\Resources\ServiceOrders\Pages\ViewServiceOrder;
 use App\Models\Service;
 use App\Models\ServiceOrder;
 use App\Models\User;
@@ -9,7 +11,6 @@ use BackedEnum;
 use Filament\Forms\Components\DatePicker;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -37,6 +38,13 @@ class ServiceOrderResource extends Resource
         return $table
             ->query(
                 ServiceOrder::query()
+                    // Eager-load relationships used in the description closure to
+                    // eliminate N+1 queries (3 relations × page size = 150 queries).
+                    ->with([
+                        'patient:id,name',
+                        'service:id,name',
+                        'doctor:id,name',
+                    ])
                     ->withSum(['transactionElements as income_total' => function ($q) {
                         $q->where('income_or_expense', 'INCOME');
                     }], 'amount')
@@ -46,7 +54,12 @@ class ServiceOrderResource extends Resource
                     ->withCount('expenseVouchers')
                     ->withSum('expenseVouchers', 'amount')
             )
+            // Render the page skeleton immediately; data loads in a follow-up
+            // Livewire request so the initial HTTP response never times out.
+            ->deferLoading()
             ->defaultSort('created_at', 'desc')
+            ->persistFiltersInSession()
+            ->persistSortInSession()
             ->columns([
                 TextColumn::make('created_at')
                     ->label('Date')
@@ -75,25 +88,23 @@ class ServiceOrderResource extends Resource
                     ->numeric(2)
                     ->sortable()
                     ->placeholder('0.00')
-                    ->color('success')
-                    ->summarize(Sum::make()->numeric(2)->label('Total Income')),
+                    ->color('success'),
                 TextColumn::make('expense_total')
                     ->label('Expense')
                     ->numeric(2)
                     ->sortable()
                     ->placeholder('0.00')
-                    ->color('danger')
-                    ->summarize(Sum::make()->numeric(2)->label('Total Expense')),
+                    ->color('danger'),
                 TextColumn::make('expense_vouchers_sum_amount')
                     ->label('Vouchers Amount')
                     ->numeric(2)
                     ->sortable()
                     ->placeholder('0.00')
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('expense_vouchers_count')
                     ->label('Vouchers')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 Filter::make('date_range')
@@ -123,7 +134,7 @@ class ServiceOrderResource extends Resource
             ])
             ->striped()
             ->paginated([25, 50, 100])
-            ->defaultPaginationPageOption(50)
+            ->defaultPaginationPageOption(25)
             ->recordUrl(fn (ServiceOrder $record): string => static::getUrl('view', ['record' => $record]))
             ->openRecordUrlInNewTab(false);
     }
@@ -136,8 +147,8 @@ class ServiceOrderResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => \App\Filament\Admin\Resources\ServiceOrders\Pages\ListServiceOrders::route('/'),
-            'view' => \App\Filament\Admin\Resources\ServiceOrders\Pages\ViewServiceOrder::route('/{record}'),
+            'index' => ListServiceOrders::route('/'),
+            'view' => ViewServiceOrder::route('/{record}'),
         ];
     }
 }
