@@ -7,7 +7,7 @@ RUN apk add --no-cache nodejs npm libzip \
     && apk add --no-cache --virtual .build-deps libzip-dev \
     && docker-php-ext-install zip \
     && apk del .build-deps \
-    && npm install -g pnpm
+    && npm install -g pnpm@9
 ENV CI=true
 WORKDIR /build
 # Composer deps (vendor needed so artisan can bootstrap)
