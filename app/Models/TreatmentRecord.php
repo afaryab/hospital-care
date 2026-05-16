@@ -22,6 +22,7 @@ class TreatmentRecord extends Model
         'history_of_present_illness',
         'examination_findings',
         'diagnosis_code',
+        'icd10_code_id',
         'diagnosis_text',
         'treatment_plan',
         'prescriptions',
@@ -94,6 +95,11 @@ class TreatmentRecord extends Model
     public function recordedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function icd10Code(): BelongsTo
+    {
+        return $this->belongsTo(Icd10Code::class, 'icd10_code_id');
     }
 
     public function vitalSigns(): HasMany

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\ClosingController;
 use App\Http\Controllers\Api\ExpenseCategoryController;
 use App\Http\Controllers\Api\ExpenseVoucherController;
+use App\Http\Controllers\Api\Icd10CodeController;
 use App\Http\Controllers\Api\IndController;
 use App\Http\Controllers\Api\LookUpController;
 use App\Http\Controllers\Api\OpdController;
@@ -14,6 +15,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/lookup', [LookUpController::class, 'index'])->name('lookup');
+    Route::get('/icd10-codes', [Icd10CodeController::class, 'index'])->name('api-icd10-codes');
 
     Route::post('/patients', [PateintController::class, 'index'])->name('api-patients-search');
     Route::post('/patients/create', [PateintController::class, 'store'])->name('api-patients-store');

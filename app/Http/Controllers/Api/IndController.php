@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Bed;
 use App\Models\BedAssignment;
+use App\Models\Icd10Code;
 use App\Models\Patient;
 use App\Models\ServiceOrder;
 use App\Models\TreatmentRecord;
@@ -169,6 +170,7 @@ class IndController extends Controller
             'history_of_present_illness' => ['nullable', 'string', 'max:5000'],
             'examination_findings' => ['nullable', 'array'],
             'diagnosis_code' => ['nullable', 'string', 'max:50'],
+            'icd10_code_id' => ['nullable', 'integer', 'exists:icd10_codes,id'],
             'diagnosis_text' => ['nullable', 'string', 'max:500'],
             'treatment_plan' => ['nullable', 'string', 'max:5000'],
             'prescriptions' => ['nullable', 'array'],
@@ -198,6 +200,14 @@ class IndController extends Controller
         unset($data['finalize']);
         $vitals = $data['vitals'] ?? null;
         unset($data['vitals']);
+
+        // Auto-sync diagnosis_code from the ICD-10 FK when provided.
+        if (! empty($data['icd10_code_id'])) {
+            $icd = Icd10Code::find($data['icd10_code_id']);
+            if ($icd) {
+                $data['diagnosis_code'] = $icd->code;
+            }
+        }
 
         $treatmentRecord = $serviceOrder->treatmentRecord;
 
