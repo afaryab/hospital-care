@@ -9,6 +9,7 @@ use App\Models\ExpenseCategory;
 use App\Models\ExpenseVoucher;
 use App\Models\Panel;
 use App\Models\Patient;
+use App\Models\PatientManager;
 use App\Models\Receaveable;
 use App\Models\Reception;
 use App\Models\Service;
@@ -47,10 +48,18 @@ class WebController extends Controller
         return Inertia::render('dashboard');
     }
 
-    public function register($year = false, $month = false)
+    public function register(Request $request, $year = false, $month = false)
     {
-
+        $user = $request->user();
         $query = Patient::query();
+
+        // Patient Managers only see patients they are explicitly authorised to.
+        // All other roles (doctors, nurses, accountants, admin, receptionists)
+        // see the full register.
+        if ($user->isPatientManager() && ! $user->isAdmin() && ! $user->isAccountant() && ! $user->isReceptionist() && ! $user->isAnyDoctor() && ! $user->nursingStaffProfiles()->exists()) {
+            $authorisedIds = PatientManager::where('user_id', $user->id)->pluck('patient_id');
+            $query->whereIn('id', $authorisedIds);
+        }
 
         $year && $query->whereYear('created_at', $year);
         $month && $query->whereMonth('created_at', $month);

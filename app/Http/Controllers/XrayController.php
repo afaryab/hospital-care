@@ -1,0 +1,102 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Patient;
+use App\Models\ServiceOrder;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class XrayController extends Controller
+{
+    public function index(Request $request): Response
+    {
+        $user = $request->user();
+        $isXrayTech = $user->xrayTechnicianProfiles()->exists();
+
+        $recentOrders = collect();
+        $todayStats = ['open' => 0, 'in_progress' => 0, 'treated' => 0, 'total' => 0];
+
+        if ($isXrayTech) {
+            $recentOrders = ServiceOrder::query()
+                ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text'])
+                ->whereIn('type', ['XRAY', 'RAD'])
+                ->where('doctor_id', $user->id)
+                ->whereDate('created_at', Carbon::today())
+                ->orderByRaw("FIELD(status, 'in-progress', 'IN-PROGRESS', 'open', 'OPEN', 'treated', 'TREATED') ASC")
+                ->orderBy('created_at', 'ASC')
+                ->limit(30)
+                ->get();
+
+            $todayStats = [
+                'open' => $recentOrders->filter(fn ($o) => strtolower($o->status) === 'open')->count(),
+                'in_progress' => $recentOrders->filter(fn ($o) => strtolower($o->status) === 'in-progress')->count(),
+                'treated' => $recentOrders->filter(fn ($o) => in_array(strtolower($o->status), ['treated', 'closed']))->count(),
+                'total' => $recentOrders->count(),
+            ];
+        }
+
+        return Inertia::render('xray/index', [
+            'isXrayTech' => $isXrayTech,
+            'recentOrders' => $recentOrders->values(),
+            'todayStats' => $todayStats,
+        ]);
+    }
+
+    public function show(Request $request, int $id): Response
+    {
+        $serviceOrder = ServiceOrder::query()
+            ->with([
+                'patient:id,name,ps_number,gender,age_days,age_dob,contact',
+                'service:id,name',
+                'doctor:id,name',
+                'treatmentRecord.vitalSigns',
+            ])
+            ->findOrFail($id);
+
+        $previousVisits = ServiceOrder::query()
+            ->with(['treatmentRecord:id,service_order_id,diagnosis_text,chief_complaint,treated_at,is_finalized'])
+            ->where('patient_id', $serviceOrder->patient_id)
+            ->whereIn('type', ['XRAY', 'RAD'])
+            ->where('id', '!=', $serviceOrder->id)
+            ->latest('created_at')
+            ->limit(5)
+            ->get(['id', 'so_number', 'status', 'created_at', 'patient_id']);
+
+        return Inertia::render('xray/patient', [
+            'serviceOrder' => $serviceOrder,
+            'previousVisits' => $previousVisits,
+        ]);
+    }
+
+    public function search(Request $request)
+    {
+        $query = trim($request->input('q', ''));
+        if (empty($query)) {
+            return redirect()->route('xray-dashboard');
+        }
+
+        $so = ServiceOrder::query()->whereIn('type', ['XRAY', 'RAD'])
+            ->where(fn ($q) => $q->where('so_number', $query)->orWhere('so_short', $query))
+            ->first();
+
+        if ($so) {
+            return redirect()->route('xray-patient', ['id' => $so->id]);
+        }
+
+        $patient = Patient::query()->where('ps_number', $query)->first();
+        if ($patient) {
+            $so = ServiceOrder::query()
+                ->where('patient_id', $patient->id)->whereIn('type', ['XRAY', 'RAD'])
+                ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS'])
+                ->latest()->first();
+            if ($so) {
+                return redirect()->route('xray-patient', ['id' => $so->id]);
+            }
+        }
+
+        return redirect()->route('xray-dashboard')->with('searchError', "No active Radiology order found for \"{$query}\".");
+    }
+}

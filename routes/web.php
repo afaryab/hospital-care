@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\DentistController;
+use App\Http\Controllers\EmergencyDoctorController;
 use App\Http\Controllers\IndDoctorController;
+use App\Http\Controllers\LabController;
 use App\Http\Controllers\Migration\ImportController;
 use App\Http\Controllers\OpdDoctorController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
@@ -10,7 +13,9 @@ use App\Http\Controllers\Reports\BankPaymentReportController;
 use App\Http\Controllers\Reports\GenericReportPdfController;
 use App\Http\Controllers\Reports\IncomeCashFlowReportController;
 use App\Http\Controllers\Reports\PanelPaymentReportController;
+use App\Http\Controllers\UltrasoundController;
 use App\Http\Controllers\WebController;
+use App\Http\Controllers\XrayController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
@@ -94,6 +99,41 @@ Route::middleware(['auth', 'verified'])->group(function () {
      */
     Route::get('IND', [IndDoctorController::class, 'index'])->name('ind-dashboard');
     Route::get('IND/{id}', [IndDoctorController::class, 'show'])->name('ind-patient');
+
+    /**
+     * Emergency Doctor routes
+     */
+    Route::get('EMG', [EmergencyDoctorController::class, 'index'])->name('emg-dashboard');
+    Route::get('EMG/search', [EmergencyDoctorController::class, 'search'])->name('emg-search');
+    Route::get('EMG/{id}', [EmergencyDoctorController::class, 'show'])->name('emg-patient');
+
+    /**
+     * Dental routes
+     */
+    Route::get('DNT', [DentistController::class, 'index'])->name('dnt-dashboard');
+    Route::get('DNT/search', [DentistController::class, 'search'])->name('dnt-search');
+    Route::get('DNT/{id}', [DentistController::class, 'show'])->name('dnt-patient');
+
+    /**
+     * Laboratory (Pathology) routes
+     */
+    Route::get('LAB', [LabController::class, 'index'])->name('lab-dashboard');
+    Route::get('LAB/search', [LabController::class, 'search'])->name('lab-search');
+    Route::get('LAB/{id}', [LabController::class, 'show'])->name('lab-patient');
+
+    /**
+     * Ultrasound routes
+     */
+    Route::get('ULT', [UltrasoundController::class, 'index'])->name('ult-dashboard');
+    Route::get('ULT/search', [UltrasoundController::class, 'search'])->name('ult-search');
+    Route::get('ULT/{id}', [UltrasoundController::class, 'show'])->name('ult-patient');
+
+    /**
+     * Radiology / X-Ray routes
+     */
+    Route::get('XRAY', [XrayController::class, 'index'])->name('xray-dashboard');
+    Route::get('XRAY/search', [XrayController::class, 'search'])->name('xray-search');
+    Route::get('XRAY/{id}', [XrayController::class, 'show'])->name('xray-patient');
 
     /**
      * Hospital Routes

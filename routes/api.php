@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ClosingController;
+use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\ExpenseCategoryController;
 use App\Http\Controllers\Api\ExpenseVoucherController;
 use App\Http\Controllers\Api\Icd10CodeController;
@@ -45,4 +46,20 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/opd/service-orders/{serviceOrder}/treatment-record', [OpdController::class, 'saveTreatmentRecord'])->name('api-opd-save-treatment');
     Route::patch('/opd/service-orders/{serviceOrder}/status', [OpdController::class, 'updateStatus'])->name('api-opd-update-status');
     Route::post('/closings/search', [ClosingController::class, 'index'])->name('api-closings-search');
+
+    // Shared treatment-record API for EMG, DNT, LAB, ULT, XRAY
+    Route::post('/emg/service-orders/{serviceOrder}/treatment-record', [DepartmentController::class, 'saveTreatmentRecord'])->name('api-emg-save-treatment');
+    Route::patch('/emg/service-orders/{serviceOrder}/status', [DepartmentController::class, 'updateStatus'])->name('api-emg-update-status');
+
+    Route::post('/dnt/service-orders/{serviceOrder}/treatment-record', [DepartmentController::class, 'saveTreatmentRecord'])->name('api-dnt-save-treatment');
+    Route::patch('/dnt/service-orders/{serviceOrder}/status', [DepartmentController::class, 'updateStatus'])->name('api-dnt-update-status');
+
+    Route::post('/lab/service-orders/{serviceOrder}/treatment-record', [DepartmentController::class, 'saveTreatmentRecord'])->name('api-lab-save-treatment');
+    Route::patch('/lab/service-orders/{serviceOrder}/status', [DepartmentController::class, 'updateStatus'])->name('api-lab-update-status');
+
+    Route::post('/ult/service-orders/{serviceOrder}/treatment-record', [DepartmentController::class, 'saveTreatmentRecord'])->name('api-ult-save-treatment');
+    Route::patch('/ult/service-orders/{serviceOrder}/status', [DepartmentController::class, 'updateStatus'])->name('api-ult-update-status');
+
+    Route::post('/xray/service-orders/{serviceOrder}/treatment-record', [DepartmentController::class, 'saveTreatmentRecord'])->name('api-xray-save-treatment');
+    Route::patch('/xray/service-orders/{serviceOrder}/status', [DepartmentController::class, 'updateStatus'])->name('api-xray-update-status');
 });
