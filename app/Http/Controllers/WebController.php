@@ -1034,7 +1034,7 @@ class WebController extends Controller
                     'transactionElements.expenseCategory:id,name',
                     'transactionElements.serviceRecestation:id,name',
                     'transactionElements.expVoucher:id,vc_number',
-                    'expenseVouchers:id,vc_number,exp_category_id,amount,payed_to,payed_to_name,status,created_at',
+                    'expenseVouchers:id,vc_number,exp_category_id,amount,payed_to,payed_to_name,transaction_id,transaction_element_id,created_at',
                     'expenseVouchers.expCategory:id,name',
                     'treatmentRecord:id,service_order_id,diagnosis_text,treatment_plan,outcome,treated_at,is_finalized',
                     'treatmentRecord.treatingDoctor:id,name',
