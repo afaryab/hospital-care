@@ -1,6 +1,8 @@
 <?php
 
+use App\Models\Service;
 use App\Models\ServiceOrder;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 test('service order so_number_parts parses correctly', function () {
@@ -94,60 +96,70 @@ test('service order generateShortServiceOrderNumber uses highest sequence per ty
 });
 
 test('service order generateToken returns Ymd prefix with 4-digit sequence starting at 0001', function () {
-    $token = ServiceOrder::generateToken(doctorId: 1, serviceId: 1);
+    $doctor = User::factory()->create();
+    $service = Service::factory()->create();
+
+    $token = ServiceOrder::generateToken(doctorId: $doctor->id, serviceId: $service->id);
 
     expect($token)->toBe(now()->format('Ymd').'0001');
 });
 
 test('service order generateToken increments per doctor independently', function () {
     $prefix = now()->format('Ymd');
+    $doctorA = User::factory()->create();
+    $doctorB = User::factory()->create();
+    $service = Service::factory()->create();
 
     ServiceOrder::factory()->create([
-        'doctor_id' => 1,
+        'doctor_id' => $doctorA->id,
         'token' => $prefix.'0001',
     ]);
     ServiceOrder::factory()->create([
-        'doctor_id' => 1,
+        'doctor_id' => $doctorA->id,
         'token' => $prefix.'0002',
     ]);
 
-    expect(ServiceOrder::generateToken(doctorId: 1, serviceId: 7))->toBe($prefix.'0003')
-        ->and(ServiceOrder::generateToken(doctorId: 2, serviceId: 7))->toBe($prefix.'0001');
+    expect(ServiceOrder::generateToken(doctorId: $doctorA->id, serviceId: $service->id))->toBe($prefix.'0003')
+        ->and(ServiceOrder::generateToken(doctorId: $doctorB->id, serviceId: $service->id))->toBe($prefix.'0001');
 });
 
 test('service order generateToken scopes by service when no doctor is set', function () {
     $prefix = now()->format('Ymd');
+    $serviceA = Service::factory()->create();
+    $serviceB = Service::factory()->create();
 
     ServiceOrder::factory()->create([
         'doctor_id' => null,
-        'service_id' => 10,
+        'service_id' => $serviceA->id,
         'token' => $prefix.'0001',
     ]);
     ServiceOrder::factory()->create([
         'doctor_id' => null,
-        'service_id' => 10,
+        'service_id' => $serviceA->id,
         'token' => $prefix.'0002',
     ]);
     // Different service — independent sequence.
     ServiceOrder::factory()->create([
         'doctor_id' => null,
-        'service_id' => 99,
+        'service_id' => $serviceB->id,
         'token' => $prefix.'0005',
     ]);
 
-    expect(ServiceOrder::generateToken(doctorId: null, serviceId: 10))->toBe($prefix.'0003')
-        ->and(ServiceOrder::generateToken(doctorId: null, serviceId: 99))->toBe($prefix.'0006');
+    expect(ServiceOrder::generateToken(doctorId: null, serviceId: $serviceA->id))->toBe($prefix.'0003')
+        ->and(ServiceOrder::generateToken(doctorId: null, serviceId: $serviceB->id))->toBe($prefix.'0006');
 });
 
 test('service order generateToken ignores tokens from previous days', function () {
     $today = now()->format('Ymd');
     $yesterday = now()->subDay()->format('Ymd');
+    $doctor = User::factory()->create();
+    $service = Service::factory()->create();
 
     ServiceOrder::factory()->create([
-        'doctor_id' => 1,
+        'doctor_id' => $doctor->id,
         'token' => $yesterday.'0099',
         'created_at' => now()->subDay(),
     ]);
 
-    expect(ServiceOrder::generateToken(doctorId: 1, serviceId: 1))->toBe($today.'0001');
+    expect(ServiceOrder::generateToken(doctorId: $doctor->id, serviceId: $service->id))->toBe($today.'0001');
 });
