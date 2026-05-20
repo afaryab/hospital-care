@@ -3,7 +3,10 @@ import AppLayout from '@/layouts/app-layout';
 import { labDashboard, labPatient, labSearch } from '@/routes';
 import { Head, usePage } from '@inertiajs/react';
 
-const breadcrumbs = [{ title: 'Dashboard', href: '/' }, { title: 'Laboratory', href: labDashboard().url }];
+const breadcrumbs = [
+    { title: 'Dashboard', href: '/' },
+    { title: 'Laboratory', href: labDashboard().url },
+];
 
 export default function LabDashboard() {
     const { hasAccess, recentOrders, todayStats, flash } = usePage<any>().props;
@@ -15,7 +18,14 @@ export default function LabDashboard() {
                 accentClass="text-violet-600"
                 hasAccess={hasAccess}
                 orders={recentOrders ?? []}
-                stats={todayStats ?? { open: 0, in_progress: 0, treated: 0, total: 0 }}
+                stats={
+                    todayStats ?? {
+                        open: 0,
+                        in_progress: 0,
+                        treated: 0,
+                        total: 0,
+                    }
+                }
                 noAccessMessage="You need a staff profile to access the Lab portal."
                 searchUrl={labSearch().url}
                 patientUrl={(id) => labPatient({ id }).url}

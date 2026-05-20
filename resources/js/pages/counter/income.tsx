@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { RadioInput } from '@/components/ui/input-radio';
 import { Label } from '@/components/ui/label';
 import { MaskInput } from '@/components/ui/mask-input';
-import { Spinner } from '@/components/ui/spinner';
 import {
     Select,
     SelectContent,
@@ -13,6 +12,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 import { AdvancedTagSelect } from '@/components/ui/tag-select';
 import BulletsWrapper from '@/elements/bullets-wrapper';
 import DepartmentMiniCard from '@/elements/department/mini-card';
@@ -33,7 +33,14 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { clsx } from 'clsx';
 import { LoaderCircle } from 'lucide-react';
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import {
+    lazy,
+    Suspense,
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from 'react';
 import { toast } from 'sonner';
 const CreatePatientPolicy = lazy(
     () => import('@/policy/create-patient-policy'),
@@ -281,7 +288,9 @@ function CollectPayment({
             };
 
             if (!validatedInput(billData)) {
-                toast.error('Please fix the validation errors before generating the bill.');
+                toast.error(
+                    'Please fix the validation errors before generating the bill.',
+                );
                 setProcessing(false);
                 return;
             }
@@ -914,7 +923,8 @@ function SelectPatient({ openCounter }: any) {
     const [hasSearched, setHasSearched] = useState(false);
 
     // Committed search params — API fires only when this changes
-    const [searchParams, setSearchParams] = useState<PatientSearchParams>(EMPTY_SEARCH);
+    const [searchParams, setSearchParams] =
+        useState<PatientSearchParams>(EMPTY_SEARCH);
 
     // Raw field states (for form binding)
     const [psInput, setPsInput] = useState('');
@@ -923,7 +933,9 @@ function SelectPatient({ openCounter }: any) {
     const [fileNumber, setFileNumber] = useState('');
 
     // Single map for all debounce timers; cleared on unmount
-    const debounceTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+    const debounceTimers = useRef<
+        Record<string, ReturnType<typeof setTimeout>>
+    >({});
 
     useEffect(() => {
         return () => {
@@ -932,25 +944,44 @@ function SelectPatient({ openCounter }: any) {
     }, []);
 
     // Form state for patient creation
-    const [formData, setFormDataState] = useState({ cnic: '', name: '', contact: '', age: '', gender: '' });
+    const [formData, setFormDataState] = useState({
+        cnic: '',
+        name: '',
+        contact: '',
+        age: '',
+        gender: '',
+    });
     const [formErrors, setFormErrors] = useState<Record<string, string[]>>({});
     const [creating, setCreating] = useState(false);
-    const setData = (field: string, val: string) => setFormDataState((d) => ({ ...d, [field]: val }));
+    const setData = (field: string, val: string) =>
+        setFormDataState((d) => ({ ...d, [field]: val }));
     const clearErrors = () => setFormErrors({});
 
     // Helper: update a single search param only if its value has changed
-    const commitParam = useCallback((key: keyof PatientSearchParams, value: string) => {
-        setSearchParams((p) => {
-            if (p[key] === value) return p;
-            return { ...p, [key]: value };
-        });
-    }, []);
+    const commitParam = useCallback(
+        (key: keyof PatientSearchParams, value: string) => {
+            setSearchParams((p) => {
+                if (p[key] === value) return p;
+                return { ...p, [key]: value };
+            });
+        },
+        [],
+    );
 
     // Helper: debounce-then-commit a search param
     const debouncedCommit = useCallback(
-        (field: string, key: keyof PatientSearchParams, value: string, delay = 400) => {
-            if (debounceTimers.current[field]) clearTimeout(debounceTimers.current[field]);
-            debounceTimers.current[field] = setTimeout(() => commitParam(key, value), delay);
+        (
+            field: string,
+            key: keyof PatientSearchParams,
+            value: string,
+            delay = 400,
+        ) => {
+            if (debounceTimers.current[field])
+                clearTimeout(debounceTimers.current[field]);
+            debounceTimers.current[field] = setTimeout(
+                () => commitParam(key, value),
+                delay,
+            );
         },
         [commitParam],
     );
@@ -965,33 +996,38 @@ function SelectPatient({ openCounter }: any) {
         setApiError(null);
     }, [searchParams]);
 
-    const fetchPatientsFromApi = useCallback(async (params: PatientSearchParams, hasInput: boolean) => {
-        if (!hasInput) {
-            setPatients([]);
-            setExactMatch([]);
-            setIsLoading(false);
-            return;
-        }
-        setIsLoading(true);
-        try {
-            const response = await apiFetch('/api/patients', {
-                method: 'POST',
-                body: JSON.stringify(params),
-            });
-            if (response.ok) {
-                const res = await response.json();
-                setPatients(res.data.possible);
-                setExactMatch(res.data.exact);
-            } else {
-                const err = await response.json().catch(() => ({}));
-                setApiError(err.message || 'Failed to fetch patients.');
+    const fetchPatientsFromApi = useCallback(
+        async (params: PatientSearchParams, hasInput: boolean) => {
+            if (!hasInput) {
+                setPatients([]);
+                setExactMatch([]);
+                setIsLoading(false);
+                return;
             }
-        } catch (error: any) {
-            setApiError(error?.message || 'Network error fetching patients.');
-        } finally {
-            setIsLoading(false);
-        }
-    }, []);
+            setIsLoading(true);
+            try {
+                const response = await apiFetch('/api/patients', {
+                    method: 'POST',
+                    body: JSON.stringify(params),
+                });
+                if (response.ok) {
+                    const res = await response.json();
+                    setPatients(res.data.possible);
+                    setExactMatch(res.data.exact);
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    setApiError(err.message || 'Failed to fetch patients.');
+                }
+            } catch (error: any) {
+                setApiError(
+                    error?.message || 'Network error fetching patients.',
+                );
+            } finally {
+                setIsLoading(false);
+            }
+        },
+        [],
+    );
 
     // ── Commit helpers ────────────────────────────────────────────────────────
 
@@ -1084,7 +1120,9 @@ function SelectPatient({ openCounter }: any) {
                     setExactMatch(res.data.exact ?? []);
                     setPatients(res.data.possible ?? []);
                 }
-                toast.warning(res.message || 'Possible duplicate patient found.');
+                toast.warning(
+                    res.message || 'Possible duplicate patient found.',
+                );
             } else if (response.status === 422) {
                 // Validation errors
                 setFormErrors(res.errors ?? {});
@@ -1103,11 +1141,17 @@ function SelectPatient({ openCounter }: any) {
             {/* ── Left column: search / create form ── */}
             <div className="flex flex-col overflow-y-auto p-4 pr-8">
                 <div className="flex w-full flex-col space-y-4">
-                    <h3 className="mb-2 text-3xl font-bold">Select / Create Patient</h3>
+                    <h3 className="mb-2 text-3xl font-bold">
+                        Select / Create Patient
+                    </h3>
 
                     {apiError && (
                         <AlertError
-                            errors={[Array.isArray(apiError) ? apiError.join(' ') : apiError]}
+                            errors={[
+                                Array.isArray(apiError)
+                                    ? apiError.join(' ')
+                                    : apiError,
+                            ]}
                             className="mb-2"
                         />
                     )}
@@ -1125,13 +1169,17 @@ function SelectPatient({ openCounter }: any) {
                             mask="aa/9999/99/999999"
                             placeholder="--/----/--/------"
                             value={psInput}
-                            onValueChange={({ masked }) => onMrNumberChange(masked)}
+                            onValueChange={({ masked }) =>
+                                onMrNumberChange(masked)
+                            }
                         />
                     </div>
 
                     {/* MRI Number */}
                     <div className="grid gap-1">
-                        <Label htmlFor="mri_number">MRI Number (Service Order)</Label>
+                        <Label htmlFor="mri_number">
+                            MRI Number (Service Order)
+                        </Label>
                         <Input
                             id="mri_number"
                             type="text"
@@ -1146,7 +1194,9 @@ function SelectPatient({ openCounter }: any) {
 
                     {/* FILE Number */}
                     <div className="grid gap-1">
-                        <Label htmlFor="file_number">File Number (SO Short)</Label>
+                        <Label htmlFor="file_number">
+                            File Number (SO Short)
+                        </Label>
                         <Input
                             id="file_number"
                             type="text"
@@ -1171,13 +1221,17 @@ function SelectPatient({ openCounter }: any) {
                             mask="99999-9999999-9"
                             placeholder="----- ------- -"
                             value={patientCnic}
-                            onValueChange={({ masked, unmasked }) => onCnicChange(masked, unmasked)}
+                            onValueChange={({ masked, unmasked }) =>
+                                onCnicChange(masked, unmasked)
+                            }
                         />
                     </div>
 
                     {/* Patient Name — live debounced search */}
                     <div className="grid gap-1">
-                        <Label htmlFor="patient_name" required={true}>Patient Name</Label>
+                        <Label htmlFor="patient_name" required={true}>
+                            Patient Name
+                        </Label>
                         <Input
                             id="patient_name"
                             type="text"
@@ -1193,24 +1247,34 @@ function SelectPatient({ openCounter }: any) {
 
                     {/* Contact — search when complete */}
                     <div className="grid gap-1">
-                        <Label htmlFor="patient_contact" required={true}>Patient Contact</Label>
+                        <Label htmlFor="patient_contact" required={true}>
+                            Patient Contact
+                        </Label>
                         <MaskInput
                             id="patient_contact"
                             type="text"
                             name="patient_contact"
                             tabIndex={6}
                             autoComplete="false"
-                            value={formData.contact === '' ? '+92-' : formData.contact}
+                            value={
+                                formData.contact === ''
+                                    ? '+92-'
+                                    : formData.contact
+                            }
                             mask="+99-999-9999999"
                             placeholder="+92-000-0000000"
-                            onValueChange={({ masked }) => onContactChange(masked)}
+                            onValueChange={({ masked }) =>
+                                onContactChange(masked)
+                            }
                         />
                         <InputError message={formErrors.contact?.[0]} />
                     </div>
 
                     {/* Age — search on blur */}
                     <div className="grid gap-1">
-                        <Label htmlFor="patient_age" required={true}>Patient Age</Label>
+                        <Label htmlFor="patient_age" required={true}>
+                            Patient Age
+                        </Label>
                         <Input
                             id="patient_age"
                             type="number"
@@ -1227,12 +1291,21 @@ function SelectPatient({ openCounter }: any) {
 
                     {/* Gender — search immediately */}
                     <div className="grid gap-1">
-                        <Label htmlFor="patient_gender" required={true}>Patient Gender</Label>
+                        <Label htmlFor="patient_gender" required={true}>
+                            Patient Gender
+                        </Label>
                         <div className="flex flex-row space-x-4">
                             {(['m', 'f', 't'] as const).map((val) => {
-                                const labels = { m: 'Male', f: 'Female', t: 'Transgender' };
+                                const labels = {
+                                    m: 'Male',
+                                    f: 'Female',
+                                    t: 'Transgender',
+                                };
                                 return (
-                                    <Label key={val} htmlFor={`patient_gender_${val}`}>
+                                    <Label
+                                        key={val}
+                                        htmlFor={`patient_gender_${val}`}
+                                    >
                                         <RadioInput
                                             id={`patient_gender_${val}`}
                                             type="radio"
@@ -1242,7 +1315,9 @@ function SelectPatient({ openCounter }: any) {
                                             value={val}
                                             className="mr-2"
                                             checked={formData.gender === val}
-                                            onChange={(e) => onGenderChange(e.target.value)}
+                                            onChange={(e) =>
+                                                onGenderChange(e.target.value)
+                                            }
                                         />
                                         {labels[val]}
                                     </Label>
@@ -1252,7 +1327,13 @@ function SelectPatient({ openCounter }: any) {
                         <InputError message={formErrors.gender?.[0]} />
                     </div>
 
-                    <Suspense fallback={<div className="text-xs text-gray-400">Loading policy…</div>}>
+                    <Suspense
+                        fallback={
+                            <div className="text-xs text-gray-400">
+                                Loading policy…
+                            </div>
+                        }
+                    >
                         <CreatePatientPolicy className="text-xs text-gray-500" />
                     </Suspense>
                 </div>
@@ -1285,7 +1366,13 @@ function SelectPatient({ openCounter }: any) {
                                     tempContact={formData.contact}
                                     tempCnic={formData.cnic}
                                     className="w-full border-l-4 border-teal-500"
-                                    link={counterSelectDepartment({ pYear: p.year, pMonth: p.month, number: p.number }).url}
+                                    link={
+                                        counterSelectDepartment({
+                                            pYear: p.year,
+                                            pMonth: p.month,
+                                            number: p.number,
+                                        }).url
+                                    }
                                 />
                             ))}
                         </>
@@ -1305,22 +1392,39 @@ function SelectPatient({ openCounter }: any) {
                                     tempContact={formData.contact}
                                     tempCnic={formData.cnic}
                                     className="w-full"
-                                    link={counterSelectDepartment({ pYear: p.year, pMonth: p.month, number: p.number }).url}
+                                    link={
+                                        counterSelectDepartment({
+                                            pYear: p.year,
+                                            pMonth: p.month,
+                                            number: p.number,
+                                        }).url
+                                    }
                                 />
                             ))}
                         </>
                     )}
 
-                    {!isLoading && hasSearched && exactMatch.length === 0 && patients.length === 0 && (
-                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-10 text-center text-gray-400">
-                            <p className="text-sm font-medium">No patients found</p>
-                            <p className="mt-1 text-xs">Fill in the name below and click &quot;Create New Patient&quot; to register a new patient.</p>
-                        </div>
-                    )}
+                    {!isLoading &&
+                        hasSearched &&
+                        exactMatch.length === 0 &&
+                        patients.length === 0 && (
+                            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-10 text-center text-gray-400">
+                                <p className="text-sm font-medium">
+                                    No patients found
+                                </p>
+                                <p className="mt-1 text-xs">
+                                    Fill in the name below and click
+                                    &quot;Create New Patient&quot; to register a
+                                    new patient.
+                                </p>
+                            </div>
+                        )}
 
                     {!hasSearched && !isLoading && (
                         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-10 text-center text-gray-300">
-                            <p className="text-sm">Start typing to search for existing patients</p>
+                            <p className="text-sm">
+                                Start typing to search for existing patients
+                            </p>
                         </div>
                     )}
 
@@ -1339,12 +1443,20 @@ function SelectPatient({ openCounter }: any) {
                             />
                             <div className="items-right justify-end">
                                 {!(formData.age && formData.gender) ? (
-                                    <Button disabled title="Age and gender are required to create a patient">
+                                    <Button
+                                        disabled
+                                        title="Age and gender are required to create a patient"
+                                    >
                                         <span>Age &amp; gender required</span>
                                     </Button>
                                 ) : (
-                                    <Button onClick={handleCreatePatient} disabled={creating}>
-                                        {creating && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+                                    <Button
+                                        onClick={handleCreatePatient}
+                                        disabled={creating}
+                                    >
+                                        {creating && (
+                                            <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                                        )}
                                         <span>Create New Patient</span>
                                     </Button>
                                 )}

@@ -22,7 +22,6 @@ import FilterAndSelectTransaction, {
 import AppLayout from '@/layouts/app-layout';
 import {
     counterExpense,
-    counterExpenseNewVoucher,
     counterView,
     home,
     myCounterList,

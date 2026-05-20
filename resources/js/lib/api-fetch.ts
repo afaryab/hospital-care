@@ -3,7 +3,10 @@
  * Automatically reads the XSRF-TOKEN cookie and attaches it as the
  * X-XSRF-TOKEN header so Laravel's CSRF middleware accepts the request.
  */
-export async function apiFetch(url: string, options: RequestInit = {}): Promise<Response> {
+export async function apiFetch(
+    url: string,
+    options: RequestInit = {},
+): Promise<Response> {
     const xsrfToken = decodeURIComponent(
         document.cookie
             .split('; ')

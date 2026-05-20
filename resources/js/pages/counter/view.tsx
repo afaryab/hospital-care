@@ -323,13 +323,17 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
             const payload = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                toast.error(payload?.message ?? 'Unable to refund transaction.');
+                toast.error(
+                    payload?.message ?? 'Unable to refund transaction.',
+                );
                 return;
             }
 
             router.reload({ only: ['openCounter'] });
         } finally {
-            setRefundingIds((prev) => prev.filter((id) => id !== transactionId));
+            setRefundingIds((prev) =>
+                prev.filter((id) => id !== transactionId),
+            );
         }
     };
 
@@ -404,12 +408,18 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                 'DISC',
                                         );
                                     const linkedTrNumber =
-                                        (isDiscount || transaction.elements?.some((el: any) => el.expense_category?.type === 'RFND'))
-                                            ? transaction.elements?.find(
+                                        isDiscount ||
+                                        transaction.elements?.some(
+                                            (el: any) =>
+                                                el.expense_category?.type ===
+                                                'RFND',
+                                        )
+                                            ? (transaction.elements?.find(
                                                   (el: any) =>
                                                       el.refunded_transaction
                                                           ?.tr_number,
-                                              )?.refunded_transaction?.tr_number ?? null
+                                              )?.refunded_transaction
+                                                  ?.tr_number ?? null)
                                             : null;
 
                                     return (
@@ -461,7 +471,9 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                 {linkedTrNumber && (
                                                     <div className="mt-0.5">
                                                         <span className="text-[10px] text-gray-400">
-                                                            {isDiscount ? 'For:' : 'Ref:'}
+                                                            {isDiscount
+                                                                ? 'For:'
+                                                                : 'Ref:'}
                                                         </span>{' '}
                                                         <span className="font-mono text-[10px] font-medium text-gray-600 dark:text-gray-300">
                                                             {linkedTrNumber}
@@ -659,7 +671,12 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                         )}
                                                                     {el.receaveable_id && (
                                                                         <span className="rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] text-green-700">
-                                                                            Receaveable ID: {el.receaveable_id} Payment
+                                                                            Receaveable
+                                                                            ID:{' '}
+                                                                            {
+                                                                                el.receaveable_id
+                                                                            }{' '}
+                                                                            Payment
                                                                         </span>
                                                                     )}
                                                                 </div>
