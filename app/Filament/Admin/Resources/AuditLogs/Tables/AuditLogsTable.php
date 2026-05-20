@@ -88,7 +88,7 @@ class AuditLogsTable
                     ]),
 
                 Filter::make('date_range')
-                    ->form([
+                    ->schema([
                         DatePicker::make('from')->label('From'),
                         DatePicker::make('until')->label('Until'),
                     ])
