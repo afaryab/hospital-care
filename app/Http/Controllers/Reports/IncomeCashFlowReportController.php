@@ -10,6 +10,7 @@ use App\Models\TransactionElement;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -209,7 +210,7 @@ class IncomeCashFlowReportController extends Controller
     /**
      * Build base query with all filters
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     private function buildBaseQuery($dateFrom, $dateTo, $closingId, $serviceId, $serviceOrderId, $doctorId, $patientId, $columns = [])
     {

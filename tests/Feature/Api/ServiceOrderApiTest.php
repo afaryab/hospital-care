@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Closing;
 use App\Models\Patient;
 use App\Models\ServiceOrder;
 use App\Models\User;

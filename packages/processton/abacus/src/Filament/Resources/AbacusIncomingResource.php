@@ -3,7 +3,11 @@
 namespace Processton\Abacus\Filament\Resources;
 
 use BackedEnum;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables;
@@ -63,31 +67,31 @@ class AbacusIncomingResource extends Resource
 
         return $schema
             ->schema([
-                \Filament\Infolists\Components\TextEntry::make('amount')
+                TextEntry::make('amount')
                     ->label('Amount')
                     ->numeric()
                     ->money($currency?->code, true),
-                \Filament\Infolists\Components\TextEntry::make('reference')
+                TextEntry::make('reference')
                     ->label('Reference'),
-                \Filament\Infolists\Components\TextEntry::make('date')
+                TextEntry::make('date')
                     ->label('Date')
                     ->formatStateUsing(fn ($state) => $state?->format('d-m-Y')),
-                \Filament\Infolists\Components\TextEntry::make('description')
+                TextEntry::make('description')
                     ->label('Description')
                     ->columnSpanFull(),
-                \Filament\Infolists\Components\RepeatableEntry::make('transactions')
+                RepeatableEntry::make('transactions')
                     ->label('Transactions')
                     ->schema([
-                        \Filament\Infolists\Components\TextEntry::make('date')
+                        TextEntry::make('date')
                             ->label('Date')
                             ->formatStateUsing(fn ($state) => $state?->format('d-m-Y')),
-                        \Filament\Infolists\Components\TextEntry::make('amount')
+                        TextEntry::make('amount')
                             ->label('Amount')
                             ->numeric()
                             ->money($currency?->code, true),
-                        \Filament\Infolists\Components\TextEntry::make('entry_type')
+                        TextEntry::make('entry_type')
                             ->label('Type'),
-                        \Filament\Infolists\Components\TextEntry::make('account.name')
+                        TextEntry::make('account.name')
                             ->label('Account'),
                     ])->columns(4)->columnSpanFull(),
             ])->columns(3);
@@ -130,12 +134,12 @@ class AbacusIncomingResource extends Resource
             ->recordAction(fn ($record) => $record->transactions_count > 0 ? 'view' : 'edit')
             ->recordUrl(fn ($record) => $record->transactions_count <= 0 ? static::getUrl('edit', ['record' => $record]) : null)
             ->actions([
-                \Filament\Actions\EditAction::make()
+                EditAction::make()
                     ->label('')
                     ->icon('heroicon-o-arrow-right-circle')
                     ->iconPosition('after')
                     ->visible(fn ($record) => $record->transactions_count === 0),
-                \Filament\Actions\ViewAction::make()->slideOver()
+                ViewAction::make()->slideOver()
                     ->modalHeading('Incoming Transaction Details')
                     ->label('')
                     ->iconPosition('after')

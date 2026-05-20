@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Receaveable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 test('receaveable can be created with factory', function () {
     $receaveable = Receaveable::factory()->create();
@@ -11,14 +12,14 @@ test('receaveable can be created with factory', function () {
 test('receaveable belongs to patient', function () {
     $receaveable = Receaveable::factory()->create();
 
-    expect($receaveable->patient())->toBeInstanceOf(Illuminate\Database\Eloquent\Relations\BelongsTo::class)
+    expect($receaveable->patient())->toBeInstanceOf(BelongsTo::class)
         ->and($receaveable->patient)->not->toBeNull();
 });
 
 test('receaveable belongs to transaction', function () {
     $receaveable = Receaveable::factory()->create();
 
-    expect($receaveable->transaction())->toBeInstanceOf(Illuminate\Database\Eloquent\Relations\BelongsTo::class)
+    expect($receaveable->transaction())->toBeInstanceOf(BelongsTo::class)
         ->and($receaveable->transaction)->not->toBeNull();
 });
 

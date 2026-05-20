@@ -4,6 +4,7 @@ use App\Models\Administrator;
 use App\Models\Closing;
 use App\Models\ExpenseVoucher;
 use App\Models\OpdDoctor;
+use App\Models\Patient;
 use App\Models\Receptionist;
 use App\Models\ServiceOrder;
 use App\Models\Transaction;
@@ -37,7 +38,7 @@ test('administrator can access all guarded resources', function () {
     Administrator::factory()->create(['user_id' => $user->id]);
     $user->assignRole('administrator');
 
-    $patient = \App\Models\Patient::factory()->create();
+    $patient = Patient::factory()->create();
 
     expect($user->canAccessPanel(Filament::getPanel('admin')))->toBeTrue()
         ->and(Gate::forUser($user)->allows('view', $patient))->toBeTrue()

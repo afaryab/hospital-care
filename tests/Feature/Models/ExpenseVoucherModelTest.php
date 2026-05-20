@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\ExpenseVoucher;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 test('expense voucher status is pending when no transaction linked', function () {
     $voucher = ExpenseVoucher::factory()->make([
@@ -54,5 +55,5 @@ test('expense voucher vc_number increments sequentially', function () {
 test('expense voucher belongs to expense category', function () {
     $voucher = ExpenseVoucher::factory()->create();
 
-    expect($voucher->expCategory())->toBeInstanceOf(Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($voucher->expCategory())->toBeInstanceOf(BelongsTo::class);
 });
