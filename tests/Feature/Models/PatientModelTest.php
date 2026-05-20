@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Patient;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 test('patient ps_number_parts parses correctly', function () {
     $patient = Patient::factory()->withPsNumber('PS/2026/03/0001')->make();
@@ -74,14 +75,24 @@ test('patient generateCounterNumber increments correctly', function () {
     expect($secondSeq)->toBe($firstSeq + 1);
 });
 
+test('patient generateCounterNumber uses highest sequence and ignores gaps', function () {
+    $now = now();
+    $prefix = sprintf('PS/%s/%s/', $now->format('Y'), $now->format('m'));
+
+    Patient::factory()->withPsNumber($prefix.'0001')->create();
+    Patient::factory()->withPsNumber($prefix.'0250')->create();
+
+    expect(Patient::generateCounterNumber())->toBe($prefix.'0251');
+});
+
 test('patient has many transactions relationship', function () {
     $patient = Patient::factory()->create();
 
-    expect($patient->transactions())->toBeInstanceOf(Illuminate\Database\Eloquent\Relations\HasMany::class);
+    expect($patient->transactions())->toBeInstanceOf(HasMany::class);
 });
 
 test('patient has many treatments relationship', function () {
     $patient = Patient::factory()->create();
 
-    expect($patient->treatments())->toBeInstanceOf(Illuminate\Database\Eloquent\Relations\HasMany::class);
+    expect($patient->treatments())->toBeInstanceOf(HasMany::class);
 });

@@ -195,18 +195,25 @@ class Transaction extends Model
             $year = $now->format('Y');
             $month = $now->format('m');
             $day = $now->format('d');
+            $prefix = "TR/{$year}/{$month}/{$day}/";
 
-            // Count how many patients have been created this month with PS numbers
-            // Use FOR UPDATE to lock the table and prevent race conditions
-            $count = self::where('tr_number', 'like', "TR/{$year}/{$month}/{$day}%")
+            $existingNumbers = self::where('tr_number', 'like', "{$prefix}%")
                 ->lockForUpdate()
-                ->count();
-            $count += 1; // Increment for the new patient
+                ->pluck('tr_number');
 
-            // Pad the count to be 4 digits
-            $count = str_pad($count, 4, '0', STR_PAD_LEFT);
+            $maxSequence = 0;
+            foreach ($existingNumbers as $trNumber) {
+                $parts = explode('/', (string) $trNumber);
+                $sequence = (int) ($parts[4] ?? 0);
+                if ($sequence > $maxSequence) {
+                    $maxSequence = $sequence;
+                }
+            }
 
-            return "TR/{$year}/{$month}/{$day}/{$count}";
+            $nextSequence = $maxSequence + 1;
+            $count = str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
+
+            return "{$prefix}{$count}";
         });
     }
 }
