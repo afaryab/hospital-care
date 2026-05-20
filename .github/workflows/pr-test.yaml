@@ -80,6 +80,13 @@ jobs:
 
           echo "Test container is running."
 
+      - name: Copy test fixtures into container
+        run: |
+          # The production image's .dockerignore excludes /tests and other
+          # dev-only assets, so we have to push them in before Pest can run.
+          docker cp tests test-runner:/var/www/html/tests
+          docker cp phpunit.xml test-runner:/var/www/html/phpunit.xml
+
       - name: Install dev dependencies & coverage driver
         run: |
           docker exec test-runner composer install --no-interaction
