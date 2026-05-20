@@ -168,6 +168,29 @@ class ServiceOrder extends Model
     }
 
     /**
+     * Extract the highest trailing-digit sequence from a list of identifier
+     * strings. Tolerates any non-digit separator (e.g. "OPD/00000001",
+     * "SHORT-00000001", or bare digits) so callers do not need to share
+     * a single formatting convention.
+     *
+     * @param  iterable<int, string|null>  $values
+     */
+    private static function maxTrailingSequence(iterable $values): int
+    {
+        $max = 0;
+        foreach ($values as $value) {
+            if (preg_match('/(\d+)\D*$/', (string) $value, $matches)) {
+                $sequence = (int) $matches[1];
+                if ($sequence > $max) {
+                    $max = $sequence;
+                }
+            }
+        }
+
+        return $max;
+    }
+
+    /**
      * Generate a unique monthly service order sequence (per type).
      *
      * Returns a zero-padded 8-digit sequence string. The full so_number
@@ -183,14 +206,7 @@ class ServiceOrder extends Model
                 ->lockForUpdate()
                 ->pluck('so_number');
 
-            $maxSequence = 0;
-            foreach ($existingNumbers as $soNumber) {
-                $parts = explode('/', (string) $soNumber);
-                $sequence = (int) (end($parts) ?: 0);
-                if ($sequence > $maxSequence) {
-                    $maxSequence = $sequence;
-                }
-            }
+            $maxSequence = self::maxTrailingSequence($existingNumbers);
 
             return str_pad((string) ($maxSequence + 1), 8, '0', STR_PAD_LEFT);
         });
@@ -209,14 +225,7 @@ class ServiceOrder extends Model
                 ->lockForUpdate()
                 ->pluck('so_short');
 
-            $maxSequence = 0;
-            foreach ($existingNumbers as $soShort) {
-                $parts = explode('/', (string) $soShort);
-                $sequence = (int) (end($parts) ?: 0);
-                if ($sequence > $maxSequence) {
-                    $maxSequence = $sequence;
-                }
-            }
+            $maxSequence = self::maxTrailingSequence($existingNumbers);
 
             return str_pad((string) ($maxSequence + 1), 8, '0', STR_PAD_LEFT);
         });

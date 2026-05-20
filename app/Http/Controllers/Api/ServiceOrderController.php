@@ -164,6 +164,7 @@ class ServiceOrderController extends Controller
 
         $query = ServiceOrder::query()
             ->with(['patient', 'doctor', 'service'])
+            ->where('status', 'CLOSED')
             ->latest('id');
 
         if (! empty($filters['payed_to'])) {
