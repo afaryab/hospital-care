@@ -131,6 +131,13 @@ jobs:
         run: docker exec test-runner vendor/bin/pint --test
 
       # --- Frontend checks ---
+      - name: Install frontend dependencies
+        run: |
+          # node_modules is excluded from the runtime image by .dockerignore,
+          # so the TypeScript/ESLint/Prettier/Vite steps below have nothing to
+          # run against. Install dev deps inside the test container.
+          docker exec test-runner pnpm install --frozen-lockfile
+
       - name: Generate Wayfinder TS files
         run: |
           # The runtime image ships without resources/js/{actions,routes}/ (they
