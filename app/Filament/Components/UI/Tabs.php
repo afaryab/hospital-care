@@ -10,11 +10,11 @@ class Tabs extends Component
      * @var array<string, array{label: string, count?: int, active?: bool}>
      */
     public array $tabs;
+
     public string $active;
 
     /**
-     * @param array<string, array{label: string, count?: int, active?: bool}> $tabs
-     * @param string $active
+     * @param  array<string, array{label: string, count?: int, active?: bool}>  $tabs
      */
     public function __construct(array $tabs, string $active)
     {

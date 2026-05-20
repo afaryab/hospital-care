@@ -20,7 +20,6 @@ use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Illuminate\Database\Eloquent\Builder;
 
 class ViewPanel extends ViewRecord implements HasTable
 {
@@ -35,7 +34,7 @@ class ViewPanel extends ViewRecord implements HasTable
             Action::make('recordCheque')
                 ->label('Record Cheque')
                 ->icon('heroicon-o-document-plus')
-                ->form([
+                ->schema([
                     Select::make('bank_account_id')
                         ->label('Deposit To (Bank Account)')
                         ->relationship('bankAccount', 'name')
@@ -70,11 +69,6 @@ class ViewPanel extends ViewRecord implements HasTable
         ];
     }
 
-    public function getTableQuery(): Builder
-    {
-        return Receaveable::query()->where('panel_id', $this->record->id);
-    }
-
     protected function getTableColumns(): array
     {
         return [
@@ -98,7 +92,7 @@ class ViewPanel extends ViewRecord implements HasTable
     public function table(Tables\Table $table): Tables\Table
     {
         return $table
-            ->query($this->getTableQuery())
+            ->query(fn () => Receaveable::query()->where('panel_id', $this->record->id))
             ->columns($this->getTableColumns())
             ->defaultSort('created_at', 'desc');
     }

@@ -8,11 +8,12 @@ use App\Models\Receaveable;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
 use App\Models\User;
+use Carbon\Carbon;
 
 use function Pest\Laravel\actingAs;
 
 afterEach(function () {
-    \Carbon\Carbon::setTestNow();
+    Carbon::setTestNow();
 });
 
 beforeEach(function () {

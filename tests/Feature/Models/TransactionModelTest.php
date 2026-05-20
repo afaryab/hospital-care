@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\Transaction;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 test('transaction tr_number_parts parses correctly', function () {
     $transaction = Transaction::factory()->make([
@@ -52,20 +54,30 @@ test('transaction generateTransactionNumber increments correctly', function () {
     expect($secondSeq)->toBe($firstSeq + 1);
 });
 
+test('transaction generateTransactionNumber uses highest sequence and ignores gaps', function () {
+    $now = now();
+    $prefix = sprintf('TR/%s/%s/%s/', $now->format('Y'), $now->format('m'), $now->format('d'));
+
+    Transaction::factory()->create(['tr_number' => $prefix.'0001']);
+    Transaction::factory()->create(['tr_number' => $prefix.'0050']);
+
+    expect(Transaction::generateTransactionNumber())->toBe($prefix.'0051');
+});
+
 test('transaction belongs to patient relationship', function () {
     $transaction = Transaction::factory()->create();
 
-    expect($transaction->patient())->toBeInstanceOf(Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($transaction->patient())->toBeInstanceOf(BelongsTo::class);
 });
 
 test('transaction belongs to closing relationship', function () {
     $transaction = Transaction::factory()->create();
 
-    expect($transaction->closing())->toBeInstanceOf(Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($transaction->closing())->toBeInstanceOf(BelongsTo::class);
 });
 
 test('transaction has many elements relationship', function () {
     $transaction = Transaction::factory()->create();
 
-    expect($transaction->elements())->toBeInstanceOf(Illuminate\Database\Eloquent\Relations\HasMany::class);
+    expect($transaction->elements())->toBeInstanceOf(HasMany::class);
 });

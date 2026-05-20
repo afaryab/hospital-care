@@ -5,7 +5,6 @@ namespace App\Observers;
 use App\Models\Service;
 use App\Models\ServiceOrder;
 use App\Models\TransactionElement;
-use Carbon\Carbon;
 
 class TransactionElementObserver
 {
@@ -29,7 +28,10 @@ class TransactionElementObserver
             $soShort = $service->department->slug.'/'.str_pad($ss, 8, '0', STR_PAD_LEFT);
             $soNumber = $patient->ps_number.'/'.$service->department->slug.'/'.str_pad($s, 8, '0', STR_PAD_LEFT);
 
-            $token = Carbon::now()->format('Ym').str_pad($s, 6, '0', STR_PAD_LEFT);
+            $token = ServiceOrder::generateToken(
+                $transactionElement->doctor_id,
+                $transactionElement->service_id,
+            );
             $payee = null;
             // Order payee set to patient
             if ($transactionElement->transaction->type == 'PANEL') {

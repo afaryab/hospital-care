@@ -6,28 +6,26 @@
     <style>
         @page {
             margin: 0;
-            size: 80mm 100mm;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Helvetica', Arial, sans-serif;
             font-size: 10px;
             line-height: 1.1;
             color: #000;
             background: white;
-            width: 80mm;
             margin: 0;
             padding: 2mm;
         }
-        
+
         .receipt {
-            width: 76mm;
+            width: 100%;
             background: white;
         }
         
@@ -206,7 +204,7 @@
         </div>
         <div class="header">
             <p>{{ $transaction->closing->ct_number }} @ {{ $generated_at->format('d/m/Y H:i') }}</p>
-            <p>By {{ $transaction->receptionist->name ?? 'N/A' }}</p>
+            <p>At {{ $transaction->closing->reception->name ?? 'N/A' }}</p>
             <div class="divider"></div>
             @if($transaction->patient)
                 <table width="100%" style="margin-bottom: 2mm;">
@@ -263,7 +261,7 @@
                             $item->service_id ? $item->service->name : ($item->service_recestation_id ? $item->serviceRecestation->name : '')
                         ) : (
                             $item->type === 'EXP' ? ($item->expense->description ?? 'Expense') : 'Voucher Payment'
-                        ) }}
+                        ) }}@if($item->serviceOrder?->type === 'OPD' && $item->serviceOrder?->token) -- {{ $item->serviceOrder->token }}@endif
                     </span>
                     <span class="col-total">{{ $item->amount }}</span>
                 </div>

@@ -22,7 +22,7 @@ class ListBankTransactions extends ListRecords
             Action::make('uploadStatement')
                 ->label('Upload Bank Statement')
                 ->icon('heroicon-o-arrow-up-tray')
-                ->form([
+                ->schema([
                     Select::make('bank_account_id')
                         ->label('Bank Account')
                         ->relationship('bankAccount', 'name')

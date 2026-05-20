@@ -137,18 +137,25 @@ class Patient extends Model
             $now = Carbon::now();
             $year = $now->format('Y');
             $month = $now->format('m');
+            $prefix = "PS/{$year}/{$month}/";
 
-            // Count how many patients have been created this month with PS numbers
-            // Use FOR UPDATE to lock the table and prevent race conditions
-            $count = self::where('ps_number', 'like', "PS/{$year}/{$month}/%")
+            $existingNumbers = self::where('ps_number', 'like', "{$prefix}%")
                 ->lockForUpdate()
-                ->count();
-            $count += 1; // Increment for the new patient
+                ->pluck('ps_number');
 
-            // Pad the count to be 4 digits
-            $count = str_pad($count, 4, '0', STR_PAD_LEFT);
+            $maxSequence = 0;
+            foreach ($existingNumbers as $psNumber) {
+                $parts = explode('/', (string) $psNumber);
+                $sequence = (int) ($parts[3] ?? 0);
+                if ($sequence > $maxSequence) {
+                    $maxSequence = $sequence;
+                }
+            }
 
-            return "PS/{$year}/{$month}/{$count}";
+            $nextSequence = $maxSequence + 1;
+            $count = str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
+
+            return "{$prefix}{$count}";
         });
     }
 

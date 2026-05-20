@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Patient;
+use App\Models\ServiceOrder;
+use App\Models\Transaction;
 
 class LookUpController extends Controller
 {
@@ -15,7 +18,7 @@ class LookUpController extends Controller
         if (str_starts_with($keyWord, 'PS')) {
             // If key work length is less than 17
             if (strlen($keyWord) < 17) {
-                $results = \App\Models\Patient::where('ps_number', 'LIKE', "{$keyWord}%")
+                $results = Patient::where('ps_number', 'LIKE', "{$keyWord}%")
                     ->limit(10)
                     ->get()
                     ->map(function ($item) {
@@ -32,7 +35,7 @@ class LookUpController extends Controller
                     ->values()
                     ->toArray();
             } elseif (strlen($keyWord) === 17) {
-                $patient = \App\Models\Patient::where('ps_number', $keyWord)->first();
+                $patient = Patient::where('ps_number', $keyWord)->first();
                 if ($patient) {
                     $results = [
                         [
@@ -49,7 +52,7 @@ class LookUpController extends Controller
 
             } elseif (strlen($keyWord) > 17 && strlen($keyWord) <= 27) {
                 // Get pattient by first 17 characters and then return service orders related to that patient like this keywork
-                $patient = \App\Models\Patient::where('ps_number', substr($keyWord, 0, 17))->first();
+                $patient = Patient::where('ps_number', substr($keyWord, 0, 17))->first();
                 if ($patient) {
 
                     $results[] = [
@@ -57,7 +60,7 @@ class LookUpController extends Controller
                         'name' => 'View '.$patient->name,
                     ];
 
-                    $serviceOrders = \App\Models\ServiceOrder::where('patient_id', $patient->id)
+                    $serviceOrders = ServiceOrder::where('patient_id', $patient->id)
                         ->where('so_number', 'LIKE', "{$keyWord}%")
                         ->limit(10)
                         ->get()
@@ -81,7 +84,7 @@ class LookUpController extends Controller
                 }
             } elseif (strlen($keyWord) === 30) {
                 // Get pattient by first 17 characters and then return service order by 27 characters
-                $patient = \App\Models\Patient::where('ps_number', substr($keyWord, 0, 17))->first();
+                $patient = Patient::where('ps_number', substr($keyWord, 0, 17))->first();
                 if ($patient) {
 
                     $results[] = [
@@ -89,7 +92,7 @@ class LookUpController extends Controller
                         'name' => 'View '.$patient->name,
                     ];
 
-                    $serviceOrder = \App\Models\ServiceOrder::where('patient_id', $patient->id)->where('so_number', $keyWord)->first();
+                    $serviceOrder = ServiceOrder::where('patient_id', $patient->id)->where('so_number', $keyWord)->first();
                     if ($serviceOrder) {
                         $results[] = [
                             'type' => 'link',
@@ -110,7 +113,7 @@ class LookUpController extends Controller
 
             // if string length is less than 14 then search with like if it is 14 then search with exact match
             if (strlen($keyWord) < 18) {
-                $results = \App\Models\Transaction::where('tr_number', 'LIKE', "{$keyWord}%")
+                $results = Transaction::where('tr_number', 'LIKE', "{$keyWord}%")
                     ->limit(10)
                     ->get()
                     ->map(function ($item) {
@@ -128,7 +131,7 @@ class LookUpController extends Controller
                     ->values()
                     ->toArray();
             } elseif (strlen($keyWord) === 18) {
-                $transaction = \App\Models\Transaction::where('tr_number', $keyWord)->first();
+                $transaction = Transaction::where('tr_number', $keyWord)->first();
                 if ($transaction) {
                     $results = [
                         [

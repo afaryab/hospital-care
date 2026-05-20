@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import {
     Select,
     SelectContent,
@@ -122,7 +122,9 @@ export default function TransactionView() {
             const payload = await response.json().catch(() => ({}));
 
             if (!response.ok) {
-                toast.error(payload?.message ?? 'Unable to refund transaction.');
+                toast.error(
+                    payload?.message ?? 'Unable to refund transaction.',
+                );
                 return;
             }
 

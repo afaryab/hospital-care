@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Service;
 use App\Models\ServiceDepartment;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 test('service department can be created with factory', function () {
     $department = ServiceDepartment::factory()->create();
@@ -12,7 +12,7 @@ test('service department can be created with factory', function () {
 test('service department has many services', function () {
     $department = ServiceDepartment::factory()->create();
 
-    expect($department->services())->toBeInstanceOf(Illuminate\Database\Eloquent\Relations\HasMany::class);
+    expect($department->services())->toBeInstanceOf(HasMany::class);
 });
 
 test('service department casts have_composit_services to boolean', function () {

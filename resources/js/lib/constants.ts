@@ -29,10 +29,15 @@ export function formatPatientAge(patient: PatientAgeInput): string {
     if (patient.age_dob) {
         const dob = new Date(patient.age_dob);
         const now = new Date();
-        const years = now.getFullYear() - dob.getFullYear() -
-            (now < new Date(now.getFullYear(), dob.getMonth(), dob.getDate()) ? 1 : 0);
+        const years =
+            now.getFullYear() -
+            dob.getFullYear() -
+            (now < new Date(now.getFullYear(), dob.getMonth(), dob.getDate())
+                ? 1
+                : 0);
         if (years < 1) {
-            const months = (now.getFullYear() - dob.getFullYear()) * 12 +
+            const months =
+                (now.getFullYear() - dob.getFullYear()) * 12 +
                 (now.getMonth() - dob.getMonth());
             return months <= 1 ? '< 1 month' : `${months} months`;
         }
@@ -40,7 +45,8 @@ export function formatPatientAge(patient: PatientAgeInput): string {
     }
     if (patient.age_days != null && patient.age_days > 0) {
         if (patient.age_days < 30) return `${patient.age_days} days`;
-        if (patient.age_days < 365) return `${Math.floor(patient.age_days / 30)} months`;
+        if (patient.age_days < 365)
+            return `${Math.floor(patient.age_days / 30)} months`;
         return `${Math.floor(patient.age_days / 365)} yrs`;
     }
     if (patient.age != null && patient.age > 0) return `${patient.age} yrs`;

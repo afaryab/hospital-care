@@ -10,6 +10,7 @@ use App\Http\Responses\CaptivePortalTwoFactorLoginResponse;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -60,7 +61,7 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
-            $query = \App\Models\User::query();
+            $query = User::query();
             if (filter_var($identifier, FILTER_VALIDATE_EMAIL)) {
                 $query->where('email', $identifier);
             } elseif (preg_match('/^\+?\d[\d\-\s]*$/', $identifier)) {
@@ -79,7 +80,7 @@ class FortifyServiceProvider extends ServiceProvider
                 return null;
             }
 
-            return \Illuminate\Support\Facades\Hash::check($password, $user->getAuthPassword()) ? $user : null;
+            return Hash::check($password, $user->getAuthPassword()) ? $user : null;
         });
     }
 

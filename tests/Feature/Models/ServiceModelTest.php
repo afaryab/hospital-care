@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Service;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 test('service can be created with factory', function () {
     $service = Service::factory()->create();
@@ -11,7 +12,7 @@ test('service can be created with factory', function () {
 test('service belongs to department', function () {
     $service = Service::factory()->create();
 
-    expect($service->department())->toBeInstanceOf(Illuminate\Database\Eloquent\Relations\BelongsTo::class)
+    expect($service->department())->toBeInstanceOf(BelongsTo::class)
         ->and($service->department)->not->toBeNull();
 });
 

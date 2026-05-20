@@ -66,7 +66,7 @@ class IncidentsTable
                     ->options(fn (): array => User::query()->orderBy('name')->pluck('name', 'id')->toArray())
                     ->searchable(),
                 Filter::make('date_range')
-                    ->form([
+                    ->schema([
                         DatePicker::make('from')->label('From'),
                         DatePicker::make('until')->label('Until'),
                     ])

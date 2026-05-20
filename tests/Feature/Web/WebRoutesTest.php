@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Closing;
 use App\Models\User;
 
 // --- Guests are redirected ---
@@ -48,7 +49,7 @@ test('authenticated user can access all patients list', function () {
 
 test('authenticated user can access receivables page', function () {
     $user = User::factory()->create();
-    \App\Models\Closing::factory()->create(['receptionist_id' => $user->id, 'status' => 'open']);
+    Closing::factory()->create(['receptionist_id' => $user->id, 'status' => 'open']);
 
     $this->actingAs($user)
         ->get(route('receaveables'))

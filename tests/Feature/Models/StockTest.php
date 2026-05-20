@@ -3,6 +3,7 @@
 use App\Enum\PurchaseOrderStatus;
 use App\Enum\StockMovementType;
 use App\Models\PurchaseOrder;
+use App\Models\PurchaseOrderItem;
 use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\StockMovement;
@@ -43,7 +44,7 @@ test('purchase order status enum casts correctly', function () {
 test('purchase order has items relationship', function () {
     $po = PurchaseOrder::factory()->create();
     $po->items()->createMany(
-        \App\Models\PurchaseOrderItem::factory()->count(3)->make()->toArray()
+        PurchaseOrderItem::factory()->count(3)->make()->toArray()
     );
 
     expect($po->items()->count())->toBe(3);

@@ -168,37 +168,115 @@ class ServiceOrder extends Model
     }
 
     /**
-     * Generate a unique service order number
+     * Extract the highest trailing-digit sequence from a list of identifier
+     * strings. Tolerates any non-digit separator (e.g. "OPD/00000001",
+     * "SHORT-00000001", or bare digits) so callers do not need to share
+     * a single formatting convention.
+     *
+     * @param  iterable<int, string|null>  $values
+     */
+    private static function maxTrailingSequence(iterable $values): int
+    {
+        $max = 0;
+        foreach ($values as $value) {
+            if (preg_match('/(\d+)\D*$/', (string) $value, $matches)) {
+                $sequence = (int) $matches[1];
+                if ($sequence > $max) {
+                    $max = $sequence;
+                }
+            }
+        }
+
+        return $max;
+    }
+
+    /**
+     * Generate a unique monthly service order sequence (per type).
+     *
+     * Returns a zero-padded 8-digit sequence string. The full so_number
+     * (which embeds the ps_number, department slug, and this sequence)
+     * is composed by the caller.
      */
     public static function generateServiceOrderNumber($type): string
     {
         return DB::transaction(function () use ($type) {
-            $count = ServiceOrder::where('type', $type)
+            $existingNumbers = ServiceOrder::where('type', $type)
                 ->where('created_at', '>=', Carbon::now()->startOfMonth())
                 ->where('created_at', '<=', Carbon::now()->endOfMonth())
                 ->lockForUpdate()
-                ->count();
+                ->pluck('so_number');
 
-            $count += 1;
+            $maxSequence = self::maxTrailingSequence($existingNumbers);
 
-            $count = str_pad($count, 8, '0', STR_PAD_LEFT);
-
-            return $count;
+            return str_pad((string) ($maxSequence + 1), 8, '0', STR_PAD_LEFT);
         });
     }
 
+    /**
+     * Generate a unique lifetime short service order sequence (per type).
+     *
+     * Returns a zero-padded 8-digit sequence string. The full so_short
+     * (department slug + this sequence) is composed by the caller.
+     */
     public static function generateShortServiceOrderNumber($type): string
     {
         return DB::transaction(function () use ($type) {
-            $count = ServiceOrder::where('type', $type)
+            $existingNumbers = ServiceOrder::where('type', $type)
                 ->lockForUpdate()
-                ->count();
+                ->pluck('so_short');
 
-            $count += 1;
+            $maxSequence = self::maxTrailingSequence($existingNumbers);
 
-            $count = str_pad($count, 8, '0', STR_PAD_LEFT);
+            return str_pad((string) ($maxSequence + 1), 8, '0', STR_PAD_LEFT);
+        });
+    }
 
-            return $count;
+    /**
+     * Generate a daily queue token for a service order.
+     *
+     * The token resets each day and is scoped to the service provider
+     * (doctor) when present so each provider gets an independent daily
+     * sequence (1, 2, 3...). When no provider is assigned, the token
+     * is scoped to the service so the same queue position is unique
+     * per service (e.g. radiology, lab) per day.
+     *
+     * Format: YYYYMMDD followed by a 4-digit sequence (e.g. 202605200001).
+     */
+    public static function generateToken(?int $doctorId = null, ?int $serviceId = null): string
+    {
+        return DB::transaction(function () use ($doctorId, $serviceId) {
+            $now = Carbon::now();
+            $datePrefix = $now->format('Ymd');
+
+            $query = self::query()
+                ->where('token', 'like', "{$datePrefix}%")
+                ->where('created_at', '>=', $now->copy()->startOfDay())
+                ->where('created_at', '<=', $now->copy()->endOfDay());
+
+            if ($doctorId !== null) {
+                $query->where('doctor_id', $doctorId);
+            } elseif ($serviceId !== null) {
+                $query->where('service_id', $serviceId);
+            }
+
+            $existingTokens = $query->lockForUpdate()->pluck('token');
+
+            $maxSequence = 0;
+            foreach ($existingTokens as $token) {
+                $token = (string) $token;
+                if (strlen($token) <= strlen($datePrefix)) {
+                    continue;
+                }
+
+                $sequence = (int) substr($token, strlen($datePrefix));
+                if ($sequence > $maxSequence) {
+                    $maxSequence = $sequence;
+                }
+            }
+
+            $nextSequence = $maxSequence + 1;
+
+            return $datePrefix.str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
         });
     }
 

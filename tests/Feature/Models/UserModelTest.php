@@ -5,6 +5,7 @@ use App\Models\Administrator;
 use App\Models\OpdDoctor;
 use App\Models\Receptionist;
 use App\Models\User;
+use Filament\Panel;
 
 test('user isAdmin returns true when user has admin profile', function () {
     $user = User::factory()->create();
@@ -57,7 +58,7 @@ test('user canAccessPanel returns true for admin panel when admin', function () 
     $user = User::factory()->create();
     Administrator::create(['user_id' => $user->id, 'authority' => 'administrator']);
 
-    $panel = mock(\Filament\Panel::class);
+    $panel = mock(Panel::class);
     $panel->shouldReceive('getId')->andReturn('admin');
 
     expect($user->canAccessPanel($panel))->toBeTrue();
@@ -66,7 +67,7 @@ test('user canAccessPanel returns true for admin panel when admin', function () 
 test('user canAccessPanel returns false for admin panel when not admin', function () {
     $user = User::factory()->create();
 
-    $panel = mock(\Filament\Panel::class);
+    $panel = mock(Panel::class);
     $panel->shouldReceive('getId')->andReturn('admin');
 
     expect($user->canAccessPanel($panel))->toBeFalse();

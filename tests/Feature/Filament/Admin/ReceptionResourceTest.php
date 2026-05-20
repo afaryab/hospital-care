@@ -1,10 +1,13 @@
 <?php
 
-use App\Models\Reception;
-use App\Models\Closing;
-use App\Models\User;
+use App\Filament\Admin\Resources\Receptions\Pages\ManageReceptions;
 use App\Models\Administrator;
+use App\Models\Closing;
+use App\Models\Reception;
+use App\Models\User;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
 use function Pest\Laravel\assertDatabaseMissing;
@@ -21,8 +24,9 @@ test('admin can merge receptions and related closings are updated', function () 
     $closing1 = Closing::factory()->create(['reception_id' => $primary->id]);
     $closing2 = Closing::factory()->create(['reception_id' => $secondary->id]);
 
-    Livewire\Livewire::test(\App\Filament\Admin\Resources\Receptions\Pages\ManageReceptions::class)
-        ->callTableBulkAction('merge', [$primary->id, $secondary->id], [
+    Livewire\Livewire::test(ManageReceptions::class)
+        ->selectTableRecords([$primary->id, $secondary->id])
+        ->callAction(TestAction::make('merge')->table()->bulk(), data: [
             'primary_reception_id' => $primary->id,
         ])
         ->assertNotified();

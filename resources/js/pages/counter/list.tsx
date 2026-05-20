@@ -1,5 +1,3 @@
-import TablePagination from '@/components/ui/table-pagination';
-import { MONTHS } from '@/lib/constants';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -8,7 +6,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import TablePagination from '@/components/ui/table-pagination';
 import AppLayout from '@/layouts/app-layout';
+import { MONTHS } from '@/lib/constants';
 import {
     counter,
     counterView,
@@ -143,7 +143,9 @@ export default function CountersList() {
                             <SelectContent>
                                 <SelectItem value="0">All</SelectItem>
                                 {MONTHS.map((m) => (
-                                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                                    <SelectItem key={m.value} value={m.value}>
+                                        {m.label}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -226,7 +228,9 @@ export default function CountersList() {
                                     <TablePagination
                                         currentPage={closings.current_page}
                                         lastPage={closings.last_page}
-                                        makeHref={(page) => `?page=${page}&year=${year}&month=${month}`}
+                                        makeHref={(page) =>
+                                            `?page=${page}&year=${year}&month=${month}`
+                                        }
                                     />
                                 </td>
                             </tr>

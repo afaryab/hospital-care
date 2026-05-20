@@ -22,7 +22,9 @@ export default function TransactionSearch() {
         // Expected format: TR/YYYY/MM/DD/NNNN
         const parts = transactionNumber.trim().toUpperCase().split('/');
         if (parts[0] !== 'TR' || parts.length !== 5) {
-            setError('Enter a valid transaction number (e.g. TR/2024/01/15/0001)');
+            setError(
+                'Enter a valid transaction number (e.g. TR/2024/01/15/0001)',
+            );
             return;
         }
 
@@ -53,7 +55,9 @@ export default function TransactionSearch() {
                                         type="text"
                                         value={transactionNumber}
                                         onChange={(e) => {
-                                            setTransactionNumber(e.target.value);
+                                            setTransactionNumber(
+                                                e.target.value,
+                                            );
                                             setError('');
                                         }}
                                         className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -61,7 +65,9 @@ export default function TransactionSearch() {
                                         autoFocus
                                     />
                                     {error && (
-                                        <p className="text-sm text-red-600">{error}</p>
+                                        <p className="text-sm text-red-600">
+                                            {error}
+                                        </p>
                                     )}
                                 </div>
                                 <Button

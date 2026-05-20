@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Processton\Abacus\Filament\Pages\BalanceSheet;
+use Processton\Abacus\Filament\Pages\CashFlowStatement;
 use Processton\Abacus\Filament\Pages\GeneralLedger;
 use Processton\Abacus\Filament\Pages\ProfitLossStatement;
 use Processton\Abacus\Filament\Pages\TrialBalance;
@@ -23,7 +24,7 @@ Route::middleware([
 
         Route::get('/balance-sheet', [BalanceSheet::class, 'streamPdf'])->name('balance-sheet.stream-pdf');
 
-        Route::get('/cash-flow-statement', [\Processton\Abacus\Filament\Pages\CashFlowStatement::class, 'streamPdf'])->name('cash-flow-statement.stream-pdf');
+        Route::get('/cash-flow-statement', [CashFlowStatement::class, 'streamPdf'])->name('cash-flow-statement.stream-pdf');
 
     });
 });
