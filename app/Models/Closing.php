@@ -88,15 +88,25 @@ class Closing extends Model
             $now = Carbon::now();
             $year = $now->format('Y');
             $month = $now->format('m');
+            $prefix = "CT/{$year}/{$month}/";
 
-            $count = self::where('ct_number', 'like', "CT/{$year}/{$month}/%")
+            $existingNumbers = self::where('ct_number', 'like', "{$prefix}%")
                 ->lockForUpdate()
-                ->count();
-            $count += 1;
+                ->pluck('ct_number');
 
-            $count = str_pad($count, 4, '0', STR_PAD_LEFT);
+            $maxSequence = 0;
+            foreach ($existingNumbers as $ctNumber) {
+                $parts = explode('/', (string) $ctNumber);
+                $sequence = (int) ($parts[3] ?? 0);
+                if ($sequence > $maxSequence) {
+                    $maxSequence = $sequence;
+                }
+            }
 
-            return "CT/{$year}/{$month}/{$count}";
+            $nextSequence = $maxSequence + 1;
+            $count = str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
+
+            return "{$prefix}{$count}";
         });
     }
 
