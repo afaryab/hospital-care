@@ -79,7 +79,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
 
         Activity::created(function (Activity $activity): void {
-            $properties = (array) ($activity->properties ?? []);
+            // properties is cast to a Collection — (array) on it would dump the
+            // object's protected internals into the payload. Always go through
+            // toArray() so the stored JSON stays a flat associative array.
+            $properties = $activity->properties?->toArray() ?? [];
 
             if (array_key_exists('ip_address', $properties) && array_key_exists('user_agent', $properties)) {
                 return;
