@@ -18,6 +18,7 @@ class HospitalSettingSeeder extends Seeder
             'hospital_ntn' => '',
             'hospital_strn' => '',
             'hospital_website' => '',
+            'hospital_timezone' => 'Asia/Karachi',
             'abacus_auto_map_accounts' => false,
         ];
 

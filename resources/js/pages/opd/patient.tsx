@@ -88,6 +88,7 @@ interface ServiceOrderData {
     type: string;
     status: string;
     token?: string | number;
+    token_short?: string | null;
     created_at?: string;
     doctor?: { id: number; name: string };
     service?: { id: number; name: string };
@@ -544,8 +545,8 @@ export default function OpdPatient() {
                         <InfoCell
                             label="Token"
                             value={
-                                serviceOrder.token
-                                    ? `#${serviceOrder.token}`
+                                serviceOrder.token_short
+                                    ? `#${serviceOrder.token_short}`
                                     : serviceOrder.so_short
                             }
                         />

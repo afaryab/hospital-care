@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 interface OpdServiceOrder extends ServiceOrder {
     status: string;
     token?: string | number;
+    token_short?: string | null;
     patient?: {
         id: number;
         name: string;

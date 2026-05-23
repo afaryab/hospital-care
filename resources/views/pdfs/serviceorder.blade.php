@@ -232,7 +232,7 @@
                         </tr>
                         <tr>
                             <td class="kv-label">Date:</td>
-                            <td class="kv-line w-mid"> {{ $serviceOrder->created_at ? $serviceOrder->created_at->format('d-m-Y H:i') : '' }}</td>
+                            <td class="kv-line w-mid"> @hdate($serviceOrder->created_at, 'd-m-Y H:i')</td>
                         </tr>
                         <tr>
                             <td class="kv-label">Pt. Name:</td>

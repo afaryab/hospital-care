@@ -28,11 +28,11 @@
             @foreach($items as $idx => $rec)
             <tr>
                 <td>{{ $idx + 1 }}</td>
-                <td>{{ $rec->created_at->format('d/m/Y') }}</td>
+                <td>@hdate($rec->created_at, 'd/m/Y')</td>
                 <td><span class="mono">{{ $rec->transaction?->tr_number ?? '-' }}</span></td>
                 <td class="text-bold">{{ $rec->patient?->name ?? 'N/A' }}</td>
                 <td>{{ $rec->panel?->name ?? 'N/A' }}</td>
-                <td>{{ $rec->due_date ? \Carbon\Carbon::parse($rec->due_date)->format('d/m/Y') : '-' }}</td>
+                <td>{{ $rec->due_date ? \App\Helpers\DateHelper::pdfFormat($rec->due_date, 'd/m/Y') : '-' }}</td>
                 <td>
                     @php
                         $statusBadge = match(strtoupper($rec->status ?? '')) {

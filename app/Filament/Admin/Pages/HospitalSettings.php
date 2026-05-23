@@ -2,8 +2,10 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Helpers\DateHelper;
 use App\Models\HospitalSetting;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -38,6 +40,7 @@ class HospitalSettings extends Page implements HasForms
             'email' => HospitalSetting::get('hospital_email'),
             'ntn' => HospitalSetting::get('hospital_ntn'),
             'strn' => HospitalSetting::get('hospital_strn'),
+            'timezone' => HospitalSetting::get('hospital_timezone', 'Asia/Karachi'),
             'abacus_auto_map_accounts' => (bool) HospitalSetting::get('abacus_auto_map_accounts', false),
         ]);
     }
@@ -72,6 +75,15 @@ class HospitalSettings extends Page implements HasForms
                 TextInput::make('strn')
                     ->label('STRN')
                     ->maxLength(100),
+                Select::make('timezone')
+                    ->label('Timezone (for printed slips & PDFs)')
+                    ->helperText('Database stores UTC. PDFs and printed slips render dates in this timezone.')
+                    ->searchable()
+                    ->required()
+                    ->options(collect(\DateTimeZone::listIdentifiers())
+                        ->mapWithKeys(fn (string $tz) => [$tz => $tz])
+                        ->toArray())
+                    ->default('Asia/Karachi'),
                 Toggle::make('abacus_auto_map_accounts')
                     ->label('Auto Map Accounts (Abacus)')
                     ->helperText('When enabled, receiving a closing statement will automatically create Abacus accounting entries.'),
@@ -90,7 +102,10 @@ class HospitalSettings extends Page implements HasForms
         HospitalSetting::set('hospital_email', $state['email'] ?? null);
         HospitalSetting::set('hospital_ntn', $state['ntn'] ?? null);
         HospitalSetting::set('hospital_strn', $state['strn'] ?? null);
+        HospitalSetting::set('hospital_timezone', $state['timezone'] ?? 'Asia/Karachi');
         HospitalSetting::set('abacus_auto_map_accounts', $state['abacus_auto_map_accounts'] ?? false);
+
+        DateHelper::flushTimezoneCache();
 
         Notification::make()
             ->title('Hospital settings saved successfully.')

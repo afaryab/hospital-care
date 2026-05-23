@@ -33,7 +33,7 @@
                         @if($transaction['is_refunded']) style="text-decoration: line-through; opacity: 0.55; background: #fef2f2;" @endif
                     >
                         <td>{{ $counter }}</td>
-                        <td>{{ $element['created_at']->format('H:i') }}</td>
+                        <td>@hdate($element['created_at'], 'H:i')</td>
                         <td>
                             {{ $element['patient_name'] ?? '-' }}
                             @if($element['patient_ps_number'])

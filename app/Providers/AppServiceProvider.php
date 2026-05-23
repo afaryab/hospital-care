@@ -32,6 +32,7 @@ use App\Services\BreachDetectionService;
 use BezhanSalleh\PanelSwitch\PanelSwitch;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -116,6 +117,10 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(Login::class, function (Login $event): void {
             app(BreachDetectionService::class)->recordSuccessfulLogin($event->user, request());
+        });
+
+        Blade::directive('hdate', function (string $expression): string {
+            return "<?php echo \\App\\Helpers\\DateHelper::pdfFormat({$expression}); ?>";
         });
     }
 }

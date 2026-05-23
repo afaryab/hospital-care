@@ -94,7 +94,7 @@ function TokenCard({ item, variant = 'open', minify }) {
             <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
                     <div className="text-xs font-semibold tracking-wide text-slate-500">
-                        Token #{item.token ? item.token : item.so_short}
+                        Token #{item.token_short ? item.token_short : item.so_short}
                     </div>
                     <div className="text-lg leading-tight font-semibold text-slate-900">
                         {item.patient.name}
@@ -185,11 +185,13 @@ function OPDQueueSlider({
     serviceName: string;
     nowServing: {
         token: string | number;
+        token_short?: string | null;
         name: string;
         mrn?: string;
     }[];
     waiting: {
         token: string | number;
+        token_short?: string | null;
         name: string;
         mrn?: string;
     }[];
@@ -356,7 +358,7 @@ function OPDQueueSlider({
                     <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
                         <span>Tip: swipe/scroll horizontally to see more</span>
                         <span className="tabular-nums">
-                            Now: {nowServing ? `#${nowServing.token}` : '—'}
+                            Now: {nowServing ? `#${nowServing.token_short ?? nowServing.token}` : '—'}
                         </span>
                     </div>
                 </div>

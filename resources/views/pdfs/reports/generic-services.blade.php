@@ -106,7 +106,7 @@
                                 @endphp
                                 <span class="badge {{ $badgeClass }}">{{ $item['type'] }}</span>
                             </td>
-                            <td>{{ $item['created_at']->format('d/m H:i') }}</td>
+                            <td>@hdate($item['created_at'], 'd/m H:i')</td>
                             <td class="amount">{{ number_format($item['amount'], 2) }}</td>
                         </tr>
                         @endforeach
@@ -150,7 +150,7 @@
                             <td class="text-bold">{{ $doc['doctor_name'] }}</td>
                             <td>{{ $exp['category'] }}</td>
                             <td><span class="mono">{{ $exp['voucher'] ?? '-' }}</span></td>
-                            <td>{{ $exp['created_at']->format('d/m H:i') }}</td>
+                            <td>@hdate($exp['created_at'], 'd/m H:i')</td>
                             <td class="amount" style="color: #dc2626;">{{ number_format($exp['amount'], 2) }}</td>
                         </tr>
                     @endforeach

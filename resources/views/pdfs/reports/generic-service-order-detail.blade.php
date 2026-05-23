@@ -12,7 +12,7 @@
 <table>
     <tr>
         <td style="width: 25%;"><span class="info-label">SO Number</span></td>
-        <td class="mono text-bold">{{ $order->so_number }}</td>
+        <td class="mono text-bold">{{ $order->so_number }}@if($order->token_short) <span class="badge badge-blue">Token #{{ $order->token_short }}</span>@endif</td>
         <td style="width: 25%;"><span class="info-label">Status</span></td>
         <td>
             <span class="badge {{ $order->status === 'closed' ? 'badge-green' : 'badge-orange' }}">
@@ -30,12 +30,12 @@
         <td><span class="info-label">Provider</span></td>
         <td>{{ $order->doctor?->name ?? '-' }}</td>
         <td><span class="info-label">Created</span></td>
-        <td>{{ $order->created_at->format('d M Y, H:i') }}</td>
+        <td>@hdate($order->created_at, 'd M Y, H:i')</td>
     </tr>
     @if($order->closed_at)
     <tr>
         <td><span class="info-label">Closed At</span></td>
-        <td>{{ \Carbon\Carbon::parse($order->closed_at)->format('d M Y, H:i') }}</td>
+        <td>@hdate($order->closed_at, 'd M Y, H:i')</td>
         <td colspan="2"></td>
     </tr>
     @endif
@@ -62,7 +62,7 @@
             @foreach($incomeElements as $i => $el)
             <tr>
                 <td>{{ $i + 1 }}</td>
-                <td>{{ $el->created_at->format('d M Y') }}</td>
+                <td>@hdate($el->created_at, 'd M Y')</td>
                 <td class="mono">{{ $el->transaction?->tr_number ?? '-' }}</td>
                 <td>{{ $el->patient?->name ?? '-' }}</td>
                 <td><span class="badge badge-blue">{{ $el->type }}</span></td>
@@ -102,11 +102,11 @@
             @foreach($receivables as $i => $rec)
             <tr>
                 <td>{{ $i + 1 }}</td>
-                <td>{{ $rec->created_at->format('d M Y') }}</td>
+                <td>@hdate($rec->created_at, 'd M Y')</td>
                 <td class="mono">{{ $rec->transaction?->tr_number ?? '-' }}</td>
                 <td>{{ $rec->patient?->name ?? '-' }}</td>
                 <td>{{ $rec->panel?->name ?? '-' }}</td>
-                <td>{{ $rec->due_date ? \Carbon\Carbon::parse($rec->due_date)->format('d M Y') : '-' }}</td>
+                <td>{{ $rec->due_date ? \App\Helpers\DateHelper::pdfFormat($rec->due_date, 'd M Y') : '-' }}</td>
                 <td>
                     @php
                         $statusBadge = match(strtolower($rec->status)) {
@@ -150,7 +150,7 @@
         @foreach($receivablePayments as $i => $tx)
         <tr>
             <td>{{ $i + 1 }}</td>
-            <td>{{ $tx->created_at->format('d M Y') }}</td>
+            <td>@hdate($tx->created_at, 'd M Y')</td>
             <td class="mono">{{ $tx->tr_number ?? '-' }}</td>
             <td class="mono">{{ $tx->receaveable?->transaction?->tr_number ?? '-' }}</td>
             <td>{{ $tx->type ?? '-' }}</td>
@@ -188,7 +188,7 @@
             @foreach($expenseVouchers as $i => $vc)
             <tr>
                 <td>{{ $i + 1 }}</td>
-                <td>{{ $vc->created_at->format('d M Y') }}</td>
+                <td>@hdate($vc->created_at, 'd M Y')</td>
                 <td class="mono">{{ $vc->vc_number ?? '-' }}</td>
                 <td>{{ $vc->expCategory?->name ?? '-' }}</td>
                 <td>{{ $vc->payedTo?->name ?? $vc->payed_to_name ?? '-' }}</td>

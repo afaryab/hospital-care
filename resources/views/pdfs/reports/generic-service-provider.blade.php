@@ -17,7 +17,7 @@
     </tr>
     <tr>
         <td><strong>Period</strong></td>
-        <td>{{ $from->format('d M Y') }} – {{ $until->format('d M Y') }}</td>
+        <td>@hdate($from, 'd M Y') – @hdate($until, 'd M Y')</td>
     </tr>
     <tr>
         <td><strong>Total Income Generated</strong></td>
@@ -72,9 +72,9 @@
         @foreach($orders as $i => $order)
         <tr>
             <td>{{ $i + 1 }}</td>
-            <td>{{ $order->created_at->format('d M Y') }}</td>
+            <td>@hdate($order->created_at, 'd M Y')</td>
             <td>
-                <strong class="mono" style="font-size: 9px;">{{ $order->so_number }}</strong><br>
+                <strong class="mono" style="font-size: 9px;">{{ $order->so_number }}</strong>@if($order->token_short) <span class="badge badge-blue" style="font-size: 8px;">Token #{{ $order->token_short }}</span>@endif<br>
                 <span class="text-muted" style="font-size: 9px;">
                     {{ collect([$order->patient?->name, $order->service?->name])->filter()->implode(' · ') }}
                 </span>
@@ -125,7 +125,7 @@
         @foreach($ordersWithVouchers as $order)
             @foreach($order->expenseVouchers as $voucher)
             <tr>
-                <td>{{ $voucher->created_at->format('d M Y') }}</td>
+                <td>@hdate($voucher->created_at, 'd M Y')</td>
                 <td class="mono">{{ $voucher->vc_number }}</td>
                 <td class="mono" style="font-size: 9px;">{{ $order->so_number }}</td>
                 <td>{{ $voucher->expCategory?->name ?? '-' }}</td>
