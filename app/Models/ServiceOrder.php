@@ -56,6 +56,7 @@ class ServiceOrder extends Model
         'number',
         'departmentKey',
         'serviceNumber',
+        'token_short',
     ];
 
     protected static function booted(): void
@@ -100,6 +101,17 @@ class ServiceOrder extends Model
     public function getServiceNumberAttribute()
     {
         return $this->so_number_parts['serviceNumber'] ?? null;
+    }
+
+    public function getTokenShortAttribute(): ?string
+    {
+        if (empty($this->token)) {
+            return null;
+        }
+
+        $token = (string) $this->token;
+
+        return strlen($token) > 4 ? substr($token, -4) : $token;
     }
 
     public function getSoNumberPartsAttribute()

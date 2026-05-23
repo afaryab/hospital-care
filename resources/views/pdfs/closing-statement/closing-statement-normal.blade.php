@@ -24,7 +24,7 @@
         <div class="info-grid-row">
             <div class="info-cell">
                 <span class="info-label">Cash Received</span><br>
-                <span class="info-value">{{ $closing['cash_receiving_time'] ? \Carbon\Carbon::parse($closing['cash_receiving_time'])->format('d/m/Y H:i') : 'N/A' }}</span>
+                <span class="info-value">{{ $closing['cash_receiving_time'] ? \App\Helpers\DateHelper::pdfFormat($closing['cash_receiving_time'], 'd/m/Y H:i') : 'N/A' }}</span>
             </div>
             <div class="info-cell">
                 <span class="info-label">Expense Paid</span><br>
@@ -49,7 +49,7 @@
             @foreach($transactions['income'] as $transaction)
                 @foreach($transaction['elements'] as $element)
                 <tr>
-                    <td>{{ \Carbon\Carbon::parse($element['created_at'])->format('H:i') }}</td>
+                    <td>{{ \App\Helpers\DateHelper::pdfFormat($element['created_at'], 'H:i') }}</td>
                     <td>
                         @if($element['patient_name'])
                             {{ $element['patient_name'] }}
@@ -91,7 +91,7 @@
                 @foreach($transaction['elements'] as $element)
                 @php $isDiscount = ($element['expense_category_type'] ?? '') === 'DISC'; @endphp
                 <tr @if($isDiscount) style="background: #fefce8;" @endif>
-                    <td>{{ \Carbon\Carbon::parse($element['created_at'])->format('H:i') }}</td>
+                    <td>{{ \App\Helpers\DateHelper::pdfFormat($element['created_at'], 'H:i') }}</td>
                     <td>
                         @if($element['expense_category_name'])
                             <span @if($isDiscount) style="color: #854d0e; font-weight: 700;" @endif>

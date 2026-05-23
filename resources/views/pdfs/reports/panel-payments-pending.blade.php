@@ -27,11 +27,11 @@
             @foreach($cheques as $idx => $cheque)
             <tr>
                 <td>{{ $idx + 1 }}</td>
-                <td>{{ $cheque->created_at->format('d/m/Y') }}</td>
+                <td>@hdate($cheque->created_at, 'd/m/Y')</td>
                 <td class="text-bold">{{ $cheque->panel?->name ?? '-' }}</td>
                 <td><span class="mono">{{ $cheque->cheque_number ?? '-' }}</span></td>
                 <td>{{ $cheque->bankAccount?->name ?? '-' }}</td>
-                <td>{{ $cheque->due_date ? \Carbon\Carbon::parse($cheque->due_date)->format('d/m/Y') : '-' }}</td>
+                <td>{{ $cheque->due_date ? \App\Helpers\DateHelper::pdfFormat($cheque->due_date, 'd/m/Y') : '-' }}</td>
                 <td class="amount">{{ number_format((float) $cheque->amount, 2) }}</td>
                 <td class="text-muted">{{ $cheque->notes ?? '-' }}</td>
             </tr>

@@ -32,6 +32,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', [WebController::class, 'index'])->name('home');
 
     /**
+     * Doctor: own service orders & expense vouchers
+     */
+    Route::get('my-patients', [WebController::class, 'myPatients'])->name('my-patients');
+    Route::get('my-payments', [WebController::class, 'myPayments'])->name('my-payments');
+
+    /**
      * Global level
      */
     Route::get('PS', [WebController::class, 'register'])->name('patients-register');

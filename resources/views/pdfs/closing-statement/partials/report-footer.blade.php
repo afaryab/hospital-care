@@ -5,7 +5,7 @@
             {{ config('app.name') }} &middot; {{ $report_title }}
         </div>
         <div class="report-footer-right">
-            Generated: {{ $generated_at->format('d M Y, H:i:s') }}
+            Generated: @hdate($generated_at, 'd M Y, H:i:s')
         </div>
     </div>
 </div> {{-- End .page --}}

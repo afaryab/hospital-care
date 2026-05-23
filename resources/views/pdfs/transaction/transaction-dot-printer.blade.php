@@ -171,7 +171,7 @@
             </div>
             <div class="info-line">
                 <span class="info-label">Date:</span>
-                <span>{{ $transaction->created_at->format('d/m/Y H:i') }}</span>
+                <span>@hdate($transaction->created_at, 'd/m/Y H:i')</span>
             </div>
             <div class="info-line">
                 <span class="info-label">Counter:</span>
@@ -210,6 +210,9 @@
                 </div>
                 @if($item->provider)
                 <div style="font-size: 7px; color: #666;">{{ $item->provider->name }}</div>
+                @endif
+                @if($item->serviceOrder?->token_short)
+                <div style="font-size: 7px; color: #666;">Token #{{ $item->serviceOrder->token_short }}</div>
                 @endif
             </div>
             @endforeach
@@ -259,7 +262,7 @@
             </div>
             <div class="info-line">
                 <span class="info-label">Due Date:</span>
-                <span>{{ $receaveable->due_date ? $receaveable->due_date->format('d/m/Y') : 'N/A' }}</span>
+                <span>{{ $receaveable->due_date ? \App\Helpers\DateHelper::pdfFormat($receaveable->due_date, 'd/m/Y') : 'N/A' }}</span>
             </div>
             <div class="dashed-line"></div>
             @endforeach
@@ -269,7 +272,7 @@
         <!-- Footer -->
         <div class="footer">
             <div class="bold">Thank You!</div>
-            <div>{{ $generated_at->format('d/m/Y H:i') }}</div>
+            <div>@hdate($generated_at, 'd/m/Y H:i')</div>
             <div>Computer Generated Receipt</div>
         </div>
     </div>

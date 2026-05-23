@@ -60,7 +60,7 @@
         </div>
         <div class="report-header-right">
             <div class="report-title">{{ $report_title }}</div>
-            <div class="report-period">{{ $from->format('d M Y') }} &mdash; {{ $until->format('d M Y') }}</div>
+            <div class="report-period">@hdate($from, 'd M Y') &mdash; @hdate($until, 'd M Y')</div>
         </div>
     </div>
 
@@ -68,11 +68,11 @@
         <div class="info-grid-row">
             <div class="info-cell">
                 <span class="info-label">Period</span><br>
-                <span class="info-value">{{ $from->format('d M Y') }} to {{ $until->format('d M Y') }}</span>
+                <span class="info-value">@hdate($from, 'd M Y') to @hdate($until, 'd M Y')</span>
             </div>
             <div class="info-cell">
                 <span class="info-label">Generated</span><br>
-                <span class="info-value">{{ $generated_at->format('d M Y, H:i') }}</span>
+                <span class="info-value">@hdate($generated_at, 'd M Y, H:i')</span>
             </div>
         </div>
         <div class="info-grid-row">

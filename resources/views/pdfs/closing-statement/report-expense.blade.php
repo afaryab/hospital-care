@@ -29,7 +29,7 @@
             @php $isDiscount = ($expense['category_type'] ?? '') === 'DISC'; @endphp
             <tr @if($isDiscount) style="background: #fefce8;" @endif>
                 <td>{{ $idx + 1 }}</td>
-                <td>{{ \Carbon\Carbon::parse($expense['created_at'])->format('H:i') }}</td>
+                <td>{{ \App\Helpers\DateHelper::pdfFormat($expense['created_at'], 'H:i') }}</td>
                 <td>
                     @if($isDiscount)
                         <span class="badge" style="background: #fef9c3; color: #854d0e;">Discount</span>

@@ -33,7 +33,7 @@
             @endphp
             <tr>
                 <td>{{ $idx + 1 }}</td>
-                <td>{{ $el->created_at->format('d/m H:i') }}</td>
+                <td>@hdate($el->created_at, 'd/m H:i')</td>
                 <td><span class="mono">{{ $el->transaction?->closing?->ct_number ?? '-' }}</span></td>
                 <td>
                     <span class="badge {{ $el->type === 'VOUCHER_PAY' ? 'badge-orange' : 'badge-red' }}">

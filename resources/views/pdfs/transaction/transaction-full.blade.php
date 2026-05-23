@@ -246,7 +246,7 @@
                     <div class="info-grid">
                         <div class="info-row">
                             <div class="info-cell info-label">Date:</div>
-                            <div class="info-cell">{{ $transaction->created_at->format('d/m/Y H:i:s') }}</div>
+                            <div class="info-cell">@hdate($transaction->created_at, 'd/m/Y H:i:s')</div>
                         </div>
                         <div class="info-row">
                             <div class="info-cell info-label">Counter:</div>
@@ -323,7 +323,9 @@
                             <td class="text-center">{{ $index + 1 }}</td>
                             <td>
                                 <div>{{ $item->service_id ? $item->service->name : ($item->service_recestation_id ? $item->serviceRecestation->name : '') }}</div>
-                                @if($item->serviceOrder) <div>MRI: {{ $item->serviceOrder->so_number }}</div>@endif
+                                @if($item->serviceOrder)
+                                    <div>MRI: {{ $item->serviceOrder->so_number }}@if($item->serviceOrder->token_short) &middot; Token #{{ $item->serviceOrder->token_short }}@endif</div>
+                                @endif
                             </td>
                             <td>{{ $item->doctor->name ?? 'N/A' }}</td>
                             <td class="text-right">{{ number_format($item->amount, 2) }}</td>
@@ -453,7 +455,7 @@
                 @if(!empty($hospital_info['strn'])) | STRN: {{ $hospital_info['strn'] }} @endif
             </p>
         @endif
-        <p>Generated on {{ $generated_at->format('d/m/Y H:i:s') }}</p>
+        <p>Generated on @hdate($generated_at, 'd/m/Y H:i:s')</p>
         <p>This is a computer-generated receipt and does not require a signature</p>
     </div>
 </body>

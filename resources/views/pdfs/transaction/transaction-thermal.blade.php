@@ -203,7 +203,7 @@
             <h2>Transaction Receipt: {{ $transaction->tr_number }}</h2>
         </div>
         <div class="header">
-            <p>{{ $transaction->closing->ct_number }} @ {{ $generated_at->format('d/m/Y H:i') }}</p>
+            <p>{{ $transaction->closing->ct_number }} @ @hdate($generated_at, 'd/m/Y H:i')</p>
             <p>At {{ $transaction->closing->reception->name ?? 'N/A' }}</p>
             <div class="divider"></div>
             @if($transaction->patient)
@@ -261,7 +261,7 @@
                             $item->service_id ? $item->service->name : ($item->service_recestation_id ? $item->serviceRecestation->name : '')
                         ) : (
                             $item->type === 'EXP' ? ($item->expense->description ?? 'Expense') : 'Voucher Payment'
-                        ) }}@if($item->serviceOrder?->type === 'OPD' && $item->serviceOrder?->token) -- {{ $item->serviceOrder->token }}@endif
+                        ) }}@if($item->serviceOrder?->token_short) -- Token #{{ $item->serviceOrder->token_short }}@endif
                     </span>
                     <span class="col-total">{{ $item->amount }}</span>
                 </div>
@@ -334,7 +334,7 @@
                     @if(!empty($hospital_info['strn'])) | STRN: {{ $hospital_info['strn'] }} @endif
                 </p>
             @endif
-            <p>Generated on {{ $generated_at->format('d/m/Y H:i:s') }}</p>
+            <p>Generated on @hdate($generated_at, 'd/m/Y H:i:s')</p>
             <p>This is a computer-generated receipt and does not require a signature</p>
         </div>
     </div>

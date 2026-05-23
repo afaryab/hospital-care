@@ -90,7 +90,7 @@
             </div>
             <div class="info-cell">
                 <span class="info-label">Report Date</span><br>
-                <span class="info-value">{{ $generated_at->format('d M Y, H:i') }}</span>
+                <span class="info-value">@hdate($generated_at, 'd M Y, H:i')</span>
             </div>
         </div>
         <div class="info-grid-row">
