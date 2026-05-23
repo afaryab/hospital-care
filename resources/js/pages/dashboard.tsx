@@ -1,9 +1,9 @@
 import Currency from '@/components/currency';
 import AppLayout from '@/layouts/app-layout';
 import {
-    counter as counterRoute,
     counterClose,
     counterOpen,
+    counter as counterRoute,
     counterView,
     home,
 } from '@/routes';
@@ -22,7 +22,9 @@ import {
     Wallet,
 } from 'lucide-react';
 
-const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: home().url }];
+const breadcrumbs: BreadcrumbItem[] = [
+    { title: 'Dashboard', href: home().url },
+];
 
 type AuthUser = { name: string; email?: string };
 
@@ -133,7 +135,11 @@ export default function Dashboard() {
 function GreetingCard({ user }: { user: AuthUser }) {
     const hour = new Date().getHours();
     const greeting =
-        hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+        hour < 12
+            ? 'Good morning'
+            : hour < 17
+              ? 'Good afternoon'
+              : 'Good evening';
     const today = new Date().toLocaleDateString(undefined, {
         weekday: 'long',
         day: 'numeric',
@@ -238,11 +244,13 @@ function ReceptionistCard({ data }: { data: ReceptionistDashboard }) {
                 {has_open_counter && counter ? (
                     <div className="flex gap-2">
                         <Link
-                            href={counterView({
-                                ctYear: counter.year,
-                                ctMonth: counter.month,
-                                ctNumber: counter.number,
-                            }).url}
+                            href={
+                                counterView({
+                                    ctYear: counter.year,
+                                    ctMonth: counter.month,
+                                    ctNumber: counter.number,
+                                }).url
+                            }
                             className="flex-1 rounded-lg bg-teal-600 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-teal-700"
                         >
                             View Counter

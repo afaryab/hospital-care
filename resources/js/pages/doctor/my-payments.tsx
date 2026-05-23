@@ -46,7 +46,10 @@ export default function MyPayments() {
     const [form, setForm] = useState(filters);
 
     const apply = () => {
-        router.get('/my-payments', form, { preserveState: true, replace: true });
+        router.get('/my-payments', form, {
+            preserveState: true,
+            replace: true,
+        });
     };
 
     const clearAll = () => {
@@ -112,7 +115,9 @@ export default function MyPayments() {
                                             q: e.target.value,
                                         }))
                                     }
-                                    onKeyDown={(e) => e.key === 'Enter' && apply()}
+                                    onKeyDown={(e) =>
+                                        e.key === 'Enter' && apply()
+                                    }
                                     placeholder="Voucher #, notes…"
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-9 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-100 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
                                 />
@@ -175,14 +180,24 @@ export default function MyPayments() {
                         <table className="w-full text-sm">
                             <thead className="bg-slate-50 text-xs font-semibold tracking-wide text-slate-600 uppercase dark:bg-gray-800 dark:text-slate-300">
                                 <tr>
-                                    <th className="px-4 py-2 text-left">Date</th>
-                                    <th className="px-4 py-2 text-left">Voucher #</th>
+                                    <th className="px-4 py-2 text-left">
+                                        Date
+                                    </th>
+                                    <th className="px-4 py-2 text-left">
+                                        Voucher #
+                                    </th>
                                     <th className="px-4 py-2 text-left">
                                         Service Order
                                     </th>
-                                    <th className="px-4 py-2 text-left">Category</th>
-                                    <th className="px-4 py-2 text-right">Amount</th>
-                                    <th className="px-4 py-2 text-left">Status</th>
+                                    <th className="px-4 py-2 text-left">
+                                        Category
+                                    </th>
+                                    <th className="px-4 py-2 text-right">
+                                        Amount
+                                    </th>
+                                    <th className="px-4 py-2 text-left">
+                                        Status
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -213,24 +228,31 @@ export default function MyPayments() {
                                             {v.service_order ? (
                                                 <>
                                                     <div className="font-mono">
-                                                        {v.service_order.so_number}
+                                                        {
+                                                            v.service_order
+                                                                .so_number
+                                                        }
                                                     </div>
                                                     <div className="text-slate-500">
                                                         {
-                                                            v.service_order.patient
-                                                                ?.name
+                                                            v.service_order
+                                                                .patient?.name
                                                         }
                                                     </div>
                                                 </>
                                             ) : (
-                                                <span className="text-slate-400">—</span>
+                                                <span className="text-slate-400">
+                                                    —
+                                                </span>
                                             )}
                                         </td>
                                         <td className="px-4 py-2 text-xs text-slate-600">
                                             {v.exp_category?.name ?? '—'}
                                         </td>
                                         <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">
-                                            <Currency value={Number(v.amount)} />
+                                            <Currency
+                                                value={Number(v.amount)}
+                                            />
                                         </td>
                                         <td className="px-4 py-2">
                                             <span
@@ -255,8 +277,8 @@ export default function MyPayments() {
                     {vouchers.last_page > 1 && (
                         <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2 text-xs dark:border-gray-800">
                             <p className="text-slate-500">
-                                Page {vouchers.current_page} of {vouchers.last_page}{' '}
-                                · {vouchers.total} total
+                                Page {vouchers.current_page} of{' '}
+                                {vouchers.last_page} · {vouchers.total} total
                             </p>
                             <div className="flex gap-1">
                                 {vouchers.links.map((l, i) => (

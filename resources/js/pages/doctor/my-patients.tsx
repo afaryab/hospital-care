@@ -64,7 +64,10 @@ export default function MyPatients() {
     const [form, setForm] = useState(filters);
 
     const apply = () => {
-        router.get('/my-patients', form, { preserveState: true, replace: true });
+        router.get('/my-patients', form, {
+            preserveState: true,
+            replace: true,
+        });
     };
 
     const clearAll = () => {
@@ -131,9 +134,14 @@ export default function MyPatients() {
                                     type="text"
                                     value={form.q ?? ''}
                                     onChange={(e) =>
-                                        setForm((f) => ({ ...f, q: e.target.value }))
+                                        setForm((f) => ({
+                                            ...f,
+                                            q: e.target.value,
+                                        }))
                                     }
-                                    onKeyDown={(e) => e.key === 'Enter' && apply()}
+                                    onKeyDown={(e) =>
+                                        e.key === 'Enter' && apply()
+                                    }
                                     placeholder="SO#, name, MR#…"
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-9 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
                                 />
@@ -168,7 +176,10 @@ export default function MyPatients() {
                                 type="date"
                                 value={form.from ?? ''}
                                 onChange={(e) =>
-                                    setForm((f) => ({ ...f, from: e.target.value }))
+                                    setForm((f) => ({
+                                        ...f,
+                                        from: e.target.value,
+                                    }))
                                 }
                                 className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
                             />
@@ -214,12 +225,24 @@ export default function MyPatients() {
                         <table className="w-full text-sm">
                             <thead className="bg-slate-50 text-xs font-semibold tracking-wide text-slate-600 uppercase dark:bg-gray-800 dark:text-slate-300">
                                 <tr>
-                                    <th className="px-4 py-2 text-left">Date</th>
-                                    <th className="px-4 py-2 text-left">SO #</th>
-                                    <th className="px-4 py-2 text-left">Patient</th>
-                                    <th className="px-4 py-2 text-left">Service</th>
-                                    <th className="px-4 py-2 text-left">Token</th>
-                                    <th className="px-4 py-2 text-left">Status</th>
+                                    <th className="px-4 py-2 text-left">
+                                        Date
+                                    </th>
+                                    <th className="px-4 py-2 text-left">
+                                        SO #
+                                    </th>
+                                    <th className="px-4 py-2 text-left">
+                                        Patient
+                                    </th>
+                                    <th className="px-4 py-2 text-left">
+                                        Service
+                                    </th>
+                                    <th className="px-4 py-2 text-left">
+                                        Token
+                                    </th>
+                                    <th className="px-4 py-2 text-left">
+                                        Status
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -229,7 +252,8 @@ export default function MyPatients() {
                                             colSpan={6}
                                             className="px-4 py-12 text-center text-sm text-slate-500"
                                         >
-                                            No service orders match these filters.
+                                            No service orders match these
+                                            filters.
                                         </td>
                                     </tr>
                                 )}
@@ -263,7 +287,9 @@ export default function MyPatients() {
                                                     #{o.token_short}
                                                 </span>
                                             ) : (
-                                                <span className="text-xs text-slate-400">—</span>
+                                                <span className="text-xs text-slate-400">
+                                                    —
+                                                </span>
                                             )}
                                         </td>
                                         <td className="px-4 py-2">
@@ -279,8 +305,8 @@ export default function MyPatients() {
                     {orders.last_page > 1 && (
                         <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2 text-xs dark:border-gray-800">
                             <p className="text-slate-500">
-                                Page {orders.current_page} of {orders.last_page} ·{' '}
-                                {orders.total} total
+                                Page {orders.current_page} of {orders.last_page}{' '}
+                                · {orders.total} total
                             </p>
                             <div className="flex gap-1">
                                 {orders.links.map((l, i) => (
