@@ -32,20 +32,239 @@ class WebController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $profiles = collect()->merge([
-            'admin' => $user->adminProfiles()->get(),
-            $user->accountantProfiles()->get(),
-            $user->receptionistProfiles()->get(),
-            $user->opdDoctorProfiles()->get(),
-            $user->indDoctorProfiles()->get(),
-            $user->emergencyDoctorProfiles()->get(),
-            $user->dentistProfiles()->get(),
-            $user->ultrasoundDoctorProfiles()->get(),
-            $user->xrayTechnicianProfiles()->get(),
-            $user->nursingStaffProfiles()->get(),
-        ]);
 
-        return Inertia::render('dashboard');
+        $dashboard = [
+            'roles' => [
+                'isReceptionist' => $user->isReceptionist(),
+                'isDoctor' => $user->isAnyDoctor(),
+                'isAdmin' => $user->isAdmin(),
+                'isAccountant' => $user->isAccountant(),
+            ],
+            'receptionist' => $user->isReceptionist()
+                ? $this->buildReceptionistDashboard($user)
+                : null,
+            'doctor' => $user->isAnyDoctor()
+                ? $this->buildDoctorDashboard($user)
+                : null,
+        ];
+
+        return Inertia::render('dashboard', $dashboard);
+    }
+
+    private function buildReceptionistDashboard(User $user): array
+    {
+        $openCounter = Closing::query()
+            ->where('status', 'open')
+            ->where('receptionist_id', $user->id)
+            ->with('reception:id,name')
+            ->latest('id')
+            ->first();
+
+        $lastClosed = Closing::query()
+            ->where('status', '!=', 'open')
+            ->where('receptionist_id', $user->id)
+            ->with('reception:id,name')
+            ->latest('id')
+            ->first();
+
+        $reference = $openCounter ?? $lastClosed;
+
+        $income = 0.0;
+        $expense = 0.0;
+        $balance = 0.0;
+        $netCash = null;
+        if ($reference) {
+            $income = (float) Transaction::query()
+                ->where('closing_id', $reference->id)
+                ->where('income_or_expense', 'INCOME')
+                ->sum('amount');
+            $expense = (float) Transaction::query()
+                ->where('closing_id', $reference->id)
+                ->where('income_or_expense', 'EXPENSE')
+                ->sum('amount');
+            $balance = (float) ($reference->opening_amount ?? 0) + $income - $expense;
+            $netCash = $openCounter
+                ? null
+                : (float) ($reference->closing_amount ?? $balance);
+        }
+
+        return [
+            'has_open_counter' => (bool) $openCounter,
+            'counter' => $reference ? [
+                'id' => $reference->id,
+                'ct_number' => $reference->ct_number,
+                'year' => $reference->year,
+                'month' => $reference->month,
+                'number' => $reference->number,
+                'status' => $reference->status,
+                'reception_name' => $reference->reception?->name,
+                'opening_amount' => (float) ($reference->opening_amount ?? 0),
+                'closing_amount' => $reference->closing_amount !== null
+                    ? (float) $reference->closing_amount
+                    : null,
+                'opened_at' => optional($reference->created_at)->toIso8601String(),
+                'closed_at' => optional($reference->closed_at)->toIso8601String(),
+            ] : null,
+            'totals' => [
+                'income' => $income,
+                'expense' => $expense,
+                'balance' => $balance,
+                'net_cash' => $netCash,
+            ],
+        ];
+    }
+
+    private function buildDoctorDashboard(User $user): array
+    {
+        $base = ServiceOrder::query()->where('doctor_id', $user->id);
+
+        $byStatus = (clone $base)
+            ->selectRaw('LOWER(status) as status, COUNT(*) as total')
+            ->groupBy(DB::raw('LOWER(status)'))
+            ->pluck('total', 'status');
+
+        $today = (clone $base)
+            ->whereDate('created_at', now()->toDateString())
+            ->count();
+
+        $recent = (clone $base)
+            ->with(['patient:id,name,ps_number', 'service:id,name'])
+            ->latest('id')
+            ->limit(5)
+            ->get()
+            ->map(fn (ServiceOrder $so) => [
+                'id' => $so->id,
+                'so_number' => $so->so_number,
+                'token_short' => $so->token_short,
+                'status' => $so->status,
+                'patient_name' => $so->patient?->name,
+                'ps_number' => $so->patient?->ps_number,
+                'service_name' => $so->service?->name,
+                'created_at' => optional($so->created_at)->toIso8601String(),
+            ]);
+
+        return [
+            'counts' => [
+                'open' => (int) ($byStatus['open'] ?? 0),
+                'in_progress' => (int) ($byStatus['in-progress'] ?? 0),
+                'treated' => (int) ($byStatus['treated'] ?? 0),
+                'closed' => (int) ($byStatus['closed'] ?? 0),
+                'refunded' => (int) ($byStatus['refunded'] ?? 0),
+                'cancelled' => (int) ($byStatus['cancelled'] ?? 0),
+                'today' => $today,
+            ],
+            'recent' => $recent,
+        ];
+    }
+
+    public function myPatients(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user->isAnyDoctor()) {
+            abort(403, 'Doctors only.');
+        }
+
+        $filters = $request->only(['status', 'q', 'from', 'until']);
+
+        $query = ServiceOrder::query()
+            ->where('doctor_id', $user->id)
+            ->with(['patient:id,name,ps_number', 'service:id,name']);
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+        if (! empty($filters['q'])) {
+            $q = $filters['q'];
+            $query->where(function ($sub) use ($q) {
+                $sub->where('so_number', 'like', "%{$q}%")
+                    ->orWhere('so_short', 'like', "%{$q}%")
+                    ->orWhereHas('patient', fn ($p) => $p
+                        ->where('name', 'like', "%{$q}%")
+                        ->orWhere('ps_number', 'like', "%{$q}%"));
+            });
+        }
+        if (! empty($filters['from'])) {
+            $query->whereDate('created_at', '>=', $filters['from']);
+        }
+        if (! empty($filters['until'])) {
+            $query->whereDate('created_at', '<=', $filters['until']);
+        }
+
+        $orders = $query->latest('id')->paginate(20)->withQueryString();
+
+        $stats = ServiceOrder::query()
+            ->where('doctor_id', $user->id)
+            ->selectRaw('LOWER(status) as status, COUNT(*) as total')
+            ->groupBy(DB::raw('LOWER(status)'))
+            ->pluck('total', 'status');
+
+        return Inertia::render('doctor/my-patients', [
+            'orders' => $orders,
+            'filters' => $filters,
+            'stats' => [
+                'open' => (int) ($stats['open'] ?? 0),
+                'in_progress' => (int) ($stats['in-progress'] ?? 0),
+                'treated' => (int) ($stats['treated'] ?? 0),
+                'closed' => (int) ($stats['closed'] ?? 0),
+                'refunded' => (int) ($stats['refunded'] ?? 0),
+                'total' => (int) array_sum($stats->toArray()),
+            ],
+        ]);
+    }
+
+    public function myPayments(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user->isAnyDoctor()) {
+            abort(403, 'Doctors only.');
+        }
+
+        $filters = $request->only(['status', 'q', 'from', 'until']);
+
+        $query = ExpenseVoucher::query()
+            ->where('payed_to', $user->id)
+            ->with(['expCategory:id,name', 'serviceOrder:id,so_number,patient_id', 'serviceOrder.patient:id,name,ps_number']);
+
+        if (! empty($filters['q'])) {
+            $q = $filters['q'];
+            $query->where(function ($sub) use ($q) {
+                $sub->where('vc_number', 'like', "%{$q}%")
+                    ->orWhere('notes', 'like', "%{$q}%");
+            });
+        }
+        if (! empty($filters['from'])) {
+            $query->whereDate('created_at', '>=', $filters['from']);
+        }
+        if (! empty($filters['until'])) {
+            $query->whereDate('created_at', '<=', $filters['until']);
+        }
+
+        $vouchers = $query->latest('id')->paginate(20)->withQueryString();
+
+        $paidTotal = (float) ExpenseVoucher::query()
+            ->where('payed_to', $user->id)
+            ->whereNotNull('transaction_id')
+            ->whereNotNull('transaction_element_id')
+            ->sum('amount');
+
+        $pendingTotal = (float) ExpenseVoucher::query()
+            ->where('payed_to', $user->id)
+            ->where(function ($q) {
+                $q->whereNull('transaction_id')->orWhereNull('transaction_element_id');
+            })
+            ->sum('amount');
+
+        return Inertia::render('doctor/my-payments', [
+            'vouchers' => $vouchers,
+            'filters' => $filters,
+            'totals' => [
+                'paid' => $paidTotal,
+                'pending' => $pendingTotal,
+                'total' => $paidTotal + $pendingTotal,
+            ],
+        ]);
     }
 
     public function register(Request $request, $year = false, $month = false)
