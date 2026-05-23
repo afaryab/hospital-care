@@ -954,17 +954,19 @@ class WebController extends Controller
                 'receaveable_id' => $receaveable->id,
             ]);
 
+            // Receivable payment element — do NOT copy service_id, otherwise
+            // TransactionElementObserver::created spawns a duplicate ServiceOrder.
+            // Reuse the original element's service_order_id so reports stay linked.
             $newTransactionElement = TransactionElement::create([
                 'closing_id' => $openCounter->id,
                 'transaction_id' => $newTransaction->id,
-                'receaveable_id' => $receaveable->id,
                 'created_by' => $request->user()->id,
                 'patient_id' => $receaveable->patient_id,
                 'type' => $element->type,
                 'income_or_expense' => $element->income_or_expense,
-                'service_id' => $element->service_id,
+                'service_order_id' => $element->service_order_id,
                 'amount' => $validatedData['amount_to_collect'],
-                'note' => $validatedData['note'] ?? null,
+                'notes' => $validatedData['note'] ?? null,
             ]);
 
             $receaveable->amount -= $validatedData['amount_to_collect'];
