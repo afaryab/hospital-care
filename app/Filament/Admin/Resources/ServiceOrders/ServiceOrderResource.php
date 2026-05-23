@@ -13,9 +13,9 @@ use BackedEnum;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -217,9 +217,10 @@ class ServiceOrderResource extends Resource
             ->modalDescription('Pick which selected service order should remain as the primary. Everything else (transaction lines, vouchers, consents, bed assignments, versions, treatment record) will be re-pointed to it, and the rest will be soft-deleted.')
             ->modalWidth('2xl')
             ->schema(fn (BulkAction $action): array => [
-                Placeholder::make('selected_summary')
+                TextEntry::make('selected_summary')
                     ->label('Selected')
-                    ->content(function () use ($action): HtmlString {
+                    ->html()
+                    ->state(function () use ($action): HtmlString {
                         $records = $action->getSelectedRecords();
                         $rows = $records
                             ->map(fn (ServiceOrder $so) => sprintf(

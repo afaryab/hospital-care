@@ -7,7 +7,6 @@ use App\Models\Receaveable;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -170,9 +169,10 @@ class ViewServiceOrder extends ViewRecord
                         ->deletable(false)
                         ->reorderable(false)
                         ->itemLabel(fn (array $state): ?string => $state['tr_number'] ?? null),
-                    Placeholder::make('affected_receivables')
+                    TextEntry::make('affected_receivables')
                         ->label('Affected Receivables')
-                        ->content(function (): HtmlString {
+                        ->html()
+                        ->state(function (): HtmlString {
                             $receivables = Receaveable::query()
                                 ->whereIn('transaction_id', TransactionElement::query()
                                     ->where('service_order_id', $this->record->id)

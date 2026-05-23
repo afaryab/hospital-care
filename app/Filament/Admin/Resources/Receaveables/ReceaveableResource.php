@@ -17,6 +17,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -81,7 +83,7 @@ class ReceaveableResource extends Resource
                         ->step('0.01')
                         ->minValue(0)
                         ->live(onBlur: true)
-                        ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                        ->afterStateUpdated(function ($state, Set $set, Get $get): void {
                             if ($get('amount') === null || $get('amount') === '') {
                                 $set('amount', $state);
                             }
