@@ -174,6 +174,17 @@ const tabConfig: { key: CounterTab; label: string; color: string }[] = [
 const CounterViewTabs = ({ openCounter }: { openCounter: any }) => {
     const [activeTab, setActiveTab] = useState<CounterTab>('general');
 
+    // A counter statement can only be printed once the shift is closed (or
+    // reported). While it is still OPEN the figures are not final, so the print
+    // and report tabs are hidden to prevent printing an in-progress counter.
+    const counterStatus = String(openCounter.status ?? '').toUpperCase();
+    const canPrint =
+        counterStatus === 'CLOSED' || counterStatus === 'REPORTED';
+
+    const visibleTabs = canPrint
+        ? tabConfig
+        : tabConfig.filter((tab) => tab.key === 'general');
+
     const closingUrl = printClosingStatement({
         year: openCounter.year,
         month: openCounter.month,
@@ -183,7 +194,7 @@ const CounterViewTabs = ({ openCounter }: { openCounter: any }) => {
     return (
         <>
             <div className="flex flex-row gap-2 divide-y-0 divide-gray-300 overflow-x-auto border-b">
-                {tabConfig.map((tab) => (
+                {visibleTabs.map((tab) => (
                     <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}

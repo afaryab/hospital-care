@@ -22,6 +22,17 @@ class UserForm
                     ->label('Email address')
                     ->email()
                     ->required(),
+                TextInput::make('password')
+                    ->label('Password')
+                    ->password()
+                    ->revealable()
+                    ->maxLength(255)
+                    ->autocomplete('new-password')
+                    ->helperText(fn (string $operation): string => $operation === 'edit'
+                        ? 'Leave blank to keep the current password.'
+                        : '')
+                    ->required(fn (string $operation): bool => $operation === 'create')
+                    ->dehydrated(fn (?string $state): bool => filled($state)),
                 // Textarea::make('two_factor_secret')
                 //     ->columnSpanFull(),
                 // Textarea::make('two_factor_recovery_codes')

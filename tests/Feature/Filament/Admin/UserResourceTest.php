@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\Users\Pages\ListUsers;
 use App\Filament\Admin\Resources\Users\Pages\ViewUser;
 use App\Models\Administrator;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -29,4 +30,45 @@ test('user view page renders', function () {
 test('user edit page renders', function () {
     $user = User::factory()->create();
     Livewire\Livewire::test(EditUser::class, ['record' => $user->getRouteKey()])->assertSuccessful();
+});
+
+test('a password can be set when creating a user', function () {
+    Livewire\Livewire::test(CreateUser::class)
+        ->fillForm([
+            'name' => 'Password User',
+            'email' => 'password-user@example.com',
+            'password' => 'super-secret',
+            'login_attempts' => 0,
+            'is_active' => true,
+            'patientManagerProfiles' => [],
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $created = User::where('email', 'password-user@example.com')->first();
+    expect($created)->not->toBeNull();
+    expect(Hash::check('super-secret', $created->password))->toBeTrue();
+});
+
+test('editing a user without a password keeps the existing one', function () {
+    $user = User::factory()->create();
+    $originalHash = $user->fresh()->password;
+
+    Livewire\Livewire::test(EditUser::class, ['record' => $user->getRouteKey()])
+        ->fillForm(['password' => ''])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect($user->fresh()->password)->toBe($originalHash);
+});
+
+test('editing a user with a new password updates it', function () {
+    $user = User::factory()->create();
+
+    Livewire\Livewire::test(EditUser::class, ['record' => $user->getRouteKey()])
+        ->fillForm(['password' => 'a-new-password'])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect(Hash::check('a-new-password', $user->fresh()->password))->toBeTrue();
 });
