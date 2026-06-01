@@ -10,6 +10,7 @@ use App\Models\ExpenseVoucher;
 use App\Models\Panel;
 use App\Models\Patient;
 use App\Models\PatientManager;
+use App\Models\PaymentMethod;
 use App\Models\Receaveable;
 use App\Models\Reception;
 use App\Models\Service;
@@ -563,6 +564,7 @@ class WebController extends Controller
         // dd($pageData['services']);
 
         $pageData['panelCompanies'] = Panel::all();
+        $pageData['paymentMethods'] = PaymentMethod::all();
 
         return Inertia::render('counter/income', $pageData);
     }
@@ -1099,6 +1101,8 @@ class WebController extends Controller
         return Inertia::render('counter/receaveables', [
             'openCounter' => $openCounter,
             'receaveables' => $receaveables,
+            'paymentMethods' => PaymentMethod::all(),
+            'panelCompanies' => Panel::all(),
         ]);
     }
 
