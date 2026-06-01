@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Helpers\DateHelper;
 use App\Models\ServiceOrder;
 use Illuminate\Contracts\Support\Responsable;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -25,8 +26,8 @@ class ServiceProviderReportExport implements FromQuery, Responsable, ShouldAutoS
             ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
             ->withSum(['expenseVouchers as voucher_total'], 'amount')
             ->with(['patient', 'service'])
-            ->when($this->filters['from'] ?? null, fn ($q, $date) => $q->whereDate('service_orders.created_at', '>=', $date))
-            ->when($this->filters['until'] ?? null, fn ($q, $date) => $q->whereDate('service_orders.created_at', '<=', $date))
+            ->when($this->filters['from'] ?? null, fn ($q, $date) => $q->where('service_orders.created_at', '>=', DateHelper::dayStartUtc($date)))
+            ->when($this->filters['until'] ?? null, fn ($q, $date) => $q->where('service_orders.created_at', '<=', DateHelper::dayEndUtc($date)))
             ->when($this->filters['doctor_id'] ?? null, fn ($q, $id) => $q->where('doctor_id', $id))
             ->when($this->filters['service_id'] ?? null, fn ($q, $id) => $q->where('service_id', $id))
             ->when($this->filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
@@ -41,7 +42,7 @@ class ServiceProviderReportExport implements FromQuery, Responsable, ShouldAutoS
     public function map($row): array
     {
         return [
-            $row->created_at?->format('d M Y'),
+            DateHelper::pdfFormat($row->created_at, 'd M Y'),
             $row->so_number,
             $row->patient?->name,
             $row->service?->name,

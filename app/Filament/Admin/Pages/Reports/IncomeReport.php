@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Pages\Reports;
 
 use App\Enum\TransactionElementType;
 use App\Exports\IncomeReportExport;
+use App\Helpers\DateHelper;
 use App\Models\Closing;
 use App\Models\Reception;
 use App\Models\Service;
@@ -44,8 +45,8 @@ class IncomeReport extends Page implements Tables\Contracts\HasTable
     public function mount(): void
     {
         $this->filters = [
-            'from' => now()->startOfMonth()->format('Y-m-d'),
-            'until' => now()->format('Y-m-d'),
+            'from' => now(DateHelper::timezone())->startOfMonth()->format('Y-m-d'),
+            'until' => now(DateHelper::timezone())->format('Y-m-d'),
             'reception_id' => null,
             'type' => null,
             'service_id' => null,
@@ -107,10 +108,10 @@ class IncomeReport extends Page implements Tables\Contracts\HasTable
                     ]);
 
                 if ($this->filters['from'] ?? null) {
-                    $query->whereDate('transaction_elements.created_at', '>=', $this->filters['from']);
+                    $query->where('transaction_elements.created_at', '>=', DateHelper::dayStartUtc($this->filters['from']));
                 }
                 if ($this->filters['until'] ?? null) {
-                    $query->whereDate('transaction_elements.created_at', '<=', $this->filters['until']);
+                    $query->where('transaction_elements.created_at', '<=', DateHelper::dayEndUtc($this->filters['until']));
                 }
                 if ($this->filters['reception_id'] ?? null) {
                     $query->whereIn('closing_id', Closing::where('reception_id', $this->filters['reception_id'])->select('id'));

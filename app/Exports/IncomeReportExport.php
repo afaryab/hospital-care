@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Helpers\DateHelper;
 use App\Models\Closing;
 use App\Models\TransactionElement;
 use Illuminate\Contracts\Support\Responsable;
@@ -27,10 +28,10 @@ class IncomeReportExport implements FromQuery, Responsable, ShouldAutoSize, With
             ->where('income_or_expense', 'INCOME');
 
         if ($this->filters['from'] ?? null) {
-            $query->whereDate('transaction_elements.created_at', '>=', $this->filters['from']);
+            $query->where('transaction_elements.created_at', '>=', DateHelper::dayStartUtc($this->filters['from']));
         }
         if ($this->filters['until'] ?? null) {
-            $query->whereDate('transaction_elements.created_at', '<=', $this->filters['until']);
+            $query->where('transaction_elements.created_at', '<=', DateHelper::dayEndUtc($this->filters['until']));
         }
         if ($this->filters['reception_id'] ?? null) {
             $query->whereIn('closing_id', Closing::where('reception_id', $this->filters['reception_id'])->select('id'));
@@ -56,7 +57,7 @@ class IncomeReportExport implements FromQuery, Responsable, ShouldAutoSize, With
     public function map($row): array
     {
         return [
-            $row->created_at?->format('d M Y H:i'),
+            DateHelper::pdfFormat($row->created_at, 'd M Y H:i'),
             $row->transaction?->closing?->ct_number,
             $row->transaction?->tr_number,
             $row->type,
