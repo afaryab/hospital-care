@@ -178,8 +178,7 @@ const CounterViewTabs = ({ openCounter }: { openCounter: any }) => {
     // reported). While it is still OPEN the figures are not final, so the print
     // and report tabs are hidden to prevent printing an in-progress counter.
     const counterStatus = String(openCounter.status ?? '').toUpperCase();
-    const canPrint =
-        counterStatus === 'CLOSED' || counterStatus === 'REPORTED';
+    const canPrint = counterStatus === 'CLOSED' || counterStatus === 'REPORTED';
 
     const visibleTabs = canPrint
         ? tabConfig
