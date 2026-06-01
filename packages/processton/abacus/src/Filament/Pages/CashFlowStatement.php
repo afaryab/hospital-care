@@ -2,6 +2,7 @@
 
 namespace Processton\Abacus\Filament\Pages;
 
+use App\Helpers\DateHelper;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -145,7 +146,7 @@ class CashFlowStatement extends Page implements HasForms
             'financingTotal' => $this->financingTotal,
             'netChange' => $this->netChange,
             'selectedYear' => AbacusYear::find($this->yearId),
-            'generatedAt' => now()->format('Y-m-d H:i:s'),
+            'generatedAt' => DateHelper::pdfFormat(now(), 'Y-m-d H:i:s'),
         ];
 
         $pdf = \App::make('dompdf.wrapper');
@@ -182,7 +183,7 @@ class CashFlowStatement extends Page implements HasForms
             'financingTotal' => $this->financingTotal,
             'netChange' => $this->netChange,
             'selectedYear' => AbacusYear::find($this->yearId),
-            'generatedAt' => now()->format('Y-m-d H:i:s'),
+            'generatedAt' => DateHelper::pdfFormat(now(), 'Y-m-d H:i:s'),
         ];
 
         $pdf = \App::make('dompdf.wrapper');

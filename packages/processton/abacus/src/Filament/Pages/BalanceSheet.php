@@ -2,6 +2,7 @@
 
 namespace Processton\Abacus\Filament\Pages;
 
+use App\Helpers\DateHelper;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -214,7 +215,7 @@ class BalanceSheet extends Page implements HasForms
             'totalAssets' => $totalAssets,
             'totalLiabilities' => $totalLiabilities,
             'totalEquity' => $totalEquity,
-            'generatedAt' => now()->format('Y-m-d H:i:s'),
+            'generatedAt' => DateHelper::pdfFormat(now(), 'Y-m-d H:i:s'),
         ];
 
         $pdf = \App::make('dompdf.wrapper');
@@ -264,7 +265,7 @@ class BalanceSheet extends Page implements HasForms
             'totalAssets' => $totalAssets,
             'totalLiabilities' => $totalLiabilities,
             'totalEquity' => $totalEquity,
-            'generatedAt' => now()->format('Y-m-d H:i:s'),
+            'generatedAt' => DateHelper::pdfFormat(now(), 'Y-m-d H:i:s'),
         ];
 
         // return view('abacus::balance-sheet-pdf', $data);

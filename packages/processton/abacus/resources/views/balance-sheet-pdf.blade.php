@@ -203,7 +203,7 @@
             <div class="report-date">As at {{ $year->end_date->format('F d, Y') }}</div>
             <div class="report-date">For the Year Ended {{ $year->end_date->format('F d, Y') }}</div>
         @else
-            <div class="report-date">As at {{ now()->format('F d, Y') }}</div>
+            <div class="report-date">As at @hdate(now(), 'F d, Y')</div>
         @endif
     </div>
 
