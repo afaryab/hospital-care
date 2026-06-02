@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Concerns;
 
+use App\Helpers\DateHelper;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -54,19 +55,19 @@ trait HasDashboardDateFilters
                     DatePicker::make('startDate')
                         ->label('Start Date')
                         ->visible(fn ($get) => $get('dateRange') === 'custom')
-                        ->default(Carbon::now()->startOfMonth()),
+                        ->default(Carbon::now(DateHelper::timezone())->startOfMonth()),
 
                     DatePicker::make('endDate')
                         ->label('End Date')
                         ->visible(fn ($get) => $get('dateRange') === 'custom')
-                        ->default(Carbon::now()),
+                        ->default(Carbon::now(DateHelper::timezone())),
                 ]),
         ];
     }
 
     protected function calculateDateRange(string $range): array
     {
-        $now = Carbon::now();
+        $now = Carbon::now(DateHelper::timezone());
 
         return match ($range) {
             'today' => [
@@ -114,7 +115,7 @@ trait HasDashboardDateFilters
 
     protected function getLastFinancialYearStart(): Carbon
     {
-        $now = Carbon::now();
+        $now = Carbon::now(DateHelper::timezone());
         $currentFinancialYearStart = $now->copy()->month(7)->startOfMonth();
 
         if ($now->month < 7) {
@@ -135,7 +136,7 @@ trait HasDashboardDateFilters
 
         if (isset($filters['dateRange']) && $filters['dateRange'] === 'custom') {
             if (isset($filters['startDate'])) {
-                return Carbon::parse($filters['startDate']);
+                return Carbon::parse($filters['startDate'], DateHelper::timezone());
             }
         }
 
@@ -143,7 +144,7 @@ trait HasDashboardDateFilters
             return $this->calculateDateRange($filters['dateRange'])['start'];
         }
 
-        return Carbon::now()->startOfMonth();
+        return Carbon::now(DateHelper::timezone())->startOfMonth();
     }
 
     public function getEndDate(): Carbon
@@ -152,7 +153,7 @@ trait HasDashboardDateFilters
 
         if (isset($filters['dateRange']) && $filters['dateRange'] === 'custom') {
             if (isset($filters['endDate'])) {
-                return Carbon::parse($filters['endDate']);
+                return Carbon::parse($filters['endDate'], DateHelper::timezone());
             }
         }
 
@@ -160,6 +161,6 @@ trait HasDashboardDateFilters
             return $this->calculateDateRange($filters['dateRange'])['end'];
         }
 
-        return Carbon::now();
+        return Carbon::now(DateHelper::timezone());
     }
 }

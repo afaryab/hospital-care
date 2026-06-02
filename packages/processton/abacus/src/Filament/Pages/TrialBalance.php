@@ -2,6 +2,7 @@
 
 namespace Processton\Abacus\Filament\Pages;
 
+use App\Helpers\DateHelper;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -129,7 +130,7 @@ class TrialBalance extends Page implements HasForms
             'endDate' => $this->endDate,
             'totalDebit' => $this->rows->sum('debit'),
             'totalCredit' => $this->rows->sum('credit'),
-            'generatedAt' => now()->format('Y-m-d H:i:s'),
+            'generatedAt' => DateHelper::pdfFormat(now(), 'Y-m-d H:i:s'),
         ];
 
         $pdf = \App::make('dompdf.wrapper');
@@ -170,7 +171,7 @@ class TrialBalance extends Page implements HasForms
             'endDate' => $this->endDate,
             'totalDebit' => $this->rows->sum('debit'),
             'totalCredit' => $this->rows->sum('credit'),
-            'generatedAt' => now()->format('Y-m-d H:i:s'),
+            'generatedAt' => DateHelper::pdfFormat(now(), 'Y-m-d H:i:s'),
         ];
 
         $pdf = \App::make('dompdf.wrapper');

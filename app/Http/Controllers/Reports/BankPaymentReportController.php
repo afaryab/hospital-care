@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Reports;
 
+use App\Helpers\DateHelper;
 use App\Http\Controllers\Controller;
 use App\Models\BankTransaction;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -14,8 +15,8 @@ class BankPaymentReportController extends Controller
     public function pending(Request $request): Response
     {
         $bankAccountId = $request->input('bank_account_id');
-        $from = Carbon::parse($request->input('date_from', now()->startOfMonth()->format('Y-m-d')))->startOfDay();
-        $until = Carbon::parse($request->input('date_to', now()->endOfMonth()->format('Y-m-d')))->endOfDay();
+        $from = Carbon::parse($request->input('date_from', now(DateHelper::timezone())->startOfMonth()->format('Y-m-d')))->startOfDay();
+        $until = Carbon::parse($request->input('date_to', now(DateHelper::timezone())->endOfMonth()->format('Y-m-d')))->endOfDay();
         $generated_at = now();
 
         $query = BankTransaction::query()
@@ -45,8 +46,8 @@ class BankPaymentReportController extends Controller
     public function received(Request $request): Response
     {
         $bankAccountId = $request->input('bank_account_id');
-        $from = Carbon::parse($request->input('date_from', now()->startOfMonth()->format('Y-m-d')))->startOfDay();
-        $until = Carbon::parse($request->input('date_to', now()->endOfMonth()->format('Y-m-d')))->endOfDay();
+        $from = Carbon::parse($request->input('date_from', now(DateHelper::timezone())->startOfMonth()->format('Y-m-d')))->startOfDay();
+        $until = Carbon::parse($request->input('date_to', now(DateHelper::timezone())->endOfMonth()->format('Y-m-d')))->endOfDay();
         $generated_at = now();
 
         $query = BankTransaction::query()

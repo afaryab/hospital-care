@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Pages\Reports;
 
 use App\Exports\ReceivablesReportExport;
+use App\Helpers\DateHelper;
 use App\Models\Panel;
 use App\Models\Receaveable;
 use Filament\Forms\Components\DatePicker;
@@ -40,8 +41,8 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
     public function mount(): void
     {
         $this->filters = [
-            'from' => now()->startOfMonth()->format('Y-m-d'),
-            'until' => now()->format('Y-m-d'),
+            'from' => now(DateHelper::timezone())->startOfMonth()->format('Y-m-d'),
+            'until' => now(DateHelper::timezone())->format('Y-m-d'),
             'status' => null,
             'panel_id' => null,
         ];
@@ -88,10 +89,10 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
                     ]);
 
                 if ($this->filters['from'] ?? null) {
-                    $query->whereDate('receaveables.created_at', '>=', $this->filters['from']);
+                    $query->where('receaveables.created_at', '>=', DateHelper::dayStartUtc($this->filters['from']));
                 }
                 if ($this->filters['until'] ?? null) {
-                    $query->whereDate('receaveables.created_at', '<=', $this->filters['until']);
+                    $query->where('receaveables.created_at', '<=', DateHelper::dayEndUtc($this->filters['until']));
                 }
                 if ($this->filters['status'] ?? null) {
                     $query->where('status', $this->filters['status']);

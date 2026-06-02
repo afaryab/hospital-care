@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use App\Helpers\DateHelper;
 use App\Models\Receaveable;
 use Illuminate\Contracts\Support\Responsable;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -24,10 +25,10 @@ class ReceivablesReportExport implements FromQuery, Responsable, ShouldAutoSize,
         $query = Receaveable::query()->with(['transaction', 'patient', 'panel']);
 
         if ($this->filters['from'] ?? null) {
-            $query->whereDate('receaveables.created_at', '>=', $this->filters['from']);
+            $query->where('receaveables.created_at', '>=', DateHelper::dayStartUtc($this->filters['from']));
         }
         if ($this->filters['until'] ?? null) {
-            $query->whereDate('receaveables.created_at', '<=', $this->filters['until']);
+            $query->where('receaveables.created_at', '<=', DateHelper::dayEndUtc($this->filters['until']));
         }
         if ($this->filters['status'] ?? null) {
             $query->where('status', $this->filters['status']);
@@ -47,13 +48,13 @@ class ReceivablesReportExport implements FromQuery, Responsable, ShouldAutoSize,
     public function map($row): array
     {
         return [
-            $row->created_at?->format('d M Y'),
+            DateHelper::pdfFormat($row->created_at, 'd M Y'),
             $row->transaction?->tr_number,
             $row->patient?->name,
             $row->panel?->name,
             number_format((float) $row->orignal_amount, 2),
             number_format((float) $row->amount, 2),
-            $row->due_date?->format('d M Y'),
+            DateHelper::pdfFormat($row->due_date, 'd M Y'),
             $row->status,
         ];
     }

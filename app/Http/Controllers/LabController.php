@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\DateHelper;
 use App\Models\Patient;
 use App\Models\ServiceOrder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -25,7 +25,7 @@ class LabController extends Controller
             $recentOrders = ServiceOrder::query()
                 ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text'])
                 ->where('type', 'PTH')
-                ->whereDate('created_at', Carbon::today())
+                ->whereBetween('created_at', DateHelper::todayRangeUtc())
                 ->orderByRaw("FIELD(status, 'in-progress', 'IN-PROGRESS', 'open', 'OPEN', 'treated', 'TREATED') ASC")
                 ->orderBy('created_at', 'ASC')
                 ->limit(50)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enum\CounterStatus;
 use App\Enum\TransactionElementType;
+use App\Helpers\DateHelper;
 use App\Models\Closing;
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseVoucher;
@@ -125,7 +126,7 @@ class WebController extends Controller
             ->pluck('total', 'status');
 
         $today = (clone $base)
-            ->whereDate('created_at', now()->toDateString())
+            ->whereBetween('created_at', DateHelper::todayRangeUtc())
             ->count();
 
         $recent = (clone $base)
@@ -186,10 +187,10 @@ class WebController extends Controller
             });
         }
         if (! empty($filters['from'])) {
-            $query->whereDate('created_at', '>=', $filters['from']);
+            $query->where('created_at', '>=', DateHelper::dayStartUtc($filters['from']));
         }
         if (! empty($filters['until'])) {
-            $query->whereDate('created_at', '<=', $filters['until']);
+            $query->where('created_at', '<=', DateHelper::dayEndUtc($filters['until']));
         }
 
         $orders = $query->latest('id')->paginate(20)->withQueryString();
@@ -236,10 +237,10 @@ class WebController extends Controller
             });
         }
         if (! empty($filters['from'])) {
-            $query->whereDate('created_at', '>=', $filters['from']);
+            $query->where('created_at', '>=', DateHelper::dayStartUtc($filters['from']));
         }
         if (! empty($filters['until'])) {
-            $query->whereDate('created_at', '<=', $filters['until']);
+            $query->where('created_at', '<=', DateHelper::dayEndUtc($filters['until']));
         }
 
         $vouchers = $query->latest('id')->paginate(20)->withQueryString();
