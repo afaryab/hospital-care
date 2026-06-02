@@ -66,7 +66,7 @@
             <td>{{ $i + 1 }}</td>
             <td>@hdate($order->created_at, 'd M Y')</td>
             <td>
-                <strong class="mono" style="font-size: 9px;">{{ $order->so_number }}</strong>@if($order->token_short) <span class="badge badge-blue" style="font-size: 8px;">Token #{{ $order->token_short }}</span>@endif<br>
+                <strong class="mono" style="font-size: 9px;">{{ $order->so_number }}{{ $order->so_short ? ' ('.$order->so_short.')' : '' }}</strong>@if($order->token_short) <span class="badge badge-blue" style="font-size: 8px;">Token #{{ $order->token_short }}</span>@endif<br>
                 <span class="text-muted" style="font-size: 9px;">
                     {{ collect([$order->patient?->name, $order->service?->name, $order->doctor?->name])->filter()->implode(' · ') }}
                 </span>

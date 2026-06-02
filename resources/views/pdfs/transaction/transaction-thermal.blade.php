@@ -267,7 +267,7 @@
                 </div>
                 @if($item->serviceOrder)
                 <div class="order-line">
-                    MRI: {{ $item->serviceOrder->so_number }} {{ $item?->doctor?->name}}
+                    MRI: {{ $item->serviceOrder->so_short }} {{ $item?->doctor?->name}}
                 </div>
                 @endif
             @endforeach

@@ -26,6 +26,7 @@ const ServiceOrderCard: React.FC<ServiceOrderCardProps> = ({
             <div className="min-w-0">
                 <p className="font-mono text-xs text-muted-foreground">
                     {serviceOrder.so_number}
+                    {serviceOrder.so_short ? ` (${serviceOrder.so_short})` : ''}
                 </p>
                 <p className="mt-0.5 text-sm font-semibold">
                     {serviceOrder.type}

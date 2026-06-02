@@ -44,6 +44,7 @@ const ServiceOrdersListingTable: React.FC<ServiceOrdersListingTableProps> = ({
                         >
                             <td className="px-4 py-2 font-mono text-xs">
                                 {so.so_number}
+                                {so.so_short ? ` (${so.so_short})` : ''}
                             </td>
                             <td className="px-4 py-2">{so.type}</td>
                             <td className="px-4 py-2">

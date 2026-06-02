@@ -15,6 +15,7 @@ const ServiceOrderTableElement: React.FC<ServiceOrderTableElementProps> = ({
         <div className="min-w-0">
             <p className="font-mono text-xs text-muted-foreground">
                 {serviceOrder.so_number}
+                {serviceOrder.so_short ? ` (${serviceOrder.so_short})` : ''}
             </p>
             <p className="truncate text-sm font-medium">{serviceOrder.type}</p>
         </div>
