@@ -90,7 +90,12 @@ const PatientTreatmentsHistory: React.FC<{ treatments: ServiceOrder[] }> = ({
                             key={treatment.id}
                             className="flex flex-col rounded-md border p-3"
                         >
-                            <div className="">{treatment.so_number}{treatment.so_short ? ` (${treatment.so_short})` : ''}</div>
+                            <div className="">
+                                {treatment.so_number}
+                                {treatment.so_short
+                                    ? ` (${treatment.so_short})`
+                                    : ''}
+                            </div>
                             <div className="flex flex-col items-center justify-between md:flex-row">
                                 <div className="w-full">
                                     <p>

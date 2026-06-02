@@ -19,7 +19,9 @@ const ServiceOrderDetailedCard: React.FC<ServiceOrderDetailedCardProps> = ({
                 <div>
                     <CardTitle className="font-mono text-base">
                         {serviceOrder.so_number}
-                        {serviceOrder.so_short ? ` (${serviceOrder.so_short})` : ''}
+                        {serviceOrder.so_short
+                            ? ` (${serviceOrder.so_short})`
+                            : ''}
                     </CardTitle>
                     <p className="mt-0.5 text-xs text-muted-foreground">
                         {serviceOrder.created_at}
