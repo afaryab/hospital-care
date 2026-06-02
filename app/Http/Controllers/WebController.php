@@ -10,6 +10,7 @@ use App\Models\ExpenseVoucher;
 use App\Models\Panel;
 use App\Models\Patient;
 use App\Models\PatientManager;
+use App\Models\PaymentMethod;
 use App\Models\Receaveable;
 use App\Models\Reception;
 use App\Models\Service;
@@ -366,7 +367,7 @@ class WebController extends Controller
         $year && $query->whereYear('created_at', $year);
         $month && $query->whereMonth('created_at', $month);
 
-        $data = $query->paginate(8);
+        $data = $query->latest('id')->paginate(8);
 
         return Inertia::render('counter/list', [
             'yearSelected' => $year,
@@ -563,6 +564,7 @@ class WebController extends Controller
         // dd($pageData['services']);
 
         $pageData['panelCompanies'] = Panel::all();
+        $pageData['paymentMethods'] = PaymentMethod::all();
 
         return Inertia::render('counter/income', $pageData);
     }
@@ -931,18 +933,21 @@ class WebController extends Controller
 
         $transaction = $receaveable->transaction;
 
-        $elements = $transaction->elements;
-
-        if ($elements->count() !== 1) {
+        if ($transaction->elements->count() !== 1) {
             return redirect()->back()->withErrors(['error' => 'Invalid receaveable transaction elements.']);
         }
-
-        $element = $elements->first();
 
         DB::beginTransaction();
 
         try {
 
+            // A receivable settlement is a cash/accounts-receivable movement, not new
+            // service revenue: the full service amount was already recognised on the
+            // original transaction's element. Recording only the payment Transaction
+            // (Dr Cash / Cr A/R, see AbacusClosingService) keeps the shift cash totals
+            // correct while avoiding a duplicate INCOME TransactionElement that would
+            // double-count the income report and the service order's totals when the
+            // receivable is collected within the same shift.
             $newTransaction = Transaction::create([
                 'closing_id' => $openCounter->id,
                 'created_by' => $request->user()->id,
@@ -952,20 +957,6 @@ class WebController extends Controller
                 'amount' => $validatedData['amount_to_collect'],
                 'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
                 'receaveable_id' => $receaveable->id,
-            ]);
-
-            // Receivable payment element — do NOT copy service_id, otherwise
-            // TransactionElementObserver::created spawns a duplicate ServiceOrder.
-            // Reuse the original element's service_order_id so reports stay linked.
-            $newTransactionElement = TransactionElement::create([
-                'closing_id' => $openCounter->id,
-                'transaction_id' => $newTransaction->id,
-                'created_by' => $request->user()->id,
-                'patient_id' => $receaveable->patient_id,
-                'type' => $element->type,
-                'income_or_expense' => $element->income_or_expense,
-                'service_order_id' => $element->service_order_id,
-                'amount' => $validatedData['amount_to_collect'],
                 'notes' => $validatedData['note'] ?? null,
             ]);
 
@@ -1099,6 +1090,8 @@ class WebController extends Controller
         return Inertia::render('counter/receaveables', [
             'openCounter' => $openCounter,
             'receaveables' => $receaveables,
+            'paymentMethods' => PaymentMethod::all(),
+            'panelCompanies' => Panel::all(),
         ]);
     }
 

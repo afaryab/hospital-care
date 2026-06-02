@@ -23,30 +23,45 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { receaveablesPayment } from '@/routes';
-import { Receaveable } from '@/types';
-import { Form } from '@inertiajs/react';
+import { Panel, PaymentMethod, Receaveable } from '@/types';
+import { Form, usePage } from '@inertiajs/react';
 
 interface ReceaveAblesButtonProps {
     receaveable: Receaveable;
+    paymentMethods?: PaymentMethod[];
+    panelCompanies?: Panel[];
     onConfirm?: (amountCollected: number, note?: string) => void;
 }
 
 export default function ReceaveAblesButton({
     receaveable,
+    paymentMethods,
+    panelCompanies,
     onConfirm,
 }: ReceaveAblesButtonProps) {
+    const sharedProps = usePage<{
+        paymentMethods?: PaymentMethod[];
+        panelCompanies?: Panel[];
+    }>().props;
+
+    const methods = paymentMethods ?? sharedProps.paymentMethods ?? [];
+    const panels = panelCompanies ?? sharedProps.panelCompanies ?? [];
+
     const [amountToCollect] = useState<string>(
         String(receaveable.amount ?? ''),
     );
     const [amountToReceave, setAmountToReceave] = useState<string>(
         String(receaveable.amount ?? ''),
     );
-    const [paymentMethod, setPaymentMethod] = useState<string>('CASH');
+    const [paymentMethod, setPaymentMethod] = useState<string>(
+        methods[0]?.slug ?? 'CASH',
+    );
+    const [panelId, setPanelId] = useState<string>('');
     const [note, setNote] = useState('');
 
-    // Load Error messages from
-
-    console.log('Receaveable in button:', receaveable);
+    const requiresPanel =
+        methods.find((method) => method.slug === paymentMethod)?.payables ===
+        'panel';
 
     return (
         <Dialog>
@@ -151,20 +166,46 @@ export default function ReceaveAblesButton({
                                         <SelectValue placeholder="Select payment method" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="CASH">
-                                            Cash
-                                        </SelectItem>
-                                        <SelectItem value="CARD">
-                                            Card
-                                        </SelectItem>
-                                        <SelectItem value="CHEQUE">
-                                            Cheque
-                                        </SelectItem>
-                                        {/* <SelectItem value="INSURANCE">INSURANCE</SelectItem> */}
+                                        {methods.map((method) => (
+                                            <SelectItem
+                                                key={method.id}
+                                                value={method.slug}
+                                            >
+                                                {method.name}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                                 <InputError message={errors.payment_method} />
                             </div>
+
+                            {requiresPanel && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="panel_id" required>
+                                        Panel Company
+                                    </Label>
+                                    <Select
+                                        value={panelId}
+                                        onValueChange={setPanelId}
+                                        name="panel_id"
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select panel company" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {panels.map((company) => (
+                                                <SelectItem
+                                                    key={company.id}
+                                                    value={String(company.id)}
+                                                >
+                                                    {company.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.panel_id} />
+                                </div>
+                            )}
 
                             <div className="grid gap-2">
                                 <Label htmlFor="receaveable_note">

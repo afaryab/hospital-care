@@ -188,3 +188,18 @@ export interface ExpenseVoucher {
 }
 
 export type Receivable = Receaveable;
+
+export interface PaymentMethod {
+    id: number;
+    name: string;
+    slug: string;
+    id_required: boolean;
+    payables?: string | null;
+    [key: string]: unknown;
+}
+
+export interface Panel {
+    id: number;
+    name: string;
+    [key: string]: unknown;
+}
