@@ -124,6 +124,7 @@ function TokenCard({ item, variant = 'open', minify }) {
                     {item.so_number && minify == false ? (
                         <div className="text-xs text-slate-500">
                             MRI #: {item.so_number}
+                            {item.so_short ? ` (${item.so_short})` : ''}
                         </div>
                     ) : null}
                     <div className="mt-4 flex items-center justify-between text-sm">

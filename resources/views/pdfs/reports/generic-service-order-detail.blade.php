@@ -12,7 +12,7 @@
 <table>
     <tr>
         <td style="width: 25%;"><span class="info-label">SO Number</span></td>
-        <td class="mono text-bold">{{ $order->so_number }}@if($order->token_short) <span class="badge badge-blue">Token #{{ $order->token_short }}</span>@endif</td>
+        <td class="mono text-bold">{{ $order->so_number }}{{ $order->so_short ? ' ('.$order->so_short.')' : '' }}@if($order->token_short) <span class="badge badge-blue">Token #{{ $order->token_short }}</span>@endif</td>
         <td style="width: 25%;"><span class="info-label">Status</span></td>
         <td>
             <span class="badge {{ $order->status === 'closed' ? 'badge-green' : 'badge-orange' }}">
@@ -252,6 +252,6 @@
 </table>
 
 @include('pdfs.reports.partials.generic-footer', [
-    'report_title' => 'Service Order Detail — ' . $order->so_number,
+    'report_title' => 'Service Order Detail — ' . $order->so_number . ($order->so_short ? ' ('.$order->so_short.')' : ''),
     'generated_at' => $generated_at,
 ])

@@ -25,6 +25,7 @@ import { LoaderCircle, Search } from 'lucide-react';
 export interface ServiceOrderSearchItem {
     id: number;
     so_number: string;
+    so_short?: string;
     type?: string;
     created_at?: string;
     patient?: {
@@ -239,7 +240,10 @@ export default function FilterAndSelectServiceOrder({
                             onClick={() => selectServiceOrder(item)}
                             className="w-full border-b px-3 py-2 text-left last:border-b-0 hover:bg-muted/40"
                         >
-                            <div className="font-medium">{item.so_number}</div>
+                            <div className="font-medium">
+                                {item.so_number}
+                                {item.so_short ? ` (${item.so_short})` : ''}
+                            </div>
                             <div className="text-xs text-muted-foreground">
                                 {item.patient?.name ?? 'N/A'} |{' '}
                                 {item.service?.name ?? 'N/A'}
@@ -252,7 +256,10 @@ export default function FilterAndSelectServiceOrder({
             {selected ? (
                 <div className="flex items-center justify-between rounded-md border bg-muted/20 p-2 text-sm">
                     <div>
-                        <div className="font-medium">{selected.so_number}</div>
+                        <div className="font-medium">
+                            {selected.so_number}
+                            {selected.so_short ? ` (${selected.so_short})` : ''}
+                        </div>
                         <div className="text-xs text-muted-foreground">
                             {selected.patient?.name ?? 'No patient linked'}
                         </div>
@@ -378,6 +385,9 @@ export default function FilterAndSelectServiceOrder({
                                 >
                                     <div className="font-medium">
                                         {item.so_number}
+                                        {item.so_short
+                                            ? ` (${item.so_short})`
+                                            : ''}
                                     </div>
                                     <div className="text-xs text-muted-foreground">
                                         {item.patient?.name ?? 'N/A'} |{' '}
