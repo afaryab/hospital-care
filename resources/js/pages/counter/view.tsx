@@ -176,9 +176,13 @@ const CounterViewTabs = ({ openCounter }: { openCounter: any }) => {
 
     // A counter statement can only be printed once the shift is closed (or
     // reported). While it is still OPEN the figures are not final, so the print
-    // and report tabs are hidden to prevent printing an in-progress counter.
+    // and report tabs are hidden for regular staff. Administrators may still
+    // print an in-progress counter.
+    const { auth } = usePage().props as unknown as { auth: any };
+    const isAdmin = (auth?.user?.profiles?.admin?.length ?? 0) > 0;
     const counterStatus = String(openCounter.status ?? '').toUpperCase();
-    const canPrint = counterStatus === 'CLOSED' || counterStatus === 'REPORTED';
+    const canPrint =
+        counterStatus === 'CLOSED' || counterStatus === 'REPORTED' || isAdmin;
 
     const visibleTabs = canPrint
         ? tabConfig

@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Administrator;
 use App\Models\Closing;
 use App\Models\User;
 
@@ -15,13 +16,23 @@ function printUrlFor(Closing $closing): string
     ]);
 }
 
-test('an open counter cannot be printed', function () {
+test('an open counter cannot be printed by regular staff', function () {
     $user = User::factory()->create();
     $closing = Closing::factory()->create(['status' => 'OPEN']);
 
     actingAs($user);
 
     get(printUrlFor($closing))->assertForbidden();
+});
+
+test('an admin can print an open counter', function () {
+    $user = User::factory()->create();
+    Administrator::create(['user_id' => $user->id, 'authority' => 'administrator']);
+    $closing = Closing::factory()->create(['status' => 'OPEN']);
+
+    actingAs($user);
+
+    get(printUrlFor($closing))->assertOk();
 });
 
 test('a closed counter can be printed', function () {
