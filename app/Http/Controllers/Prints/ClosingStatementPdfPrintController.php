@@ -64,15 +64,6 @@ class ClosingStatementPdfPrintController extends Controller
             abort(404, "Closing statement {$ctNumber} not found");
         }
 
-        // Only finalised counters may be printed. While a counter is still OPEN its
-        // figures are not final, so printing the statement or any report is blocked
-        // for regular staff. Administrators may still print an in-progress counter.
-        $isFinalised = in_array(strtoupper((string) $closing->status), ['CLOSED', 'REPORTED'], true);
-
-        if (! $isFinalised && ! $request->user()?->isAdmin()) {
-            abort(403, "Counter {$ctNumber} must be closed before it can be printed.");
-        }
-
         // If a specific report type is requested, generate that report
         if ($report && in_array($report, $allowedReports)) {
             $data = $this->prepareClosingData($closing);
