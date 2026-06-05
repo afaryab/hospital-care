@@ -49,9 +49,10 @@ export default function Profile({
     status?: string;
 }) {
     const { auth, timezone } = usePage<SharedData>().props;
-    const browserTimezone = typeof window !== 'undefined'
-        ? Intl.DateTimeFormat().resolvedOptions().timeZone
-        : 'UTC';
+    const browserTimezone =
+        typeof window !== 'undefined'
+            ? Intl.DateTimeFormat().resolvedOptions().timeZone
+            : 'UTC';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -118,11 +119,12 @@ export default function Profile({
                                     <select
                                         id="timezone"
                                         name="timezone"
-                                        className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-xs focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs ring-offset-background placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                         defaultValue={auth.user.timezone ?? ''}
                                     >
                                         <option value="">
-                                            Auto-detect from browser ({browserTimezone})
+                                            Auto-detect from browser (
+                                            {browserTimezone})
                                         </option>
                                         {COMMON_TIMEZONES.map((tz) => (
                                             <option key={tz} value={tz}>
@@ -131,7 +133,7 @@ export default function Profile({
                                         ))}
                                     </select>
 
-                                    <p className="text-muted-foreground text-xs">
+                                    <p className="text-xs text-muted-foreground">
                                         Currently using: {timezone}
                                     </p>
 
