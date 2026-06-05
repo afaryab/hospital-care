@@ -81,7 +81,7 @@
             border-bottom: 1px dotted #CFCFCF;
             padding: 1mm 0;
             margin: 1mm 0;
-            font-size: 9px;
+            font-size: 11px;
             font-weight: bold;
         }
         
@@ -109,7 +109,7 @@
         }
         
         .item-line {
-            font-size: 9px;
+            font-size: 11px;
             margin-bottom: 0.5mm;
         }
         
@@ -121,7 +121,7 @@
         
         .order-line {
             background: #f0f0f0;
-            font-size: 8px;
+            font-size: 10px;
             color: #666;
             padding: 0.5mm;
             margin-bottom: 1mm;
@@ -137,7 +137,7 @@
         }
         
         .totals {
-            font-size: 9px;
+            font-size: 11px;
         }
         
         .total-line {
@@ -283,7 +283,7 @@
                 <div class="item-line">
                     <span class="col-product">
                         {{ $item?->expenseCategory?->name }}
-                        <p style="font-size: 8px;">{{ $item->notes }}</p>
+                        <p style="font-size: 10px;">{{ $item->notes }}</p>
                     </span>
                     
                     <span class="col-total">{{ $item->amount }}</span>

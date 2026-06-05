@@ -23,8 +23,8 @@ class ExpenseVoucherInfolist
                         TextEntry::make('expCategory.name')
                             ->label('Expense Category')
                             ->placeholder('N/A'),
-                        TextEntry::make('serviceOrder.so_number')
-                            ->label('Service Order')
+                        TextEntry::make('serviceOrder.service.name')
+                            ->label('Service')
                             ->placeholder('N/A'),
                         TextEntry::make('payed_to')
                             ->label('Paid To')

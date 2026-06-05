@@ -14,6 +14,26 @@ import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
 
+const COMMON_TIMEZONES = [
+    'Asia/Karachi',
+    'Asia/Kolkata',
+    'Asia/Dubai',
+    'Asia/Riyadh',
+    'Asia/Shanghai',
+    'Asia/Tokyo',
+    'Europe/London',
+    'Europe/Berlin',
+    'Europe/Paris',
+    'America/New_York',
+    'America/Chicago',
+    'America/Denver',
+    'America/Los_Angeles',
+    'America/Toronto',
+    'Australia/Sydney',
+    'Pacific/Auckland',
+    'UTC',
+];
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Profile settings',
@@ -28,7 +48,11 @@ export default function Profile({
     mustVerifyEmail: boolean;
     status?: string;
 }) {
-    const { auth } = usePage<SharedData>().props;
+    const { auth, timezone } = usePage<SharedData>().props;
+    const browserTimezone =
+        typeof window !== 'undefined'
+            ? Intl.DateTimeFormat().resolvedOptions().timeZone
+            : 'UTC';
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -86,6 +110,36 @@ export default function Profile({
                                     <InputError
                                         className="mt-2"
                                         message={errors.email}
+                                    />
+                                </div>
+
+                                <div className="grid gap-2">
+                                    <Label htmlFor="timezone">Timezone</Label>
+
+                                    <select
+                                        id="timezone"
+                                        name="timezone"
+                                        className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs ring-offset-background placeholder:text-muted-foreground focus:ring-1 focus:ring-ring focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                        defaultValue={auth.user.timezone ?? ''}
+                                    >
+                                        <option value="">
+                                            Auto-detect from browser (
+                                            {browserTimezone})
+                                        </option>
+                                        {COMMON_TIMEZONES.map((tz) => (
+                                            <option key={tz} value={tz}>
+                                                {tz.replace(/_/g, ' ')}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <p className="text-xs text-muted-foreground">
+                                        Currently using: {timezone}
+                                    </p>
+
+                                    <InputError
+                                        className="mt-2"
+                                        message={errors.timezone}
                                     />
                                 </div>
 

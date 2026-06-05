@@ -1,4 +1,8 @@
-@php $elements = $getState() ?? collect(); @endphp
+@php
+    $elements = $getState() ?? collect();
+    $uniqueTransactions = $elements->pluck('transaction')->filter()->unique('id');
+    $totalPaid = $uniqueTransactions->sum('amount');
+@endphp
 
 @if($elements->isEmpty())
     <p class="text-sm text-gray-500 italic">No income transactions found.</p>
@@ -13,7 +17,8 @@
                 <th class="px-3 py-2">Patient</th>
                 <th class="px-3 py-2">Type</th>
                 <th class="px-3 py-2">Payment</th>
-                <th class="px-3 py-2 text-right">Amount</th>
+                <th class="px-3 py-2 text-right">Charge</th>
+                <th class="px-3 py-2 text-right">Paid</th>
             </tr>
         </thead>
         <tbody>
@@ -26,6 +31,7 @@
                 <td class="px-3 py-2"><span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ $el->type }}</span></td>
                 <td class="px-3 py-2">{{ $el->transaction?->type ?? '-' }}</td>
                 <td class="px-3 py-2 text-right font-mono">{{ number_format($el->amount, 2) }}</td>
+                <td class="px-3 py-2 text-right font-mono">{{ number_format($el->transaction?->amount ?? 0, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -33,6 +39,7 @@
             <tr class="font-bold bg-gray-50 dark:bg-white/5">
                 <td colspan="6" class="px-3 py-2 text-right">Total</td>
                 <td class="px-3 py-2 text-right font-mono">{{ number_format($elements->sum('amount'), 2) }}</td>
+                <td class="px-3 py-2 text-right font-mono">{{ number_format($totalPaid, 2) }}</td>
             </tr>
         </tfoot>
     </table>

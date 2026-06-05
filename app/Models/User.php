@@ -51,6 +51,7 @@ class User extends Authenticatable implements FilamentUser
         'profile_img_id',
         'is_active',
         'banned_message',
+        'timezone',
         'created_at',
         'updated_at',
     ];
