@@ -79,7 +79,7 @@
 
         .item {
             margin-bottom: 3px;
-            font-size: 8px;
+            font-size: 10px;
         }
 
         .item-name {
@@ -89,7 +89,7 @@
         .item-details {
             display: flex;
             justify-content: space-between;
-            font-size: 7px;
+            font-size: 9px;
         }
 
         .totals {
@@ -209,10 +209,10 @@
                     <span>{{ number_format($item->total, 2) }}</span>
                 </div>
                 @if($item->provider)
-                <div style="font-size: 7px; color: #666;">{{ $item->provider->name }}</div>
+                <div style="font-size: 9px; color: #666;">{{ $item->provider->name }}</div>
                 @endif
                 @if($item->serviceOrder?->token_short)
-                <div style="font-size: 7px; color: #666;">Token #{{ $item->serviceOrder->token_short }}</div>
+                <div style="font-size: 9px; color: #666;">Token #{{ $item->serviceOrder->token_short }}</div>
                 @endif
             </div>
             @endforeach

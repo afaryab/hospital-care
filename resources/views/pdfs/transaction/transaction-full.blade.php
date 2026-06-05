@@ -110,11 +110,11 @@
             background-color: #f8f9fa;
             font-weight: bold;
             color: #495057;
-            font-size: 11px;
+            font-size: 13px;
         }
 
         .items-table td {
-            font-size: 10px;
+            font-size: 12px;
         }
 
         .text-right {
