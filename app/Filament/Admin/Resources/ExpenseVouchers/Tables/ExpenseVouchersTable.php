@@ -30,8 +30,8 @@ class ExpenseVouchersTable
                     ->label('Expense Category')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('serviceOrder.so_number')
-                    ->label('Service Order')
+                TextColumn::make('serviceOrder.service.name')
+                    ->label('Service')
                     ->searchable()
                     ->sortable()
                     ->toggleable(),
