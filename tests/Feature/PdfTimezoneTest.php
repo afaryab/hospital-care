@@ -23,7 +23,8 @@ test('pdf generated_at timestamp renders in the hospital timezone, not UTC', fun
     // This is the exact expression the Abacus accounting PDFs use for "Generated on".
     $rendered = DateHelper::pdfFormat(now(), 'Y-m-d H:i:s');
 
-    expect($rendered)->toBe('2026-05-23 03:30:00');
+    expect($rendered)->toBe('2026-05-23 03:30:00')
+        ->and($rendered)->not->toBe(now()->format('Y-m-d H:i:s'));
 });
 
 test('pdf dates follow the configured hospital timezone setting', function () {

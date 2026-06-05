@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Helpers\UserTimezone;
 use App\Models\Asset;
 use App\Models\Closing;
 use App\Models\ExpenseVoucher;
@@ -30,6 +31,7 @@ use App\Policies\TransactionPolicy;
 use App\Policies\UserPolicy;
 use App\Services\BreachDetectionService;
 use BezhanSalleh\PanelSwitch\PanelSwitch;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Blade;
@@ -120,6 +122,10 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(Login::class, function (Login $event): void {
             app(BreachDetectionService::class)->recordSuccessfulLogin($event->user, request());
+        });
+
+        TextColumn::configureUsing(function (TextColumn $column): void {
+            $column->timezone(UserTimezone::current());
         });
 
         Blade::directive('hdate', function (string $expression): string {
