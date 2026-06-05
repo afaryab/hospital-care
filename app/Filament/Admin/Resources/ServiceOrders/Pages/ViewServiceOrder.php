@@ -32,6 +32,9 @@ class ViewServiceOrder extends ViewRecord
                     TextEntry::make('so_short')->label('Short#')->copyable(),
                     TextEntry::make('patient.name')->label('Patient'),
                     TextEntry::make('service.name')->label('Service'),
+                    TextEntry::make('service.charges')
+                        ->label('Package Amount')
+                        ->numeric(decimalPlaces: 2),
                     TextEntry::make('doctor.name')->label('Provider'),
                     TextEntry::make('status')
                         ->badge()
@@ -43,7 +46,7 @@ class ViewServiceOrder extends ViewRecord
                     TextEntry::make('created_at')->label('Created')->dateTime('d M Y, H:i'),
                     TextEntry::make('closed_at')->label('Closed At')->dateTime('d M Y, H:i')->placeholder('-'),
                 ])
-                ->columns(4),
+                ->columns(5),
 
             Section::make('Income Transactions')
                 ->schema([
