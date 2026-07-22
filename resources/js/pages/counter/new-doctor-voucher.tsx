@@ -358,7 +358,7 @@ function VoucherDetailsForm({
             try {
                 const body: Record<string, unknown> = {
                     search: searchQuery,
-                    limit: 50,
+                    limit: 100,
                     doctor_only: filterDoctorOnly,
                     payed_to: userId,
                 };
@@ -439,7 +439,7 @@ function VoucherDetailsForm({
             {/* Service Orders Table */}
             {showServiceOrders && (
                 <div className="space-y-2">
-                    <Label>Service Orders (Completed &amp; Unpaid)</Label>
+                    <Label>Service Orders</Label>
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="relative min-w-[200px] flex-1">
                             <Search className="absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
@@ -524,8 +524,7 @@ function VoucherDetailsForm({
                                             colSpan={6}
                                             className="p-4 text-center text-muted-foreground"
                                         >
-                                            No completed unpaid service orders
-                                            found.
+                                            No service orders found.
                                         </td>
                                     </tr>
                                 ) : (
@@ -534,9 +533,7 @@ function VoucherDetailsForm({
                                             key={so.id}
                                             className={clsx(
                                                 'cursor-pointer border-b last:border-b-0 hover:bg-muted/40',
-                                                selectedServiceOrderIds.includes(
-                                                    so.id,
-                                                ) && 'bg-blue-50',
+                                                selectedServiceOrderIds.includes(so.id) && 'bg-blue-50',
                                             )}
                                             onClick={() =>
                                                 toggleServiceOrder(so.id)
@@ -579,8 +576,7 @@ function VoucherDetailsForm({
                     </div>
                     {selectedServiceOrderIds.length > 0 && (
                         <p className="text-sm text-muted-foreground">
-                            {selectedServiceOrderIds.length} service order(s)
-                            selected
+                            {selectedServiceOrderIds.length} service order(s) selected
                         </p>
                     )}
                 </div>

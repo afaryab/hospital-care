@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Closing;
 use App\Models\Patient;
 use App\Models\ServiceOrder;
 use App\Models\User;
@@ -105,14 +104,16 @@ test('completed unpaid returns expected structure', function () {
         ->assertJsonStructure(['data']);
 });
 
-test('completed unpaid only returns closed service orders', function () {
-    ServiceOrder::factory()->create(['status' => 'CLOSED']);
-    ServiceOrder::factory()->create(['status' => 'OPEN']);
+test('completed unpaid returns service orders regardless of status', function () {
+    $closed = ServiceOrder::factory()->create(['status' => 'CLOSED']);
+    $open = ServiceOrder::factory()->create(['status' => 'OPEN']);
+    $treated = ServiceOrder::factory()->create(['status' => 'treated']);
 
     $response = $this->postJson('/api/service-orders/completed-unpaid', []);
 
     $response->assertOk();
-    collect($response->json('data'))->each(fn ($item) => expect($item['status'])->toBe('CLOSED'));
+    $ids = collect($response->json('data'))->pluck('id');
+    expect($ids)->toContain($closed->id, $open->id, $treated->id);
 });
 
 test('completed unpaid respects limit', function () {

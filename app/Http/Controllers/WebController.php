@@ -1504,18 +1504,6 @@ class WebController extends Controller
             ]);
         }
 
-        if (! empty($serviceOrderIds)) {
-            // Backend validation: all service orders must be CLOSED
-            $serviceOrders = ServiceOrder::whereIn('id', $serviceOrderIds)->get();
-
-            $notClosed = $serviceOrders->filter(fn ($so) => $so->status !== 'CLOSED');
-            if ($notClosed->isNotEmpty()) {
-                return back()->withErrors([
-                    'service_order_ids' => 'All selected service orders must have CLOSED status. Invalid: '.$notClosed->pluck('so_number')->implode(', '),
-                ]);
-            }
-        }
-
         $voucher = DB::transaction(function () use ($validated, $serviceOrderIds) {
             $voucher = ExpenseVoucher::create([
                 'exp_category_id' => $validated['exp_category_id'],
