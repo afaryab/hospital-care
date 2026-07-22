@@ -20,6 +20,7 @@ class ServiceRecestation extends Model
         'tax_rate',
         'have_service_provider',
         'service_provider_types',
+        'color',
         'created_by',
     ];
 

@@ -19,6 +19,7 @@ use Filament\Actions\EditAction;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -75,9 +76,27 @@ class ServiceResource extends Resource
                 //     ->numeric(),
                 TextInput::make('slug')
                     ->required(),
-                \Filament\Forms\Components\Toggle::make('is_composit_service')
+                Select::make('color')
+                    ->label('Triage / Display Color')
+                    ->helperText('Sets the background color on featured service buttons. Use for emergency triage coding.')
+                    ->options([
+                        'red' => '🔴 Red — Immediate Resuscitation',
+                        'yellow' => '🟡 Yellow — Emergency',
+                        'blue' => '🔵 Blue — Urgent',
+                        'sky' => '🩵 Sky Blue — Semi Urgent',
+                        'green' => '🟢 Green — Non Urgent',
+                    ])
+                    ->nullable()
+                    ->searchable(),
+                Toggle::make('is_featured')
+                    ->label('Featured (shows as quick-select button)')
                     ->default(false),
-                \Filament\Forms\Components\Toggle::make('have_service_provider')
+                Toggle::make('generate_service_order')
+                    ->label('Generates Service Order')
+                    ->default(false),
+                Toggle::make('is_composit_service')
+                    ->default(false),
+                Toggle::make('have_service_provider')
                     ->live()
                     ->default(false),
                 Select::make('service_provider_types')

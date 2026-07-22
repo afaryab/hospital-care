@@ -25,6 +25,7 @@ class Service extends Model
         'name',
         'icon',
         'slug',
+        'color',
         'service_department_id',
         'charges',
         'charges_include_tax',
