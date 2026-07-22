@@ -1,6 +1,11 @@
 import DeptQueueDashboard from '@/elements/dept-portal/DeptQueueDashboard';
 import AppLayout from '@/layouts/app-layout';
-import { apiXrayMyQueue, apiXraySearch, xrayDashboard, xrayPatient } from '@/routes';
+import {
+    apiXrayMyQueue,
+    apiXraySearch,
+    xrayDashboard,
+    xrayPatient,
+} from '@/routes';
 import { Head, usePage } from '@inertiajs/react';
 import { Radiation } from 'lucide-react';
 

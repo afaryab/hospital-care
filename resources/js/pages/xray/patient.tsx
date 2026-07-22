@@ -43,8 +43,13 @@ export default function XrayPatient() {
                 chiefComplaintLabel="Referral Reason / Clinical History"
                 treatmentPlanLabel="Radiology Report"
                 treatmentPlanPlaceholder={`TECHNIQUE:\n\nFINDINGS:\nLungs: \nCardiac silhouette: \nMediastinum: \nBones: \nOther: \n\nIMPRESSION:\n`}
-                uploadAttachmentUrl={apiXrayUploadAttachment({ serviceOrder: serviceOrder.id }).url}
-                deleteAttachmentUrl={(attachmentId) => apiXrayDeleteAttachment({ attachment: attachmentId }).url}
+                uploadAttachmentUrl={
+                    apiXrayUploadAttachment({ serviceOrder: serviceOrder.id })
+                        .url
+                }
+                deleteAttachmentUrl={(attachmentId) =>
+                    apiXrayDeleteAttachment({ attachment: attachmentId }).url
+                }
             />
         </AppLayout>
     );

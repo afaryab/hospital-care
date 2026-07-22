@@ -1,6 +1,11 @@
 import DeptQueueDashboard from '@/elements/dept-portal/DeptQueueDashboard';
 import AppLayout from '@/layouts/app-layout';
-import { apiEmgMyQueue, apiEmgSearch, emgDashboard, emgPatient } from '@/routes';
+import {
+    apiEmgMyQueue,
+    apiEmgSearch,
+    emgDashboard,
+    emgPatient,
+} from '@/routes';
 import { Head, usePage } from '@inertiajs/react';
 import { Siren } from 'lucide-react';
 

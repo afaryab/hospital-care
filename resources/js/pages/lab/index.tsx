@@ -1,6 +1,11 @@
 import DeptQueueDashboard from '@/elements/dept-portal/DeptQueueDashboard';
 import AppLayout from '@/layouts/app-layout';
-import { apiLabMyQueue, apiLabSearch, labDashboard, labPatient } from '@/routes';
+import {
+    apiLabMyQueue,
+    apiLabSearch,
+    labDashboard,
+    labPatient,
+} from '@/routes';
 import { Head, usePage } from '@inertiajs/react';
 import { FlaskConical } from 'lucide-react';
 

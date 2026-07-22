@@ -43,8 +43,13 @@ export default function LabPatient() {
                 chiefComplaintLabel="Test Requested / Clinical Indication"
                 treatmentPlanLabel="Lab Results"
                 treatmentPlanPlaceholder={`Enter results here. Example:\nHb: 12.5 g/dL\nWBC: 8,000/μL\nPlatelets: 220,000/μL\nBlood Sugar (F): 95 mg/dL`}
-                uploadAttachmentUrl={apiLabUploadAttachment({ serviceOrder: serviceOrder.id }).url}
-                deleteAttachmentUrl={(attachmentId) => apiLabDeleteAttachment({ attachment: attachmentId }).url}
+                uploadAttachmentUrl={
+                    apiLabUploadAttachment({ serviceOrder: serviceOrder.id })
+                        .url
+                }
+                deleteAttachmentUrl={(attachmentId) =>
+                    apiLabDeleteAttachment({ attachment: attachmentId }).url
+                }
             />
         </AppLayout>
     );

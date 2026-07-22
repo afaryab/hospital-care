@@ -1,6 +1,11 @@
 import DeptQueueDashboard from '@/elements/dept-portal/DeptQueueDashboard';
 import AppLayout from '@/layouts/app-layout';
-import { apiDntMyQueue, apiDntSearch, dntDashboard, dntPatient } from '@/routes';
+import {
+    apiDntMyQueue,
+    apiDntSearch,
+    dntDashboard,
+    dntPatient,
+} from '@/routes';
 import { Head, usePage } from '@inertiajs/react';
 import { BriefcaseMedical } from 'lucide-react';
 

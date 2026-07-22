@@ -11,7 +11,8 @@ import {
 import { Head, usePage } from '@inertiajs/react';
 
 export default function EmgPatient() {
-    const { serviceOrder, previousVisits, formConfig, triages } = usePage<any>().props;
+    const { serviceOrder, previousVisits, formConfig, triages } =
+        usePage<any>().props;
     const breadcrumbs = [
         { title: 'Dashboard', href: '/' },
         { title: 'Emergency', href: emgDashboard().url },
@@ -44,10 +45,22 @@ export default function EmgPatient() {
                 showAttachments={formConfig?.showAttachments ?? false}
                 showDentalChart={formConfig?.showDentalChart ?? false}
                 chiefComplaintLabel="Presenting Complaint / Triage"
-                examSystems={['General', 'Airway', 'Breathing', 'Circulation', 'Neurological', 'Other']}
+                examSystems={[
+                    'General',
+                    'Airway',
+                    'Breathing',
+                    'Circulation',
+                    'Neurological',
+                    'Other',
+                ]}
                 triages={triages ?? []}
-                uploadAttachmentUrl={apiEmgUploadAttachment({ serviceOrder: serviceOrder.id }).url}
-                deleteAttachmentUrl={(attachmentId) => apiEmgDeleteAttachment({ attachment: attachmentId }).url}
+                uploadAttachmentUrl={
+                    apiEmgUploadAttachment({ serviceOrder: serviceOrder.id })
+                        .url
+                }
+                deleteAttachmentUrl={(attachmentId) =>
+                    apiEmgDeleteAttachment({ attachment: attachmentId }).url
+                }
             />
         </AppLayout>
     );

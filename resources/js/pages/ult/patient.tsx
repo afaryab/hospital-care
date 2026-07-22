@@ -43,8 +43,13 @@ export default function UltPatient() {
                 chiefComplaintLabel="Referral Reason"
                 treatmentPlanLabel="Ultrasound Report"
                 treatmentPlanPlaceholder={`FINDINGS:\nLiver: \nGallbladder: \nKidneys: \nBladder: \nUterus/Prostate: \nOther: \n\nIMPRESSION:\n`}
-                uploadAttachmentUrl={apiUltUploadAttachment({ serviceOrder: serviceOrder.id }).url}
-                deleteAttachmentUrl={(attachmentId) => apiUltDeleteAttachment({ attachment: attachmentId }).url}
+                uploadAttachmentUrl={
+                    apiUltUploadAttachment({ serviceOrder: serviceOrder.id })
+                        .url
+                }
+                deleteAttachmentUrl={(attachmentId) =>
+                    apiUltDeleteAttachment({ attachment: attachmentId }).url
+                }
             />
         </AppLayout>
     );

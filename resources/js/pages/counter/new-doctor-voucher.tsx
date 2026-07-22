@@ -533,7 +533,9 @@ function VoucherDetailsForm({
                                             key={so.id}
                                             className={clsx(
                                                 'cursor-pointer border-b last:border-b-0 hover:bg-muted/40',
-                                                selectedServiceOrderIds.includes(so.id) && 'bg-blue-50',
+                                                selectedServiceOrderIds.includes(
+                                                    so.id,
+                                                ) && 'bg-blue-50',
                                             )}
                                             onClick={() =>
                                                 toggleServiceOrder(so.id)
@@ -576,7 +578,8 @@ function VoucherDetailsForm({
                     </div>
                     {selectedServiceOrderIds.length > 0 && (
                         <p className="text-sm text-muted-foreground">
-                            {selectedServiceOrderIds.length} service order(s) selected
+                            {selectedServiceOrderIds.length} service order(s)
+                            selected
                         </p>
                     )}
                 </div>

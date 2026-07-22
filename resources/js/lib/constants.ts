@@ -64,5 +64,8 @@ const TRIAGE_BADGE_CLASSES: Record<string, string> = {
 
 /** Tailwind classes for a triage badge, keyed by the triage's stored color name. */
 export function triageBadgeClass(color?: string | null): string {
-    return TRIAGE_BADGE_CLASSES[color ?? ''] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
+    return (
+        TRIAGE_BADGE_CLASSES[color ?? ''] ??
+        'bg-slate-100 text-slate-600 ring-slate-200'
+    );
 }

@@ -1,6 +1,11 @@
 import DeptQueueDashboard from '@/elements/dept-portal/DeptQueueDashboard';
 import AppLayout from '@/layouts/app-layout';
-import { apiUltMyQueue, apiUltSearch, ultDashboard, ultPatient } from '@/routes';
+import {
+    apiUltMyQueue,
+    apiUltSearch,
+    ultDashboard,
+    ultPatient,
+} from '@/routes';
 import { Head, usePage } from '@inertiajs/react';
 import { ScanLine } from 'lucide-react';
 

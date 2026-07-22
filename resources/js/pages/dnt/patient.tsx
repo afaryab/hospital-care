@@ -41,7 +41,13 @@ export default function DntPatient() {
                 chiefComplaintLabel="Chief Dental Complaint"
                 treatmentPlanLabel="Dental Procedure / Treatment Plan"
                 treatmentPlanPlaceholder="Procedure performed, teeth involved, materials used, post-op instructions…"
-                examSystems={['Soft Tissue', 'Hard Tissue', 'Periodontal', 'Occlusion', 'Radiographic Findings']}
+                examSystems={[
+                    'Soft Tissue',
+                    'Hard Tissue',
+                    'Periodontal',
+                    'Occlusion',
+                    'Radiographic Findings',
+                ]}
             />
         </AppLayout>
     );
