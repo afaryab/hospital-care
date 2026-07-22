@@ -285,7 +285,32 @@ class WebController extends Controller
         $year && $query->whereYear('created_at', $year);
         $month && $query->whereMonth('created_at', $month);
 
-        $data = $query->orderBy('created_at', 'DESC')->paginate(8);
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'contact' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        if (! empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('ps_number', 'like', "%{$search}%")
+                    ->orWhereHas('treatments', fn ($t) => $t->where('so_number', 'like', "%{$search}%")
+                        ->orWhere('so_short', 'like', "%{$search}%"));
+            });
+        }
+
+        if (! empty($filters['contact'])) {
+            // Contact is encrypted at rest (App\Casts\SafeEncrypted), so it can't be
+            // searched with LIKE — match on the deterministic contact_hash instead,
+            // the same lookup pattern used by Api\PateintController::search().
+            $normalizedContact = preg_replace('/\D+/', '', $filters['contact']);
+            if ($normalizedContact !== '') {
+                $query->where('contact_hash', hash('sha256', $normalizedContact));
+            }
+        }
+
+        $data = $query->orderBy('created_at', 'DESC')->paginate(8)->withQueryString();
 
         $serviceDepartments = ServiceDepartment::all();
 
@@ -294,6 +319,10 @@ class WebController extends Controller
             'monthSelected' => $month,
             'patientsPaginated' => $data,
             'serviceDepartments' => $serviceDepartments,
+            'filters' => [
+                'search' => $filters['search'] ?? '',
+                'contact' => $filters['contact'] ?? '',
+            ],
         ]);
 
     }
@@ -1078,7 +1107,7 @@ class WebController extends Controller
         ])->with('success', 'Transaction updated');
     }
 
-    public function receaveables()
+    public function receaveables(Request $request)
     {
         $openCounter = Closing::with('transactions')->where('status', 'open')->where('receptionist_id', request()->user()->id)->first();
 
@@ -1086,13 +1115,64 @@ class WebController extends Controller
             return redirect(route('counter-open'));
         }
 
-        $receaveables = Receaveable::with('patient', 'transaction')->where('status', 'unpaid')->paginate();
+        $filters = $request->validate([
+            'status' => ['nullable', 'in:all,paid,unpaid'],
+            'search' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $status = $filters['status'] ?? 'unpaid';
+
+        $query = Receaveable::with(['patient', 'transaction']);
+
+        // Receivable statuses are stored inconsistently across the app
+        // (unpaid/paid/payed/pending/cancelled, mixed case) — normalize
+        // to the two buckets the filter cares about.
+        if ($status === 'paid') {
+            $query->whereRaw('LOWER(status) IN (?, ?)', ['paid', 'payed']);
+        } elseif ($status === 'unpaid') {
+            $query->whereRaw('LOWER(status) IN (?, ?)', ['unpaid', 'pending']);
+        }
+
+        if (! empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('patient', fn ($p) => $p->where('name', 'like', "%{$search}%")
+                    ->orWhere('ps_number', 'like', "%{$search}%"))
+                    ->orWhereHas('transaction.elements.serviceOrder', fn ($so) => $so->where('so_number', 'like', "%{$search}%")
+                        ->orWhere('so_short', 'like', "%{$search}%"));
+            });
+        }
+
+        $receaveables = $query->latest('id')->paginate()->withQueryString();
+
+        $receaveables->getCollection()->transform(function (Receaveable $r) {
+            $serviceOrder = $r->serviceOrder;
+
+            $r->setRelation('payments', $r->payments()->latest('id')->get());
+            $r->setRelation('linked_service_order', $serviceOrder);
+
+            $r->expense_vouchers = $serviceOrder
+                ? $serviceOrder->expenseVouchers()->withCount('serviceOrders')->get()->map(fn ($v) => [
+                    'id' => $v->id,
+                    'vc_number' => $v->vc_number,
+                    'amount' => (float) $v->amount,
+                    'share_amount' => (float) $v->amount / max(1, $v->service_orders_count),
+                    'status' => $v->status,
+                ])
+                : collect();
+
+            return $r;
+        });
 
         return Inertia::render('counter/receaveables', [
             'openCounter' => $openCounter,
             'receaveables' => $receaveables,
             'paymentMethods' => PaymentMethod::all(),
             'panelCompanies' => Panel::all(),
+            'filters' => [
+                'status' => $status,
+                'search' => $filters['search'] ?? '',
+            ],
         ]);
     }
 
@@ -1214,7 +1294,7 @@ class WebController extends Controller
             ->withSum(['transactionElements as expense_total' => function ($query) {
                 $query->where('income_or_expense', 'EXPENSE');
             }], 'amount')
-            ->withSum('expenseVouchers as voucher_expense_total', 'amount')
+            ->withVoucherExpenseTotal('voucher_expense_total')
             ->latest('id');
 
         if (! empty($filters['search'])) {
@@ -1270,7 +1350,7 @@ class WebController extends Controller
                 ->withSum(['transactionElements as expense_total' => function ($query) {
                     $query->where('income_or_expense', 'EXPENSE');
                 }], 'amount')
-                ->withSum('expenseVouchers as voucher_expense_total', 'amount')
+                ->withVoucherExpenseTotal('voucher_expense_total')
                 ->find($filters['service_order_id']);
 
             // Load receivables for the selected service order

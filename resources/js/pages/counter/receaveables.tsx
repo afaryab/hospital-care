@@ -1,18 +1,36 @@
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import ReceaveAblesButton from '@/elements/receaveables/ReceaveAblesButton';
 import AppLayout from '@/layouts/app-layout';
-import { counter, home, patientsRegisterPsNumber } from '@/routes';
-import { type BreadcrumbItem, type Panel, type PaymentMethod } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import {
+    counter,
+    home,
+    patientsRegisterPsNumber,
+    receaveables as receaveablesRoute,
+    serviceOrdersOverview,
+} from '@/routes';
+import {
+    type BreadcrumbItem,
+    type Panel,
+    type PaymentMethod,
+    type Receaveable,
+} from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 
 interface PageProps {
     yearSelected: string;
     monthSelected: string;
-    closings: {
-        data: Array<{
-            id: number;
-            name: string;
-            [key: string]: any;
-        }>;
+    receaveables: {
+        data: Receaveable[];
         current_page: number;
         last_page: number;
         total: number;
@@ -21,7 +39,21 @@ interface PageProps {
     };
     paymentMethods: PaymentMethod[];
     panelCompanies: Panel[];
+    filters?: {
+        status?: string;
+        search?: string;
+    };
     [key: string]: any;
+}
+
+const currency = new Intl.NumberFormat('en-PK', {
+    style: 'currency',
+    currency: 'PKR',
+    maximumFractionDigits: 2,
+});
+
+function formatMoney(value?: number | null): string {
+    return currency.format(value ?? 0);
 }
 
 export default function ReveaveablesList() {
@@ -40,19 +72,88 @@ export default function ReveaveablesList() {
         },
     ];
 
-    const { receaveables, paymentMethods, panelCompanies } =
+    const { receaveables, paymentMethods, panelCompanies, filters } =
         usePage<PageProps>().props;
+
+    const [status, setStatus] = useState<string>(filters?.status ?? 'unpaid');
+    const [search, setSearch] = useState<string>(filters?.search ?? '');
+
+    const applyFilters = () => {
+        router.get(
+            receaveablesRoute().url,
+            {
+                status: status || undefined,
+                search: search || undefined,
+            },
+            { preserveState: true, replace: true },
+        );
+    };
+
+    const clearFilters = () => {
+        setStatus('unpaid');
+        setSearch('');
+        router.get(
+            receaveablesRoute().url,
+            {},
+            { preserveState: false, replace: true },
+        );
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Receaveables - Counter" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
+                <div className="grid gap-4 rounded-xl bg-white p-4 text-[#1c398e] lg:grid-cols-3 dark:bg-neutral-950">
+                    <div className="space-y-2 lg:col-span-2">
+                        <Label htmlFor="receaveable-search">Search</Label>
+                        <Input
+                            id="receaveable-search"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            onKeyDown={(event) =>
+                                event.key === 'Enter' && applyFilters()
+                            }
+                            placeholder="Patient name, PS#, or SO#/short#"
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="receaveable-status">Status</Label>
+                        <Select
+                            value={status}
+                            onValueChange={(value) => setStatus(value)}
+                        >
+                            <SelectTrigger id="receaveable-status">
+                                <SelectValue placeholder="Unpaid" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="unpaid">Unpaid</SelectItem>
+                                <SelectItem value="paid">Paid</SelectItem>
+                                <SelectItem value="all">All</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex gap-3 lg:col-span-3">
+                        <Button onClick={applyFilters}>Apply Filters</Button>
+                        <Button variant="outline" onClick={clearFilters}>
+                            Clear
+                        </Button>
+                    </div>
+                </div>
                 <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950">
                     <table className="bg-gray-50 text-left text-xs text-gray-700 uppercase dark:bg-neutral-950 dark:text-gray-400">
                         <thead>
                             <tr>
                                 <th scope="col" className="px-6 py-3">
                                     Patient
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Service Order
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Transactions
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Expense Vouchers
                                 </th>
                                 <th scope="col" className="px-6 py-3">
                                     Orignal
@@ -69,14 +170,19 @@ export default function ReveaveablesList() {
                             </tr>
                         </thead>
                         <tbody>
-                            {receaveables.data.map((r: any) => {
+                            {receaveables.data.map((r) => {
                                 const explodedPsid =
                                     r.patient.ps_number.split('/');
+                                const linkedServiceOrder =
+                                    r.linked_service_order;
+                                const payments = r.payments ?? [];
+                                const expenseVouchers =
+                                    r.expense_vouchers ?? [];
 
                                 return (
                                     <tr
                                         key={r.id}
-                                        className="border-b border-gray-200 bg-white dark:border-neutral-950 dark:bg-neutral-800"
+                                        className="border-b border-gray-200 bg-white align-top dark:border-neutral-950 dark:bg-neutral-800"
                                     >
                                         <td
                                             scope="row"
@@ -102,6 +208,78 @@ export default function ReveaveablesList() {
                                                 </span>
                                             </Link>
                                         </td>
+                                        <td className="px-6 py-3 normal-case">
+                                            {linkedServiceOrder ? (
+                                                <Link
+                                                    href={
+                                                        serviceOrdersOverview({
+                                                            query: {
+                                                                service_order_id:
+                                                                    linkedServiceOrder.id,
+                                                            },
+                                                        }).url
+                                                    }
+                                                    className="text-blue-500"
+                                                >
+                                                    {
+                                                        linkedServiceOrder.so_number
+                                                    }
+                                                </Link>
+                                            ) : (
+                                                <span className="text-gray-400">
+                                                    —
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-3 normal-case">
+                                            <div>
+                                                TR:{' '}
+                                                {r.transaction?.tr_number ??
+                                                    '—'}
+                                            </div>
+                                            {payments.map((payment) => (
+                                                <div
+                                                    key={payment.id}
+                                                    className="text-gray-500"
+                                                >
+                                                    Payment: {payment.tr_number}{' '}
+                                                    (
+                                                    {formatMoney(
+                                                        payment.amount,
+                                                    )}
+                                                    )
+                                                </div>
+                                            ))}
+                                        </td>
+                                        <td className="px-6 py-3 normal-case">
+                                            {expenseVouchers.length === 0 ? (
+                                                <span className="text-gray-400">
+                                                    —
+                                                </span>
+                                            ) : (
+                                                expenseVouchers.map(
+                                                    (voucher) => (
+                                                        <div key={voucher.id}>
+                                                            {voucher.vc_number}:{' '}
+                                                            {formatMoney(
+                                                                voucher.share_amount,
+                                                            )}
+                                                            {voucher.share_amount !==
+                                                                voucher.amount && (
+                                                                <span className="text-[10px] text-gray-500">
+                                                                    {' '}
+                                                                    (of{' '}
+                                                                    {formatMoney(
+                                                                        voucher.amount,
+                                                                    )}
+                                                                    , shared)
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    ),
+                                                )
+                                            )}
+                                        </td>
                                         <td className="px-6 py-3">
                                             {r.orignal_amount}
                                         </td>
@@ -110,9 +288,6 @@ export default function ReveaveablesList() {
                                         </td>
                                         <td className="px-6 py-3">
                                             {r.status}
-                                        </td>
-                                        <td className="px-6 py-3">
-                                            {r.closed_at}
                                         </td>
                                         <td className="px-6 py-3">
                                             <ReceaveAblesButton
@@ -127,7 +302,7 @@ export default function ReveaveablesList() {
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colSpan={4} className="text-right">
+                                <td colSpan={8} className="text-right">
                                     {(() => {
                                         const current =
                                             receaveables.current_page;
@@ -180,7 +355,7 @@ export default function ReveaveablesList() {
                                         const pages = buildRange(current, last);
 
                                         const makeHref = (page: number) =>
-                                            `?page=${page}`;
+                                            `?page=${page}&status=${status}&search=${encodeURIComponent(search)}`;
 
                                         return (
                                             <nav className="flex items-center justify-center gap-2 py-2">
