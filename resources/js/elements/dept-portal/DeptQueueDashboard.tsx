@@ -54,6 +54,7 @@ interface Props {
     searchApiUrl: string; // POST — /api/{dept}/search
     searchTypes: string[]; // SO types to search, e.g. ['EMG']
     doctorScoped?: boolean; // whether queue is filtered by doctor_id (default true)
+    showCallButton?: boolean; // departments like EMG don't call patients by turn (default true)
     flashError?: string;
     icon: React.ReactNode;
 }
@@ -105,6 +106,7 @@ export default function DeptQueueDashboard({
     searchApiUrl,
     searchTypes,
     doctorScoped = true,
+    showCallButton = true,
     flashError,
     icon,
 }: Props) {
@@ -246,7 +248,7 @@ export default function DeptQueueDashboard({
                         <h1 className="text-xl font-bold text-slate-900 md:text-2xl">
                             {deptName} Dashboard
                         </h1>
-                        <p className="text-sm text-slate-500">Today's queue</p>
+                        <p className="text-sm text-slate-500">Live queue</p>
                     </div>
                 </div>
                 <div className="hidden items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200 sm:flex">
@@ -261,7 +263,7 @@ export default function DeptQueueDashboard({
             <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {[
                     {
-                        label: 'Total Today',
+                        label: 'Total',
                         value: stats.total,
                         icon: <Users className="h-5 w-5 text-slate-500" />,
                         bg: 'bg-white',
@@ -400,7 +402,7 @@ export default function DeptQueueDashboard({
                     <h2 className="text-base font-semibold text-slate-900">
                         {searchResults
                             ? `Search Results (${searchResults.length})`
-                            : 'My Queue Today'}
+                            : 'My Queue'}
                     </h2>
                     <button
                         type="button"
@@ -421,7 +423,7 @@ export default function DeptQueueDashboard({
                         <p className="text-sm text-slate-500">
                             {searchResults
                                 ? 'No matching orders found.'
-                                : 'No patients in your queue today.'}
+                                : 'No patients in your queue.'}
                         </p>
                     </div>
                 ) : (
@@ -526,26 +528,29 @@ export default function DeptQueueDashboard({
                                     </div>
 
                                     <div className="flex shrink-0 items-center gap-2">
-                                        {!isTreated && !isInProgress && (
-                                            <button
-                                                type="button"
-                                                disabled={
-                                                    callingPatient === order.id
-                                                }
-                                                onClick={(e) =>
-                                                    callPatient(order, e)
-                                                }
-                                                className={clsx(
-                                                    'hidden rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors disabled:opacity-50 sm:block',
-                                                    accentColor,
-                                                    'hover:opacity-90',
-                                                )}
-                                            >
-                                                {callingPatient === order.id
-                                                    ? 'Calling…'
-                                                    : 'Call'}
-                                            </button>
-                                        )}
+                                        {showCallButton &&
+                                            !isTreated &&
+                                            !isInProgress && (
+                                                <button
+                                                    type="button"
+                                                    disabled={
+                                                        callingPatient ===
+                                                        order.id
+                                                    }
+                                                    onClick={(e) =>
+                                                        callPatient(order, e)
+                                                    }
+                                                    className={clsx(
+                                                        'hidden rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors disabled:opacity-50 sm:block',
+                                                        accentColor,
+                                                        'hover:opacity-90',
+                                                    )}
+                                                >
+                                                    {callingPatient === order.id
+                                                        ? 'Calling…'
+                                                        : 'Call'}
+                                                </button>
+                                            )}
                                         <button
                                             type="button"
                                             onClick={() =>

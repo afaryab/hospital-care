@@ -3,10 +3,22 @@ import DentalChart, {
 } from '@/components/ui/dental-chart';
 import DrugPicker from '@/components/ui/drug-picker';
 import Icd10Picker from '@/components/ui/icd10-picker';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import TreatmentAttachments, {
     type TreatmentAttachmentData,
 } from '@/components/ui/treatment-attachments';
-import { formatPatientAge, triageBadgeClass } from '@/lib/constants';
+import {
+    formatPatientAge,
+    triageBadgeClass,
+    triageDotClass,
+} from '@/lib/constants';
+import { printServiceorder } from '@/routes';
 import { router } from '@inertiajs/react';
 import { clsx } from 'clsx';
 import {
@@ -23,6 +35,7 @@ import {
     History,
     Lock,
     Plus,
+    Printer,
     Save,
     Siren,
     Stethoscope,
@@ -147,6 +160,7 @@ export interface DeptPatientFormProps {
     requireTreatmentTime?: boolean;
     showAttachments?: boolean;
     showDentalChart?: boolean;
+    showCallButton?: boolean; // departments like EMG don't call patients by turn (default true)
     treatmentPlanLabel?: string; // e.g. "Imaging Report" for ULT/XRAY
     treatmentPlanPlaceholder?: string; // pre-filled template text
     chiefComplaintLabel?: string;
@@ -302,6 +316,7 @@ export default function DeptPatientForm({
     requireTreatmentTime = false,
     showAttachments = false,
     showDentalChart = false,
+    showCallButton = true,
     treatmentPlanLabel = 'Treatment Plan / Notes',
     treatmentPlanPlaceholder = 'Management plan, investigations, advice…',
     chiefComplaintLabel = 'Chief Complaint',
@@ -579,7 +594,8 @@ export default function DeptPatientForm({
                                 {previousVisits.length})
                             </button>
 
-                            {!isFinalized &&
+                            {showCallButton &&
+                                !isFinalized &&
                                 serviceOrder.status.toLowerCase() ===
                                     'open' && (
                                     <button
@@ -595,6 +611,19 @@ export default function DeptPatientForm({
                                         {calling ? 'Calling…' : 'Call Patient'}
                                     </button>
                                 )}
+
+                            <a
+                                href={
+                                    printServiceorder({
+                                        id: serviceOrder.id,
+                                    }).url
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                                <Printer className="h-3.5 w-3.5" /> Print
+                            </a>
 
                             {!isFinalized && (
                                 <>
@@ -801,28 +830,43 @@ export default function DeptPatientForm({
                                                 *
                                             </span>
                                         </label>
-                                        <select
+                                        <Select
                                             disabled={isFinalized}
-                                            value={triageId ?? ''}
-                                            onChange={(e) =>
+                                            value={
+                                                triageId ? String(triageId) : ''
+                                            }
+                                            onValueChange={(value) =>
                                                 setTriageId(
-                                                    e.target.value
-                                                        ? Number(e.target.value)
+                                                    value
+                                                        ? Number(value)
                                                         : null,
                                                 )
                                             }
-                                            className={inputClass(isFinalized)}
-                                            required
                                         >
-                                            <option value="">
-                                                Select triage level…
-                                            </option>
-                                            {triages.map((t) => (
-                                                <option key={t.id} value={t.id}>
-                                                    {t.name}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Select triage level…" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {triages.map((t) => (
+                                                    <SelectItem
+                                                        key={t.id}
+                                                        value={String(t.id)}
+                                                    >
+                                                        <span className="flex items-center gap-2">
+                                                            <span
+                                                                className={clsx(
+                                                                    'h-2.5 w-2.5 shrink-0 rounded-full',
+                                                                    triageDotClass(
+                                                                        t.color,
+                                                                    ),
+                                                                )}
+                                                            />
+                                                            {t.name}
+                                                        </span>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                         {triageId && (
                                             <span
                                                 className={clsx(

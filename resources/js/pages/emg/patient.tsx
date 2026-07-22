@@ -44,6 +44,7 @@ export default function EmgPatient() {
                 requireTreatmentTime={formConfig?.requireTreatmentTime ?? true}
                 showAttachments={formConfig?.showAttachments ?? false}
                 showDentalChart={formConfig?.showDentalChart ?? false}
+                showCallButton={false}
                 chiefComplaintLabel="Presenting Complaint / Triage"
                 examSystems={[
                     'General',
