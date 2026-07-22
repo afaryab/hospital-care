@@ -35,14 +35,19 @@
                     @endphp
                     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $colors }}">{{ strtoupper($status) }}</span>
                 </td>
-                <td class="px-3 py-2 text-right font-mono">{{ number_format($voucher->amount, 2) }}</td>
+                <td class="px-3 py-2 text-right font-mono">
+                    {{ number_format($voucher->share_amount ?? $voucher->amount, 2) }}
+                    @if(($voucher->service_orders_count ?? 1) > 1)
+                        <div class="text-[10px] font-normal text-gray-500 dark:text-gray-400">of {{ number_format($voucher->amount, 2) }} total, shared across {{ $voucher->service_orders_count }} orders</div>
+                    @endif
+                </td>
             </tr>
             @endforeach
         </tbody>
         <tfoot>
             @php
-                $paidTotal = $vouchers->filter(fn($v) => strtolower($v->status) === 'payed' || strtolower($v->status) === 'paid')->sum('amount');
-                $pendingTotal = $vouchers->filter(fn($v) => strtolower($v->status) === 'pending')->sum('amount');
+                $paidTotal = $vouchers->filter(fn($v) => strtolower($v->status) === 'payed' || strtolower($v->status) === 'paid')->sum(fn($v) => $v->share_amount ?? $v->amount);
+                $pendingTotal = $vouchers->filter(fn($v) => strtolower($v->status) === 'pending')->sum(fn($v) => $v->share_amount ?? $v->amount);
             @endphp
             <tr class="font-bold bg-gray-50 dark:bg-white/5">
                 <td colspan="6" class="px-3 py-2 text-right">Paid Total</td>
@@ -54,7 +59,7 @@
             </tr>
             <tr class="font-bold bg-gray-100 dark:bg-white/10">
                 <td colspan="6" class="px-3 py-2 text-right">Grand Total</td>
-                <td class="px-3 py-2 text-right font-mono">{{ number_format($vouchers->sum('amount'), 2) }}</td>
+                <td class="px-3 py-2 text-right font-mono">{{ number_format($vouchers->sum(fn($v) => $v->share_amount ?? $v->amount), 2) }}</td>
             </tr>
         </tfoot>
     </table>

@@ -261,8 +261,8 @@ class GenericReportPdfController extends Controller
             ->where('service_orders.created_at', '<=', DateHelper::dayEndUtc($until))
             ->with(['patient:id,name', 'service:id,name', 'doctor:id,name', 'expenseVouchers'])
             ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
-            ->withSum(['expenseVouchers as voucher_total'], 'amount')
-            ->withSum(['expenseVouchers as paid_total' => fn ($q) => $q->where('status', 'payed')], 'amount');
+            ->withVoucherExpenseTotal('voucher_total')
+            ->withVoucherExpenseTotal('paid_total', fn ($q) => $q->whereNotNull('expense_vouchers.transaction_id')->whereNotNull('expense_vouchers.transaction_element_id'));
 
         if ($request->filled('status')) {
             $query->where('status', $request->input('status'));
@@ -309,10 +309,14 @@ class GenericReportPdfController extends Controller
             ->orderBy('created_at')
             ->get();
 
-        // Expense vouchers for this SO
+        // Expense vouchers for this SO — share_amount divides a voucher's
+        // amount across every service order it's linked to, so a voucher
+        // shared with other orders isn't counted in full against this one.
         $expenseVouchers = $order->expenseVouchers()
+            ->withCount('serviceOrders')
             ->with(['expCategory', 'payedTo'])
-            ->get();
+            ->get()
+            ->each(fn ($voucher) => $voucher->share_amount = $voucher->amount / max(1, $voucher->service_orders_count));
 
         return $this->renderPdf('pdfs.reports.generic-service-order-detail', [
             'order' => $order,
@@ -388,7 +392,7 @@ class GenericReportPdfController extends Controller
             ->where('service_orders.created_at', '<=', DateHelper::dayEndUtc($until))
             ->with(['patient:id,name', 'service:id,name', 'doctor:id,name'])
             ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
-            ->withSum('expenseVouchers as voucher_total', 'amount');
+            ->withVoucherExpenseTotal('voucher_total');
 
         if ($request->filled('type')) {
             $query->where('type', $request->input('type'));
@@ -436,7 +440,7 @@ class GenericReportPdfController extends Controller
             ->where('service_orders.created_at', '<=', DateHelper::dayEndUtc($until))
             ->with(['patient:id,name', 'service:id,name', 'doctor:id,name', 'expenseVouchers.expCategory'])
             ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
-            ->withSum('expenseVouchers as voucher_total', 'amount');
+            ->withVoucherExpenseTotal('voucher_total');
 
         if ($request->filled('doctor_id')) {
             $query->where('doctor_id', $request->input('doctor_id'));

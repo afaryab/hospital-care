@@ -3,6 +3,7 @@
 use App\Filament\Admin\Resources\ServiceOrders\Pages\ListServiceOrders;
 use App\Filament\Admin\Resources\ServiceOrders\Pages\ViewServiceOrder;
 use App\Models\Administrator;
+use App\Models\ExpenseVoucher;
 use App\Models\ServiceOrder;
 use App\Models\TreatmentRecord;
 use App\Models\Triage;
@@ -18,9 +19,34 @@ test('service order list page renders', function () {
     Livewire\Livewire::test(ListServiceOrders::class)->assertSuccessful();
 });
 
+test('service order list vouchers amount column divides a shared expense voucher', function () {
+    $serviceOrder = ServiceOrder::factory()->create();
+    $otherOrder = ServiceOrder::factory()->create();
+
+    $voucher = ExpenseVoucher::factory()->create(['amount' => 900]);
+    $voucher->serviceOrders()->attach([$serviceOrder->id, $otherOrder->id]);
+
+    Livewire\Livewire::test(ListServiceOrders::class)
+        ->call('loadTable')
+        ->assertTableColumnStateSet('expense_vouchers_sum_amount', 450.0, record: $serviceOrder);
+});
+
 test('service order view page renders', function () {
     $serviceOrder = ServiceOrder::factory()->create();
     Livewire\Livewire::test(ViewServiceOrder::class, ['record' => $serviceOrder->getRouteKey()])->assertSuccessful();
+});
+
+test('service order view page shows the divided share of a shared expense voucher', function () {
+    $serviceOrder = ServiceOrder::factory()->create();
+    $otherOrder = ServiceOrder::factory()->create();
+
+    $voucher = ExpenseVoucher::factory()->create(['amount' => 800]);
+    $voucher->serviceOrders()->attach([$serviceOrder->id, $otherOrder->id]);
+
+    Livewire\Livewire::test(ViewServiceOrder::class, ['record' => $serviceOrder->getRouteKey()])
+        ->assertSuccessful()
+        ->assertSee('400.00')
+        ->assertSee('shared across 2 orders');
 });
 
 test('service order list can be filtered by triage', function () {

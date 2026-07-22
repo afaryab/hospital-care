@@ -24,7 +24,7 @@ class ServicePerformanceReportExport implements FromQuery, Responsable, ShouldAu
     {
         return ServiceOrder::query()
             ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
-            ->withSum(['expenseVouchers as voucher_total'], 'amount')
+            ->withVoucherExpenseTotal('voucher_total')
             ->with(['patient', 'service', 'doctor'])
             ->when($this->filters['from'] ?? null, fn ($q, $date) => $q->where('service_orders.created_at', '>=', DateHelper::dayStartUtc($date)))
             ->when($this->filters['until'] ?? null, fn ($q, $date) => $q->where('service_orders.created_at', '<=', DateHelper::dayEndUtc($date)))

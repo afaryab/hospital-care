@@ -63,7 +63,7 @@ class ServiceOrderResource extends Resource
                         $q->where('income_or_expense', 'EXPENSE');
                     }], 'amount')
                     ->withCount('expenseVouchers')
-                    ->withSum('expenseVouchers', 'amount')
+                    ->withVoucherExpenseTotal('expense_vouchers_sum_amount')
             )
             // Render the page skeleton immediately; data loads in a follow-up
             // Livewire request so the initial HTTP response never times out.

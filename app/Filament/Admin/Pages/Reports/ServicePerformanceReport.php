@@ -111,7 +111,7 @@ class ServicePerformanceReport extends Page implements Tables\Contracts\HasTable
                     ->withSum(['transactionElements as income_total' => function ($q) {
                         $q->where('income_or_expense', 'INCOME');
                     }], 'amount')
-                    ->withSum(['expenseVouchers as voucher_total'], 'amount')
+                    ->withVoucherExpenseTotal('voucher_total')
                     ->with(['patient:id,name', 'service:id,name', 'doctor:id,name'])
                     ->when($this->filters['from'] ?? null, fn (Builder $q, $date) => $q->where('service_orders.created_at', '>=', DateHelper::dayStartUtc($date)))
                     ->when($this->filters['until'] ?? null, fn (Builder $q, $date) => $q->where('service_orders.created_at', '<=', DateHelper::dayEndUtc($date)))
