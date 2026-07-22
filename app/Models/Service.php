@@ -26,6 +26,7 @@ class Service extends Model
         'icon',
         'slug',
         'color',
+        'treatment_form_config',
         'service_department_id',
         'charges',
         'charges_include_tax',
@@ -46,6 +47,7 @@ class Service extends Model
         'is_composit_service' => 'boolean',
         'generate_service_order' => 'boolean',
         'is_featured' => 'boolean',
+        'treatment_form_config' => 'json',
     ];
 
     // Auto-append computed attributes (accessors) when serializing

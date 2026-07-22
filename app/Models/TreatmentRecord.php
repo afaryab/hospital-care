@@ -18,6 +18,7 @@ class TreatmentRecord extends Model
         'service_order_id',
         'department_id',
         'treating_doctor_id',
+        'triage_id',
         'chief_complaint',
         'history_of_present_illness',
         'examination_findings',
@@ -30,6 +31,7 @@ class TreatmentRecord extends Model
         'outcome',
         'referral_to',
         'department_specific_data',
+        'dental_chart',
         'treated_at',
         'recorded_by',
         'is_finalized',
@@ -42,6 +44,7 @@ class TreatmentRecord extends Model
             'examination_findings' => 'json',
             'prescriptions' => 'json',
             'department_specific_data' => 'json',
+            'dental_chart' => 'json',
             'is_finalized' => 'boolean',
             'treated_at' => 'datetime',
             'finalized_at' => 'datetime',
@@ -105,6 +108,23 @@ class TreatmentRecord extends Model
     public function vitalSigns(): HasMany
     {
         return $this->hasMany(VitalSign::class);
+    }
+
+    public function triage(): BelongsTo
+    {
+        return $this->belongsTo(Triage::class);
+    }
+
+    public function triageHistories(): HasMany
+    {
+        // Tie-break on id: sequential changes within the same second would
+        // otherwise sort ambiguously on changed_at alone.
+        return $this->hasMany(TriageHistory::class)->latest('changed_at')->latest('id');
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(TreatmentAttachment::class);
     }
 
     public function versions(): HasMany
