@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import DrugPicker from '@/components/ui/drug-picker';
 import Icd10Picker from '@/components/ui/icd10-picker';
 import AppLayout from '@/layouts/app-layout';
 import { opdDashboard, opdPatient, apiOpdSaveTreatment, apiOpdUpdateStatus } from '@/routes';
@@ -537,8 +538,24 @@ export default function OpdPatient() {
                                     {prescriptions.map((row, idx) => (
                                         <tr key={idx} className="bg-white hover:bg-slate-50">
                                             <td className="px-2 py-1.5">
-                                                <input disabled={isFinalized} value={row.drug_name} onChange={(e) => updatePrescription(idx, 'drug_name', e.target.value)}
-                                                    placeholder="Drug name" className={tableInputClass(isFinalized)} />
+                                                {isFinalized ? (
+                                                    <input disabled value={row.drug_name} className={tableInputClass(true)} />
+                                                ) : (
+                                                    <DrugPicker
+                                                        value={row.drug_name}
+                                                        onChange={(name) => updatePrescription(idx, 'drug_name', name)}
+                                                        onSelect={(drug) => {
+                                                            setPrescriptions((prev) => prev.map((r, i) => i !== idx ? r : {
+                                                                ...r,
+                                                                drug_name: drug.name,
+                                                                dose: drug.default_dose ?? r.dose,
+                                                                frequency: drug.default_frequency ?? r.frequency,
+                                                                duration: drug.default_duration ?? r.duration,
+                                                                route: drug.default_route ?? r.route,
+                                                            }));
+                                                        }}
+                                                    />
+                                                )}
                                             </td>
                                             <td className="px-2 py-1.5">
                                                 <input disabled={isFinalized} value={row.dose} onChange={(e) => updatePrescription(idx, 'dose', e.target.value)}

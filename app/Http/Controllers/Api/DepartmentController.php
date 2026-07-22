@@ -127,4 +127,73 @@ class DepartmentController extends Controller
             'data' => $serviceOrder->only(['id', 'status']),
         ]);
     }
+
+    /**
+     * Return today's queue for the given department types.
+     * Route: GET /api/{dept}/my-queue?types[]=EMG
+     */
+    public function myQueue(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $types = $request->query('types', []);
+
+        if (empty($types) || ! is_array($types)) {
+            return response()->json(['data' => [], 'stats' => ['open' => 0, 'in_progress' => 0, 'treated' => 0, 'total' => 0]]);
+        }
+
+        $query = ServiceOrder::query()
+            ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text'])
+            ->whereIn('type', $types)
+            ->whereDate('created_at', Carbon::today())
+            ->orderByRaw("FIELD(status, 'in-progress', 'IN-PROGRESS', 'open', 'OPEN', 'treated', 'TREATED') ASC")
+            ->orderBy('created_at', 'ASC');
+
+        // For departments with a doctor assignment, scope to the logged-in user
+        if ($request->boolean('doctor_scoped', true)) {
+            $query->where('doctor_id', $user->id);
+        }
+
+        $orders = $query->limit(50)->get();
+
+        return response()->json([
+            'data' => $orders->values(),
+            'stats' => [
+                'open' => $orders->filter(fn ($o) => strtolower($o->status) === 'open')->count(),
+                'in_progress' => $orders->filter(fn ($o) => strtolower($o->status) === 'in-progress')->count(),
+                'treated' => $orders->filter(fn ($o) => in_array(strtolower($o->status), ['treated', 'closed']))->count(),
+                'total' => $orders->count(),
+            ],
+        ]);
+    }
+
+    /**
+     * Live search across SO number and patient name for a department.
+     * Route: POST /api/{dept}/search
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'q' => ['required', 'string', 'max:255'],
+            'types' => ['required', 'array'],
+            'types.*' => ['string'],
+        ]);
+
+        $q = trim($data['q']);
+        $types = $data['types'];
+
+        $results = ServiceOrder::query()
+            ->with(['patient:id,name,ps_number', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text'])
+            ->whereIn('type', $types)
+            ->where(function ($query) use ($q) {
+                $query->where('so_number', 'like', "%{$q}%")
+                    ->orWhere('so_short', 'like', "%{$q}%")
+                    ->orWhereHas('patient', fn ($pq) => $pq->where('name', 'like', "%{$q}%")
+                        ->orWhere('ps_number', 'like', "%{$q}%"));
+            })
+            ->latest('id')
+            ->limit(15)
+            ->get();
+
+        return response()->json(['data' => $results->values()]);
+    }
 }

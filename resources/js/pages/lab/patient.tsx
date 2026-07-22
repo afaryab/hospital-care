@@ -15,11 +15,19 @@ export default function LabPatient() {
             <Head title={`LAB — ${serviceOrder.patient?.name ?? 'Patient'}`} />
             <DeptPatientForm
                 deptName="Laboratory"
+                accentColor="bg-violet-600"
                 dashboardUrl={labDashboard().url}
                 saveApiUrl={apiLabSaveTreatment({ serviceOrder: serviceOrder.id }).url}
                 updateStatusUrl={apiLabUpdateStatus({ serviceOrder: serviceOrder.id }).url}
                 serviceOrder={serviceOrder}
                 previousVisits={previousVisits ?? []}
+                showVitals={false}
+                showExamFindings={false}
+                showPrescriptions={false}
+                showFollowUp={false}
+                chiefComplaintLabel="Test Requested / Clinical Indication"
+                treatmentPlanLabel="Lab Results"
+                treatmentPlanPlaceholder={`Enter results here. Example:\nHb: 12.5 g/dL\nWBC: 8,000/μL\nPlatelets: 220,000/μL\nBlood Sugar (F): 95 mg/dL`}
             />
         </AppLayout>
     );

@@ -15,11 +15,20 @@ export default function DntPatient() {
             <Head title={`DNT — ${serviceOrder.patient?.name ?? 'Patient'}`} />
             <DeptPatientForm
                 deptName="Dental"
+                accentColor="bg-sky-600"
                 dashboardUrl={dntDashboard().url}
                 saveApiUrl={apiDntSaveTreatment({ serviceOrder: serviceOrder.id }).url}
                 updateStatusUrl={apiDntUpdateStatus({ serviceOrder: serviceOrder.id }).url}
                 serviceOrder={serviceOrder}
                 previousVisits={previousVisits ?? []}
+                showVitals={false}
+                showExamFindings={true}
+                showPrescriptions={true}
+                showFollowUp={true}
+                chiefComplaintLabel="Chief Dental Complaint"
+                treatmentPlanLabel="Dental Procedure / Treatment Plan"
+                treatmentPlanPlaceholder="Procedure performed, teeth involved, materials used, post-op instructions…"
+                examSystems={['Soft Tissue', 'Hard Tissue', 'Periodontal', 'Occlusion', 'Radiographic Findings']}
             />
         </AppLayout>
     );

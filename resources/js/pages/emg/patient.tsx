@@ -15,11 +15,18 @@ export default function EmgPatient() {
             <Head title={`EMG — ${serviceOrder.patient?.name ?? 'Patient'}`} />
             <DeptPatientForm
                 deptName="Emergency"
+                accentColor="bg-red-600"
                 dashboardUrl={emgDashboard().url}
                 saveApiUrl={apiEmgSaveTreatment({ serviceOrder: serviceOrder.id }).url}
                 updateStatusUrl={apiEmgUpdateStatus({ serviceOrder: serviceOrder.id }).url}
                 serviceOrder={serviceOrder}
                 previousVisits={previousVisits ?? []}
+                showVitals={true}
+                showExamFindings={true}
+                showPrescriptions={true}
+                showFollowUp={true}
+                chiefComplaintLabel="Presenting Complaint / Triage"
+                examSystems={['General', 'Airway', 'Breathing', 'Circulation', 'Neurological', 'Other']}
             />
         </AppLayout>
     );

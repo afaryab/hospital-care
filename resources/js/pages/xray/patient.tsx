@@ -15,11 +15,19 @@ export default function XrayPatient() {
             <Head title={`XRAY — ${serviceOrder.patient?.name ?? 'Patient'}`} />
             <DeptPatientForm
                 deptName="Radiology / X-Ray"
+                accentColor="bg-orange-600"
                 dashboardUrl={xrayDashboard().url}
                 saveApiUrl={apiXraySaveTreatment({ serviceOrder: serviceOrder.id }).url}
                 updateStatusUrl={apiXrayUpdateStatus({ serviceOrder: serviceOrder.id }).url}
                 serviceOrder={serviceOrder}
                 previousVisits={previousVisits ?? []}
+                showVitals={false}
+                showExamFindings={false}
+                showPrescriptions={false}
+                showFollowUp={false}
+                chiefComplaintLabel="Referral Reason / Clinical History"
+                treatmentPlanLabel="Radiology Report"
+                treatmentPlanPlaceholder={`TECHNIQUE:\n\nFINDINGS:\nLungs: \nCardiac silhouette: \nMediastinum: \nBones: \nOther: \n\nIMPRESSION:\n`}
             />
         </AppLayout>
     );

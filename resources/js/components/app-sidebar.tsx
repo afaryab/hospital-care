@@ -12,6 +12,8 @@ import {
 import {
     counter,
     counterExpenseVouchersList,
+    dntDashboard,
+    emgDashboard,
     home,
     hospitalDentalQueue,
     hospitalEmergencyQueue,
@@ -21,12 +23,15 @@ import {
     hospitalRadiologyQueue,
     hospitalUltrasoundQueue,
     indDashboard,
+    labDashboard,
     myCounterList,
     opdDashboard,
     patientsRegister,
     receaveables,
     transactionEditSearch,
     transactionSearch,
+    ultDashboard,
+    xrayDashboard,
 } from '@/routes';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
@@ -35,11 +40,17 @@ import {
     BriefcaseMedical,
     ChartLine,
     Cog,
+    FlaskConical,
     ListTree,
     LucideBlinds,
     LucideHome,
     LucideShoppingBasket,
     LucideWaypoints,
+    Radiation,
+    ScanLine,
+    Siren,
+    Stethoscope,
+    Waypoints,
 } from 'lucide-react';
 import AppLogoIcon from './app-logo-icon';
 
@@ -51,8 +62,6 @@ export function AppSidebar() {
     const { auth, routeName } = props as any;
 
     const { user } = auth;
-
-    console.log('Current page URL:', user);
 
     const haveAdminProfile =
         user?.profiles?.admin && user?.profiles?.admin.length > 0;
@@ -190,7 +199,7 @@ export function AppSidebar() {
                                 tooltip={{ children: 'OPD Dashboard' }}
                             >
                                 <Link href={opdDashboard().url} prefetch>
-                                    <BriefcaseMedical />
+                                    <Stethoscope />
                                     <span>OPD</span>
                                 </Link>
                             </SidebarMenuButton>
@@ -201,11 +210,83 @@ export function AppSidebar() {
                             <SidebarMenuButton
                                 asChild
                                 isActive={page.url.startsWith('/IND')}
-                                tooltip={{ children: 'Indoor Dashboard' }}
+                                tooltip={{ children: 'Indoor / Inpatient' }}
                             >
                                 <Link href={indDashboard().url} prefetch>
                                     <BriefcaseMedical />
-                                    <span>IND</span>
+                                    <span>Indoor</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
+                    {haveEmergencyDoctorProfile && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url.startsWith('/EMG')}
+                                tooltip={{ children: 'Emergency Portal' }}
+                            >
+                                <Link href={emgDashboard().url} prefetch>
+                                    <Siren />
+                                    <span>Emergency</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
+                    {haveDentistProfile && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url.startsWith('/DNT')}
+                                tooltip={{ children: 'Dental Portal' }}
+                            >
+                                <Link href={dntDashboard().url} prefetch>
+                                    <Waypoints />
+                                    <span>Dental</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
+                    {haveUltrasoundDoctorProfile && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url.startsWith('/ULT')}
+                                tooltip={{ children: 'Ultrasound Portal' }}
+                            >
+                                <Link href={ultDashboard().url} prefetch>
+                                    <ScanLine />
+                                    <span>Ultrasound</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
+                    {haveXrayDoctorProfile && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url.startsWith('/XRAY')}
+                                tooltip={{ children: 'Radiology Portal' }}
+                            >
+                                <Link href={xrayDashboard().url} prefetch>
+                                    <Radiation />
+                                    <span>Radiology</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
+                    {(haveNursingProfile ||
+                        haveReceptionistProfile ||
+                        haveAdminProfile) && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url.startsWith('/LAB')}
+                                tooltip={{ children: 'Laboratory Portal' }}
+                            >
+                                <Link href={labDashboard().url} prefetch>
+                                    <FlaskConical />
+                                    <span>Laboratory</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

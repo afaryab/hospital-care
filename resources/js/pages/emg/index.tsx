@@ -1,7 +1,8 @@
 import DeptQueueDashboard from '@/elements/dept-portal/DeptQueueDashboard';
 import AppLayout from '@/layouts/app-layout';
-import { emgDashboard, emgPatient, emgSearch } from '@/routes';
+import { apiEmgMyQueue, apiEmgSearch, emgDashboard, emgPatient } from '@/routes';
 import { Head, usePage } from '@inertiajs/react';
+import { Siren } from 'lucide-react';
 
 const breadcrumbs = [{ title: 'Dashboard', href: '/' }, { title: 'Emergency', href: emgDashboard().url }];
 
@@ -12,13 +13,17 @@ export default function EmgDashboard() {
             <Head title="Emergency Portal" />
             <DeptQueueDashboard
                 deptName="Emergency"
+                accentColor="bg-red-600"
                 accentClass="text-red-600"
+                icon={<Siren className="h-6 w-6" />}
                 hasAccess={isEmgDoctor}
                 orders={recentOrders ?? []}
                 stats={todayStats ?? { open: 0, in_progress: 0, treated: 0, total: 0 }}
                 noAccessMessage="You need an Emergency Doctor profile to access this portal."
-                searchUrl={emgSearch().url}
                 patientUrl={(id) => emgPatient({ id }).url}
+                myQueueUrl={apiEmgMyQueue().url}
+                searchApiUrl={apiEmgSearch().url}
+                searchTypes={['EMG']}
                 flashError={(flash as any)?.searchError}
             />
         </AppLayout>
