@@ -2,6 +2,7 @@
 
 namespace Processton\Abacus\Filament\Pages;
 
+use App\Helpers\DateHelper;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -191,7 +192,7 @@ class GeneralLedger extends Page implements HasForms
             'endDate' => $this->endDate,
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
-            'generatedAt' => now()->format('Y-m-d H:i:s'),
+            'generatedAt' => DateHelper::pdfFormat(now(), 'Y-m-d H:i:s'),
         ];
 
         $pdf = \App::make('dompdf.wrapper');
@@ -259,7 +260,7 @@ class GeneralLedger extends Page implements HasForms
             'endDate' => $this->endDate,
             'totalDebit' => $totalDebit,
             'totalCredit' => $totalCredit,
-            'generatedAt' => now()->format('Y-m-d H:i:s'),
+            'generatedAt' => DateHelper::pdfFormat(now(), 'Y-m-d H:i:s'),
         ];
 
         $pdf = \App::make('dompdf.wrapper');

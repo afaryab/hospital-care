@@ -6,28 +6,26 @@
     <style>
         @page {
             margin: 0;
-            size: 80mm 100mm;
         }
-        
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Helvetica', Arial, sans-serif;
             font-size: 10px;
             line-height: 1.1;
             color: #000;
             background: white;
-            width: 80mm;
             margin: 0;
             padding: 2mm;
         }
-        
+
         .receipt {
-            width: 76mm;
+            width: 100%;
             background: white;
         }
         
@@ -83,7 +81,7 @@
             border-bottom: 1px dotted #CFCFCF;
             padding: 1mm 0;
             margin: 1mm 0;
-            font-size: 9px;
+            font-size: 11px;
             font-weight: bold;
         }
         
@@ -111,7 +109,7 @@
         }
         
         .item-line {
-            font-size: 9px;
+            font-size: 11px;
             margin-bottom: 0.5mm;
         }
         
@@ -123,7 +121,7 @@
         
         .order-line {
             background: #f0f0f0;
-            font-size: 8px;
+            font-size: 10px;
             color: #666;
             padding: 0.5mm;
             margin-bottom: 1mm;
@@ -139,7 +137,7 @@
         }
         
         .totals {
-            font-size: 9px;
+            font-size: 11px;
         }
         
         .total-line {
@@ -205,8 +203,8 @@
             <h2>Transaction Receipt: {{ $transaction->tr_number }}</h2>
         </div>
         <div class="header">
-            <p>{{ $transaction->closing->ct_number }} @ {{ $generated_at->format('d/m/Y H:i') }}</p>
-            <p>By {{ $transaction->receptionist->name ?? 'N/A' }}</p>
+            <p>{{ $transaction->closing->ct_number }} @ @hdate($generated_at, 'd/m/Y H:i')</p>
+            <p>At {{ $transaction->closing->reception->name ?? 'N/A' }}</p>
             <div class="divider"></div>
             @if($transaction->patient)
                 <table width="100%" style="margin-bottom: 2mm;">
@@ -263,13 +261,13 @@
                             $item->service_id ? $item->service->name : ($item->service_recestation_id ? $item->serviceRecestation->name : '')
                         ) : (
                             $item->type === 'EXP' ? ($item->expense->description ?? 'Expense') : 'Voucher Payment'
-                        ) }}
+                        ) }}@if($item->serviceOrder?->token_short) -- Token #{{ $item->serviceOrder->token_short }}@endif
                     </span>
                     <span class="col-total">{{ $item->amount }}</span>
                 </div>
                 @if($item->serviceOrder)
                 <div class="order-line">
-                    MRI: {{ $item->serviceOrder->so_number }} {{ $item?->doctor?->name}}
+                    MRI: {{ $item->serviceOrder->so_short }} {{ $item?->doctor?->name}}
                 </div>
                 @endif
             @endforeach
@@ -285,7 +283,7 @@
                 <div class="item-line">
                     <span class="col-product">
                         {{ $item?->expenseCategory?->name }}
-                        <p style="font-size: 8px;">{{ $item->notes }}</p>
+                        <p style="font-size: 10px;">{{ $item->notes }}</p>
                     </span>
                     
                     <span class="col-total">{{ $item->amount }}</span>
@@ -336,7 +334,7 @@
                     @if(!empty($hospital_info['strn'])) | STRN: {{ $hospital_info['strn'] }} @endif
                 </p>
             @endif
-            <p>Generated on {{ $generated_at->format('d/m/Y H:i:s') }}</p>
+            <p>Generated on @hdate($generated_at, 'd/m/Y H:i:s')</p>
             <p>This is a computer-generated receipt and does not require a signature</p>
         </div>
     </div>

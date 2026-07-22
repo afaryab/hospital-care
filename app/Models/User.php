@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +16,7 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements FilamentUser
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
+    /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable;
 
     public function getActivitylogOptions(): LogOptions
@@ -50,6 +51,7 @@ class User extends Authenticatable implements FilamentUser
         'profile_img_id',
         'is_active',
         'banned_message',
+        'timezone',
         'created_at',
         'updated_at',
     ];

@@ -3,6 +3,7 @@
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseVoucher;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 test('expense voucher vc_number is auto-generated when not provided', function () {
     $category = ExpenseCategory::factory()->create();
@@ -92,5 +93,5 @@ test('expense voucher vc_numbers are sequential when auto-generated', function (
 test('expense voucher belongs to expense category relationship', function () {
     $voucher = ExpenseVoucher::factory()->create();
 
-    expect($voucher->expCategory())->toBeInstanceOf(Illuminate\Database\Eloquent\Relations\BelongsTo::class);
+    expect($voucher->expCategory())->toBeInstanceOf(BelongsTo::class);
 });

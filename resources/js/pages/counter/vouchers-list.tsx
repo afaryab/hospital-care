@@ -134,7 +134,9 @@ export default function VouchersList() {
                                     <SelectItem value="06">June</SelectItem>
                                     <SelectItem value="07">July</SelectItem>
                                     <SelectItem value="08">August</SelectItem>
-                                    <SelectItem value="09">September</SelectItem>
+                                    <SelectItem value="09">
+                                        September
+                                    </SelectItem>
                                     <SelectItem value="10">October</SelectItem>
                                     <SelectItem value="11">November</SelectItem>
                                     <SelectItem value="12">December</SelectItem>
@@ -143,7 +145,6 @@ export default function VouchersList() {
                         </div>
                     </div>
                     <div className="flex flex-0 flex-row items-end gap-2">
-                        
                         <Link href={counterExpenseNewDoctorVoucher().url}>
                             <Button variant="secondary">
                                 + New Doctor Voucher
@@ -155,9 +156,7 @@ export default function VouchersList() {
                             </Button>
                         </Link>
                         <Link href={counterExpenseNewVoucher().url}>
-                            <Button variant="outline">
-                                + New Voucher
-                            </Button>
+                            <Button variant="outline">+ New Voucher</Button>
                         </Link>
                     </div>
                 </div>

@@ -1,5 +1,3 @@
-import TablePagination from '@/components/ui/table-pagination';
-import { MONTHS } from '@/lib/constants';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -8,7 +6,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import TablePagination from '@/components/ui/table-pagination';
 import AppLayout from '@/layouts/app-layout';
+import { MONTHS } from '@/lib/constants';
 import {
     counter,
     counterView,
@@ -143,7 +143,9 @@ export default function CountersList() {
                             <SelectContent>
                                 <SelectItem value="0">All</SelectItem>
                                 {MONTHS.map((m) => (
-                                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                                    <SelectItem key={m.value} value={m.value}>
+                                        {m.label}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -158,6 +160,9 @@ export default function CountersList() {
                                     Info
                                 </th>
                                 <th scope="col" className="px-6 py-3">
+                                    Status
+                                </th>
+                                <th scope="col" className="px-6 py-3">
                                     Opening Amount
                                 </th>
                                 <th scope="col" className="px-6 py-3">
@@ -165,6 +170,9 @@ export default function CountersList() {
                                 </th>
                                 <th scope="col" className="px-6 py-3">
                                     Expense Payed
+                                </th>
+                                <th scope="col" className="px-6 py-3">
+                                    Opened At
                                 </th>
                                 <th scope="col" className="px-6 py-3">
                                     Closed At
@@ -205,6 +213,11 @@ export default function CountersList() {
                                             </Link>
                                         </td>
                                         <td className="px-6 py-3">
+                                            <CounterStatusBadge
+                                                status={p.status}
+                                            />
+                                        </td>
+                                        <td className="px-6 py-3">
                                             {p.opening_amount}
                                         </td>
                                         <td className="px-6 py-3">
@@ -214,7 +227,10 @@ export default function CountersList() {
                                             {p.expense_payed}
                                         </td>
                                         <td className="px-6 py-3">
-                                            {p.closed_at}
+                                            {formatDateTime(p.created_at)}
+                                        </td>
+                                        <td className="px-6 py-3">
+                                            {formatDateTime(p.closed_at)}
                                         </td>
                                     </tr>
                                 );
@@ -222,11 +238,13 @@ export default function CountersList() {
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colSpan={4}>
+                                <td colSpan={7}>
                                     <TablePagination
                                         currentPage={closings.current_page}
                                         lastPage={closings.last_page}
-                                        makeHref={(page) => `?page=${page}&year=${year}&month=${month}`}
+                                        makeHref={(page) =>
+                                            `?page=${page}&year=${year}&month=${month}`
+                                        }
                                     />
                                 </td>
                             </tr>
@@ -235,6 +253,43 @@ export default function CountersList() {
                 </div>
             </div>
         </AppLayout>
+    );
+}
+
+function formatDateTime(value?: string | null) {
+    if (!value) {
+        return '—';
+    }
+
+    const parsed = new Date(value);
+
+    if (Number.isNaN(parsed.getTime())) {
+        return value;
+    }
+
+    return parsed.toLocaleString();
+}
+
+function CounterStatusBadge({ status }: { status?: string }) {
+    const normalized = (status ?? '').toUpperCase();
+
+    const styles: Record<string, string> = {
+        OPEN: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+        CLOSED: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+        REPORTED:
+            'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+    };
+
+    const badgeClass =
+        styles[normalized] ??
+        'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+
+    return (
+        <span
+            className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}`}
+        >
+            {normalized || 'UNKNOWN'}
+        </span>
     );
 }
 

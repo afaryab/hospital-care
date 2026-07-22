@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\DateHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Icd10Code;
 use App\Models\Patient;
@@ -217,7 +218,7 @@ class OpdController extends Controller
             ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text'])
             ->where('type', 'OPD')
             ->where('doctor_id', $user->id)
-            ->whereDate('created_at', Carbon::today())
+            ->whereBetween('created_at', DateHelper::todayRangeUtc())
             ->orderByRaw("FIELD(status, 'in-progress', 'IN-PROGRESS', 'open', 'OPEN', 'treated', 'TREATED') ASC")
             ->orderBy('created_at', 'ASC')
             ->get();

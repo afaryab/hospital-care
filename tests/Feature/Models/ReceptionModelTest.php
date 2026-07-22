@@ -8,7 +8,6 @@ test('reception can be created with factory', function () {
 
     expect($reception)->toBeInstanceOf(Reception::class)
         ->and($reception->name)->not->toBeNull()
-        ->and($reception->is_cash_allowed)->toBeTrue()
         ->and($reception->is_allowed_to_pay_voucher)->toBeFalse();
 });
 
@@ -16,16 +15,10 @@ test('reception boolean fields are cast correctly', function () {
     $reception = Reception::factory()->create([
         'is_allowed_to_pay_voucher' => true,
         'is_allowed_to_pay_from_petty_cash' => true,
-        'is_cash_allowed' => false,
-        'is_cheques_allowed' => true,
-        'is_card_allowed' => true,
     ]);
 
     expect($reception->is_allowed_to_pay_voucher)->toBeBool()->toBeTrue()
-        ->and($reception->is_allowed_to_pay_from_petty_cash)->toBeBool()->toBeTrue()
-        ->and($reception->is_cash_allowed)->toBeBool()->toBeFalse()
-        ->and($reception->is_cheques_allowed)->toBeBool()->toBeTrue()
-        ->and($reception->is_card_allowed)->toBeBool()->toBeTrue();
+        ->and($reception->is_allowed_to_pay_from_petty_cash)->toBeBool()->toBeTrue();
 });
 
 test('reception allowed_departments is cast to json', function () {
@@ -54,9 +47,6 @@ test('reception fillable attributes can be mass assigned', function () {
         'name' => 'Main Reception',
         'is_allowed_to_pay_voucher' => true,
         'is_allowed_to_pay_from_petty_cash' => false,
-        'is_cash_allowed' => true,
-        'is_cheques_allowed' => false,
-        'is_card_allowed' => false,
     ]);
 
     expect($reception->name)->toBe('Main Reception')

@@ -16,10 +16,10 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -51,9 +51,9 @@ class ServiceResource extends Resource
                     ->options(HealthIconHelper::options())
                     ->searchable()
                     ->helperText('Choose a Health Icons identifier for this service.'),
-                Placeholder::make('icon_preview')
+                TextEntry::make('icon_preview')
                     ->label('Icon Preview')
-                    ->content(function (Get $get): HtmlString {
+                    ->state(function (Get $get): HtmlString {
                         $icon = $get('icon');
 
                         if (blank($icon)) {
@@ -61,7 +61,8 @@ class ServiceResource extends Resource
                         }
 
                         return new HtmlString(HealthIconHelper::img($icon).' <span class="ml-2 text-sm">'.$icon.'</span>');
-                    }),
+                    })
+                    ->html(),
                 Select::make('service_department_id')
                     ->relationship('department', 'name')
                     ->required(),

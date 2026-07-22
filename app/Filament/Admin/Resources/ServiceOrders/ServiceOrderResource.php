@@ -8,8 +8,15 @@ use App\Models\Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceOrder;
 use App\Models\User;
+use App\Services\ServiceOrderMerger;
 use BackedEnum;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -18,6 +25,8 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 class ServiceOrderResource extends Resource
@@ -189,7 +198,108 @@ class ServiceOrderResource extends Resource
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(25)
             ->recordUrl(fn (ServiceOrder $record): string => static::getUrl('view', ['record' => $record]))
-            ->openRecordUrlInNewTab(false);
+            ->openRecordUrlInNewTab(false)
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    static::mergeDuplicatesBulkAction(),
+                ]),
+            ]);
+    }
+
+    protected static function mergeDuplicatesBulkAction(): BulkAction
+    {
+        return BulkAction::make('merge_duplicates')
+            ->label('Merge Duplicates')
+            ->icon('heroicon-o-arrows-pointing-in')
+            ->color('warning')
+            ->visible(fn () => auth()->user()?->isAdmin() ?? false)
+            ->modalHeading('Merge Duplicate Service Orders')
+            ->modalDescription('Pick which selected service order should remain as the primary. Everything else (transaction lines, vouchers, consents, bed assignments, versions, treatment record) will be re-pointed to it, and the rest will be soft-deleted.')
+            ->modalWidth('2xl')
+            ->schema(fn (BulkAction $action): array => [
+                TextEntry::make('selected_summary')
+                    ->label('Selected')
+                    ->html()
+                    ->state(function () use ($action): HtmlString {
+                        $records = $action->getSelectedRecords();
+                        $rows = $records
+                            ->map(fn (ServiceOrder $so) => sprintf(
+                                '<tr><td class="px-2 py-1 font-mono text-xs">%s</td><td class="px-2 py-1">%s</td><td class="px-2 py-1 text-xs">%s</td><td class="px-2 py-1 text-xs">%s</td></tr>',
+                                e($so->so_number),
+                                e($so->patient?->name ?? '—'),
+                                e($so->service?->name ?? '—'),
+                                e($so->created_at?->format('d M Y H:i') ?? '—'),
+                            ))
+                            ->implode('');
+
+                        return new HtmlString(
+                            '<div class="overflow-x-auto"><table class="w-full text-sm border border-gray-200"><thead class="bg-gray-50"><tr>'
+                            .'<th class="px-2 py-1 text-left">SO#</th>'
+                            .'<th class="px-2 py-1 text-left">Patient</th>'
+                            .'<th class="px-2 py-1 text-left">Service</th>'
+                            .'<th class="px-2 py-1 text-left">Created</th>'
+                            .'</tr></thead><tbody>'.$rows.'</tbody></table></div>'
+                        );
+                    }),
+                Select::make('primary_id')
+                    ->label('Keep as primary')
+                    ->required()
+                    ->native(false)
+                    ->options(function () use ($action) {
+                        return $action->getSelectedRecords()
+                            ->mapWithKeys(fn (ServiceOrder $so) => [
+                                $so->id => "{$so->so_number} — {$so->patient?->name} — {$so->service?->name}",
+                            ])
+                            ->toArray();
+                    }),
+                Textarea::make('reason')
+                    ->label('Reason for merge')
+                    ->rows(2)
+                    ->maxLength(1000)
+                    ->required()
+                    ->helperText('Required for audit trail.'),
+            ])
+            ->action(function (array $data, Collection $records, BulkAction $action) {
+                if ($records->count() < 2) {
+                    Notification::make()
+                        ->title('Select at least 2 service orders to merge.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                $patientIds = $records->pluck('patient_id')->unique()->filter()->values();
+                if ($patientIds->count() > 1) {
+                    Notification::make()
+                        ->title('All selected service orders must belong to the same patient.')
+                        ->body('Found patient IDs: '.$patientIds->implode(', '))
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                $primary = $records->firstWhere('id', (int) $data['primary_id']);
+                if (! $primary) {
+                    Notification::make()
+                        ->title('Primary service order must be one of the selected rows.')
+                        ->danger()
+                        ->send();
+
+                    return;
+                }
+
+                $result = app(ServiceOrderMerger::class)->merge($primary, $records, $data['reason'] ?? null);
+
+                Notification::make()
+                    ->title('Merged into '.$primary->so_number)
+                    ->body(count($result['merged_ids']).' duplicate(s) merged and soft-deleted.')
+                    ->success()
+                    ->send();
+
+                $action->deselectAllRecords();
+            });
     }
 
     public static function infolist(Schema $schema): Schema

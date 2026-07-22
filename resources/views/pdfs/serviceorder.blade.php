@@ -219,7 +219,7 @@
 
         <div class="heading-wrap">
             <div class="badge d-block text-center">EMERGENCY DEPARTMENT</div>
-            <div class="subhead">CLINICAL PERFORMA SO: <span class="u">{{ $serviceOrder->so_number ?? '' }}</span> Page 1/2</div>
+            <div class="subhead">CLINICAL PERFORMA SO: <span class="u">{{ $serviceOrder->so_number ?? '' }}{{ $serviceOrder->so_short ? ' ('.$serviceOrder->so_short.')' : '' }}</span> Page 1/2</div>
         </div>
 
         <table style="width:100%; margin-top:12px; border-collapse:collapse;">
@@ -228,11 +228,11 @@
                     <table class="kv-table">
                         <tr>
                             <td class="kv-label" style="width:30%;">MR # :</td>
-                            <td class="kv-line w-mid" style="width:70%;">{{ $serviceOrder->so_number ?? '' }}</td>
+                            <td class="kv-line w-mid" style="width:70%;">{{ $serviceOrder->so_number ?? '' }}{{ $serviceOrder->so_short ? ' ('.$serviceOrder->so_short.')' : '' }}</td>
                         </tr>
                         <tr>
                             <td class="kv-label">Date:</td>
-                            <td class="kv-line w-mid"> {{ $serviceOrder->created_at ? $serviceOrder->created_at->format('d-m-Y H:i') : '' }}</td>
+                            <td class="kv-line w-mid"> @hdate($serviceOrder->created_at, 'd-m-Y H:i')</td>
                         </tr>
                         <tr>
                             <td class="kv-label">Pt. Name:</td>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Reports;
 
+use App\Helpers\DateHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Panel;
 use App\Models\PanelCheque;
@@ -15,14 +16,19 @@ class PanelPaymentReportController extends Controller
     public function pending(Request $request): Response
     {
         $panelId = $request->input('panel_id');
-        $from = Carbon::parse($request->input('date_from', now()->startOfMonth()->format('Y-m-d')))->startOfDay();
-        $until = Carbon::parse($request->input('date_to', now()->endOfMonth()->format('Y-m-d')))->endOfDay();
+        $timezone = DateHelper::timezone();
+        $from = $request->filled('date_from')
+            ? Carbon::parse($request->input('date_from'), $timezone)
+            : now($timezone)->startOfMonth();
+        $until = $request->filled('date_to')
+            ? Carbon::parse($request->input('date_to'), $timezone)
+            : now($timezone)->endOfMonth();
         $generated_at = now();
 
         $query = PanelCheque::query()
             ->with(['panel', 'bankAccount'])
             ->where('status', 'pending')
-            ->whereBetween('created_at', [$from, $until]);
+            ->whereBetween('created_at', [DateHelper::dayStartUtc($from), DateHelper::dayEndUtc($until)]);
 
         if ($panelId) {
             $query->where('panel_id', $panelId);

@@ -3,6 +3,9 @@
 namespace Processton\Abacus\Filament\Resources;
 
 use BackedEnum;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -106,11 +109,11 @@ class AbacusChartOfAccountResource extends Resource
                 //
             ])
             ->actions([
-                \Filament\Actions\EditAction::make()->slideOver(),
+                EditAction::make()->slideOver(),
             ])
             ->bulkActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    \Filament\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

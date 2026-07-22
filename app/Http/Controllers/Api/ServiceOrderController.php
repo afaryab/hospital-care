@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\DateHelper;
 use App\Http\Controllers\Controller;
 use App\Models\ServiceOrder;
 use Illuminate\Http\Request;
@@ -51,11 +52,11 @@ class ServiceOrderController extends Controller
         }
 
         if (! empty($filters['created_from'])) {
-            $query->whereDate('created_at', '>=', $filters['created_from']);
+            $query->where('created_at', '>=', DateHelper::dayStartUtc($filters['created_from']));
         }
 
         if (! empty($filters['created_to'])) {
-            $query->whereDate('created_at', '<=', $filters['created_to']);
+            $query->where('created_at', '<=', DateHelper::dayEndUtc($filters['created_to']));
         }
 
         $exact = collect();

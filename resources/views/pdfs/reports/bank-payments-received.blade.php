@@ -26,7 +26,7 @@
             @foreach($transactions as $idx => $txn)
             <tr>
                 <td>{{ $idx + 1 }}</td>
-                <td>{{ \Carbon\Carbon::parse($txn->transaction_date)->format('d/m/Y') }}</td>
+                <td>{{ \App\Helpers\DateHelper::pdfFormat($txn->transaction_date, 'd/m/Y') }}</td>
                 <td class="text-bold">{{ $txn->bankAccount?->name ?? '-' }}</td>
                 <td><span class="mono">{{ $txn->reference_number ?? '-' }}</span></td>
                 <td class="amount">{{ number_format((float) ($txn->credit ?? 0), 2) }}</td>

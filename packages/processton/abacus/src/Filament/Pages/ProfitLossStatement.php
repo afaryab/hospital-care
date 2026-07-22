@@ -2,6 +2,7 @@
 
 namespace Processton\Abacus\Filament\Pages;
 
+use App\Helpers\DateHelper;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -169,7 +170,7 @@ class ProfitLossStatement extends Page implements HasForms
             'endDate' => $this->endDate,
             'totalIncome' => $this->totalIncome,
             'totalExpense' => $this->totalExpense,
-            'generatedAt' => now()->format('Y-m-d H:i:s'),
+            'generatedAt' => DateHelper::pdfFormat(now(), 'Y-m-d H:i:s'),
         ];
 
         $pdf = \App::make('dompdf.wrapper');
@@ -207,7 +208,7 @@ class ProfitLossStatement extends Page implements HasForms
             'endDate' => $this->endDate,
             'totalIncome' => $this->totalIncome,
             'totalExpense' => $this->totalExpense,
-            'generatedAt' => now()->format('Y-m-d H:i:s'),
+            'generatedAt' => DateHelper::pdfFormat(now(), 'Y-m-d H:i:s'),
         ];
 
         $pdf = \App::make('dompdf.wrapper');

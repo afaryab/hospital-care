@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Widgets;
 
 use App\Enum\CounterStatus;
+use App\Helpers\DateHelper;
 use App\Helpers\NumberHelper;
 use App\Models\Closing;
 use App\Models\ExpenseVoucher;
@@ -27,8 +28,10 @@ class AdminStatsOverview extends StatsOverviewWidget
 
     public function getStats(): array
     {
-        $startDate = $this->pageFilters['startDate'] ?? Carbon::now()->startOfMonth();
-        $endDate = $this->pageFilters['endDate'] ?? Carbon::now();
+        // Interpret the picked range in the hospital timezone, then resolve the
+        // exact UTC instants so datetime-column filters line up with stored data.
+        $startDate = DateHelper::dayStartUtc($this->pageFilters['startDate'] ?? Carbon::now(DateHelper::timezone())->startOfMonth());
+        $endDate = DateHelper::dayEndUtc($this->pageFilters['endDate'] ?? Carbon::now(DateHelper::timezone()));
 
         return [
             $this->getUserStats($startDate, $endDate),
@@ -50,14 +53,14 @@ class AdminStatsOverview extends StatsOverviewWidget
 
         $userThisDuration = User::query()
             ->nonSystem()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->count();
 
         $userChartThisDuration = User::query()
             ->nonSystem()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->groupBy('date')
             ->orderBy('date')
@@ -78,13 +81,13 @@ class AdminStatsOverview extends StatsOverviewWidget
         $totalServices = Service::count();
 
         $serviceThisDuration = Service::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->count();
 
         $serviceChartThisDuration = Service::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->groupBy('date')
             ->orderBy('date')
@@ -104,13 +107,13 @@ class AdminStatsOverview extends StatsOverviewWidget
         $totalPatients = Patient::count();
 
         $patientThisDuration = Patient::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->count();
 
         $patientChartThisDuration = Patient::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->groupBy('date')
             ->orderBy('date')
@@ -136,21 +139,21 @@ class AdminStatsOverview extends StatsOverviewWidget
         $receptions = Reception::count();
 
         $periodTotals = Closing::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->selectRaw('SUM(closing_amount) - SUM(opening_amount) as net, COUNT(*) as total_closings')
             ->first();
         $totalCollectionThisDuration = $periodTotals->net ?? 0;
         $totalClosingsThisDuration = $periodTotals->total_closings ?? 0;
         $totalOpeningsThisDuration = Closing::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->where('status', CounterStatus::OPEN)
             ->count();
 
         $totalChartThisDuration = Closing::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->selectRaw('DATE(created_at) as date, SUM(closing_amount) as count')
             ->groupBy('date')
             ->orderBy('date')
@@ -171,18 +174,18 @@ class AdminStatsOverview extends StatsOverviewWidget
         $total = ExpenseVoucher::count();
 
         $expenseThisDuration = ExpenseVoucher::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->sum('amount');
 
         $totalThisDuration = ExpenseVoucher::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->count();
 
         $expenseChartThisDuration = ExpenseVoucher::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
             ->groupBy('date')
             ->orderBy('date')
@@ -203,17 +206,17 @@ class AdminStatsOverview extends StatsOverviewWidget
         $total = Transaction::count();
 
         $totalCollectionThisDuration = Transaction::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->sum('amount');
         $totalThisDuration = Transaction::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->count();
 
         $totalChartThisDuration = Transaction::query()
-            ->when($startDate, fn (Builder $query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn (Builder $query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($startDate, fn (Builder $query) => $query->where('created_at', '>=', $startDate))
+            ->when($endDate, fn (Builder $query) => $query->where('created_at', '<=', $endDate))
             ->selectRaw('DATE(created_at) as date, SUM(amount) as count')
             ->groupBy('date')
             ->orderBy('date')

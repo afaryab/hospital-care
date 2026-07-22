@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Reports;
 
+use App\Helpers\DateHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Closing;
 use App\Models\Receaveable;
@@ -20,13 +21,12 @@ class GenericReportPdfController extends Controller
 {
     public function income(Request $request): Response
     {
-        $from = $request->date('from') ?? now()->startOfMonth();
-        $until = $request->date('until') ?? now();
+        [$from, $until] = $this->resolveDateRange($request);
 
         $query = TransactionElement::query()
             ->where('income_or_expense', 'INCOME')
-            ->whereDate('transaction_elements.created_at', '>=', $from)
-            ->whereDate('transaction_elements.created_at', '<=', $until)
+            ->where('transaction_elements.created_at', '>=', DateHelper::dayStartUtc($from))
+            ->where('transaction_elements.created_at', '<=', DateHelper::dayEndUtc($until))
             ->with(['transaction.closing.reception', 'patient', 'service', 'doctor']);
 
         if ($request->filled('reception_id')) {
@@ -53,8 +53,8 @@ class GenericReportPdfController extends Controller
             'elements' => $elements,
             'total' => $total,
             'by_type' => $byType,
-            'from' => Carbon::parse($from),
-            'until' => Carbon::parse($until),
+            'from' => $from,
+            'until' => $until,
             'generated_at' => now(),
             'filters' => $this->describeFilters($request, ['reception_id', 'type', 'service_id', 'doctor_id']),
         ], 'income-report');
@@ -62,13 +62,12 @@ class GenericReportPdfController extends Controller
 
     public function expense(Request $request): Response
     {
-        $from = $request->date('from') ?? now()->startOfMonth();
-        $until = $request->date('until') ?? now();
+        [$from, $until] = $this->resolveDateRange($request);
 
         $query = TransactionElement::query()
             ->where('income_or_expense', 'EXPENSE')
-            ->whereDate('transaction_elements.created_at', '>=', $from)
-            ->whereDate('transaction_elements.created_at', '<=', $until)
+            ->where('transaction_elements.created_at', '>=', DateHelper::dayStartUtc($from))
+            ->where('transaction_elements.created_at', '<=', DateHelper::dayEndUtc($until))
             ->with(['transaction.closing.reception', 'expenseCategory', 'expVoucher.payedTo', 'expVoucher.expCategory']);
 
         if ($request->filled('reception_id')) {
@@ -87,8 +86,8 @@ class GenericReportPdfController extends Controller
         return $this->renderPdf('pdfs.reports.generic-expense', [
             'elements' => $elements,
             'total' => $total,
-            'from' => Carbon::parse($from),
-            'until' => Carbon::parse($until),
+            'from' => $from,
+            'until' => $until,
             'generated_at' => now(),
             'filters' => $this->describeFilters($request, ['reception_id', 'type', 'expense_category_id']),
         ], 'expense-report');
@@ -96,12 +95,11 @@ class GenericReportPdfController extends Controller
 
     public function receivables(Request $request): Response
     {
-        $from = $request->date('from') ?? now()->startOfMonth();
-        $until = $request->date('until') ?? now();
+        [$from, $until] = $this->resolveDateRange($request);
 
         $query = Receaveable::query()
-            ->whereDate('receaveables.created_at', '>=', $from)
-            ->whereDate('receaveables.created_at', '<=', $until)
+            ->where('receaveables.created_at', '>=', DateHelper::dayStartUtc($from))
+            ->where('receaveables.created_at', '<=', DateHelper::dayEndUtc($until))
             ->with(['patient', 'panel', 'transaction']);
 
         if ($request->filled('status')) {
@@ -117,8 +115,8 @@ class GenericReportPdfController extends Controller
         return $this->renderPdf('pdfs.reports.generic-receivables', [
             'items' => $items,
             'total' => $total,
-            'from' => Carbon::parse($from),
-            'until' => Carbon::parse($until),
+            'from' => $from,
+            'until' => $until,
             'generated_at' => now(),
             'filters' => $this->describeFilters($request, ['status', 'panel_id']),
         ], 'receivables-report');
@@ -126,15 +124,14 @@ class GenericReportPdfController extends Controller
 
     public function services(Request $request): Response
     {
-        $from = $request->date('from') ?? now()->startOfMonth();
-        $until = $request->date('until') ?? now();
+        [$from, $until] = $this->resolveDateRange($request);
 
         // Income elements with services
         $incomeQuery = TransactionElement::query()
             ->whereNotNull('service_id')
             ->where('income_or_expense', 'INCOME')
-            ->whereDate('transaction_elements.created_at', '>=', $from)
-            ->whereDate('transaction_elements.created_at', '<=', $until)
+            ->where('transaction_elements.created_at', '>=', DateHelper::dayStartUtc($from))
+            ->where('transaction_elements.created_at', '<=', DateHelper::dayEndUtc($until))
             ->with(['transaction', 'patient', 'service.department', 'doctor']);
 
         if ($request->filled('reception_id')) {
@@ -152,8 +149,8 @@ class GenericReportPdfController extends Controller
         // Expense elements (voucher payments to providers) within span
         $expenseQuery = TransactionElement::query()
             ->where('income_or_expense', 'EXPENSE')
-            ->whereDate('transaction_elements.created_at', '>=', $from)
-            ->whereDate('transaction_elements.created_at', '<=', $until)
+            ->where('transaction_elements.created_at', '>=', DateHelper::dayStartUtc($from))
+            ->where('transaction_elements.created_at', '<=', DateHelper::dayEndUtc($until))
             ->whereNotNull('exp_voucher_id')
             ->with(['expVoucher.payedTo', 'expVoucher.expCategory', 'expenseCategory']);
 
@@ -248,8 +245,8 @@ class GenericReportPdfController extends Controller
             'expenses_by_doctor' => array_values($expensesByDoctor),
             'total_service_income' => $totalServiceIncome,
             'total_expense_paid' => $totalExpensePaid,
-            'from' => Carbon::parse($from),
-            'until' => Carbon::parse($until),
+            'from' => $from,
+            'until' => $until,
             'generated_at' => now(),
             'filters' => $this->describeFilters($request, ['reception_id', 'service_id', 'doctor_id']),
         ], 'services-report');
@@ -257,12 +254,11 @@ class GenericReportPdfController extends Controller
 
     public function serviceOrders(Request $request): Response
     {
-        $from = $request->date('from') ?? now()->startOfMonth();
-        $until = $request->date('until') ?? now();
+        [$from, $until] = $this->resolveDateRange($request);
 
         $query = ServiceOrder::query()
-            ->whereDate('service_orders.created_at', '>=', $from)
-            ->whereDate('service_orders.created_at', '<=', $until)
+            ->where('service_orders.created_at', '>=', DateHelper::dayStartUtc($from))
+            ->where('service_orders.created_at', '<=', DateHelper::dayEndUtc($until))
             ->with(['patient:id,name', 'service:id,name', 'doctor:id,name', 'expenseVouchers'])
             ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
             ->withSum(['expenseVouchers as voucher_total'], 'amount')
@@ -282,8 +278,8 @@ class GenericReportPdfController extends Controller
 
         return $this->renderPdf('pdfs.reports.generic-service-orders', [
             'orders' => $orders,
-            'from' => Carbon::parse($from),
-            'until' => Carbon::parse($until),
+            'from' => $from,
+            'until' => $until,
             'generated_at' => now(),
         ], 'service-orders-report');
     }
@@ -349,6 +345,28 @@ class GenericReportPdfController extends Controller
         }
     }
 
+    /**
+     * Resolve the requested [from, until] range as hospital-timezone Carbon
+     * instances. User-supplied dates are interpreted in the hospital timezone,
+     * and defaults span the current month in that same timezone.
+     *
+     * @return array{0: Carbon, 1: Carbon}
+     */
+    private function resolveDateRange(Request $request): array
+    {
+        $timezone = DateHelper::timezone();
+
+        $from = $request->filled('from')
+            ? Carbon::parse($request->input('from'), $timezone)
+            : now($timezone)->startOfMonth();
+
+        $until = $request->filled('until')
+            ? Carbon::parse($request->input('until'), $timezone)
+            : now($timezone);
+
+        return [$from, $until];
+    }
+
     private function describeFilters(Request $request, array $keys): array
     {
         $filters = [];
@@ -363,12 +381,11 @@ class GenericReportPdfController extends Controller
 
     public function servicePerformance(Request $request): Response
     {
-        $from = $request->date('from') ?? now()->startOfMonth();
-        $until = $request->date('until') ?? now();
+        [$from, $until] = $this->resolveDateRange($request);
 
         $query = ServiceOrder::query()
-            ->whereDate('service_orders.created_at', '>=', $from)
-            ->whereDate('service_orders.created_at', '<=', $until)
+            ->where('service_orders.created_at', '>=', DateHelper::dayStartUtc($from))
+            ->where('service_orders.created_at', '<=', DateHelper::dayEndUtc($until))
             ->with(['patient:id,name', 'service:id,name', 'doctor:id,name'])
             ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
             ->withSum('expenseVouchers as voucher_total', 'amount');
@@ -403,8 +420,8 @@ class GenericReportPdfController extends Controller
             'total_income' => $totalIncome,
             'total_expense' => $totalExpense,
             'by_department' => $byDepartment,
-            'from' => Carbon::parse($from),
-            'until' => Carbon::parse($until),
+            'from' => $from,
+            'until' => $until,
             'generated_at' => now(),
             'filters' => $this->describeFilters($request, ['type', 'status', 'service_id', 'doctor_id']),
         ], 'service-performance-report');
@@ -412,12 +429,11 @@ class GenericReportPdfController extends Controller
 
     public function serviceProvider(Request $request): Response
     {
-        $from = $request->date('from') ?? now()->startOfMonth();
-        $until = $request->date('until') ?? now();
+        [$from, $until] = $this->resolveDateRange($request);
 
         $query = ServiceOrder::query()
-            ->whereDate('service_orders.created_at', '>=', $from)
-            ->whereDate('service_orders.created_at', '<=', $until)
+            ->where('service_orders.created_at', '>=', DateHelper::dayStartUtc($from))
+            ->where('service_orders.created_at', '<=', DateHelper::dayEndUtc($until))
             ->with(['patient:id,name', 'service:id,name', 'doctor:id,name', 'expenseVouchers.expCategory'])
             ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
             ->withSum('expenseVouchers as voucher_total', 'amount');
@@ -446,8 +462,8 @@ class GenericReportPdfController extends Controller
             'provider' => $provider,
             'total_income' => $totalIncome,
             'total_expense' => $totalExpense,
-            'from' => Carbon::parse($from),
-            'until' => Carbon::parse($until),
+            'from' => $from,
+            'until' => $until,
             'generated_at' => now(),
             'filters' => $this->describeFilters($request, ['doctor_id', 'service_id', 'status']),
         ], 'service-provider-report');

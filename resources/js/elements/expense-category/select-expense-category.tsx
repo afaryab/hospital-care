@@ -65,10 +65,13 @@ export default function SelectExpenseCategory({
             setIsLoading(true);
 
             try {
-                const response = await apiFetch('/api/expense-categories/search', {
-                    method: 'POST',
-                    body: JSON.stringify({ limit: 100 }),
-                });
+                const response = await apiFetch(
+                    '/api/expense-categories/search',
+                    {
+                        method: 'POST',
+                        body: JSON.stringify({ limit: 100 }),
+                    },
+                );
 
                 if (!response.ok) {
                     throw new Error('Failed to load expense categories');

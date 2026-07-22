@@ -58,4 +58,3 @@ test('transaction edited_amount is not set when amount is unchanged', function (
 
     expect($transaction->edited_amount)->toBeNull();
 });
-

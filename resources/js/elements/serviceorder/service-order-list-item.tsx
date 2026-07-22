@@ -31,6 +31,7 @@ const ServiceOrderListItem: React.FC<ServiceOrderListItemProps> = ({
         <div className="min-w-0">
             <p className="font-mono text-xs text-muted-foreground">
                 {serviceOrder.so_number}
+                {serviceOrder.so_short ? ` (${serviceOrder.so_short})` : ''}
             </p>
             <p className="text-sm font-medium">{serviceOrder.type}</p>
         </div>

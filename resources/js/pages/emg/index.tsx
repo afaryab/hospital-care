@@ -4,10 +4,14 @@ import { apiEmgMyQueue, apiEmgSearch, emgDashboard, emgPatient } from '@/routes'
 import { Head, usePage } from '@inertiajs/react';
 import { Siren } from 'lucide-react';
 
-const breadcrumbs = [{ title: 'Dashboard', href: '/' }, { title: 'Emergency', href: emgDashboard().url }];
+const breadcrumbs = [
+    { title: 'Dashboard', href: '/' },
+    { title: 'Emergency', href: emgDashboard().url },
+];
 
 export default function EmgDashboard() {
-    const { isEmgDoctor, recentOrders, todayStats, flash } = usePage<any>().props;
+    const { isEmgDoctor, recentOrders, todayStats, flash } =
+        usePage<any>().props;
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Emergency Portal" />
@@ -18,7 +22,14 @@ export default function EmgDashboard() {
                 icon={<Siren className="h-6 w-6" />}
                 hasAccess={isEmgDoctor}
                 orders={recentOrders ?? []}
-                stats={todayStats ?? { open: 0, in_progress: 0, treated: 0, total: 0 }}
+                stats={
+                    todayStats ?? {
+                        open: 0,
+                        in_progress: 0,
+                        treated: 0,
+                        total: 0,
+                    }
+                }
                 noAccessMessage="You need an Emergency Doctor profile to access this portal."
                 patientUrl={(id) => emgPatient({ id }).url}
                 myQueueUrl={apiEmgMyQueue().url}

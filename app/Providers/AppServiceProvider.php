@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Helpers\UserTimezone;
 use App\Models\Asset;
 use App\Models\Closing;
 use App\Models\ExpenseVoucher;
@@ -30,8 +31,10 @@ use App\Policies\TransactionPolicy;
 use App\Policies\UserPolicy;
 use App\Services\BreachDetectionService;
 use BezhanSalleh\PanelSwitch\PanelSwitch;
+use Filament\Tables\Columns\TextColumn;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -78,7 +81,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
 
         Activity::created(function (Activity $activity): void {
-            $properties = (array) ($activity->properties ?? []);
+            // properties is cast to a Collection — (array) on it would dump the
+            // object's protected internals into the payload. Always go through
+            // toArray() so the stored JSON stays a flat associative array.
+            $properties = $activity->properties?->toArray() ?? [];
 
             if (array_key_exists('ip_address', $properties) && array_key_exists('user_agent', $properties)) {
                 return;
@@ -116,6 +122,14 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(Login::class, function (Login $event): void {
             app(BreachDetectionService::class)->recordSuccessfulLogin($event->user, request());
+        });
+
+        TextColumn::configureUsing(function (TextColumn $column): void {
+            $column->timezone(UserTimezone::current());
+        });
+
+        Blade::directive('hdate', function (string $expression): string {
+            return "<?php echo \\App\\Helpers\\DateHelper::pdfFormat({$expression}); ?>";
         });
     }
 }

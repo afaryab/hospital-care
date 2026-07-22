@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
@@ -9,6 +10,8 @@ use Spatie\Backup\Events\UnhealthyBackupWasFound;
 use Spatie\Backup\Notifications\EventHandler;
 use Spatie\Backup\Notifications\Notifiable;
 use Spatie\Backup\Notifications\Notifications\UnhealthyBackupWasFoundNotification;
+use Spatie\Backup\Tasks\Cleanup\Strategies\DefaultStrategy;
+use Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays;
 use Symfony\Component\Process\ExecutableFinder;
 use ZipArchive;
 
@@ -36,12 +39,12 @@ beforeEach(function () {
                     'name' => 'hospital-care-test-backup',
                     'disks' => ['local'],
                     'health_checks' => [
-                        \Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays::class => 1,
+                        MaximumAgeInDays::class => 1,
                     ],
                 ],
             ],
             'cleanup' => [
-                'strategy' => \Spatie\Backup\Tasks\Cleanup\Strategies\DefaultStrategy::class,
+                'strategy' => DefaultStrategy::class,
                 'default_strategy' => [
                     'keep_all_backups_for_days' => 7,
                     'keep_daily_backups_for_days' => 7,
@@ -108,12 +111,12 @@ test('backup creates a zip file with a database dump', function () {
                     'name' => 'hospital-care-test-backup',
                     'disks' => ['local'],
                     'health_checks' => [
-                        \Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays::class => 1,
+                        MaximumAgeInDays::class => 1,
                     ],
                 ],
             ],
             'cleanup' => [
-                'strategy' => \Spatie\Backup\Tasks\Cleanup\Strategies\DefaultStrategy::class,
+                'strategy' => DefaultStrategy::class,
                 'default_strategy' => [
                     'keep_all_backups_for_days' => 7,
                     'keep_daily_backups_for_days' => 7,
@@ -126,7 +129,7 @@ test('backup creates a zip file with a database dump', function () {
         ],
     ]);
 
-    \Illuminate\Support\Facades\DB::connection('sqlite_backup_test')
+    DB::connection('sqlite_backup_test')
         ->statement('CREATE TABLE IF NOT EXISTS backup_probe (id INTEGER PRIMARY KEY, name TEXT)');
 
     $filename = 'backup-with-db-'.Str::uuid().'.zip';

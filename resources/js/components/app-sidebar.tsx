@@ -25,6 +25,8 @@ import {
     indDashboard,
     labDashboard,
     myCounterList,
+    myPatients,
+    myPayments,
     opdDashboard,
     patientsRegister,
     receaveables,
@@ -46,10 +48,12 @@ import {
     LucideHome,
     LucideShoppingBasket,
     LucideWaypoints,
+    PiggyBank,
     Radiation,
     ScanLine,
     Siren,
     Stethoscope,
+    Users,
     Waypoints,
 } from 'lucide-react';
 import AppLogoIcon from './app-logo-icon';
@@ -191,7 +195,7 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     )}
-                    {haveOPDDoctorProfile && (
+                    {(haveOPDDoctorProfile || haveNursingProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -205,7 +209,7 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     )}
-                    {haveIndoorDoctorProfile && (
+                    {(haveIndoorDoctorProfile || haveNursingProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -219,7 +223,7 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     )}
-                    {haveEmergencyDoctorProfile && (
+                    {(haveEmergencyDoctorProfile || haveNursingProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -233,7 +237,7 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     )}
-                    {haveDentistProfile && (
+                    {(haveDentistProfile || haveNursingProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -247,7 +251,7 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     )}
-                    {haveUltrasoundDoctorProfile && (
+                    {(haveUltrasoundDoctorProfile || haveNursingProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -261,11 +265,14 @@ export function AppSidebar() {
                             </SidebarMenuButton>
                         </SidebarMenuItem>
                     )}
-                    {haveXrayDoctorProfile && (
+                    {(haveXrayDoctorProfile || haveNursingProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
-                                isActive={page.url.startsWith('/XRAY')}
+                                isActive={
+                                    page.url.startsWith('/XRAY') ||
+                                    page.url.startsWith('/RAD')
+                                }
                                 tooltip={{ children: 'Radiology Portal' }}
                             >
                                 <Link href={xrayDashboard().url} prefetch>
@@ -292,6 +299,42 @@ export function AppSidebar() {
                         </SidebarMenuItem>
                     )}
                 </SidebarMenu>
+                {(haveOPDDoctorProfile ||
+                    haveIndoorDoctorProfile ||
+                    haveEmergencyDoctorProfile ||
+                    haveDentistProfile ||
+                    haveUltrasoundDoctorProfile ||
+                    haveXrayDoctorProfile) && (
+                    <SidebarMenu className="px-2">
+                        <span className="sidebar-menu-label text-sm text-[#06df72]">
+                            My Work
+                        </span>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url.startsWith(myPatients().url)}
+                                tooltip={{ children: 'My Patients' }}
+                            >
+                                <Link href={myPatients().url} prefetch>
+                                    <Users />
+                                    <span>My Patients</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url.startsWith(myPayments().url)}
+                                tooltip={{ children: 'My Payments' }}
+                            >
+                                <Link href={myPayments().url} prefetch>
+                                    <PiggyBank />
+                                    <span>My Payments</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    </SidebarMenu>
+                )}
                 {haveReceptionistProfile && (
                     <SidebarMenu className="px-2">
                         <span className="sidebar-menu-label text-sm text-[#06df72]">

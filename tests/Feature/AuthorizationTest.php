@@ -14,9 +14,6 @@ function makeReception(): Reception
         'name' => 'Main Reception',
         'is_allowed_to_pay_voucher' => 0,
         'is_allowed_to_pay_from_petty_cash' => 0,
-        'is_cash_allowed' => 1,
-        'is_cheques_allowed' => 0,
-        'is_card_allowed' => 0,
     ]);
 }
 

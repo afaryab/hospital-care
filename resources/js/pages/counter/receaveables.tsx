@@ -1,7 +1,7 @@
 import ReceaveAblesButton from '@/elements/receaveables/ReceaveAblesButton';
 import AppLayout from '@/layouts/app-layout';
 import { counter, home, patientsRegisterPsNumber } from '@/routes';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type Panel, type PaymentMethod } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
 
 interface PageProps {
@@ -19,6 +19,8 @@ interface PageProps {
         per_page: number;
         [key: string]: any;
     };
+    paymentMethods: PaymentMethod[];
+    panelCompanies: Panel[];
     [key: string]: any;
 }
 
@@ -38,7 +40,8 @@ export default function ReveaveablesList() {
         },
     ];
 
-    const { receaveables } = usePage<PageProps>().props;
+    const { receaveables, paymentMethods, panelCompanies } =
+        usePage<PageProps>().props;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -114,6 +117,8 @@ export default function ReveaveablesList() {
                                         <td className="px-6 py-3">
                                             <ReceaveAblesButton
                                                 receaveable={r}
+                                                paymentMethods={paymentMethods}
+                                                panelCompanies={panelCompanies}
                                             />
                                         </td>
                                     </tr>

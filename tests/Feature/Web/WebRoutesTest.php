@@ -1,6 +1,9 @@
 <?php
 
+use App\Models\Closing;
+use App\Models\PaymentMethod;
 use App\Models\User;
+use Inertia\Testing\AssertableInertia as Assert;
 
 // --- Guests are redirected ---
 
@@ -48,11 +51,29 @@ test('authenticated user can access all patients list', function () {
 
 test('authenticated user can access receivables page', function () {
     $user = User::factory()->create();
-    \App\Models\Closing::factory()->create(['receptionist_id' => $user->id, 'status' => 'open']);
+    Closing::factory()->create(['receptionist_id' => $user->id, 'status' => 'open']);
 
     $this->actingAs($user)
         ->get(route('receaveables'))
         ->assertOk();
+});
+
+test('receivables page passes payment methods from the database', function () {
+    $user = User::factory()->create();
+    Closing::factory()->create(['receptionist_id' => $user->id, 'status' => 'open']);
+
+    PaymentMethod::create(['slug' => 'CASH', 'name' => 'Cash', 'id_required' => false]);
+    PaymentMethod::create(['slug' => 'PANEL', 'name' => 'Panel', 'id_required' => false, 'payables' => 'panel']);
+
+    $this->actingAs($user)
+        ->get(route('receaveables'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('counter/receaveables')
+            ->has('paymentMethods', 2)
+            ->where('paymentMethods.0.slug', 'CASH')
+            ->where('paymentMethods.1.slug', 'PANEL')
+            ->has('panelCompanies')
+        );
 });
 
 test('authenticated user can access counter list page', function () {

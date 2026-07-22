@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Pages\Reports;
 
 use App\Enum\ServiceOrderStatus;
 use App\Exports\ServiceProviderReportExport;
+use App\Helpers\DateHelper;
 use App\Models\Service;
 use App\Models\ServiceOrder;
 use App\Models\User;
@@ -43,8 +44,8 @@ class ServiceProviderReport extends Page implements Tables\Contracts\HasTable
     public function mount(): void
     {
         $this->filters = [
-            'from' => now()->startOfMonth()->format('Y-m-d'),
-            'until' => now()->format('Y-m-d'),
+            'from' => now(DateHelper::timezone())->startOfMonth()->format('Y-m-d'),
+            'until' => now(DateHelper::timezone())->format('Y-m-d'),
             'doctor_id' => null,
             'service_id' => null,
             'status' => null,
@@ -103,8 +104,8 @@ class ServiceProviderReport extends Page implements Tables\Contracts\HasTable
                     }], 'amount')
                     ->withSum(['expenseVouchers as voucher_total'], 'amount')
                     ->with(['patient:id,name', 'service:id,name'])
-                    ->when($this->filters['from'] ?? null, fn (Builder $q, $date) => $q->whereDate('service_orders.created_at', '>=', $date))
-                    ->when($this->filters['until'] ?? null, fn (Builder $q, $date) => $q->whereDate('service_orders.created_at', '<=', $date))
+                    ->when($this->filters['from'] ?? null, fn (Builder $q, $date) => $q->where('service_orders.created_at', '>=', DateHelper::dayStartUtc($date)))
+                    ->when($this->filters['until'] ?? null, fn (Builder $q, $date) => $q->where('service_orders.created_at', '<=', DateHelper::dayEndUtc($date)))
                     ->when($this->filters['doctor_id'] ?? null, fn (Builder $q, $id) => $q->where('doctor_id', $id))
                     ->when($this->filters['service_id'] ?? null, fn (Builder $q, $id) => $q->where('service_id', $id))
                     ->when($this->filters['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status));

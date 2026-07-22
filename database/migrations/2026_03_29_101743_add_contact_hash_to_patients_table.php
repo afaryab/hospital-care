@@ -29,7 +29,7 @@ return new class extends Migration
 
                     try {
                         $plainContact = Crypt::decryptString($plainContact);
-                    } catch (\Throwable) {
+                    } catch (Throwable) {
                     }
 
                     $normalized = preg_replace('/\D+/', '', $plainContact) ?: null;

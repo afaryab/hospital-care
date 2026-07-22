@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             TrustProxies::class,
         ]);
 
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'browser_timezone']);
 
         $middleware->web(append: [
             HandleAppearance::class,

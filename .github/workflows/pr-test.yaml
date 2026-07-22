@@ -80,10 +80,25 @@ jobs:
 
           echo "Test container is running."
 
+      - name: Copy test fixtures into container
+        run: |
+          # The production image's .dockerignore excludes /tests and other
+          # dev-only assets, so we have to push them in before Pest can run.
+          docker cp tests test-runner:/var/www/html/tests
+          docker cp phpunit.xml test-runner:/var/www/html/phpunit.xml
+
       - name: Install dev dependencies & coverage driver
         run: |
           docker exec test-runner composer install --no-interaction
-          docker exec test-runner sh -c "pecl install pcov && docker-php-ext-enable pcov"
+          # The runtime image strips its build toolchain after baking in the
+          # base extensions, so we re-add just enough to compile pcov here,
+          # then remove it again to keep the running container slim.
+          docker exec test-runner sh -c "
+            apk add --no-cache --virtual .pcov-build-deps autoconf gcc g++ make linux-headers \
+              && pecl install pcov \
+              && docker-php-ext-enable pcov \
+              && apk del .pcov-build-deps
+          "
 
       - name: Run migrations
         run: docker exec test-runner php artisan migrate --force
@@ -116,6 +131,22 @@ jobs:
         run: docker exec test-runner vendor/bin/pint --test
 
       # --- Frontend checks ---
+      - name: Install frontend dependencies
+        run: |
+          # node_modules is excluded from the runtime image by .dockerignore,
+          # so the TypeScript/ESLint/Prettier/Vite steps below have nothing to
+          # run against. Install dev deps inside the test container.
+          docker exec test-runner pnpm install --frozen-lockfile
+
+      - name: Generate Wayfinder TS files
+        run: |
+          # The runtime image ships without resources/js/{actions,routes}/ (they
+          # are gitignored and only created during the Vite build stage), so the
+          # TypeScript check has no module to resolve `@/routes` and `@/actions`
+          # to. Regenerate them inside the test container with --with-form so
+          # the helpers exposing .form() exist for the tsc pass below.
+          docker exec test-runner php artisan wayfinder:generate --with-form
+
       - name: Patch generated Wayfinder files
         run: |
           docker exec test-runner sh -c '

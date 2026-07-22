@@ -1,5 +1,3 @@
-import TablePagination from '@/components/ui/table-pagination';
-import { MONTHS } from '@/lib/constants';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -9,7 +7,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import TablePagination from '@/components/ui/table-pagination';
 import AppLayout from '@/layouts/app-layout';
+import { MONTHS } from '@/lib/constants';
 import {
     home,
     patientsRegister,
@@ -149,7 +149,9 @@ export default function Register() {
                             <SelectContent>
                                 <SelectItem value="0">All</SelectItem>
                                 {MONTHS.map((m) => (
-                                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                                    <SelectItem key={m.value} value={m.value}>
+                                        {m.label}
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -300,9 +302,13 @@ export default function Register() {
                             <tr>
                                 <td colSpan={4}>
                                     <TablePagination
-                                        currentPage={patientsPaginated.current_page}
+                                        currentPage={
+                                            patientsPaginated.current_page
+                                        }
                                         lastPage={patientsPaginated.last_page}
-                                        makeHref={(page) => `?page=${page}&year=${year}&month=${month}`}
+                                        makeHref={(page) =>
+                                            `?page=${page}&year=${year}&month=${month}`
+                                        }
                                     />
                                 </td>
                             </tr>

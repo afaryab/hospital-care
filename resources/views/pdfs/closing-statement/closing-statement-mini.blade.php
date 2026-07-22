@@ -51,7 +51,7 @@
 <div class="header">
     <h1>Closing Statement</h1>
     <h2>{{ $closing['ct_number'] }}</h2>
-    <p>{{ $generated_at->format('d/m/Y H:i') }}</p>
+    <p>@hdate($generated_at, 'd/m/Y H:i')</p>
 </div>
 
 {{-- Counter Info --}}
@@ -114,7 +114,7 @@
 <div class="kv highlight"><span class="kv-label">Net Cash <span style="font-size:8px;font-weight:normal">(Cash − Exp)</span></span><span class="kv-value">{{ number_format($netCash, 0) }}</span></div>
 
 <div class="footer">
-    <p>{{ $generated_at->format('d/m/Y H:i:s') }}</p>
+    <p>@hdate($generated_at, 'd/m/Y H:i:s')</p>
 </div>
 
 </body>

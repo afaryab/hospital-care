@@ -33,7 +33,7 @@ class ConsentResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->query(Consent::query()->with(['patient:id,name,ps_number', 'serviceOrder:id,so_number', 'recordedBy:id,name']))
+            ->query(Consent::query()->with(['patient:id,name,ps_number', 'serviceOrder:id,so_number,service_id', 'serviceOrder.service:id,name', 'recordedBy:id,name']))
             ->defaultSort('consented_at', 'desc')
             ->columns([
                 TextColumn::make('consented_at')->label('Date')->dateTime('d M Y H:i')->sortable(),
@@ -41,7 +41,7 @@ class ConsentResource extends Resource
                     ->label('Patient')
                     ->description(fn (Consent $c) => $c->patient?->ps_number)
                     ->searchable(),
-                TextColumn::make('serviceOrder.so_number')->label('Service Order')->searchable()->fontFamily('mono'),
+                TextColumn::make('serviceOrder.service.name')->label('Service')->searchable(),
                 TextColumn::make('consent_type')
                     ->label('Type')
                     ->badge()

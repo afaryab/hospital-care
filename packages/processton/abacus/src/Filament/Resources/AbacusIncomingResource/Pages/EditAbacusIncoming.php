@@ -7,6 +7,8 @@ use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Schema;
 use Processton\Abacus\Filament\Resources\AbacusIncomingResource;
 use Processton\Abacus\Models\AbacusChartOfAccount;
@@ -37,8 +39,8 @@ class EditAbacusIncoming extends EditRecord
 
         return $form
             ->schema([
-                \Filament\Schemas\Components\Grid::make(2)->schema([
-                    \Filament\Schemas\Components\Fieldset::make('Incoming')->schema([
+                Grid::make(2)->schema([
+                    Fieldset::make('Incoming')->schema([
                         Forms\Components\TextInput::make('reference')
                             ->label('Reference')
                             ->disabled()
@@ -62,7 +64,7 @@ class EditAbacusIncoming extends EditRecord
                             ->columnSpanFull()
                             ->minValue(0),
                     ]),
-                    \Filament\Schemas\Components\Fieldset::make('Transactions')->schema([
+                    Fieldset::make('Transactions')->schema([
                         Forms\Components\Repeater::make('transactions')
                             ->schema([
                                 Forms\Components\DatePicker::make('date')

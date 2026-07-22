@@ -2,11 +2,23 @@
 
 namespace App\Filament\Admin\Resources\Receaveables;
 
+use App\Filament\Admin\Resources\Receaveables\Pages\CreateReceaveable;
+use App\Filament\Admin\Resources\Receaveables\Pages\EditReceaveable;
 use App\Filament\Admin\Resources\Receaveables\Pages\ListReceaveables;
 use App\Models\Panel;
+use App\Models\Patient;
 use App\Models\Receaveable;
+use App\Models\Transaction;
 use BackedEnum;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -32,7 +44,70 @@ class ReceaveableResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([]);
+        return $schema->components([
+            Section::make('Receivable Details')
+                ->schema([
+                    Select::make('patient_id')
+                        ->label('Patient')
+                        ->required()
+                        ->searchable()
+                        ->preload()
+                        ->getSearchResultsUsing(fn (string $search) => Patient::query()
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('ps_number', 'like', "%{$search}%")
+                            ->limit(25)
+                            ->get()
+                            ->mapWithKeys(fn (Patient $p) => [$p->id => "{$p->name} ({$p->ps_number})"])
+                            ->toArray())
+                        ->getOptionLabelUsing(fn ($value): ?string => Patient::find($value)?->name),
+                    Select::make('panel_id')
+                        ->label('Panel')
+                        ->options(fn () => Panel::orderBy('name')->pluck('name', 'id'))
+                        ->searchable()
+                        ->preload(),
+                    Select::make('transaction_id')
+                        ->label('Linked Transaction')
+                        ->searchable()
+                        ->preload(false)
+                        ->getSearchResultsUsing(fn (string $search) => Transaction::query()
+                            ->where('tr_number', 'like', "%{$search}%")
+                            ->limit(25)
+                            ->pluck('tr_number', 'id')
+                            ->toArray())
+                        ->getOptionLabelUsing(fn ($value): ?string => Transaction::find($value)?->tr_number)
+                        ->helperText('The transaction that produced this receivable (optional).'),
+                    TextInput::make('orignal_amount')
+                        ->label('Original Amount')
+                        ->required()
+                        ->numeric()
+                        ->step('0.01')
+                        ->minValue(0)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(function ($state, Set $set, Get $get): void {
+                            if ($get('amount') === null || $get('amount') === '') {
+                                $set('amount', $state);
+                            }
+                        }),
+                    TextInput::make('amount')
+                        ->label('Remaining Amount')
+                        ->required()
+                        ->numeric()
+                        ->step('0.01')
+                        ->minValue(0),
+                    DatePicker::make('due_date')
+                        ->label('Due Date'),
+                    Select::make('status')
+                        ->required()
+                        ->options([
+                            'pending' => 'Pending',
+                            'paid' => 'Paid',
+                            'cancelled' => 'Cancelled',
+                        ])
+                        ->default('pending')
+                        ->native(false),
+                ])
+                ->columns(2),
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -95,6 +170,10 @@ class ReceaveableResource extends Resource
                     ->label('Overdue only')
                     ->query(fn (Builder $q) => $q->where('due_date', '<', now())->whereNotIn('status', ['paid', 'cancelled'])),
             ])
+            ->recordActions([
+                EditAction::make(),
+                DeleteAction::make(),
+            ])
             ->striped()
             ->paginated([25, 50, 100]);
     }
@@ -103,6 +182,8 @@ class ReceaveableResource extends Resource
     {
         return [
             'index' => ListReceaveables::route('/'),
+            'create' => CreateReceaveable::route('/create'),
+            'edit' => EditReceaveable::route('/{record}/edit'),
         ];
     }
 }

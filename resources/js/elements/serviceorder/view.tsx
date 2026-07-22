@@ -357,7 +357,10 @@ export default function EmergencyClinicalPerforma({
 
     const onPrint = () => {
         const id = serviceOrder?.id;
-        if (!id) { toast.error('Missing Service Order ID'); return; }
+        if (!id) {
+            toast.error('Missing Service Order ID');
+            return;
+        }
         const url = `/PRINT/SO/${id}`;
         window.open(url, '_blank', 'noopener,noreferrer');
     };

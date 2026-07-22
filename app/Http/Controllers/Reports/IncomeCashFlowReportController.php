@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Reports;
 
+use App\Helpers\DateHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Closing;
 use App\Models\Patient;
@@ -9,7 +10,7 @@ use App\Models\Service;
 use App\Models\TransactionElement;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -30,8 +31,8 @@ class IncomeCashFlowReportController extends Controller
         gc_enable();
 
         // Get filters from request
-        $dateFrom = $request->input('date_from', now()->startOfMonth()->format('Y-m-d'));
-        $dateTo = $request->input('date_to', now()->endOfMonth()->format('Y-m-d'));
+        $dateFrom = $request->input('date_from', now(DateHelper::timezone())->startOfMonth()->format('Y-m-d'));
+        $dateTo = $request->input('date_to', now(DateHelper::timezone())->endOfMonth()->format('Y-m-d'));
         $closingId = $request->input('closing_id');
         $serviceId = $request->input('service_id');
         $serviceOrderId = $request->input('service_order_id');
@@ -65,8 +66,8 @@ class IncomeCashFlowReportController extends Controller
             ->where('income_or_expense', 'INCOME')
             ->when($dateFrom && $dateTo, function ($q) use ($dateFrom, $dateTo) {
                 return $q->whereBetween('created_at', [
-                    Carbon::parse($dateFrom)->startOfDay(),
-                    Carbon::parse($dateTo)->endOfDay(),
+                    DateHelper::dayStartUtc($dateFrom),
+                    DateHelper::dayEndUtc($dateTo),
                 ]);
             })
             ->when($closingId, fn ($q) => $q->where('closing_id', $closingId))
@@ -158,7 +159,7 @@ class IncomeCashFlowReportController extends Controller
             'filters' => $filterData,
             'group_by' => $groupBy,
             'columns' => $columns,
-            'generated_at' => now()->format('M d, Y H:i:s'),
+            'generated_at' => DateHelper::pdfFormat(now(), 'M d, Y H:i:s'),
             'total_records_in_db' => $totalCount,
             'records_shown' => $processedCount,
         ];
@@ -209,7 +210,7 @@ class IncomeCashFlowReportController extends Controller
     /**
      * Build base query with all filters
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return Builder
      */
     private function buildBaseQuery($dateFrom, $dateTo, $closingId, $serviceId, $serviceOrderId, $doctorId, $patientId, $columns = [])
     {
@@ -272,8 +273,8 @@ class IncomeCashFlowReportController extends Controller
         // Apply date filter
         if ($dateFrom && $dateTo) {
             $query->whereBetween('transaction_elements.created_at', [
-                Carbon::parse($dateFrom)->startOfDay(),
-                Carbon::parse($dateTo)->endOfDay(),
+                DateHelper::dayStartUtc($dateFrom),
+                DateHelper::dayEndUtc($dateTo),
             ]);
         }
 
@@ -333,8 +334,8 @@ class IncomeCashFlowReportController extends Controller
                 break;
 
             case 'date':
-                $key = Carbon::parse($element->created_at)->format('Y-m-d');
-                $label = Carbon::parse($element->created_at)->format('M d, Y');
+                $key = DateHelper::tz($element->created_at)->format('Y-m-d');
+                $label = DateHelper::tz($element->created_at)->format('M d, Y');
                 break;
 
             default:

@@ -4,10 +4,14 @@ import { apiXrayMyQueue, apiXraySearch, xrayDashboard, xrayPatient } from '@/rou
 import { Head, usePage } from '@inertiajs/react';
 import { Radiation } from 'lucide-react';
 
-const breadcrumbs = [{ title: 'Dashboard', href: '/' }, { title: 'Radiology', href: xrayDashboard().url }];
+const breadcrumbs = [
+    { title: 'Dashboard', href: '/' },
+    { title: 'Radiology', href: xrayDashboard().url },
+];
 
 export default function XrayDashboard() {
-    const { isXrayTech, recentOrders, todayStats, flash } = usePage<any>().props;
+    const { isXrayTech, recentOrders, todayStats, flash } =
+        usePage<any>().props;
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Radiology / X-Ray Portal" />
@@ -18,7 +22,14 @@ export default function XrayDashboard() {
                 icon={<Radiation className="h-6 w-6" />}
                 hasAccess={isXrayTech}
                 orders={recentOrders ?? []}
-                stats={todayStats ?? { open: 0, in_progress: 0, treated: 0, total: 0 }}
+                stats={
+                    todayStats ?? {
+                        open: 0,
+                        in_progress: 0,
+                        treated: 0,
+                        total: 0,
+                    }
+                }
                 noAccessMessage="You need an X-Ray Technician profile to access this portal."
                 patientUrl={(id) => xrayPatient({ id }).url}
                 myQueueUrl={apiXrayMyQueue().url}
