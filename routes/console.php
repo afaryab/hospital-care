@@ -15,11 +15,11 @@ Schedule::command('telescope:prune')->daily();
 Schedule::command('bank:link-transactions')->hourly()->runInBackground()->withoutOverlapping();
 
 // Temporarily disabled for manual testing
-Schedule::command('app:sync-old-hims --entity=all')
-    ->everyTenSeconds()
-    ->runInBackground()
-    ->withoutOverlapping()
-    ->onOneServer();
+// Schedule::command('app:sync-old-hims --entity=all')
+//     ->everyTenSeconds()
+//     ->runInBackground()
+//     ->withoutOverlapping()
+//     ->onOneServer();
 
 Schedule::command('backup:run')
     ->dailyAt('01:00')

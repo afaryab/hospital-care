@@ -7,6 +7,7 @@ use App\Filament\Admin\Resources\ServiceOrders\Pages\ViewServiceOrder;
 use App\Models\Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceOrder;
+use App\Models\Triage;
 use App\Models\User;
 use App\Services\ServiceOrderMerger;
 use BackedEnum;
@@ -62,7 +63,7 @@ class ServiceOrderResource extends Resource
                         $q->where('income_or_expense', 'EXPENSE');
                     }], 'amount')
                     ->withCount('expenseVouchers')
-                    ->withSum('expenseVouchers', 'amount')
+                    ->withVoucherExpenseTotal('expense_vouchers_sum_amount')
             )
             // Render the page skeleton immediately; data loads in a follow-up
             // Livewire request so the initial HTTP response never times out.
@@ -185,6 +186,15 @@ class ServiceOrderResource extends Resource
                         )
                         ->orderBy('name')
                         ->pluck('name', 'id'))
+                    ->searchable(),
+                SelectFilter::make('triage')
+                    ->label('Triage')
+                    ->options(fn () => Triage::orderBy('priority')->pluck('name', 'id'))
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['value'] ?? null, fn (Builder $q, $value) => $q
+                            ->whereHas('treatmentRecord', fn (Builder $tq) => $tq->where('triage_id', $value))
+                        )
+                    )
                     ->searchable(),
             ])
             ->groups([

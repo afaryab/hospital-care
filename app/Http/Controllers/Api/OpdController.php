@@ -219,7 +219,7 @@ class OpdController extends Controller
             ->where('type', 'OPD')
             ->where('doctor_id', $user->id)
             ->whereBetween('created_at', DateHelper::todayRangeUtc())
-            ->orderByRaw("FIELD(status, 'in-progress', 'IN-PROGRESS', 'open', 'OPEN', 'treated', 'TREATED') ASC")
+            ->orderByRaw("CASE WHEN LOWER(status) = 'in-progress' THEN 0 WHEN LOWER(status) = 'open' THEN 1 WHEN LOWER(status) = 'treated' THEN 2 ELSE 3 END ASC")
             ->orderBy('created_at', 'ASC')
             ->get();
 

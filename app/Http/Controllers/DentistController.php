@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DateHelper;
+use App\Helpers\TreatmentFormConfig;
 use App\Models\Patient;
 use App\Models\ServiceOrder;
 use Illuminate\Http\Request;
@@ -25,8 +26,8 @@ class DentistController extends Controller
                 ->where('type', 'DNT')
                 ->where('doctor_id', $user->id)
                 ->whereBetween('created_at', DateHelper::todayRangeUtc())
-                ->orderByRaw("FIELD(status, 'in-progress', 'IN-PROGRESS', 'open', 'OPEN', 'treated', 'TREATED') ASC")
-                ->orderBy('created_at', 'ASC')
+                ->orderByRaw("CASE WHEN LOWER(status) = 'in-progress' THEN 0 WHEN LOWER(status) = 'open' THEN 1 WHEN LOWER(status) = 'treated' THEN 2 ELSE 3 END ASC")
+                ->orderBy('created_at', 'DESC')
                 ->limit(30)
                 ->get();
 
@@ -50,14 +51,15 @@ class DentistController extends Controller
         $serviceOrder = ServiceOrder::query()
             ->with([
                 'patient:id,name,ps_number,gender,age_days,age_dob,contact',
-                'service:id,name',
+                'service:id,name,treatment_form_config',
                 'doctor:id,name',
                 'treatmentRecord.vitalSigns',
+                'treatmentRecord.attachments',
             ])
             ->findOrFail($id);
 
         $previousVisits = ServiceOrder::query()
-            ->with(['treatmentRecord:id,service_order_id,diagnosis_text,chief_complaint,treated_at,is_finalized'])
+            ->with(['treatmentRecord:id,service_order_id,diagnosis_text,chief_complaint,treated_at,is_finalized,dental_chart'])
             ->where('patient_id', $serviceOrder->patient_id)
             ->where('type', 'DNT')
             ->where('id', '!=', $serviceOrder->id)
@@ -68,6 +70,7 @@ class DentistController extends Controller
         return Inertia::render('dnt/patient', [
             'serviceOrder' => $serviceOrder,
             'previousVisits' => $previousVisits,
+            'formConfig' => TreatmentFormConfig::resolve('DNT', $serviceOrder->service?->treatment_form_config),
         ]);
     }
 

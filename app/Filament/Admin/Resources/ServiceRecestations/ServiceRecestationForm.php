@@ -43,6 +43,18 @@ class ServiceRecestationForm
                     ->required()
                     ->numeric()
                     ->default(0),
+                Select::make('color')
+                    ->label('Triage / Display Color')
+                    ->helperText('Sets the background color when this resuscitation service is listed. Use for emergency triage coding.')
+                    ->options([
+                        'red' => '🔴 Red — Immediate Resuscitation',
+                        'yellow' => '🟡 Yellow — Emergency',
+                        'blue' => '🔵 Blue — Urgent',
+                        'sky' => '🩵 Sky Blue — Semi Urgent',
+                        'green' => '🟢 Green — Non Urgent',
+                    ])
+                    ->nullable()
+                    ->searchable(),
                 Toggle::make('have_service_provider')
                     ->live()
                     ->default(false),

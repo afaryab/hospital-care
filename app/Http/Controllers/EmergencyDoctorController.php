@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DateHelper;
+use App\Helpers\TreatmentFormConfig;
 use App\Models\Patient;
 use App\Models\ServiceOrder;
+use App\Models\Triage;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -25,8 +27,8 @@ class EmergencyDoctorController extends Controller
                 ->where('type', 'EMG')
                 ->where('doctor_id', $user->id)
                 ->whereBetween('created_at', DateHelper::todayRangeUtc())
-                ->orderByRaw("FIELD(status, 'in-progress', 'IN-PROGRESS', 'open', 'OPEN', 'treated', 'TREATED') ASC")
-                ->orderBy('created_at', 'ASC')
+                ->orderByRaw("CASE WHEN LOWER(status) = 'in-progress' THEN 0 WHEN LOWER(status) = 'open' THEN 1 WHEN LOWER(status) = 'treated' THEN 2 ELSE 3 END ASC")
+                ->orderBy('created_at', 'DESC')
                 ->limit(30)
                 ->get();
 
@@ -50,14 +52,19 @@ class EmergencyDoctorController extends Controller
         $serviceOrder = ServiceOrder::query()
             ->with([
                 'patient:id,name,ps_number,gender,age_days,age_dob,contact',
-                'service:id,name',
+                'service:id,name,treatment_form_config',
                 'doctor:id,name',
                 'treatmentRecord.vitalSigns',
+                'treatmentRecord.triage',
+                'treatmentRecord.attachments',
+                'treatmentRecord.triageHistories.oldTriage:id,name,color',
+                'treatmentRecord.triageHistories.newTriage:id,name,color',
+                'treatmentRecord.triageHistories.changedBy:id,name',
             ])
             ->findOrFail($id);
 
         $previousVisits = ServiceOrder::query()
-            ->with(['treatmentRecord:id,service_order_id,diagnosis_text,chief_complaint,treated_at,is_finalized'])
+            ->with(['treatmentRecord:id,service_order_id,diagnosis_text,chief_complaint,treated_at,is_finalized,triage_id', 'treatmentRecord.triage:id,name,color'])
             ->where('patient_id', $serviceOrder->patient_id)
             ->where('type', 'EMG')
             ->where('id', '!=', $serviceOrder->id)
@@ -68,6 +75,8 @@ class EmergencyDoctorController extends Controller
         return Inertia::render('emg/patient', [
             'serviceOrder' => $serviceOrder,
             'previousVisits' => $previousVisits,
+            'formConfig' => TreatmentFormConfig::resolve('EMG', $serviceOrder->service?->treatment_form_config),
+            'triages' => Triage::query()->where('is_active', true)->orderBy('priority')->get(['id', 'name', 'color', 'priority']),
         ]);
     }
 

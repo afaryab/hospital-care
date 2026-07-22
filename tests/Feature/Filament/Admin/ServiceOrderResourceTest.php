@@ -3,7 +3,10 @@
 use App\Filament\Admin\Resources\ServiceOrders\Pages\ListServiceOrders;
 use App\Filament\Admin\Resources\ServiceOrders\Pages\ViewServiceOrder;
 use App\Models\Administrator;
+use App\Models\ExpenseVoucher;
 use App\Models\ServiceOrder;
+use App\Models\TreatmentRecord;
+use App\Models\Triage;
 use App\Models\User;
 
 beforeEach(function () {
@@ -16,7 +19,66 @@ test('service order list page renders', function () {
     Livewire\Livewire::test(ListServiceOrders::class)->assertSuccessful();
 });
 
+test('service order list vouchers amount column divides a shared expense voucher', function () {
+    $serviceOrder = ServiceOrder::factory()->create();
+    $otherOrder = ServiceOrder::factory()->create();
+
+    $voucher = ExpenseVoucher::factory()->create(['amount' => 900]);
+    $voucher->serviceOrders()->attach([$serviceOrder->id, $otherOrder->id]);
+
+    Livewire\Livewire::test(ListServiceOrders::class)
+        ->call('loadTable')
+        ->assertTableColumnStateSet('expense_vouchers_sum_amount', 450.0, record: $serviceOrder);
+});
+
 test('service order view page renders', function () {
     $serviceOrder = ServiceOrder::factory()->create();
     Livewire\Livewire::test(ViewServiceOrder::class, ['record' => $serviceOrder->getRouteKey()])->assertSuccessful();
+});
+
+test('service order view page shows the divided share of a shared expense voucher', function () {
+    $serviceOrder = ServiceOrder::factory()->create();
+    $otherOrder = ServiceOrder::factory()->create();
+
+    $voucher = ExpenseVoucher::factory()->create(['amount' => 800]);
+    $voucher->serviceOrders()->attach([$serviceOrder->id, $otherOrder->id]);
+
+    Livewire\Livewire::test(ViewServiceOrder::class, ['record' => $serviceOrder->getRouteKey()])
+        ->assertSuccessful()
+        ->assertSee('400.00')
+        ->assertSee('shared across 2 orders');
+});
+
+test('service order list can be filtered by triage', function () {
+    $triage = Triage::factory()->create();
+
+    $matching = ServiceOrder::factory()->create(['so_number' => 'PS/2026/01/0001/EMG/01']);
+    TreatmentRecord::factory()->create(['service_order_id' => $matching->id, 'triage_id' => $triage->id]);
+
+    $other = ServiceOrder::factory()->create(['so_number' => 'PS/2026/01/0002/EMG/01']);
+    TreatmentRecord::factory()->create(['service_order_id' => $other->id]);
+
+    Livewire\Livewire::test(ListServiceOrders::class)
+        ->call('loadTable')
+        ->assertCanSeeTableRecords([$matching, $other])
+        ->filterTable('triage', $triage->id)
+        ->assertCanSeeTableRecords([$matching])
+        ->assertCanNotSeeTableRecords([$other]);
+});
+
+test('visiting the service order list with a triage query param pre-applies the filter', function () {
+    $triage = Triage::factory()->create();
+
+    $matching = ServiceOrder::factory()->create(['so_number' => 'PS/2026/01/0003/EMG/01']);
+    TreatmentRecord::factory()->create(['service_order_id' => $matching->id, 'triage_id' => $triage->id]);
+
+    $other = ServiceOrder::factory()->create(['so_number' => 'PS/2026/01/0004/EMG/01']);
+    TreatmentRecord::factory()->create(['service_order_id' => $other->id]);
+
+    Livewire\Livewire::withQueryParams(['triage' => (string) $triage->id])
+        ->test(ListServiceOrders::class)
+        ->assertSuccessful()
+        ->call('loadTable')
+        ->assertCanSeeTableRecords([$matching])
+        ->assertCanNotSeeTableRecords([$other]);
 });

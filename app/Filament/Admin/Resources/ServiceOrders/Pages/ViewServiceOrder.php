@@ -117,8 +117,10 @@ class ViewServiceOrder extends ViewRecord
                     ViewEntry::make('expense_vouchers')
                         ->view('filament.admin.resources.service-orders.expense-vouchers-table')
                         ->state(fn ($record) => $record->expenseVouchers()
+                            ->withCount('serviceOrders')
                             ->with(['expCategory', 'payedTo'])
-                            ->get()),
+                            ->get()
+                            ->each(fn ($voucher) => $voucher->share_amount = $voucher->amount / max(1, $voucher->service_orders_count))),
                 ]),
         ]);
     }

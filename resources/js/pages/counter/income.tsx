@@ -1,6 +1,13 @@
 // @ts-nocheck
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { RadioInput } from '@/components/ui/input-radio';
 import { Label } from '@/components/ui/label';
@@ -32,7 +39,7 @@ import {
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { clsx } from 'clsx';
-import { LoaderCircle } from 'lucide-react';
+import { Info, LoaderCircle } from 'lucide-react';
 import {
     lazy,
     Suspense,
@@ -498,42 +505,179 @@ function CollectPayment({
                             </div>
                         )}
                         <div className="mb-2 grid gap-2">
-                            <Label htmlFor="featured_services">
-                                Featured Services
-                            </Label>
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="featured_services">
+                                    Featured Services
+                                </Label>
+                                {/* Triage guideline popup for receptionists */}
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <button
+                                            type="button"
+                                            className="flex h-5 w-5 items-center justify-center rounded-full text-blue-500 hover:text-blue-700"
+                                            title="Triage Color Guidelines"
+                                        >
+                                            <Info className="h-4 w-4" />
+                                        </button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-md">
+                                        <DialogHeader>
+                                            <DialogTitle>
+                                                Emergency Triage Color
+                                                Guidelines
+                                            </DialogTitle>
+                                        </DialogHeader>
+                                        <div className="space-y-2 pt-2">
+                                            {[
+                                                {
+                                                    color: 'red',
+                                                    swatch: 'bg-red-600',
+                                                    label: 'Immediate Resuscitation',
+                                                    desc: 'Life-threatening emergency. Patient must be seen immediately. Do NOT delay.',
+                                                },
+                                                {
+                                                    color: 'yellow',
+                                                    swatch: 'bg-yellow-400',
+                                                    label: 'Emergency',
+                                                    desc: 'High-risk. Seen within 10–15 minutes. Ongoing monitoring required.',
+                                                },
+                                                {
+                                                    color: 'blue',
+                                                    swatch: 'bg-blue-600',
+                                                    label: 'Urgent',
+                                                    desc: 'Moderate risk. Seen within 30 minutes.',
+                                                },
+                                                {
+                                                    color: 'sky',
+                                                    swatch: 'bg-sky-400',
+                                                    label: 'Semi Urgent',
+                                                    desc: 'Lower risk. Seen within 60 minutes.',
+                                                },
+                                                {
+                                                    color: 'green',
+                                                    swatch: 'bg-green-600',
+                                                    label: 'Non Urgent',
+                                                    desc: 'Routine. Seen within 2 hours.',
+                                                },
+                                            ].map((t) => (
+                                                <div
+                                                    key={t.color}
+                                                    className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5"
+                                                >
+                                                    <div
+                                                        className={clsx(
+                                                            'h-8 w-8 shrink-0 rounded-md',
+                                                            t.swatch,
+                                                        )}
+                                                    />
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-sm font-bold text-slate-900">
+                                                            {t.label}
+                                                        </p>
+                                                        <p className="text-xs text-slate-500">
+                                                            {t.desc}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
                             <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                                 {services
                                     .filter(
                                         (service: any) => service.is_featured,
                                     )
-                                    .map((service: any) => (
-                                        <button
-                                            key={service.id}
-                                            onClick={() =>
-                                                setSelectedServices((prev) =>
-                                                    prev.includes(service.id)
-                                                        ? prev.filter(
-                                                              (id) =>
-                                                                  id !==
-                                                                  service.id,
+                                    .map((service: any) => {
+                                        const isSelected =
+                                            selectedServices.includes(
+                                                service.id,
+                                            );
+                                        const hasColor = !!service.color;
+                                        return (
+                                            <button
+                                                key={service.id}
+                                                type="button"
+                                                onClick={() =>
+                                                    setSelectedServices(
+                                                        (prev) =>
+                                                            prev.includes(
+                                                                service.id,
+                                                            )
+                                                                ? prev.filter(
+                                                                      (id) =>
+                                                                          id !==
+                                                                          service.id,
+                                                                  )
+                                                                : [
+                                                                      ...prev,
+                                                                      service.id,
+                                                                  ],
+                                                    )
+                                                }
+                                                className={clsx(
+                                                    'rounded-lg border-2 p-3 text-left transition-all',
+                                                    isSelected && hasColor
+                                                        ? clsx(
+                                                              triageBg(
+                                                                  service.color,
+                                                              ),
+                                                              'border-transparent ring-2 ring-offset-1',
+                                                              triageRing(
+                                                                  service.color,
+                                                              ),
                                                           )
-                                                        : [...prev, service.id],
-                                                )
-                                            }
-                                            className={clsx(
-                                                'rounded-lg border-2 p-3 text-left transition-all',
-                                                selectedServices.includes(
-                                                    service.id,
-                                                )
-                                                    ? 'border-green-500 bg-green-50 dark:bg-green-950'
-                                                    : 'border-gray-200 hover:border-gray-300 dark:border-neutral-700',
-                                            )}
-                                        >
-                                            <div className="text-sm font-semibold">
-                                                {service.name}
-                                            </div>
-                                        </button>
-                                    ))}
+                                                        : isSelected
+                                                          ? 'border-green-500 bg-green-50'
+                                                          : hasColor
+                                                            ? clsx(
+                                                                  triageBgLight(
+                                                                      service.color,
+                                                                  ),
+                                                                  triageBorder(
+                                                                      service.color,
+                                                                  ),
+                                                                  'hover:opacity-90',
+                                                              )
+                                                            : 'border-gray-200 hover:border-gray-300',
+                                                )}
+                                            >
+                                                <div
+                                                    className={clsx(
+                                                        'text-sm font-semibold',
+                                                        isSelected && hasColor
+                                                            ? triageText(
+                                                                  service.color,
+                                                              )
+                                                            : '',
+                                                        !isSelected && hasColor
+                                                            ? triageText(
+                                                                  service.color,
+                                                              )
+                                                            : '',
+                                                    )}
+                                                >
+                                                    {service.name}
+                                                </div>
+                                                {service.charges > 0 && (
+                                                    <div
+                                                        className={clsx(
+                                                            'mt-0.5 text-xs',
+                                                            hasColor
+                                                                ? triageText(
+                                                                      service.color,
+                                                                  ) +
+                                                                      ' opacity-75'
+                                                                : 'text-gray-500',
+                                                        )}
+                                                    >
+                                                        Rs. {service.charges}
+                                                    </div>
+                                                )}
+                                            </button>
+                                        );
+                                    })}
                             </div>
                         </div>
                         <div className="grid gap-2">
@@ -1469,6 +1613,154 @@ function SelectPatient({ openCounter }: any) {
     );
 }
 
+// ─── Triage color helpers ──────────────────────────────────────────────────────
+
+function triageBg(color?: string) {
+    switch (color) {
+        case 'red':
+            return 'bg-red-600';
+        case 'yellow':
+            return 'bg-yellow-400';
+        case 'blue':
+            return 'bg-blue-600';
+        case 'sky':
+            return 'bg-sky-400';
+        case 'green':
+            return 'bg-green-600';
+        default:
+            return 'bg-gray-100';
+    }
+}
+function triageBgLight(color?: string) {
+    switch (color) {
+        case 'red':
+            return 'bg-red-50';
+        case 'yellow':
+            return 'bg-yellow-50';
+        case 'blue':
+            return 'bg-blue-50';
+        case 'sky':
+            return 'bg-sky-50';
+        case 'green':
+            return 'bg-green-50';
+        default:
+            return 'bg-gray-50';
+    }
+}
+function triageText(color?: string) {
+    switch (color) {
+        case 'red':
+            return 'text-red-700';
+        case 'yellow':
+            return 'text-yellow-800';
+        case 'blue':
+            return 'text-blue-700';
+        case 'sky':
+            return 'text-sky-700';
+        case 'green':
+            return 'text-green-700';
+        default:
+            return 'text-gray-700';
+    }
+}
+function triageBorder(color?: string) {
+    switch (color) {
+        case 'red':
+            return 'border-red-300';
+        case 'yellow':
+            return 'border-yellow-300';
+        case 'blue':
+            return 'border-blue-300';
+        case 'sky':
+            return 'border-sky-300';
+        case 'green':
+            return 'border-green-300';
+        default:
+            return 'border-gray-200';
+    }
+}
+function triageRing(color?: string) {
+    switch (color) {
+        case 'red':
+            return 'ring-red-500';
+        case 'yellow':
+            return 'ring-yellow-500';
+        case 'blue':
+            return 'ring-blue-500';
+        case 'sky':
+            return 'ring-sky-400';
+        case 'green':
+            return 'ring-green-500';
+        default:
+            return 'ring-gray-300';
+    }
+}
+
+// ─── Searchable provider dropdown ─────────────────────────────────────────────
+
+function ProviderCombobox({
+    providers,
+    value,
+    onChange,
+}: {
+    providers: Array<{ id: number | string; name: string }>;
+    value: string;
+    onChange: (v: string) => void;
+}) {
+    const [search, setSearch] = useState('');
+    const [open, setOpen] = useState(false);
+    const selected = providers.find((p) => p.id.toString() === value);
+    const filtered = providers.filter((p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()),
+    );
+
+    return (
+        <div className="relative">
+            <input
+                type="text"
+                className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-800 selection:bg-green-600 selection:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-green-400 focus:outline-none"
+                placeholder={selected ? selected.name : 'Search provider…'}
+                value={open ? search : (selected?.name ?? '')}
+                onFocus={() => {
+                    setOpen(true);
+                    setSearch('');
+                }}
+                onChange={(e) => setSearch(e.target.value)}
+                onBlur={() => setTimeout(() => setOpen(false), 150)}
+            />
+            {open && (
+                <div className="absolute z-50 mt-1 max-h-52 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                    {filtered.length === 0 ? (
+                        <div className="px-3 py-2 text-sm text-slate-400">
+                            No provider found.
+                        </div>
+                    ) : (
+                        filtered.map((p) => (
+                            <button
+                                key={p.id}
+                                type="button"
+                                className={clsx(
+                                    'flex w-full items-center px-3 py-2 text-left text-sm transition-colors',
+                                    value === p.id.toString()
+                                        ? 'bg-green-50 font-semibold text-green-700'
+                                        : 'text-slate-700 hover:bg-slate-50',
+                                )}
+                                onMouseDown={() => {
+                                    onChange(p.id.toString());
+                                    setOpen(false);
+                                    setSearch('');
+                                }}
+                            >
+                                {p.name}
+                            </button>
+                        ))
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
 function BillItemsEditableTableRow({
     service_name,
     serviceid,
@@ -1512,24 +1804,11 @@ function BillItemsEditableTableRow({
                     {service?.service_provider_types &&
                     service.service_provider_types.length > 0 ? (
                         <>
-                            <Select
+                            <ProviderCombobox
+                                providers={providers}
                                 value={selectedProvider}
-                                onValueChange={handleProviderChange}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select provider" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {providers.map((provider: any) => (
-                                        <SelectItem
-                                            key={provider.id}
-                                            value={provider.id.toString()}
-                                        >
-                                            {provider.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                                onChange={handleProviderChange}
+                            />
                             {!selectedProvider && (
                                 <InputError message="Please select a provider." />
                             )}

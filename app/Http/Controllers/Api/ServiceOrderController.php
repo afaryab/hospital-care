@@ -163,19 +163,14 @@ class ServiceOrderController extends Controller
             'closing_id' => ['nullable', 'integer', 'exists:closings,id'],
         ]);
 
+        $payedTo = $filters['payed_to'] ?? null;
+
         $query = ServiceOrder::query()
-            ->with(['patient', 'doctor', 'service'])
-            ->where('status', 'CLOSED')
+            ->with(['patient:id,name,ps_number', 'doctor:id,name', 'service:id,name'])
             ->latest('id');
 
-        if (! empty($filters['payed_to'])) {
-            $query->whereDoesntHave('expenseVouchers', fn ($q) => $q->where('payed_to', $filters['payed_to']));
-        } else {
-            $query->whereDoesntHave('expenseVouchers');
-        }
-
-        if (! empty($filters['doctor_only']) && ! empty($filters['payed_to'])) {
-            $query->where('doctor_id', $filters['payed_to']);
+        if (! empty($filters['doctor_only']) && $payedTo) {
+            $query->where('doctor_id', $payedTo);
         }
 
         if (! empty($filters['closing_id'])) {

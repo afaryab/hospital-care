@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Closure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -296,6 +298,36 @@ class ServiceOrder extends Model
     {
         return $this->belongsToMany(ExpenseVoucher::class, 'expense_voucher_service_order')
             ->withTimestamps();
+    }
+
+    /**
+     * Adds a `$as` column reflecting each service order's fair share of its
+     * linked expense vouchers. A voucher attached to multiple service orders
+     * (expenseVouchers() is many-to-many) must have its amount divided across
+     * them rather than counted in full against every order it touches.
+     */
+    public function scopeWithVoucherExpenseTotal(Builder $query, string $as = 'voucher_expense_total', ?Closure $voucherConstraint = null): Builder
+    {
+        $shareSubquery = DB::table('expense_voucher_service_order as evso')
+            ->join('expense_vouchers', 'expense_vouchers.id', '=', 'evso.expense_voucher_id')
+            ->joinSub(
+                DB::table('expense_voucher_service_order')
+                    ->select('expense_voucher_id')
+                    ->selectRaw('count(*) as linked_count')
+                    ->groupBy('expense_voucher_id'),
+                'evso_counts',
+                'evso_counts.expense_voucher_id',
+                '=',
+                'evso.expense_voucher_id'
+            )
+            ->whereColumn('evso.service_order_id', 'service_orders.id')
+            ->selectRaw('coalesce(sum(expense_vouchers.amount / evso_counts.linked_count), 0)');
+
+        if ($voucherConstraint) {
+            $voucherConstraint($shareSubquery);
+        }
+
+        return $query->addSelect([$as => $shareSubquery]);
     }
 
     public function transactionElements(): HasMany

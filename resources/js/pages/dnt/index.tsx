@@ -1,7 +1,13 @@
 import DeptQueueDashboard from '@/elements/dept-portal/DeptQueueDashboard';
 import AppLayout from '@/layouts/app-layout';
-import { dntDashboard, dntPatient, dntSearch } from '@/routes';
+import {
+    apiDntMyQueue,
+    apiDntSearch,
+    dntDashboard,
+    dntPatient,
+} from '@/routes';
 import { Head, usePage } from '@inertiajs/react';
+import { BriefcaseMedical } from 'lucide-react';
 
 const breadcrumbs = [
     { title: 'Dashboard', href: '/' },
@@ -15,7 +21,9 @@ export default function DntDashboard() {
             <Head title="Dental Portal" />
             <DeptQueueDashboard
                 deptName="Dental"
+                accentColor="bg-sky-600"
                 accentClass="text-sky-600"
+                icon={<BriefcaseMedical className="h-6 w-6" />}
                 hasAccess={isDentist}
                 orders={recentOrders ?? []}
                 stats={
@@ -27,8 +35,10 @@ export default function DntDashboard() {
                     }
                 }
                 noAccessMessage="You need a Dentist profile to access this portal."
-                searchUrl={dntSearch().url}
                 patientUrl={(id) => dntPatient({ id }).url}
+                myQueueUrl={apiDntMyQueue().url}
+                searchApiUrl={apiDntSearch().url}
+                searchTypes={['DNT']}
                 flashError={(flash as any)?.searchError}
             />
         </AppLayout>

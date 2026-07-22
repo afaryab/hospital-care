@@ -197,22 +197,27 @@
                         {{ strtoupper($vc->status) }}
                     </span>
                 </td>
-                <td class="amount">{{ number_format($vc->amount, 2) }}</td>
+                <td class="amount">
+                    {{ number_format($vc->share_amount ?? $vc->amount, 2) }}
+                    @if(($vc->service_orders_count ?? 1) > 1)
+                        <div style="font-size: 8px; color: #6b7280;">of {{ number_format($vc->amount, 2) }} total, shared across {{ $vc->service_orders_count }} orders</div>
+                    @endif
+                </td>
             </tr>
             @endforeach
         </tbody>
         <tfoot>
             <tr class="total-row">
                 <td colspan="6" class="text-right">Total Vouchers</td>
-                <td class="amount">{{ number_format($expenseVouchers->sum('amount'), 2) }}</td>
+                <td class="amount">{{ number_format($expenseVouchers->sum(fn ($v) => $v->share_amount ?? $v->amount), 2) }}</td>
             </tr>
             <tr class="subtotal-row">
                 <td colspan="6" class="text-right">Paid</td>
-                <td class="amount" style="color: #065f46;">{{ number_format($expenseVouchers->where('status', 'payed')->sum('amount'), 2) }}</td>
+                <td class="amount" style="color: #065f46;">{{ number_format($expenseVouchers->where('status', 'payed')->sum(fn ($v) => $v->share_amount ?? $v->amount), 2) }}</td>
             </tr>
             <tr class="subtotal-row">
                 <td colspan="6" class="text-right">Pending</td>
-                <td class="amount" style="color: #991b1b;">{{ number_format($expenseVouchers->where('status', '!=', 'payed')->sum('amount'), 2) }}</td>
+                <td class="amount" style="color: #991b1b;">{{ number_format($expenseVouchers->where('status', '!=', 'payed')->sum(fn ($v) => $v->share_amount ?? $v->amount), 2) }}</td>
             </tr>
         </tfoot>
     </table>
@@ -234,20 +239,20 @@
         <td class="amount">{{ number_format($receivablePayments->sum('amount'), 2) }}</td>
     </tr>
     <tr>
-        <td>Total Expense Vouchers Issued</td>
-        <td class="amount text-bold" style="color: #991b1b;">{{ number_format($expenseVouchers->sum('amount'), 2) }}</td>
+        <td>Total Expense Vouchers Issued (this order's share)</td>
+        <td class="amount text-bold" style="color: #991b1b;">{{ number_format($expenseVouchers->sum(fn ($v) => $v->share_amount ?? $v->amount), 2) }}</td>
     </tr>
     <tr>
         <td>&nbsp;&nbsp;&nbsp;↳ Paid</td>
-        <td class="amount" style="color: #065f46;">{{ number_format($expenseVouchers->where('status', 'payed')->sum('amount'), 2) }}</td>
+        <td class="amount" style="color: #065f46;">{{ number_format($expenseVouchers->where('status', 'payed')->sum(fn ($v) => $v->share_amount ?? $v->amount), 2) }}</td>
     </tr>
     <tr>
         <td>&nbsp;&nbsp;&nbsp;↳ Pending</td>
-        <td class="amount" style="color: #991b1b;">{{ number_format($expenseVouchers->where('status', '!=', 'payed')->sum('amount'), 2) }}</td>
+        <td class="amount" style="color: #991b1b;">{{ number_format($expenseVouchers->where('status', '!=', 'payed')->sum(fn ($v) => $v->share_amount ?? $v->amount), 2) }}</td>
     </tr>
     <tr class="total-row">
         <td>Net (Income − Vouchers Issued)</td>
-        <td class="amount">{{ number_format($incomeElements->sum('amount') - $expenseVouchers->sum('amount'), 2) }}</td>
+        <td class="amount">{{ number_format($incomeElements->sum('amount') - $expenseVouchers->sum(fn ($v) => $v->share_amount ?? $v->amount), 2) }}</td>
     </tr>
 </table>
 

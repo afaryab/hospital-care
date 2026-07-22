@@ -1,7 +1,13 @@
 import DeptQueueDashboard from '@/elements/dept-portal/DeptQueueDashboard';
 import AppLayout from '@/layouts/app-layout';
-import { ultDashboard, ultPatient, ultSearch } from '@/routes';
+import {
+    apiUltMyQueue,
+    apiUltSearch,
+    ultDashboard,
+    ultPatient,
+} from '@/routes';
 import { Head, usePage } from '@inertiajs/react';
+import { ScanLine } from 'lucide-react';
 
 const breadcrumbs = [
     { title: 'Dashboard', href: '/' },
@@ -16,7 +22,9 @@ export default function UltDashboard() {
             <Head title="Ultrasound Portal" />
             <DeptQueueDashboard
                 deptName="Ultrasound"
+                accentColor="bg-teal-600"
                 accentClass="text-teal-600"
+                icon={<ScanLine className="h-6 w-6" />}
                 hasAccess={isUltDoctor}
                 orders={recentOrders ?? []}
                 stats={
@@ -28,8 +36,10 @@ export default function UltDashboard() {
                     }
                 }
                 noAccessMessage="You need an Ultrasound Doctor profile to access this portal."
-                searchUrl={ultSearch().url}
                 patientUrl={(id) => ultPatient({ id }).url}
+                myQueueUrl={apiUltMyQueue().url}
+                searchApiUrl={apiUltSearch().url}
+                searchTypes={['ULT']}
                 flashError={(flash as any)?.searchError}
             />
         </AppLayout>

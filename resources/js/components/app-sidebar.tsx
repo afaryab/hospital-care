@@ -42,7 +42,7 @@ import {
     BriefcaseMedical,
     ChartLine,
     Cog,
-    HeartPulse,
+    FlaskConical,
     ListTree,
     LucideBlinds,
     LucideHome,
@@ -50,10 +50,11 @@ import {
     LucideWaypoints,
     PiggyBank,
     Radiation,
-    Smile,
-    TestTube,
+    ScanLine,
+    Siren,
+    Stethoscope,
     Users,
-    Waves,
+    Waypoints,
 } from 'lucide-react';
 import AppLogoIcon from './app-logo-icon';
 
@@ -202,7 +203,7 @@ export function AppSidebar() {
                                 tooltip={{ children: 'OPD Dashboard' }}
                             >
                                 <Link href={opdDashboard().url} prefetch>
-                                    <BriefcaseMedical />
+                                    <Stethoscope />
                                     <span>OPD</span>
                                 </Link>
                             </SidebarMenuButton>
@@ -213,11 +214,11 @@ export function AppSidebar() {
                             <SidebarMenuButton
                                 asChild
                                 isActive={page.url.startsWith('/IND')}
-                                tooltip={{ children: 'Indoor Dashboard' }}
+                                tooltip={{ children: 'Indoor / Inpatient' }}
                             >
                                 <Link href={indDashboard().url} prefetch>
                                     <BriefcaseMedical />
-                                    <span>IND</span>
+                                    <span>Indoor</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -227,11 +228,11 @@ export function AppSidebar() {
                             <SidebarMenuButton
                                 asChild
                                 isActive={page.url.startsWith('/EMG')}
-                                tooltip={{ children: 'Emergency Dashboard' }}
+                                tooltip={{ children: 'Emergency Portal' }}
                             >
                                 <Link href={emgDashboard().url} prefetch>
-                                    <HeartPulse />
-                                    <span>EMG</span>
+                                    <Siren />
+                                    <span>Emergency</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -241,11 +242,11 @@ export function AppSidebar() {
                             <SidebarMenuButton
                                 asChild
                                 isActive={page.url.startsWith('/DNT')}
-                                tooltip={{ children: 'Dental Dashboard' }}
+                                tooltip={{ children: 'Dental Portal' }}
                             >
                                 <Link href={dntDashboard().url} prefetch>
-                                    <Smile />
-                                    <span>DNT</span>
+                                    <Waypoints />
+                                    <span>Dental</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -255,25 +256,11 @@ export function AppSidebar() {
                             <SidebarMenuButton
                                 asChild
                                 isActive={page.url.startsWith('/ULT')}
-                                tooltip={{ children: 'Ultrasound Dashboard' }}
+                                tooltip={{ children: 'Ultrasound Portal' }}
                             >
                                 <Link href={ultDashboard().url} prefetch>
-                                    <Waves />
-                                    <span>ULT</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
-                    )}
-                    {(haveNursingProfile || haveAdminProfile) && (
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                asChild
-                                isActive={page.url.startsWith('/LAB')}
-                                tooltip={{ children: 'Pathology / Laboratory' }}
-                            >
-                                <Link href={labDashboard().url} prefetch>
-                                    <TestTube />
-                                    <span>PATH</span>
+                                    <ScanLine />
+                                    <span>Ultrasound</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -286,11 +273,27 @@ export function AppSidebar() {
                                     page.url.startsWith('/XRAY') ||
                                     page.url.startsWith('/RAD')
                                 }
-                                tooltip={{ children: 'Radiology' }}
+                                tooltip={{ children: 'Radiology Portal' }}
                             >
                                 <Link href={xrayDashboard().url} prefetch>
                                     <Radiation />
                                     <span>Radiology</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
+                    {(haveNursingProfile ||
+                        haveReceptionistProfile ||
+                        haveAdminProfile) && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url.startsWith('/LAB')}
+                                tooltip={{ children: 'Laboratory Portal' }}
+                            >
+                                <Link href={labDashboard().url} prefetch>
+                                    <FlaskConical />
+                                    <span>Laboratory</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

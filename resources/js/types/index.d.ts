@@ -145,6 +145,24 @@ export interface Receaveable {
     status: string;
     created_at: string;
     closed_at?: string;
+    linked_service_order?: {
+        id: number;
+        so_number: string;
+        so_short?: string;
+    } | null;
+    payments?: Array<{
+        id: number;
+        tr_number: string;
+        amount: number;
+        created_at: string;
+    }>;
+    expense_vouchers?: Array<{
+        id: number;
+        vc_number: string;
+        amount: number;
+        share_amount: number;
+        status: string;
+    }>;
 }
 
 export interface Closing {

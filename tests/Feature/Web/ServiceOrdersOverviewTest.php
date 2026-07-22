@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ExpenseVoucher;
 use App\Models\ServiceOrder;
 use App\Models\TransactionElement;
 use App\Models\User;
@@ -58,5 +59,24 @@ test('service orders overview loads selected service order profile details', fun
             ->where('selectedServiceOrder.id', $serviceOrder->id)
             ->where('selectedServiceOrder.income_total', 2000)
             ->where('selectedServiceOrder.expense_total', 400)
+        );
+});
+
+test('selected service order voucher expense total is divided across linked orders', function () {
+    $user = User::factory()->create();
+    actingAs($user);
+
+    $serviceOrder = ServiceOrder::factory()->create();
+    $otherOrder = ServiceOrder::factory()->create();
+
+    $voucher = ExpenseVoucher::factory()->create(['amount' => 1000]);
+    $voucher->serviceOrders()->attach([$serviceOrder->id, $otherOrder->id]);
+
+    get(route('service-orders-overview', ['service_order_id' => $serviceOrder->id]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('service-orders/index')
+            ->where('selectedServiceOrder.id', $serviceOrder->id)
+            ->where('selectedServiceOrder.voucher_expense_total', 500)
         );
 });

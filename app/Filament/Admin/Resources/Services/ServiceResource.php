@@ -77,6 +77,24 @@ class ServiceResource extends Resource
                 //     ->numeric(),
                 TextInput::make('slug')
                     ->required(),
+                Select::make('color')
+                    ->label('Triage / Display Color')
+                    ->helperText('Sets the background color on featured service buttons. Use for emergency triage coding.')
+                    ->options([
+                        'red' => '🔴 Red — Immediate Resuscitation',
+                        'yellow' => '🟡 Yellow — Emergency',
+                        'blue' => '🔵 Blue — Urgent',
+                        'sky' => '🩵 Sky Blue — Semi Urgent',
+                        'green' => '🟢 Green — Non Urgent',
+                    ])
+                    ->nullable()
+                    ->searchable(),
+                Toggle::make('is_featured')
+                    ->label('Featured (shows as quick-select button)')
+                    ->default(false),
+                Toggle::make('generate_service_order')
+                    ->label('Generates Service Order')
+                    ->default(false),
                 Toggle::make('is_composit_service')
                     ->default(false),
                 Toggle::make('have_service_provider')

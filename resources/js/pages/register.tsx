@@ -1,3 +1,4 @@
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -20,7 +21,7 @@ import {
 } from '@/routes';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 interface PageProps {
     yearSelected: string;
@@ -37,6 +38,10 @@ interface PageProps {
         per_page: number;
         [key: string]: any;
     };
+    filters?: {
+        search?: string;
+        contact?: string;
+    };
     [key: string]: any;
 }
 
@@ -52,7 +57,7 @@ export default function Register() {
         },
     ];
 
-    const { yearSelected, monthSelected, patientsPaginated } =
+    const { yearSelected, monthSelected, patientsPaginated, filters } =
         usePage<PageProps>().props;
 
     if (yearSelected) {
@@ -76,43 +81,60 @@ export default function Register() {
 
     const [year, setYear] = useState<string>(yearSelected as string);
     const [month, setMonth] = useState<string>(monthSelected as string);
-    const [patientName, setPatientName] = useState<string>('');
-    const [patientContact, setPatientContact] = useState<string>('');
+    const [search, setSearch] = useState<string>(filters?.search ?? '');
+    const [contact, setContact] = useState<string>(filters?.contact ?? '');
 
-    useEffect(() => {
-        // Only navigate if the current values differ from the initial props
-        if (year !== yearSelected || month !== monthSelected) {
-            let url = '';
-            if (year != '0' && month != '0') {
-                url = patientsRegisterYearMonth({
-                    year: year,
-                    month: month,
-                }).url;
-            } else if (year != '0') {
-                url = patientsRegisterYear({
-                    year: year,
-                }).url;
-            } else {
-                url = patientsRegister().url;
-            }
-
-            router.get(url, {
-                name: patientName,
-                contact: patientContact,
-            });
+    const registerUrlForPeriod = (y: string, m: string) => {
+        if (y != '0' && m != '0') {
+            return patientsRegisterYearMonth({ year: y, month: m }).url;
         }
-    }, [year, month, yearSelected, monthSelected]);
+        if (y != '0') {
+            return patientsRegisterYear({ year: y }).url;
+        }
+        return patientsRegister().url;
+    };
+
+    const applyFilters = () => {
+        router.get(
+            registerUrlForPeriod(year, month),
+            {
+                search: search || undefined,
+                contact: contact || undefined,
+            },
+            { preserveState: true, replace: true },
+        );
+    };
+
+    const clearFilters = () => {
+        setSearch('');
+        setContact('');
+        router.get(
+            registerUrlForPeriod(year, month),
+            {},
+            { preserveState: false, replace: true },
+        );
+    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
-                <div className="flex flex-0 flex-row gap-4 rounded-xl bg-[#1c398e] p-2 dark:bg-[#0a0a0a]">
+                <div className="flex flex-wrap items-end gap-4 rounded-xl bg-[#1c398e] p-2 dark:bg-[#0a0a0a]">
                     <div className="grid gap-2">
                         <Label htmlFor="year">Year</Label>
                         <Select
                             value={year.toString()}
-                            onValueChange={(value) => setYear(value)}
+                            onValueChange={(value) => {
+                                setYear(value);
+                                router.get(
+                                    registerUrlForPeriod(value, month),
+                                    {
+                                        search: search || undefined,
+                                        contact: contact || undefined,
+                                    },
+                                    { preserveState: true, replace: true },
+                                );
+                            }}
                         >
                             <SelectTrigger id="year">
                                 <SelectValue placeholder="Select Year" />
@@ -135,13 +157,22 @@ export default function Register() {
                                 })}
                             </SelectContent>
                         </Select>
-                        {/* <InputError message={errors.email} /> */}
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="month">Month</Label>
                         <Select
                             value={month.toString()}
-                            onValueChange={(value) => setMonth(value)}
+                            onValueChange={(value) => {
+                                setMonth(value);
+                                router.get(
+                                    registerUrlForPeriod(year, value),
+                                    {
+                                        search: search || undefined,
+                                        contact: contact || undefined,
+                                    },
+                                    { preserveState: true, replace: true },
+                                );
+                            }}
                         >
                             <SelectTrigger id="month">
                                 <SelectValue placeholder="Select Month" />
@@ -155,23 +186,22 @@ export default function Register() {
                                 ))}
                             </SelectContent>
                         </Select>
-                        {/* <InputError message={errors.email} /> */}
                     </div>
                     <div className="grid gap-2">
-                        <Label htmlFor="patient_name">Patient Name</Label>
+                        <Label htmlFor="search">Search</Label>
                         <Input
-                            id="patient_name"
+                            id="search"
                             type="text"
-                            name="patient_name"
-                            required
+                            name="search"
                             autoFocus
-                            tabIndex={3}
-                            autoComplete="false"
-                            placeholder="Patient name"
-                            value={patientName}
-                            onChange={(e) => setPatientName(e.target.value)}
+                            autoComplete="off"
+                            placeholder="Patient name, PS#, or SO#/short#"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            onKeyDown={(e) =>
+                                e.key === 'Enter' && applyFilters()
+                            }
                         />
-                        {/* <InputError message={errors.email} /> */}
                     </div>
                     <div className="grid gap-2">
                         <Label htmlFor="patient_contact">Patient Contact</Label>
@@ -179,17 +209,20 @@ export default function Register() {
                             id="patient_contact"
                             type="text"
                             name="patient_contact"
-                            required
-                            autoFocus
-                            tabIndex={3}
-                            autoComplete="false"
-                            placeholder="Patient name"
-                            value={
-                                patientContact === '' ? '+92-' : patientContact
+                            autoComplete="off"
+                            placeholder="+92-"
+                            value={contact}
+                            onChange={(e) => setContact(e.target.value)}
+                            onKeyDown={(e) =>
+                                e.key === 'Enter' && applyFilters()
                             }
-                            onChange={(e) => setPatientContact(e.target.value)}
                         />
-                        {/* <InputError message={errors.email} /> */}
+                    </div>
+                    <div className="flex gap-3">
+                        <Button onClick={applyFilters}>Apply Filters</Button>
+                        <Button variant="outline" onClick={clearFilters}>
+                            Clear
+                        </Button>
                     </div>
                 </div>
                 <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950">
@@ -307,7 +340,7 @@ export default function Register() {
                                         }
                                         lastPage={patientsPaginated.last_page}
                                         makeHref={(page) =>
-                                            `?page=${page}&year=${year}&month=${month}`
+                                            `?page=${page}&year=${year}&month=${month}&search=${encodeURIComponent(search)}&contact=${encodeURIComponent(contact)}`
                                         }
                                     />
                                 </td>
