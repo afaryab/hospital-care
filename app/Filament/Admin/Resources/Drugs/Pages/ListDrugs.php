@@ -22,7 +22,7 @@ class ListDrugs extends ListRecords
                 ->label('Import CSV / Excel')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('gray')
-                ->form([
+                ->schema([
                     FileUpload::make('file')
                         ->label('Drug File (CSV or Excel)')
                         ->helperText('Columns: name, generic_name, type, category, strength, manufacturer, default_dose, default_frequency, default_duration, default_route, usage_instructions, contraindications, side_effects')

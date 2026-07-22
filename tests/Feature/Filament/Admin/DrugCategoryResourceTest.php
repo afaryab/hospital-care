@@ -40,5 +40,5 @@ test('admin can create a drug category', function () {
 test('drug category creation requires a name', function () {
     Livewire\Livewire::test(ManageDrugCategories::class)
         ->callAction('create', data: ['name' => null])
-        ->assertHasActionErrors(['name' => 'required']);
+        ->assertHasFormErrors(['name' => 'required']);
 });
