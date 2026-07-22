@@ -1,4 +1,4 @@
-import { formatPatientAge } from '@/lib/constants';
+import { formatPatientAge, triageBadgeClass } from '@/lib/constants';
 import { type ServiceOrder } from '@/types';
 import { router } from '@inertiajs/react';
 import { clsx } from 'clsx';
@@ -18,7 +18,10 @@ interface DeptOrder extends ServiceOrder {
     status: string;
     patient?: { id: number; name: string; ps_number: string; gender?: string; age_days?: number; age_dob?: string } | null;
     service?: { id: number; name: string } | null;
-    treatment_record?: { id: number; is_finalized: boolean; diagnosis_text?: string } | null;
+    treatment_record?: {
+        id: number; is_finalized: boolean; diagnosis_text?: string;
+        triage?: { id: number; name: string; color: string } | null;
+    } | null;
     created_at?: string;
 }
 
@@ -238,6 +241,11 @@ export default function DeptQueueDashboard({
                                     <p className="text-xs text-slate-500">{order.so_number} &bull; {order.patient?.ps_number}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
+                                    {order.treatment_record?.triage && (
+                                        <span className={clsx('rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1', triageBadgeClass(order.treatment_record.triage.color))}>
+                                            {order.treatment_record.triage.name}
+                                        </span>
+                                    )}
                                     {statusBadge(order.status)}
                                     <ChevronRight className="h-4 w-4 text-slate-400" />
                                 </div>
@@ -294,6 +302,11 @@ export default function DeptQueueDashboard({
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
                                             <span className="truncate text-sm font-semibold text-slate-900">{order.patient?.name}</span>
+                                            {order.treatment_record?.triage && (
+                                                <span className={clsx('rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1', triageBadgeClass(order.treatment_record.triage.color))}>
+                                                    {order.treatment_record.triage.name}
+                                                </span>
+                                            )}
                                             {statusBadge(order.status)}
                                         </div>
                                         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">

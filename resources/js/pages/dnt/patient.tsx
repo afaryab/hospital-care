@@ -9,7 +9,7 @@ import {
 import { Head, usePage } from '@inertiajs/react';
 
 export default function DntPatient() {
-    const { serviceOrder, previousVisits } = usePage<any>().props;
+    const { serviceOrder, previousVisits, formConfig } = usePage<any>().props;
     const breadcrumbs = [
         { title: 'Dashboard', href: '/' },
         { title: 'Dental', href: dntDashboard().url },
@@ -33,10 +33,11 @@ export default function DntPatient() {
                 }
                 serviceOrder={serviceOrder}
                 previousVisits={previousVisits ?? []}
-                showVitals={false}
-                showExamFindings={true}
-                showPrescriptions={true}
-                showFollowUp={true}
+                showVitals={formConfig?.showVitals ?? false}
+                showExamFindings={formConfig?.showExamFindings ?? true}
+                showPrescriptions={formConfig?.showPrescriptions ?? true}
+                showFollowUp={formConfig?.showFollowUp ?? true}
+                showDentalChart={formConfig?.showDentalChart ?? true}
                 chiefComplaintLabel="Chief Dental Complaint"
                 treatmentPlanLabel="Dental Procedure / Treatment Plan"
                 treatmentPlanPlaceholder="Procedure performed, teeth involved, materials used, post-op instructions…"

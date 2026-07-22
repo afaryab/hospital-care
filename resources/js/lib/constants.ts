@@ -53,3 +53,16 @@ export function formatPatientAge(patient: PatientAgeInput): string {
     if (patient.age_group) return patient.age_group;
     return '—';
 }
+
+const TRIAGE_BADGE_CLASSES: Record<string, string> = {
+    red: 'bg-red-100 text-red-700 ring-red-200',
+    yellow: 'bg-yellow-100 text-yellow-700 ring-yellow-200',
+    blue: 'bg-blue-100 text-blue-700 ring-blue-200',
+    sky: 'bg-sky-100 text-sky-700 ring-sky-200',
+    green: 'bg-green-100 text-green-700 ring-green-200',
+};
+
+/** Tailwind classes for a triage badge, keyed by the triage's stored color name. */
+export function triageBadgeClass(color?: string | null): string {
+    return TRIAGE_BADGE_CLASSES[color ?? ''] ?? 'bg-slate-100 text-slate-600 ring-slate-200';
+}

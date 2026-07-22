@@ -1,6 +1,8 @@
+import DentalChart, { type DentalChartValue } from '@/components/ui/dental-chart';
 import DrugPicker from '@/components/ui/drug-picker';
 import Icd10Picker from '@/components/ui/icd10-picker';
-import { formatPatientAge } from '@/lib/constants';
+import TreatmentAttachments, { type TreatmentAttachmentData } from '@/components/ui/treatment-attachments';
+import { formatPatientAge, triageBadgeClass } from '@/lib/constants';
 import { router } from '@inertiajs/react';
 import { clsx } from 'clsx';
 import {
@@ -11,12 +13,14 @@ import {
     CheckCircle,
     ChevronDown,
     ChevronUp,
+    Clock,
     FileText,
     Heart,
     History,
     Lock,
     Plus,
     Save,
+    Siren,
     Stethoscope,
     Thermometer,
     Trash2,
@@ -44,17 +48,32 @@ interface Prescription {
     drug_name: string; dose?: string; frequency?: string; duration?: string; route?: string; instructions?: string;
 }
 
+export interface Triage {
+    id: number; name: string; color: string; priority?: number;
+}
+
+interface TriageHistoryEntry {
+    id: number; changed_at: string;
+    old_triage?: Triage | null; new_triage?: Triage | null;
+    changed_by?: { id: number; name: string } | null;
+}
+
 interface TreatmentRecord {
     id?: number; chief_complaint?: string; history_of_present_illness?: string;
     examination_findings?: Record<string, string>; diagnosis_code?: string;
     icd10_code_id?: number | null; diagnosis_text?: string; treatment_plan?: string;
     prescriptions?: Prescription[]; follow_up_date?: string; outcome?: string; referral_to?: string;
     is_finalized?: boolean; treated_at?: string; vital_signs?: VitalSign[];
+    triage_id?: number | null; triage?: Triage | null; triage_histories?: TriageHistoryEntry[];
+    dental_chart?: DentalChartValue | null; attachments?: TreatmentAttachmentData[];
 }
 
 interface PreviousVisit {
     id: number; so_number: string; status: string; created_at: string;
-    treatment_record?: { diagnosis_text?: string; chief_complaint?: string; is_finalized?: boolean } | null;
+    treatment_record?: {
+        diagnosis_text?: string; chief_complaint?: string; is_finalized?: boolean;
+        triage?: Triage | null; dental_chart?: DentalChartValue | null;
+    } | null;
 }
 
 export interface DeptPatientFormProps {
@@ -74,10 +93,17 @@ export interface DeptPatientFormProps {
     showExamFindings?: boolean;
     showPrescriptions?: boolean;
     showFollowUp?: boolean;
+    showTriage?: boolean;
+    requireTreatmentTime?: boolean;
+    showAttachments?: boolean;
+    showDentalChart?: boolean;
     treatmentPlanLabel?: string;       // e.g. "Imaging Report" for ULT/XRAY
     treatmentPlanPlaceholder?: string; // pre-filled template text
     chiefComplaintLabel?: string;
     examSystems?: string[];            // custom systems for exam findings
+    triages?: Triage[];                // active triage options, required when showTriage
+    uploadAttachmentUrl?: string;
+    deleteAttachmentUrl?: (attachmentId: number) => string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -101,6 +127,16 @@ function statusColor(status: string) {
 
 function blankRx(): Prescription {
     return { drug_name: '', dose: '', frequency: '', duration: '', route: '', instructions: '' };
+}
+
+// datetime-local inputs need "YYYY-MM-DDTHH:mm"; ISO strings from the backend
+// include seconds/timezone, so trim to the minute for the input value.
+function toDatetimeLocal(value?: string | null) {
+    if (!value) return '';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -157,10 +193,12 @@ function tableInputClass(disabled: boolean) {
 export default function DeptPatientForm({
     deptName, accentColor, dashboardUrl, saveApiUrl, updateStatusUrl, serviceOrder, previousVisits,
     showVitals = true, showExamFindings = false, showPrescriptions = true, showFollowUp = true,
+    showTriage = false, requireTreatmentTime = false, showAttachments = false, showDentalChart = false,
     treatmentPlanLabel = 'Treatment Plan / Notes',
     treatmentPlanPlaceholder = 'Management plan, investigations, advice…',
     chiefComplaintLabel = 'Chief Complaint',
     examSystems = ['General', 'Cardiovascular', 'Respiratory', 'Abdomen', 'CNS', 'Other'],
+    triages = [], uploadAttachmentUrl, deleteAttachmentUrl,
 }: DeptPatientFormProps) {
     const existing = serviceOrder.treatment_record;
     const isFinalized = existing?.is_finalized ?? false;
@@ -176,6 +214,10 @@ export default function DeptPatientForm({
     const [outcome, setOutcome] = useState(existing?.outcome ?? '');
     const [referralTo, setReferralTo] = useState(existing?.referral_to ?? '');
     const [examFindings, setExamFindings] = useState<Record<string, string>>(existing?.examination_findings ?? {});
+    const [triageId, setTriageId] = useState<number | null>(existing?.triage_id ?? null);
+    const [treatedAt, setTreatedAt] = useState(() => toDatetimeLocal(existing?.treated_at) || toDatetimeLocal(new Date().toISOString()));
+    const [dentalChart, setDentalChart] = useState<DentalChartValue>(existing?.dental_chart ?? {});
+    const [attachments, setAttachments] = useState<TreatmentAttachmentData[]>(existing?.attachments ?? []);
     const lastVital = existing?.vital_signs?.[existing.vital_signs.length - 1] ?? {};
     const [vitals, setVitals] = useState({
         temperature: lastVital.temperature ?? '', bp_systolic: lastVital.bp_systolic ?? '',
@@ -201,8 +243,14 @@ export default function DeptPatientForm({
         outcome: showFollowUp ? (outcome || null) : null,
         referral_to: showFollowUp ? (referralTo || null) : null,
         vitals: showVitals && Object.values(vitals).some((v) => v !== '') ? vitals : null,
+        dental_chart: showDentalChart ? dentalChart : undefined,
+        // Omitted entirely (not just null) for departments that don't use triage/treatment-time,
+        // so the backend's "did triage_id change" check and its default treated_at timestamping
+        // are left untouched for those departments.
+        triage_id: showTriage ? triageId : undefined,
+        treated_at: requireTreatmentTime ? (treatedAt ? new Date(treatedAt).toISOString() : null) : undefined,
         finalize,
-    }), [chiefComplaint, hpi, examFindings, diagnosisCode, icd10CodeId, diagnosisText, treatmentPlan, prescriptions, followUpDate, outcome, referralTo, vitals, showVitals, showExamFindings, showPrescriptions, showFollowUp]);
+    }), [chiefComplaint, hpi, examFindings, diagnosisCode, icd10CodeId, diagnosisText, treatmentPlan, prescriptions, followUpDate, outcome, referralTo, vitals, dentalChart, triageId, treatedAt, showVitals, showExamFindings, showPrescriptions, showFollowUp, showDentalChart, showTriage, requireTreatmentTime]);
 
     const save = useCallback(async (finalize: boolean) => {
         if (finalize) setFinalizing(true); else setSaving(true);
@@ -355,7 +403,19 @@ export default function DeptPatientForm({
                                 {previousVisits.map((v) => (
                                     <div key={v.id} className="flex items-start justify-between px-4 py-3">
                                         <div>
-                                            <p className="text-xs font-semibold text-slate-800">{v.so_number}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="text-xs font-semibold text-slate-800">{v.so_number}</p>
+                                                {v.treatment_record?.triage && (
+                                                    <span className={clsx('rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1', triageBadgeClass(v.treatment_record.triage.color))}>
+                                                        {v.treatment_record.triage.name}
+                                                    </span>
+                                                )}
+                                                {v.treatment_record?.dental_chart && Object.keys(v.treatment_record.dental_chart).length > 0 && (
+                                                    <span className="rounded-full bg-teal-50 px-1.5 py-0.5 text-[10px] font-medium text-teal-700">
+                                                        {Object.keys(v.treatment_record.dental_chart).length} teeth
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="mt-0.5 text-xs text-slate-500">{formatDate(v.created_at)}</p>
                                             {v.treatment_record?.diagnosis_text && (
                                                 <p className="mt-1 text-xs text-slate-600">{v.treatment_record.diagnosis_text}</p>
@@ -393,6 +453,76 @@ export default function DeptPatientForm({
                             className={textareaClass(isFinalized)}
                         />
                     </FormSection>
+
+                    {(showTriage || requireTreatmentTime) && (
+                        <FormSection icon={<Siren className="h-4 w-4 text-red-600" />} title="Triage & Treatment Time">
+                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                {showTriage && (
+                                    <div>
+                                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                                            Triage Level <span className="text-red-500">*</span>
+                                        </label>
+                                        <select
+                                            disabled={isFinalized}
+                                            value={triageId ?? ''}
+                                            onChange={(e) => setTriageId(e.target.value ? Number(e.target.value) : null)}
+                                            className={inputClass(isFinalized)}
+                                            required
+                                        >
+                                            <option value="">Select triage level…</option>
+                                            {triages.map((t) => (
+                                                <option key={t.id} value={t.id}>{t.name}</option>
+                                            ))}
+                                        </select>
+                                        {triageId && (
+                                            <span className={clsx('mt-1.5 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ring-1', triageBadgeClass(triages.find((t) => t.id === triageId)?.color))}>
+                                                {triages.find((t) => t.id === triageId)?.name}
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                                {requireTreatmentTime && (
+                                    <div>
+                                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                                            Time of Treatment <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            disabled={isFinalized} type="datetime-local"
+                                            value={treatedAt}
+                                            onChange={(e) => setTreatedAt(e.target.value)}
+                                            className={inputClass(isFinalized)}
+                                            required
+                                        />
+                                    </div>
+                                )}
+                            </div>
+
+                            {showTriage && (existing?.triage_histories?.length ?? 0) > 0 && (
+                                <div className="mt-4 border-t border-slate-100 pt-3">
+                                    <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                                        <Clock className="h-3.5 w-3.5" /> Triage Change History
+                                    </p>
+                                    <ul className="space-y-1.5">
+                                        {existing?.triage_histories?.map((h) => (
+                                            <li key={h.id} className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+                                                <span>{formatDate(h.changed_at)}</span>
+                                                {h.old_triage ? (
+                                                    <>
+                                                        <span className={clsx('rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1', triageBadgeClass(h.old_triage.color))}>{h.old_triage.name}</span>
+                                                        <span>→</span>
+                                                    </>
+                                                ) : (
+                                                    <span className="italic">Initial:</span>
+                                                )}
+                                                <span className={clsx('rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1', triageBadgeClass(h.new_triage?.color))}>{h.new_triage?.name}</span>
+                                                {h.changed_by && <span className="text-slate-400">by {h.changed_by.name}</span>}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </FormSection>
+                    )}
 
                     <FormSection icon={<FileText className="h-4 w-4 text-slate-500" />} title="History of Present Illness">
                         <textarea
@@ -449,6 +579,16 @@ export default function DeptPatientForm({
                         </FormSection>
                     )}
 
+                    {showDentalChart && (
+                        <FormSection icon={<Stethoscope className="h-4 w-4 text-teal-600" />} title="Dental Chart">
+                            <DentalChart
+                                value={dentalChart}
+                                onChange={setDentalChart}
+                                disabled={isFinalized}
+                            />
+                        </FormSection>
+                    )}
+
                     <FormSection icon={<FileText className="h-4 w-4 text-indigo-500" />} title="Diagnosis">
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <div>
@@ -471,6 +611,19 @@ export default function DeptPatientForm({
                             </div>
                         </div>
                     </FormSection>
+
+                    {showAttachments && uploadAttachmentUrl && deleteAttachmentUrl && (
+                        <FormSection icon={<FileText className="h-4 w-4 text-blue-500" />} title="Images & Reports">
+                            <TreatmentAttachments
+                                attachments={attachments}
+                                uploadUrl={uploadAttachmentUrl}
+                                deleteUrlFor={deleteAttachmentUrl}
+                                disabled={isFinalized}
+                                onUploaded={(a) => setAttachments((prev) => [...prev, a])}
+                                onDeleted={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
+                            />
+                        </FormSection>
+                    )}
 
                     <FormSection icon={<FileText className="h-4 w-4 text-violet-500" />} title={treatmentPlanLabel}>
                         <textarea
