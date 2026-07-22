@@ -8,11 +8,12 @@ use App\Models\Receaveable;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
 use App\Models\User;
+use Carbon\Carbon;
 
 use function Pest\Laravel\actingAs;
 
 afterEach(function () {
-    \Carbon\Carbon::setTestNow();
+    Carbon::setTestNow();
 });
 
 beforeEach(function () {
@@ -49,7 +50,7 @@ test('admin can view transaction details with elements', function () {
         ->assertSuccessful()
         ->assertSee('TR/2026/03/29/1111')
         ->assertSee('OPD')
-        ->assertSee('500.00');
+        ->assertSee("PKR\u{A0}500");
 });
 
 test('admin can filter transactions by income expense', function () {

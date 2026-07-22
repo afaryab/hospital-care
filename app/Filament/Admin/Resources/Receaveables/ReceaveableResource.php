@@ -77,15 +77,16 @@ class ReceaveableResource extends Resource
                     ->badge()
                     ->color(fn (string $state): string => match (strtolower($state)) {
                         'paid', 'payed' => 'success',
-                        'pending' => 'warning',
+                        'unpaid', 'partial', 'pending' => 'warning',
                         'overdue' => 'danger',
+                        'cancelled' => 'gray',
                         default => 'gray',
                     })
                     ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('status')
-                    ->options(['pending' => 'Pending', 'paid' => 'Paid', 'cancelled' => 'Cancelled']),
+                    ->options(['unpaid' => 'Unpaid', 'paid' => 'Paid', 'cancelled' => 'Cancelled']),
                 SelectFilter::make('panel_id')
                     ->label('Panel')
                     ->options(fn () => Panel::orderBy('name')->pluck('name', 'id'))

@@ -25,15 +25,19 @@ return new class extends Migration
 
         // ── 3. Backfill: link existing string diagnosis_code rows ──────────
         // Where treatment_records.diagnosis_code matches an icd10_codes.code,
-        // populate the new FK so historical data is not orphaned.
-        DB::statement('
-            UPDATE treatment_records tr
-            JOIN icd10_codes ic ON ic.code = tr.diagnosis_code
-            SET tr.icd10_code_id = ic.id
-            WHERE tr.icd10_code_id IS NULL
-              AND tr.diagnosis_code IS NOT NULL
-              AND tr.diagnosis_code != \'\'
-        ');
+        // populate the new FK so historical data is not orphaned. The multi-table
+        // UPDATE ... JOIN syntax is MySQL-specific; guard it so other drivers
+        // (e.g. SQLite used in the test suite) skip a backfill that has no rows.
+        if (DB::connection()->getDriverName() === 'mysql') {
+            DB::statement('
+                UPDATE treatment_records tr
+                JOIN icd10_codes ic ON ic.code = tr.diagnosis_code
+                SET tr.icd10_code_id = ic.id
+                WHERE tr.icd10_code_id IS NULL
+                  AND tr.diagnosis_code IS NOT NULL
+                  AND tr.diagnosis_code != \'\'
+            ');
+        }
     }
 
     public function down(): void
