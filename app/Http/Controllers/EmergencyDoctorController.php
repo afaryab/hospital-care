@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Helpers\DateHelper;
 use App\Helpers\TreatmentFormConfig;
 use App\Models\Patient;
 use App\Models\ServiceOrder;
@@ -26,7 +25,6 @@ class EmergencyDoctorController extends Controller
                 ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text'])
                 ->where('type', 'EMG')
                 ->where('doctor_id', $user->id)
-                ->whereBetween('created_at', DateHelper::todayRangeUtc())
                 ->orderByRaw("CASE WHEN LOWER(status) = 'in-progress' THEN 0 WHEN LOWER(status) = 'open' THEN 1 WHEN LOWER(status) = 'treated' THEN 2 ELSE 3 END ASC")
                 ->orderBy('created_at', 'DESC')
                 ->limit(30)

@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Icd10Code;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceOrder;
+use App\Models\Transaction;
+use App\Models\TransactionElement;
 use App\Models\TreatmentAttachment;
 use App\Models\TreatmentRecord;
 use App\Models\TriageHistory;
@@ -152,7 +154,10 @@ class DepartmentController extends Controller
     }
 
     /**
-     * Return today's queue for the given department types.
+     * Return the latest queue for the given department types, most recent
+     * first. Not scoped to "today" — a date-based cutoff caused the queue to
+     * intermittently show empty despite orders existing (timezone bucketing
+     * mismatch, and legitimately spans past midnight for departments like EMG).
      * Route: GET /api/{dept}/my-queue?types[]=EMG
      */
     public function myQueue(Request $request): JsonResponse
@@ -167,7 +172,6 @@ class DepartmentController extends Controller
         $query = ServiceOrder::query()
             ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text,triage_id', 'treatmentRecord.triage:id,name,color'])
             ->whereIn('type', $types)
-            ->whereDate('created_at', Carbon::today())
             ->orderByRaw("CASE WHEN LOWER(status) = 'in-progress' THEN 0 WHEN LOWER(status) = 'open' THEN 1 WHEN LOWER(status) = 'treated' THEN 2 ELSE 3 END ASC")
             ->orderBy('created_at', 'DESC');
 
@@ -191,6 +195,18 @@ class DepartmentController extends Controller
 
     /**
      * Live search across SO number and patient name for a department.
+     *
+     * Rather than OR-ing leading-wildcard LIKEs across every column (a full
+     * scan regardless of what was typed), the search term's shape tells us
+     * exactly which single column to query:
+     *   - "PS/{y}/{m}/{n}/{DEPT}/{seq}" (extra segments beyond the patient
+     *     number) → so_number
+     *   - "PS/{y}/{m}/{n}" (plain patient number) → patient.ps_number
+     *   - starts with "SO" → so_number
+     *   - starts with "TR" → transaction number, resolved to its service order(s)
+     *   - all-digits → so_short
+     *   - anything else → patient name
+     *
      * Route: POST /api/{dept}/search
      */
     public function search(Request $request): JsonResponse
@@ -204,18 +220,33 @@ class DepartmentController extends Controller
         $q = trim($data['q']);
         $types = $data['types'];
 
-        $results = ServiceOrder::query()
+        $query = ServiceOrder::query()
             ->with(['patient:id,name,ps_number', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text,triage_id', 'treatmentRecord.triage:id,name,color'])
-            ->whereIn('type', $types)
-            ->where(function ($query) use ($q) {
-                $query->where('so_number', 'like', "%{$q}%")
-                    ->orWhere('so_short', 'like', "%{$q}%")
-                    ->orWhereHas('patient', fn ($pq) => $pq->where('name', 'like', "%{$q}%")
-                        ->orWhere('ps_number', 'like', "%{$q}%"));
-            })
-            ->latest('id')
-            ->limit(15)
-            ->get();
+            ->whereIn('type', $types);
+
+        $upper = strtoupper($q);
+
+        if (str_starts_with($upper, 'PS') && substr_count($q, '/') > 3) {
+            // e.g. PS/2026/07/2620/EMG/00001334 — a full so_number
+            $query->where('so_number', 'like', "{$q}%");
+        } elseif (str_starts_with($upper, 'PS')) {
+            // e.g. PS/2026/07/2620 — a plain patient ps_number
+            $query->whereHas('patient', fn ($pq) => $pq->where('ps_number', 'like', "{$q}%"));
+        } elseif (str_starts_with($upper, 'SO')) {
+            $query->where('so_number', 'like', "{$q}%");
+        } elseif (str_starts_with($upper, 'TR')) {
+            $transactionIds = Transaction::where('tr_number', 'like', "{$q}%")->limit(50)->pluck('id');
+            $serviceOrderIds = TransactionElement::whereIn('transaction_id', $transactionIds)
+                ->whereNotNull('service_order_id')
+                ->pluck('service_order_id');
+            $query->whereIn('id', $serviceOrderIds);
+        } elseif (ctype_digit($q)) {
+            $query->where('so_short', 'like', "{$q}%");
+        } else {
+            $query->whereHas('patient', fn ($pq) => $pq->where('name', 'like', "%{$q}%"));
+        }
+
+        $results = $query->latest('id')->limit(15)->get();
 
         return response()->json(['data' => $results->values()]);
     }

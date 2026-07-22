@@ -129,6 +129,18 @@ test('my-queue defaults to most recently created service orders first', function
     expect($ids->search($newer->id))->toBeLessThan($ids->search($older->id));
 });
 
+test('my-queue is not restricted to today — older open orders still show', function () {
+    $fewDaysOld = ServiceOrder::factory()->create([
+        'type' => 'EMG', 'doctor_id' => $this->doctor->id, 'status' => 'open', 'created_at' => now()->subDays(3),
+    ]);
+
+    $response = $this->getJson('/api/emg/my-queue?'.http_build_query(['types' => ['EMG']]));
+
+    $response->assertOk();
+    $ids = collect($response->json('data'))->pluck('id');
+    expect($ids)->toContain($fewDaysOld->id);
+});
+
 test('doctor can upload and delete a treatment attachment', function () {
     Storage::fake('public');
 
