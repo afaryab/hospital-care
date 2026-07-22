@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DateHelper;
+use App\Helpers\TreatmentFormConfig;
 use App\Models\Patient;
 use App\Models\ServiceOrder;
 use Illuminate\Http\Request;
@@ -25,8 +26,8 @@ class UltrasoundController extends Controller
                 ->where('type', 'ULT')
                 ->where('doctor_id', $user->id)
                 ->whereBetween('created_at', DateHelper::todayRangeUtc())
-                ->orderByRaw("FIELD(status, 'in-progress', 'IN-PROGRESS', 'open', 'OPEN', 'treated', 'TREATED') ASC")
-                ->orderBy('created_at', 'ASC')
+                ->orderByRaw("CASE WHEN LOWER(status) = 'in-progress' THEN 0 WHEN LOWER(status) = 'open' THEN 1 WHEN LOWER(status) = 'treated' THEN 2 ELSE 3 END ASC")
+                ->orderBy('created_at', 'DESC')
                 ->limit(30)
                 ->get();
 
@@ -50,9 +51,10 @@ class UltrasoundController extends Controller
         $serviceOrder = ServiceOrder::query()
             ->with([
                 'patient:id,name,ps_number,gender,age_days,age_dob,contact',
-                'service:id,name',
+                'service:id,name,treatment_form_config',
                 'doctor:id,name',
                 'treatmentRecord.vitalSigns',
+                'treatmentRecord.attachments',
             ])
             ->findOrFail($id);
 
@@ -68,6 +70,7 @@ class UltrasoundController extends Controller
         return Inertia::render('ult/patient', [
             'serviceOrder' => $serviceOrder,
             'previousVisits' => $previousVisits,
+            'formConfig' => TreatmentFormConfig::resolve('ULT', $serviceOrder->service?->treatment_form_config),
         ]);
     }
 

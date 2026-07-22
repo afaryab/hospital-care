@@ -4,12 +4,17 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Icd10Code;
+use App\Models\ServiceDepartment;
 use App\Models\ServiceOrder;
+use App\Models\TreatmentAttachment;
 use App\Models\TreatmentRecord;
+use App\Models\TriageHistory;
 use App\Models\VitalSign;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 /**
  * Shared treatment-record handler for EMG, DNT, LAB (PTH), ULT, and XRAY
@@ -20,6 +25,8 @@ class DepartmentController extends Controller
 {
     public function saveTreatmentRecord(Request $request, ServiceOrder $serviceOrder): JsonResponse
     {
+        $isEmergency = $serviceOrder->type === 'EMG';
+
         $data = $request->validate([
             'chief_complaint' => ['nullable', 'string', 'max:1000'],
             'history_of_present_illness' => ['nullable', 'string', 'max:3000'],
@@ -39,6 +46,9 @@ class DepartmentController extends Controller
             'outcome' => ['nullable', 'string', 'max:50'],
             'referral_to' => ['nullable', 'string', 'max:255'],
             'department_specific_data' => ['nullable', 'array'],
+            'dental_chart' => ['nullable', 'array'],
+            'triage_id' => [Rule::requiredIf($isEmergency), 'nullable', 'integer', 'exists:triages,id'],
+            'treated_at' => [Rule::requiredIf($isEmergency), 'nullable', 'date'],
             'finalize' => ['nullable', 'boolean'],
             'vitals' => ['nullable', 'array'],
             'vitals.temperature' => ['nullable', 'numeric'],
@@ -65,6 +75,7 @@ class DepartmentController extends Controller
         }
 
         $treatmentRecord = $serviceOrder->treatmentRecord;
+        $previousTriageId = $treatmentRecord?->triage_id;
 
         if ($treatmentRecord) {
             $updateData = array_filter($data, fn ($v) => $v !== null);
@@ -77,12 +88,24 @@ class DepartmentController extends Controller
         } else {
             $treatmentRecord = TreatmentRecord::create([
                 'service_order_id' => $serviceOrder->id,
+                'department_id' => $this->resolveDepartmentId($serviceOrder),
                 'treating_doctor_id' => auth()->id(),
                 'recorded_by' => auth()->id(),
-                'treated_at' => Carbon::now(),
+                'treated_at' => $data['treated_at'] ?? Carbon::now(),
                 'is_finalized' => $finalize,
                 'finalized_at' => $finalize ? Carbon::now() : null,
                 ...$data,
+            ]);
+        }
+
+        if (array_key_exists('triage_id', $data) && $data['triage_id'] !== $previousTriageId) {
+            TriageHistory::create([
+                'treatment_record_id' => $treatmentRecord->id,
+                'service_order_id' => $serviceOrder->id,
+                'old_triage_id' => $previousTriageId,
+                'new_triage_id' => $data['triage_id'],
+                'changed_by' => auth()->id(),
+                'changed_at' => Carbon::now(),
             ]);
         }
 
@@ -142,11 +165,11 @@ class DepartmentController extends Controller
         }
 
         $query = ServiceOrder::query()
-            ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text'])
+            ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text,triage_id', 'treatmentRecord.triage:id,name,color'])
             ->whereIn('type', $types)
             ->whereDate('created_at', Carbon::today())
-            ->orderByRaw("FIELD(status, 'in-progress', 'IN-PROGRESS', 'open', 'OPEN', 'treated', 'TREATED') ASC")
-            ->orderBy('created_at', 'ASC');
+            ->orderByRaw("CASE WHEN LOWER(status) = 'in-progress' THEN 0 WHEN LOWER(status) = 'open' THEN 1 WHEN LOWER(status) = 'treated' THEN 2 ELSE 3 END ASC")
+            ->orderBy('created_at', 'DESC');
 
         // For departments with a doctor assignment, scope to the logged-in user
         if ($request->boolean('doctor_scoped', true)) {
@@ -182,7 +205,7 @@ class DepartmentController extends Controller
         $types = $data['types'];
 
         $results = ServiceOrder::query()
-            ->with(['patient:id,name,ps_number', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text'])
+            ->with(['patient:id,name,ps_number', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text,triage_id', 'treatmentRecord.triage:id,name,color'])
             ->whereIn('type', $types)
             ->where(function ($query) use ($q) {
                 $query->where('so_number', 'like', "%{$q}%")
@@ -195,5 +218,61 @@ class DepartmentController extends Controller
             ->get();
 
         return response()->json(['data' => $results->values()]);
+    }
+
+    /**
+     * Upload an image/PDF attachment for a treatment record (X-ray, Ultrasound, etc).
+     * Route: POST /api/{dept}/service-orders/{serviceOrder}/attachments
+     */
+    public function uploadAttachment(Request $request, ServiceOrder $serviceOrder): JsonResponse
+    {
+        $data = $request->validate([
+            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
+            'label' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $treatmentRecord = $serviceOrder->treatmentRecord ?? TreatmentRecord::create([
+            'service_order_id' => $serviceOrder->id,
+            'department_id' => $this->resolveDepartmentId($serviceOrder),
+            'treating_doctor_id' => auth()->id(),
+            'recorded_by' => auth()->id(),
+            'treated_at' => Carbon::now(),
+        ]);
+
+        $file = $data['file'];
+        $path = $file->store("treatment-attachments/{$treatmentRecord->id}", 'public');
+
+        $attachment = TreatmentAttachment::create([
+            'treatment_record_id' => $treatmentRecord->id,
+            'file_path' => $path,
+            'file_name' => $file->getClientOriginalName(),
+            'file_type' => $file->getClientMimeType(),
+            'label' => $data['label'] ?? null,
+            'uploaded_by' => auth()->id(),
+            'uploaded_at' => Carbon::now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Attachment uploaded.',
+            'data' => $attachment,
+        ], 201);
+    }
+
+    /**
+     * Delete a treatment attachment.
+     * Route: DELETE /api/{dept}/attachments/{attachment}
+     */
+    public function deleteAttachment(TreatmentAttachment $attachment): JsonResponse
+    {
+        Storage::disk('public')->delete($attachment->file_path);
+        $attachment->delete();
+
+        return response()->json(['message' => 'Attachment deleted.']);
+    }
+
+    private function resolveDepartmentId(ServiceOrder $serviceOrder): int
+    {
+        return ServiceDepartment::where('slug', $serviceOrder->type)->value('id')
+            ?? $serviceOrder->service?->service_department_id;
     }
 }

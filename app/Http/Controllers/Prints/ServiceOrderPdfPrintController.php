@@ -15,7 +15,7 @@ class ServiceOrderPdfPrintController extends Controller
      */
     public function stream(string $id, Request $request)
     {
-        $serviceOrder = ServiceOrder::with(['patient', 'doctor'])
+        $serviceOrder = ServiceOrder::with(['patient', 'doctor', 'treatmentRecord.triage', 'treatmentRecord.attachments'])
             ->findOrFail($id);
 
         $patient = $serviceOrder->patient;

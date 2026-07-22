@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\DateHelper;
+use App\Helpers\TreatmentFormConfig;
 use App\Models\Patient;
 use App\Models\ServiceOrder;
 use Illuminate\Http\Request;
@@ -26,8 +27,8 @@ class LabController extends Controller
                 ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text'])
                 ->where('type', 'PTH')
                 ->whereBetween('created_at', DateHelper::todayRangeUtc())
-                ->orderByRaw("FIELD(status, 'in-progress', 'IN-PROGRESS', 'open', 'OPEN', 'treated', 'TREATED') ASC")
-                ->orderBy('created_at', 'ASC')
+                ->orderByRaw("CASE WHEN LOWER(status) = 'in-progress' THEN 0 WHEN LOWER(status) = 'open' THEN 1 WHEN LOWER(status) = 'treated' THEN 2 ELSE 3 END ASC")
+                ->orderBy('created_at', 'DESC')
                 ->limit(50)
                 ->get();
 
@@ -51,9 +52,10 @@ class LabController extends Controller
         $serviceOrder = ServiceOrder::query()
             ->with([
                 'patient:id,name,ps_number,gender,age_days,age_dob,contact',
-                'service:id,name',
+                'service:id,name,treatment_form_config',
                 'doctor:id,name',
                 'treatmentRecord.vitalSigns',
+                'treatmentRecord.attachments',
             ])
             ->findOrFail($id);
 
@@ -69,6 +71,7 @@ class LabController extends Controller
         return Inertia::render('lab/patient', [
             'serviceOrder' => $serviceOrder,
             'previousVisits' => $previousVisits,
+            'formConfig' => TreatmentFormConfig::resolve('PTH', $serviceOrder->service?->treatment_form_config),
         ]);
     }
 

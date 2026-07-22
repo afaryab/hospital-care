@@ -54,24 +54,34 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/emg/search', [DepartmentController::class, 'search'])->name('api-emg-search');
     Route::post('/emg/service-orders/{serviceOrder}/treatment-record', [DepartmentController::class, 'saveTreatmentRecord'])->name('api-emg-save-treatment');
     Route::patch('/emg/service-orders/{serviceOrder}/status', [DepartmentController::class, 'updateStatus'])->name('api-emg-update-status');
+    Route::post('/emg/service-orders/{serviceOrder}/attachments', [DepartmentController::class, 'uploadAttachment'])->name('api-emg-upload-attachment');
+    Route::delete('/emg/attachments/{attachment}', [DepartmentController::class, 'deleteAttachment'])->name('api-emg-delete-attachment');
 
     Route::get('/dnt/my-queue', [DepartmentController::class, 'myQueue'])->name('api-dnt-my-queue');
     Route::post('/dnt/search', [DepartmentController::class, 'search'])->name('api-dnt-search');
     Route::post('/dnt/service-orders/{serviceOrder}/treatment-record', [DepartmentController::class, 'saveTreatmentRecord'])->name('api-dnt-save-treatment');
     Route::patch('/dnt/service-orders/{serviceOrder}/status', [DepartmentController::class, 'updateStatus'])->name('api-dnt-update-status');
+    Route::post('/dnt/service-orders/{serviceOrder}/attachments', [DepartmentController::class, 'uploadAttachment'])->name('api-dnt-upload-attachment');
+    Route::delete('/dnt/attachments/{attachment}', [DepartmentController::class, 'deleteAttachment'])->name('api-dnt-delete-attachment');
 
     Route::get('/lab/my-queue', [DepartmentController::class, 'myQueue'])->name('api-lab-my-queue');
     Route::post('/lab/search', [DepartmentController::class, 'search'])->name('api-lab-search');
     Route::post('/lab/service-orders/{serviceOrder}/treatment-record', [DepartmentController::class, 'saveTreatmentRecord'])->name('api-lab-save-treatment');
     Route::patch('/lab/service-orders/{serviceOrder}/status', [DepartmentController::class, 'updateStatus'])->name('api-lab-update-status');
+    Route::post('/lab/service-orders/{serviceOrder}/attachments', [DepartmentController::class, 'uploadAttachment'])->name('api-lab-upload-attachment');
+    Route::delete('/lab/attachments/{attachment}', [DepartmentController::class, 'deleteAttachment'])->name('api-lab-delete-attachment');
 
     Route::get('/ult/my-queue', [DepartmentController::class, 'myQueue'])->name('api-ult-my-queue');
     Route::post('/ult/search', [DepartmentController::class, 'search'])->name('api-ult-search');
     Route::post('/ult/service-orders/{serviceOrder}/treatment-record', [DepartmentController::class, 'saveTreatmentRecord'])->name('api-ult-save-treatment');
     Route::patch('/ult/service-orders/{serviceOrder}/status', [DepartmentController::class, 'updateStatus'])->name('api-ult-update-status');
+    Route::post('/ult/service-orders/{serviceOrder}/attachments', [DepartmentController::class, 'uploadAttachment'])->name('api-ult-upload-attachment');
+    Route::delete('/ult/attachments/{attachment}', [DepartmentController::class, 'deleteAttachment'])->name('api-ult-delete-attachment');
 
     Route::get('/xray/my-queue', [DepartmentController::class, 'myQueue'])->name('api-xray-my-queue');
     Route::post('/xray/search', [DepartmentController::class, 'search'])->name('api-xray-search');
     Route::post('/xray/service-orders/{serviceOrder}/treatment-record', [DepartmentController::class, 'saveTreatmentRecord'])->name('api-xray-save-treatment');
     Route::patch('/xray/service-orders/{serviceOrder}/status', [DepartmentController::class, 'updateStatus'])->name('api-xray-update-status');
+    Route::post('/xray/service-orders/{serviceOrder}/attachments', [DepartmentController::class, 'uploadAttachment'])->name('api-xray-upload-attachment');
+    Route::delete('/xray/attachments/{attachment}', [DepartmentController::class, 'deleteAttachment'])->name('api-xray-delete-attachment');
 });
