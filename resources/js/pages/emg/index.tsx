@@ -40,6 +40,7 @@ export default function EmgDashboard() {
                 myQueueUrl={apiEmgMyQueue().url}
                 searchApiUrl={apiEmgSearch().url}
                 searchTypes={['EMG']}
+                showCallButton={false}
                 flashError={(flash as any)?.searchError}
             />
         </AppLayout>

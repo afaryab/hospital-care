@@ -1,6 +1,6 @@
 import PatientMiniCard from '@/elements/patient/mini-card';
 import PatientTreatmentsHistoryCard from '@/elements/patient/treatments-history-card';
-import EmergencyClinicalPerforma from '@/elements/serviceorder/view';
+import ServiceOrderView from '@/elements/serviceorder/service-order-view';
 import AppLayout from '@/layouts/app-layout';
 import {
     home,
@@ -96,26 +96,19 @@ export default function PatientView() {
                                 </Link>
                             ))}
                         </div>
-                        <div className="grid flex-1 grid-cols-2 gap-6">
-                            <div className="hidden xl:block">
+                        {serviceOrder ? (
+                            <div className="flex-1 p-4">
+                                <ServiceOrderView serviceOrder={serviceOrder} />
+                            </div>
+                        ) : (
+                            <div className="grid flex-1 grid-cols-1 gap-6 p-4 xl:grid-cols-2">
                                 <PatientTreatmentsHistoryCard
                                     patient={patientData}
                                     departmentKey={departmentKey}
                                     className="h-full"
                                 />
                             </div>
-                            <div className="col-span-2 xl:col-span-1">
-                                {serviceOrder ? (
-                                    <EmergencyClinicalPerforma
-                                        patient={patientData}
-                                        serviceOrder={serviceOrder}
-                                        className="h-full"
-                                    />
-                                ) : (
-                                    <></>
-                                )}
-                            </div>
-                        </div>
+                        )}
                     </div>
                 </div>
             </div>

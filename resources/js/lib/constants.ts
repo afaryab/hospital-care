@@ -69,3 +69,16 @@ export function triageBadgeClass(color?: string | null): string {
         'bg-slate-100 text-slate-600 ring-slate-200'
     );
 }
+
+const TRIAGE_DOT_CLASSES: Record<string, string> = {
+    red: 'bg-red-500',
+    yellow: 'bg-yellow-500',
+    blue: 'bg-blue-500',
+    sky: 'bg-sky-500',
+    green: 'bg-green-500',
+};
+
+/** Solid Tailwind background class for a small triage color dot/circle. */
+export function triageDotClass(color?: string | null): string {
+    return TRIAGE_DOT_CLASSES[color ?? ''] ?? 'bg-slate-400';
+}

@@ -343,7 +343,50 @@ class WebController extends Controller
 
             $serviceOrder = ServiceOrder::where('so_number', $soNumber)
                 ->orWhere('so_short', $soNumber)
+                ->with([
+                    'patient:id,name,ps_number,contact,cnic',
+                    'service:id,name,icon',
+                    'doctor:id,name',
+                    'transactionElements.transaction:id,tr_number,created_at,type',
+                    'transactionElements.expenseCategory:id,name',
+                    'transactionElements.serviceRecestation:id,name',
+                    'transactionElements.expVoucher:id,vc_number',
+                    'expenseVouchers' => fn ($q) => $q
+                        ->select(['expense_vouchers.id', 'expense_vouchers.vc_number', 'expense_vouchers.exp_category_id', 'expense_vouchers.amount', 'expense_vouchers.payed_to', 'expense_vouchers.payed_to_name', 'expense_vouchers.transaction_id', 'expense_vouchers.transaction_element_id', 'expense_vouchers.created_at'])
+                        ->withCount('serviceOrders'),
+                    'expenseVouchers.expCategory:id,name',
+                    'expenseVouchers.payedTo:id,name',
+                    'treatmentRecord.treatingDoctor:id,name',
+                    'treatmentRecord.vitalSigns',
+                    'treatmentRecord.triage:id,name,color',
+                    'treatmentRecord.triageHistories.oldTriage:id,name,color',
+                    'treatmentRecord.triageHistories.newTriage:id,name,color',
+                    'treatmentRecord.triageHistories.changedBy:id,name',
+                    'treatmentRecord.attachments',
+                ])
+                ->withSum(['transactionElements as income_total' => fn ($q) => $q->where('income_or_expense', 'INCOME')], 'amount')
+                ->withSum(['transactionElements as expense_total' => fn ($q) => $q->where('income_or_expense', 'EXPENSE')], 'amount')
+                ->withVoucherExpenseTotal('voucher_expense_total')
                 ->firstOrFail();
+
+            $incomeTransactionIds = $serviceOrder->transactionElements
+                ->where('income_or_expense', 'INCOME')
+                ->pluck('transaction_id')
+                ->unique()
+                ->filter();
+
+            $serviceOrder->setRelation(
+                'receivables',
+                Receaveable::whereIn('transaction_id', $incomeTransactionIds)
+                    ->with(['patient:id,name', 'panel:id,name', 'transaction:id,tr_number'])
+                    ->get()
+            );
+
+            // A voucher shared across multiple service orders is divided
+            // evenly between them (see ServiceOrder::scopeWithVoucherExpenseTotal).
+            $serviceOrder->expenseVouchers->each(
+                fn ($voucher) => $voucher->share_amount = $voucher->amount / max(1, $voucher->service_orders_count)
+            );
 
         }
 
