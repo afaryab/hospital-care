@@ -1,4 +1,20 @@
 {{-- resources/views/forms/emergency-clinical-performa.blade.php --}}
+@php
+    $hospitalName = \App\Models\HospitalSetting::get('hospital_name', config('app.name'));
+    $departmentName = $serviceOrder->service?->department?->name ?? 'Emergency';
+    $pastDiagnoses = $pastDiagnoses ?? collect();
+    $tr = $serviceOrder->treatmentRecord;
+    $lastVital = $tr?->vitalSigns?->last();
+    $treatingDoctor = $tr?->treatingDoctor ?? $serviceOrder->doctor;
+    $treatingDoctorName = $treatingDoctor?->name ?? '';
+    if ($treatingDoctor?->pmdc_number) {
+        $treatingDoctorName .= " (PMDC# {$treatingDoctor->pmdc_number})";
+    }
+    $prescriptions = $tr?->prescriptions ?? [];
+    $drugRowCount = max(5, count($prescriptions));
+    $outcomeValue = $tr?->outcome?->value;
+    $checked = fn (string $value) => $outcomeValue === $value ? 'X' : '';
+@endphp
 <!doctype html>
 <html lang="en">
 <head>
@@ -218,7 +234,7 @@
     <div class="page">
 
         <div class="heading-wrap">
-            <div class="badge d-block text-center">EMERGENCY DEPARTMENT</div>
+            <div class="badge d-block text-center">{{ strtoupper($departmentName) }} DEPARTMENT</div>
             <div class="subhead">CLINICAL PERFORMA SO: <span class="u">{{ $serviceOrder->so_number ?? '' }}{{ $serviceOrder->so_short ? ' ('.$serviceOrder->so_short.')' : '' }}</span> Page 1/2</div>
         </div>
 
@@ -240,7 +256,7 @@
                         </tr>
                         <tr>
                             <td class="kv-label">S/o, D/o, W/o:</td>
-                            <td class="kv-line w-long">{{ $patient->guardian_name ?? '' }}</td>
+                            <td class="kv-line w-long">{{ trim(($patient->relation ?? '').' '.($patient->guardian ?? '')) }}</td>
                         </tr>
                         <tr>
                             <td class="kv-label">Age &amp; Sex:</td>
@@ -262,11 +278,11 @@
                         </tr>
                         <tr>
                             <td class="kv-label" style="width: 30%;">Time:</td>
-                            <td class="kv-line w-mid" style="width: 70%;"></td>
+                            <td class="kv-line w-mid" style="width: 70%;">@hdate($tr?->treated_at, 'd-m-Y H:i')</td>
                         </tr>
                         <tr>
                             <td class="kv-label">Name of Doctor:</td>
-                            <td class="kv-line w-long"></td>
+                            <td class="kv-line w-long">{{ $treatingDoctorName }}</td>
                         </tr>
                         <tr>
                             <td class="kv-label">Name of Nurse:</td>
@@ -274,11 +290,11 @@
                         </tr>
                         <tr>
                             <td class="kv-label">Triage Category:</td>
-                            <td class="kv-line w-long"></td>
+                            <td class="kv-line w-long">{{ $tr?->triage?->name }}</td>
                         </tr>
                         <tr>
                             <td class="kv-label">Complain:</td>
-                            <td class="kv-line w-long"></td>
+                            <td class="kv-line w-long">{{ $tr?->chief_complaint }}</td>
                         </tr>
                         <tr>
                             <td  class="kv-line w-long" colspan="2" ></td>
@@ -295,7 +311,7 @@
                     <div class="consent">
                         <div>
                             <span class="checkbox"></span>
-                            <span>We give our consent according to the patient’s condition. In case of any medication-related issue or loss of life, Karachi Hospital will not be held responsible.</span>
+                            <span>We give our consent according to the patient’s condition. In case of any medication-related issue or loss of life, {{ $hospitalName }} will not be held responsible.</span>
                         </div>
                         <table class="kv-table" style="margin-top:6px;">
                             <tr>
@@ -313,7 +329,7 @@
                     <div class="consent">
                         <div>
                             <span class="checkbox"></span>
-                            <span>We give our consent according to the patient’s condition. In case of any medication-related issue or loss of life, Karachi Hospital will not be held responsible.</span>
+                            <span>We give our consent according to the patient’s condition. In case of any medication-related issue or loss of life, {{ $hospitalName }} will not be held responsible.</span>
                         </div>
                         <table class="kv-table" style="margin-top:6px;">
                             <tr>
@@ -331,21 +347,28 @@
         </table>
 
         {{-- Main clinical table --}}
+        @php $examFindings = $tr?->examination_findings ?? []; @endphp
         <table class="clinical-grid" style="margin-top:8px;">
             <tr>
-                <td style="width:70%;" class="bold">DOCTOR'S NAME: {{ $serviceOrder->doctor->name ?? '' }} <span style="float:right">TIME SEEN BY DOCTOR:</span></td>
-                <td style="width:30%;" class="bold center"></td>
+                <td style="width:70%;" class="bold">DOCTOR'S NAME: {{ $treatingDoctorName }} <span style="float:right">TIME SEEN BY DOCTOR:</span></td>
+                <td style="width:30%;" class="bold center">@hdate($tr?->treated_at, 'H:i')</td>
             </tr>
             <tr>
                 <td class="bold">HISTORY:</td>
                 <td class="bold">PAST HISTORY:</td>
             </tr>
 
-            {{-- history lines --}}
-            @for($i=0; $i<4; $i++)
+            {{-- history lines: left = this visit's HPI, right = last 6 diagnosed conditions from previous visits --}}
+            @php $historyRowCount = max(4, $pastDiagnoses->count()); @endphp
+            @for($i=0; $i<$historyRowCount; $i++)
+                @php $pastDx = $pastDiagnoses[$i] ?? null; @endphp
                 <tr>
-                    <td></td>
-                    <td></td>
+                    <td>{{ $i === 0 ? $tr?->history_of_present_illness : '' }}</td>
+                    <td>
+                        @if($pastDx)
+                            {{ $pastDx->icd10Code?->code ?? $pastDx->diagnosis_code }}{{ $pastDx->icd10Code?->description ? ' - '.$pastDx->icd10Code->description : '' }}
+                        @endif
+                    </td>
                 </tr>
             @endfor
 
@@ -354,7 +377,7 @@
                 <td class="bold">
                     EXAMINATION: &gt; Airway: Clear&nbsp; Y&nbsp; N
                     &nbsp;&nbsp;&gt; Breathing: Spontaneous&nbsp; Y&nbsp; N
-                    &nbsp;&nbsp;&gt; R/R:&nbsp;&nbsp; &nbsp;&nbsp; /min
+                    &nbsp;&nbsp;&gt; R/R:&nbsp;{{ $lastVital?->respiratory_rate }}&nbsp; /min
                     &nbsp;&nbsp;&gt; GCS
                 </td>
                 <td style="height:24px;"></td>
@@ -363,9 +386,9 @@
             <tr>
                 <td class="bold">
                     CIRCULATIONS:&nbsp; Y&nbsp; N
-                    &nbsp;&nbsp;&gt; Pulse:&nbsp;&nbsp; &nbsp;&nbsp; /min
-                    &nbsp;&nbsp;&gt; BP
-                    &nbsp;&nbsp;&gt; TEMP:&nbsp;&nbsp;&nbsp; F
+                    &nbsp;&nbsp;&gt; Pulse:&nbsp;{{ $lastVital?->pulse_rate }}&nbsp; /min
+                    &nbsp;&nbsp;&gt; BP&nbsp;{{ $lastVital && $lastVital->blood_pressure_systolic ? $lastVital->blood_pressure_systolic.'/'.$lastVital->blood_pressure_diastolic : '' }}
+                    &nbsp;&nbsp;&gt; TEMP:&nbsp;{{ $lastVital?->temperature }}&nbsp; F
                     &nbsp;&nbsp;&gt; BSL
                 </td>
                 <td style="height:24px;"></td>
@@ -376,9 +399,14 @@
             </tr>
 
             {{-- big writing area + right column labels --}}
+            @php $examEntries = array_values($examFindings); $examLabels = array_keys($examFindings); @endphp
             @for($i=0; $i<10; $i++)
                 <tr>
-                    <td></td>
+                    <td>
+                        @if(isset($examLabels[$i]))
+                            <span class="bold">{{ $examLabels[$i] }}:</span> {{ $examEntries[$i] }}
+                        @endif
+                    </td>
                     <td class="bold">
                         @if($i==2) <span class="bold">ALLERGIES:&nbsp; Y&nbsp; N</span> @endif
                         @if($i==5) <span class="bold">IMMUNIZATION:&nbsp; Y&nbsp; N</span> @endif
@@ -396,7 +424,7 @@
     <div class="page last">
 
         <div class="heading-wrap">
-            <div class="badge d-block text-center">EMERGENCY DEPARTMENT</div>
+            <div class="badge d-block text-center">{{ strtoupper($departmentName) }} DEPARTMENT</div>
             <div class="subhead">CLINICAL PERFORMA SO: <span class="u">{{ $serviceOrder->so_number ?? '' }}</span> Page 2/2</div>
         </div>
 
@@ -409,7 +437,7 @@
 
             @for($i=0; $i<7; $i++)
                 <tr>
-                    <td></td>
+                    <td>{{ $i === 0 ? $tr?->treatment_plan : '' }}</td>
                     <td></td>
                 </tr>
             @endfor
@@ -427,13 +455,21 @@
                 <th class="bold bg-gray" style="width:12%;">TIME</th>
             </tr>
 
-            @for($i=0; $i<5; $i++)
+            @for($i=0; $i<$drugRowCount; $i++)
+                @php
+                    $rx = $prescriptions[$i] ?? null;
+                    $rxTime = $rx['given_at'] ?? $tr?->treated_at;
+                @endphp
                 <tr>
+                    <td>{{ $rx ? \App\Helpers\DateHelper::pdfFormat($rxTime, 'd-m-Y') : '' }}</td>
+                    <td colspan="3">
+                        @if($rx)
+                            {{ trim(($rx['drug_name'] ?? '').' '.($rx['dose'] ?? '').' '.($rx['frequency'] ?? '').' '.($rx['route'] ?? '')) }}
+                        @endif
+                    </td>
+                    <td>{{ $rx ? $treatingDoctorName : '' }}</td>
                     <td></td>
-                    <td colspan="3"></td>
-                    <td></td>
-                    <td></td>
-                    <td></td>
+                    <td>{{ $rx ? \App\Helpers\DateHelper::pdfFormat($rxTime, 'H:i') : '' }}</td>
                 </tr>
             @endfor
         </table>
@@ -445,7 +481,7 @@
                 <th class="bold bg-gray" style="width:30%;">NURSING INTERVENTIONS</th>
             </tr>
             <tr>
-                <td rowspan="3"></td>
+                <td rowspan="3">{{ trim(($tr?->diagnosis_code ?? '').' '.($tr?->diagnosis_text ?? '')) }}</td>
                 <td></td>
             </tr>
 
@@ -456,12 +492,12 @@
             @endfor
             <tr>
                 <td>
-                    <div class="bold"><span class="inline-check"><span class="cb"></span>  DISCHARGE PLAN</div>
-                    <td></td>
+                    <div class="bold"><span class="inline-check"><span class="cb">{{ $checked('discharged') }}</span>  DISCHARGE PLAN</div>
+                    <td>{{ $tr?->outcome_notes }}</td>
                 </td>
             </tr>
             <tr>
-                <td class="bold"><span class="inline-check"><span class="cb"></span> REFERRED TO:&nbsp; Surgical, Medical, O &amp; G, Paeds, Other:</span></td>
+                <td class="bold"><span class="inline-check"><span class="cb">{{ $checked('referred') }}</span> REFERRED TO:&nbsp; Surgical, Medical, O &amp; G, Paeds, Other: {{ $tr?->referral_to }}</span></td>
                 <td></td>
             </tr>
             <tr>
@@ -480,9 +516,9 @@
                 <td class="bold table-container">
                     <table class="border-none">
                         <tr>
-                            <td style="width: 43%;"><span class="inline-check"><span class="cb"></span> TRANSFERRED TO:&nbsp;</span></td>
-                            <td style="width: 20%;"><span class="inline-check"><span class="cb"></span> DATE:&nbsp;</span></td>
-                            <td style="width: 27%;"><span class="inline-check"><span class="cb"></span> TIME:&nbsp;</span></td>
+                            <td style="width: 43%;"><span class="inline-check"><span class="cb">{{ $checked('referred') }}</span> TRANSFERRED TO:&nbsp;{{ $outcomeValue === 'referred' ? $tr?->referral_to : '' }}</span></td>
+                            <td style="width: 20%;"><span class="inline-check"><span class="cb"></span> DATE:&nbsp;{{ $outcomeValue === 'referred' ? $tr?->outcome_at?->format('d-m-Y') : '' }}</span></td>
+                            <td style="width: 27%;"><span class="inline-check"><span class="cb"></span> TIME:&nbsp;{{ $outcomeValue === 'referred' ? $tr?->outcome_at?->format('H:i') : '' }}</span></td>
                         </tr>
                     </table>
                 </td>
@@ -492,9 +528,9 @@
                 <td class="bold table-container">
                     <table class="border-none">
                         <tr>
-                            <td style="width: 43%;"><span class="inline-check"><span class="cb"></span> DISCHARGED HOME:&nbsp;</span></td>
-                            <td style="width: 20%;"><span class="inline-check"><span class="cb"></span> DATE:&nbsp;</span></td>
-                            <td style="width: 27%;"><span class="inline-check"><span class="cb"></span> TIME:&nbsp;</span></td>
+                            <td style="width: 43%;"><span class="inline-check"><span class="cb">{{ $checked('discharged') }}</span> DISCHARGED HOME:&nbsp;</span></td>
+                            <td style="width: 20%;"><span class="inline-check"><span class="cb"></span> DATE:&nbsp;{{ $outcomeValue === 'discharged' ? $tr?->outcome_at?->format('d-m-Y') : '' }}</span></td>
+                            <td style="width: 27%;"><span class="inline-check"><span class="cb"></span> TIME:&nbsp;{{ $outcomeValue === 'discharged' ? $tr?->outcome_at?->format('H:i') : '' }}</span></td>
                         </tr>
                     </table>
                 </td>
@@ -535,8 +571,8 @@
                 <td class="bold table-container" rowspan="2">
                     <table class="border-none">
                         <tr>
-                            <td style="width: 50%;"><span class="inline-check"><span class="cb"></span> DIED IN ED Date&nbsp;</span></td>
-                            <td style="width: 50%;"><span class="inline-check"><span class="cb"></span> Time&nbsp;</span></td>
+                            <td style="width: 50%;"><span class="inline-check"><span class="cb">{{ $checked('expired') }}</span> DIED IN ED Date&nbsp;{{ $outcomeValue === 'expired' ? $tr?->outcome_at?->format('d-m-Y') : '' }}</span></td>
+                            <td style="width: 50%;"><span class="inline-check"><span class="cb"></span> Time&nbsp;{{ $outcomeValue === 'expired' ? $tr?->outcome_at?->format('H:i') : '' }}</span></td>
                         </tr>
                         <tr>
                             <td style="width: 50%;"><span class="inline-check"><span class="cb"></span> Left Against Medical Advice&nbsp;</span></td>
@@ -544,7 +580,7 @@
                         </tr>
                     </table>
                 </td>
-                <td></td>
+                <td>{{ $outcomeValue === 'expired' ? $tr?->outcome_notes : '' }}</td>
             </tr>
             <tr>
                 <td></td>
@@ -557,7 +593,7 @@
                             <td style="width: 23%;"><span class="inline-check"><span class="cb"></span> SIGNATURE:&nbsp;</span></td>
                         </tr>
                         <tr>
-                            <td class="kv-line w-long"></td>
+                            <td class="kv-line w-long">{{ $treatingDoctorName }}</td>
                             <td class="kv-line w-mid"></td>
                         </tr>
                     </table>

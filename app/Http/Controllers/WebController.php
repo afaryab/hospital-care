@@ -1521,7 +1521,7 @@ class WebController extends Controller
 
     public function emergencyQueue()
     {
-        $type = 'EMER';
+        $type = 'EMG';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
             ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
@@ -1601,7 +1601,7 @@ class WebController extends Controller
 
     public function laboratoryQueue()
     {
-        $type = 'DNT';
+        $type = 'PTH';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
             ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])

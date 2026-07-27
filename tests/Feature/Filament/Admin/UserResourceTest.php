@@ -72,3 +72,40 @@ test('editing a user with a new password updates it', function () {
 
     expect(Hash::check('a-new-password', $user->fresh()->password))->toBeTrue();
 });
+
+test('an emergency doctor profile requires a PMDC number', function () {
+    Livewire\Livewire::test(CreateUser::class)
+        ->fillForm([
+            'name' => 'Dr No Pmdc',
+            'email' => 'no-pmdc@example.com',
+            'password' => 'super-secret',
+            'login_attempts' => 0,
+            'is_active' => true,
+            'emergencyDoctorProfiles' => [
+                ['authority' => 'assistant', 'pmdc_number' => ''],
+            ],
+        ])
+        ->call('create')
+        ->assertHasFormErrors(['emergencyDoctorProfiles.0.pmdc_number' => 'required']);
+});
+
+test('an emergency doctor profile persists authority and PMDC number', function () {
+    Livewire\Livewire::test(CreateUser::class)
+        ->fillForm([
+            'name' => 'Dr With Pmdc',
+            'email' => 'with-pmdc@example.com',
+            'password' => 'super-secret',
+            'login_attempts' => 0,
+            'is_active' => true,
+            'emergencyDoctorProfiles' => [
+                ['authority' => 'consultant', 'pmdc_number' => '99887-P'],
+            ],
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $created = User::where('email', 'with-pmdc@example.com')->first();
+    $profile = $created->emergencyDoctorProfiles()->first();
+    expect($profile->authority)->toBe('consultant');
+    expect($profile->pmdc_number)->toBe('99887-P');
+});

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Prints;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServiceOrder;
+use App\Models\TreatmentRecord;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -15,20 +16,33 @@ class ServiceOrderPdfPrintController extends Controller
      */
     public function stream(string $id, Request $request)
     {
-        $serviceOrder = ServiceOrder::with(['patient', 'doctor', 'treatmentRecord.triage', 'treatmentRecord.attachments'])
-            ->findOrFail($id);
+        $serviceOrder = ServiceOrder::with([
+            'patient',
+            'doctor',
+            'service.department:id,name',
+            'treatmentRecord.triage',
+            'treatmentRecord.attachments',
+            'treatmentRecord.treatingDoctor',
+            'treatmentRecord.vitalSigns',
+        ])->findOrFail($id);
 
         $patient = $serviceOrder->patient;
 
-        // return view('pdfs.serviceorder', [
-        //     'serviceOrder' => $serviceOrder,
-        //     'patient' => $patient,
-        // ]);
-        // dd($serviceOrder->doctor);
+        // Past History: the patient's last 6 diagnosed conditions from other
+        // service orders, distinct from the doctor-entered History on this visit.
+        $pastDiagnoses = TreatmentRecord::query()
+            ->whereHas('serviceOrder', fn ($q) => $q->where('patient_id', $serviceOrder->patient_id)
+                ->where('id', '!=', $serviceOrder->id))
+            ->where(fn ($q) => $q->whereNotNull('diagnosis_code')->orWhereNotNull('icd10_code_id'))
+            ->with('icd10Code:id,code,description')
+            ->latest('treated_at')
+            ->limit(6)
+            ->get(['id', 'service_order_id', 'diagnosis_code', 'icd10_code_id', 'treated_at']);
 
         $html = view('pdfs.serviceorder', [
             'serviceOrder' => $serviceOrder,
             'patient' => $patient,
+            'pastDiagnoses' => $pastDiagnoses,
         ])->render();
 
         $fileName = 'ED-Clinical-Performa-'.($serviceOrder->id ?? Str::uuid()).'.pdf';

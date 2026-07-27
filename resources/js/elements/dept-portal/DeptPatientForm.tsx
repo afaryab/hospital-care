@@ -14,6 +14,10 @@ import TreatmentAttachments, {
     type TreatmentAttachmentData,
 } from '@/components/ui/treatment-attachments';
 import {
+    DeathConfirmDialog,
+    DischargeDialog,
+} from '@/elements/dept-portal/DischargeDialog';
+import {
     formatPatientAge,
     triageBadgeClass,
     triageDotClass,
@@ -78,6 +82,7 @@ interface Prescription {
     duration?: string;
     route?: string;
     instructions?: string;
+    given_at?: string;
 }
 
 export interface Triage {
@@ -107,6 +112,8 @@ interface TreatmentRecord {
     prescriptions?: Prescription[];
     follow_up_date?: string;
     outcome?: string;
+    outcome_at?: string;
+    outcome_notes?: string;
     referral_to?: string;
     is_finalized?: boolean;
     treated_at?: string;
@@ -161,6 +168,8 @@ export interface DeptPatientFormProps {
     showAttachments?: boolean;
     showDentalChart?: boolean;
     showCallButton?: boolean; // departments like EMG don't call patients by turn (default true)
+    canDischarge?: boolean; // nursing staff can chart but not discharge (default true)
+    requireDischargeDetails?: boolean; // EMG: Finalize becomes Discharge with a required outcome dialog
     treatmentPlanLabel?: string; // e.g. "Imaging Report" for ULT/XRAY
     treatmentPlanPlaceholder?: string; // pre-filled template text
     chiefComplaintLabel?: string;
@@ -317,6 +326,8 @@ export default function DeptPatientForm({
     showAttachments = false,
     showDentalChart = false,
     showCallButton = true,
+    canDischarge = true,
+    requireDischargeDetails = false,
     treatmentPlanLabel = 'Treatment Plan / Notes',
     treatmentPlanPlaceholder = 'Management plan, investigations, advice…',
     chiefComplaintLabel = 'Chief Complaint',
@@ -356,6 +367,10 @@ export default function DeptPatientForm({
         existing?.follow_up_date ?? '',
     );
     const [outcome, setOutcome] = useState(existing?.outcome ?? '');
+    const [outcomeAt, setOutcomeAt] = useState(existing?.outcome_at ?? '');
+    const [outcomeNotes, setOutcomeNotes] = useState(
+        existing?.outcome_notes ?? '',
+    );
     const [referralTo, setReferralTo] = useState(existing?.referral_to ?? '');
     const [examFindings, setExamFindings] = useState<Record<string, string>>(
         existing?.examination_findings ?? {},
@@ -393,9 +408,14 @@ export default function DeptPatientForm({
     const [finalizing, setFinalizing] = useState(false);
     const [showHistory, setShowHistory] = useState(false);
     const [calling, setCalling] = useState(false);
+    const [dischargeDialogOpen, setDischargeDialogOpen] = useState(false);
+    const [deathConfirmOpen, setDeathConfirmOpen] = useState(false);
+    const [pendingBlackTriageId, setPendingBlackTriageId] = useState<
+        number | null
+    >(null);
 
     const buildPayload = useCallback(
-        (finalize = false) => ({
+        (finalize = false, overrides: Record<string, unknown> = {}) => ({
             chief_complaint: chiefComplaint,
             history_of_present_illness: hpi,
             examination_findings: showExamFindings ? examFindings : undefined,
@@ -407,8 +427,24 @@ export default function DeptPatientForm({
                 ? prescriptions.filter((p) => p.drug_name.trim())
                 : [],
             follow_up_date: showFollowUp ? followUpDate || null : null,
-            outcome: showFollowUp ? outcome || null : null,
-            referral_to: showFollowUp ? referralTo || null : null,
+            outcome:
+                showFollowUp || requireDischargeDetails
+                    ? outcome || null
+                    : null,
+            outcome_at:
+                showFollowUp || requireDischargeDetails
+                    ? outcomeAt
+                        ? new Date(outcomeAt).toISOString()
+                        : null
+                    : null,
+            outcome_notes:
+                showFollowUp || requireDischargeDetails
+                    ? outcomeNotes || null
+                    : null,
+            referral_to:
+                showFollowUp || requireDischargeDetails
+                    ? referralTo || null
+                    : null,
             vitals:
                 showVitals && Object.values(vitals).some((v) => v !== '')
                     ? vitals
@@ -424,6 +460,7 @@ export default function DeptPatientForm({
                     : null
                 : undefined,
             finalize,
+            ...overrides,
         }),
         [
             chiefComplaint,
@@ -436,6 +473,8 @@ export default function DeptPatientForm({
             prescriptions,
             followUpDate,
             outcome,
+            outcomeAt,
+            outcomeNotes,
             referralTo,
             vitals,
             dentalChart,
@@ -448,11 +487,12 @@ export default function DeptPatientForm({
             showDentalChart,
             showTriage,
             requireTreatmentTime,
+            requireDischargeDetails,
         ],
     );
 
     const save = useCallback(
-        async (finalize: boolean) => {
+        async (finalize: boolean, overrides: Record<string, unknown> = {}) => {
             if (finalize) setFinalizing(true);
             else setSaving(true);
             try {
@@ -464,7 +504,7 @@ export default function DeptPatientForm({
                         'X-Requested-With': 'XMLHttpRequest',
                         'X-XSRF-TOKEN': getCsrf(),
                     },
-                    body: JSON.stringify(buildPayload(finalize)),
+                    body: JSON.stringify(buildPayload(finalize, overrides)),
                 });
                 const json = await res.json();
                 if (!res.ok) {
@@ -482,6 +522,60 @@ export default function DeptPatientForm({
         },
         [buildPayload, saveApiUrl],
     );
+
+    const confirmDischarge = (payload: {
+        outcome: 'discharged' | 'referred';
+        outcome_at: string;
+        referral_to?: string;
+        outcome_notes?: string;
+    }) => {
+        setOutcome(payload.outcome);
+        setOutcomeAt(payload.outcome_at);
+        setReferralTo(payload.referral_to ?? '');
+        setOutcomeNotes(payload.outcome_notes ?? '');
+        setDischargeDialogOpen(false);
+        save(true, {
+            outcome: payload.outcome,
+            outcome_at: new Date(payload.outcome_at).toISOString(),
+            referral_to: payload.referral_to || null,
+            outcome_notes: payload.outcome_notes || null,
+        });
+    };
+
+    const confirmDeath = (payload: {
+        outcome_at: string;
+        outcome_notes?: string;
+    }) => {
+        setTriageId(pendingBlackTriageId);
+        setOutcome('expired');
+        setOutcomeAt(payload.outcome_at);
+        setOutcomeNotes(payload.outcome_notes ?? '');
+        setDeathConfirmOpen(false);
+        save(true, {
+            triage_id: pendingBlackTriageId,
+            outcome: 'expired',
+            outcome_at: new Date(payload.outcome_at).toISOString(),
+            outcome_notes: payload.outcome_notes || null,
+        });
+        setPendingBlackTriageId(null);
+    };
+
+    const cancelDeathConfirm = () => {
+        setDeathConfirmOpen(false);
+        setPendingBlackTriageId(null);
+    };
+
+    const handleFinalizeClick = () => {
+        if (requireDischargeDetails) {
+            setDischargeDialogOpen(true);
+        } else {
+            save(true);
+        }
+    };
+    const finalizeLabel = requireDischargeDetails ? 'Discharge' : 'Finalize';
+    const finalizingLabel = requireDischargeDetails
+        ? 'Discharging…'
+        : 'Finalizing…';
 
     const callPatient = async () => {
         setCalling(true);
@@ -636,21 +730,23 @@ export default function DeptPatientForm({
                                         <Save className="h-3.5 w-3.5" />{' '}
                                         {saving ? 'Saving…' : 'Save Draft'}
                                     </button>
-                                    <button
-                                        type="button"
-                                        disabled={finalizing}
-                                        onClick={() => save(true)}
-                                        className={clsx(
-                                            'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50',
-                                            accentColor,
-                                            'hover:opacity-90',
-                                        )}
-                                    >
-                                        <CheckCircle className="h-3.5 w-3.5" />{' '}
-                                        {finalizing
-                                            ? 'Finalizing…'
-                                            : 'Finalize'}
-                                    </button>
+                                    {canDischarge && (
+                                        <button
+                                            type="button"
+                                            disabled={finalizing}
+                                            onClick={handleFinalizeClick}
+                                            className={clsx(
+                                                'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50',
+                                                accentColor,
+                                                'hover:opacity-90',
+                                            )}
+                                        >
+                                            <CheckCircle className="h-3.5 w-3.5" />{' '}
+                                            {finalizing
+                                                ? finalizingLabel
+                                                : finalizeLabel}
+                                        </button>
+                                    )}
                                 </>
                             )}
                         </div>
@@ -835,13 +931,24 @@ export default function DeptPatientForm({
                                             value={
                                                 triageId ? String(triageId) : ''
                                             }
-                                            onValueChange={(value) =>
-                                                setTriageId(
-                                                    value
-                                                        ? Number(value)
-                                                        : null,
-                                                )
-                                            }
+                                            onValueChange={(value) => {
+                                                const newId = value
+                                                    ? Number(value)
+                                                    : null;
+                                                const newTriage = triages.find(
+                                                    (t) => t.id === newId,
+                                                );
+                                                if (
+                                                    newTriage?.color === 'black'
+                                                ) {
+                                                    setPendingBlackTriageId(
+                                                        newId,
+                                                    );
+                                                    setDeathConfirmOpen(true);
+                                                } else {
+                                                    setTriageId(newId);
+                                                }
+                                            }}
                                         >
                                             <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Select triage level…" />
@@ -1240,6 +1347,7 @@ export default function DeptPatientForm({
                                                 'Duration',
                                                 'Route',
                                                 'Instructions',
+                                                'Given At',
                                                 '',
                                             ].map((h) => (
                                                 <th
@@ -1409,6 +1517,31 @@ export default function DeptPatientForm({
                                                     />
                                                 </td>
                                                 <td className="px-2 py-1.5">
+                                                    <input
+                                                        disabled={isFinalized}
+                                                        type="datetime-local"
+                                                        value={toDatetimeLocal(
+                                                            row.given_at,
+                                                        )}
+                                                        onChange={(e) =>
+                                                            updateRx(
+                                                                idx,
+                                                                'given_at',
+                                                                e.target.value
+                                                                    ? new Date(
+                                                                          e
+                                                                              .target
+                                                                              .value,
+                                                                      ).toISOString()
+                                                                    : '',
+                                                            )
+                                                        }
+                                                        className={tableInputClass(
+                                                            isFinalized,
+                                                        )}
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-1.5">
                                                     {!isFinalized &&
                                                         prescriptions.length >
                                                             1 && (
@@ -1462,7 +1595,13 @@ export default function DeptPatientForm({
                             }
                             title="Follow-up & Outcome"
                         >
-                            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            <div
+                                className={clsx(
+                                    'grid grid-cols-1 gap-3',
+                                    !requireDischargeDetails &&
+                                        'sm:grid-cols-3',
+                                )}
+                            >
                                 <div>
                                     <label className="mb-1 block text-xs font-medium text-slate-500">
                                         Follow-up Date
@@ -1477,49 +1616,76 @@ export default function DeptPatientForm({
                                         className={inputClass(isFinalized)}
                                     />
                                 </div>
-                                <div>
-                                    <label className="mb-1 block text-xs font-medium text-slate-500">
-                                        Outcome
-                                    </label>
-                                    <select
-                                        disabled={isFinalized}
-                                        value={outcome}
-                                        onChange={(e) =>
-                                            setOutcome(e.target.value)
-                                        }
-                                        className={inputClass(isFinalized)}
-                                    >
-                                        <option value="">Select outcome</option>
-                                        <option value="improved">
-                                            Improved
-                                        </option>
-                                        <option value="unchanged">
-                                            Unchanged
-                                        </option>
-                                        <option value="deteriorated">
-                                            Deteriorated
-                                        </option>
-                                        <option value="referred">
-                                            Referred
-                                        </option>
-                                        <option value="expired">Expired</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="mb-1 block text-xs font-medium text-slate-500">
-                                        Referred To
-                                    </label>
-                                    <input
-                                        disabled={isFinalized}
-                                        value={referralTo}
-                                        onChange={(e) =>
-                                            setReferralTo(e.target.value)
-                                        }
-                                        placeholder="Department / Hospital"
-                                        className={inputClass(isFinalized)}
-                                    />
-                                </div>
+                                {/* EMG captures outcome/referral via the required Discharge dialog instead */}
+                                {!requireDischargeDetails && (
+                                    <>
+                                        <div>
+                                            <label className="mb-1 block text-xs font-medium text-slate-500">
+                                                Outcome
+                                            </label>
+                                            <select
+                                                disabled={isFinalized}
+                                                value={outcome}
+                                                onChange={(e) =>
+                                                    setOutcome(e.target.value)
+                                                }
+                                                className={inputClass(
+                                                    isFinalized,
+                                                )}
+                                            >
+                                                <option value="">
+                                                    Select outcome
+                                                </option>
+                                                <option value="improved">
+                                                    Improved
+                                                </option>
+                                                <option value="unchanged">
+                                                    Unchanged
+                                                </option>
+                                                <option value="deteriorated">
+                                                    Deteriorated
+                                                </option>
+                                                <option value="referred">
+                                                    Referred
+                                                </option>
+                                                <option value="expired">
+                                                    Expired
+                                                </option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="mb-1 block text-xs font-medium text-slate-500">
+                                                Referred To
+                                            </label>
+                                            <input
+                                                disabled={isFinalized}
+                                                value={referralTo}
+                                                onChange={(e) =>
+                                                    setReferralTo(
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                placeholder="Department / Hospital"
+                                                className={inputClass(
+                                                    isFinalized,
+                                                )}
+                                            />
+                                        </div>
+                                    </>
+                                )}
                             </div>
+                            {requireDischargeDetails && outcome && (
+                                <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                                    Disposition recorded via Discharge:{' '}
+                                    <span className="font-semibold capitalize">
+                                        {outcome}
+                                    </span>
+                                    {referralTo && <> to {referralTo}</>}
+                                    {outcomeAt && (
+                                        <> at {formatDate(outcomeAt)}</>
+                                    )}
+                                </div>
+                            )}
                         </FormSection>
                     )}
 
@@ -1535,23 +1701,43 @@ export default function DeptPatientForm({
                                 <Save className="h-4 w-4" />{' '}
                                 {saving ? 'Saving…' : 'Save Draft'}
                             </button>
-                            <button
-                                type="button"
-                                disabled={finalizing}
-                                onClick={() => save(true)}
-                                className={clsx(
-                                    'flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50',
-                                    accentColor,
-                                    'hover:opacity-90',
-                                )}
-                            >
-                                <CheckCircle className="h-4 w-4" />{' '}
-                                {finalizing ? 'Finalizing…' : 'Finalize Record'}
-                            </button>
+                            {canDischarge && (
+                                <button
+                                    type="button"
+                                    disabled={finalizing}
+                                    onClick={handleFinalizeClick}
+                                    className={clsx(
+                                        'flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50',
+                                        accentColor,
+                                        'hover:opacity-90',
+                                    )}
+                                >
+                                    <CheckCircle className="h-4 w-4" />{' '}
+                                    {finalizing
+                                        ? finalizingLabel
+                                        : `${finalizeLabel} Record`}
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>
             </div>
+
+            <DischargeDialog
+                open={dischargeDialogOpen}
+                onOpenChange={setDischargeDialogOpen}
+                submitting={finalizing}
+                onConfirm={confirmDischarge}
+            />
+            <DeathConfirmDialog
+                open={deathConfirmOpen}
+                onOpenChange={(open) => {
+                    if (!open) cancelDeathConfirm();
+                }}
+                submitting={finalizing}
+                onConfirm={confirmDeath}
+                onCancel={cancelDeathConfirm}
+            />
         </div>
     );
 }

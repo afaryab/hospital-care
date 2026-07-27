@@ -67,6 +67,7 @@ class UserForm
                             ->default('assistant')
                             ->required(),
                     ])
+                    ->defaultItems(0)
                     ->addActionLabel('Add Administrator Profile')
                     ->collapsible()
                     ->collapsed()
@@ -84,6 +85,7 @@ class UserForm
                             ->default('assistant')
                             ->required(),
                     ])
+                    ->defaultItems(0)
                     ->addActionLabel('Add Accountant Profile')
                     ->collapsible()
                     ->collapsed()
@@ -107,6 +109,7 @@ class UserForm
                             ->preload()
                             ->nullable(),
                     ])
+                    ->defaultItems(0)
                     ->addActionLabel('Add Receptionist Profile')
                     ->collapsible()
                     ->collapsed()
@@ -123,6 +126,7 @@ class UserForm
                             ->preload()
                             ->required(),
                     ])
+                    ->defaultItems(0)
                     ->addActionLabel('Add Patient Manager Profile')
                     ->collapsible()
                     ->collapsed()
@@ -140,7 +144,11 @@ class UserForm
                             ])
                             ->default('assistant')
                             ->required(),
+                        TextInput::make('pmdc_number')
+                            ->label('PMDC Number')
+                            ->required(),
                     ])
+                    ->defaultItems(0)
                     ->addActionLabel('Add OPD Doctor Profile')
                     ->collapsible()
                     ->collapsed()
@@ -158,7 +166,11 @@ class UserForm
                             ])
                             ->default('assistant')
                             ->required(),
+                        TextInput::make('pmdc_number')
+                            ->label('PMDC Number')
+                            ->required(),
                     ])
+                    ->defaultItems(0)
                     ->addActionLabel('Add Inpatient Doctor Profile')
                     ->collapsible()
                     ->collapsed()
@@ -176,7 +188,11 @@ class UserForm
                             ])
                             ->default('assistant')
                             ->required(),
+                        TextInput::make('pmdc_number')
+                            ->label('PMDC Number')
+                            ->required(),
                     ])
+                    ->defaultItems(0)
                     ->addActionLabel('Add Emergency Doctor Profile')
                     ->collapsible()
                     ->collapsed()
@@ -194,7 +210,11 @@ class UserForm
                             ])
                             ->default('assistant')
                             ->required(),
+                        TextInput::make('pmdc_number')
+                            ->label('PMDC Number')
+                            ->required(),
                     ])
+                    ->defaultItems(0)
                     ->addActionLabel('Add Dentist Profile')
                     ->collapsible()
                     ->collapsed()
@@ -212,7 +232,11 @@ class UserForm
                             ])
                             ->default('assistant')
                             ->required(),
+                        TextInput::make('pmdc_number')
+                            ->label('PMDC Number')
+                            ->required(),
                     ])
+                    ->defaultItems(0)
                     ->addActionLabel('Add Ultrasound Doctor Profile')
                     ->collapsible()
                     ->collapsed()
@@ -231,6 +255,7 @@ class UserForm
                             ->default('assistant')
                             ->required(),
                     ])
+                    ->defaultItems(0)
                     ->addActionLabel('Add X-Ray Technician Profile')
                     ->collapsible()
                     ->collapsed()
@@ -250,6 +275,7 @@ class UserForm
                             ->default('assistant')
                             ->required(),
                     ])
+                    ->defaultItems(0)
                     ->addActionLabel('Add Nursing Staff Profile')
                     ->collapsible()
                     ->collapsed()

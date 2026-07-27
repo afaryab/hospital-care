@@ -11,7 +11,7 @@ import {
 import { Head, usePage } from '@inertiajs/react';
 
 export default function EmgPatient() {
-    const { serviceOrder, previousVisits, formConfig, triages } =
+    const { serviceOrder, previousVisits, formConfig, triages, canDischarge } =
         usePage<any>().props;
     const breadcrumbs = [
         { title: 'Dashboard', href: '/' },
@@ -45,6 +45,8 @@ export default function EmgPatient() {
                 showAttachments={formConfig?.showAttachments ?? false}
                 showDentalChart={formConfig?.showDentalChart ?? false}
                 showCallButton={false}
+                canDischarge={canDischarge ?? true}
+                requireDischargeDetails
                 chiefComplaintLabel="Presenting Complaint / Triage"
                 examSystems={[
                     'General',

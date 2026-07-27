@@ -11,5 +11,7 @@ class IndDoctor extends Model
 
     protected $fillable = [
         'user_id',
+        'authority',
+        'pmdc_number',
     ];
 }

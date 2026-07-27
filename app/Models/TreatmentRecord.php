@@ -29,6 +29,8 @@ class TreatmentRecord extends Model
         'prescriptions',
         'follow_up_date',
         'outcome',
+        'outcome_at',
+        'outcome_notes',
         'referral_to',
         'department_specific_data',
         'dental_chart',
@@ -50,6 +52,7 @@ class TreatmentRecord extends Model
             'finalized_at' => 'datetime',
             'follow_up_date' => 'date',
             'outcome' => TreatmentOutcome::class,
+            'outcome_at' => 'datetime',
         ];
     }
 
