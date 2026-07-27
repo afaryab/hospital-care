@@ -208,6 +208,20 @@ class User extends Authenticatable implements FilamentUser
             || $this->xrayTechnicianProfiles()->exists();
     }
 
+    /**
+     * PMDC (Pakistan Medical & Dental Council) registration number, from
+     * whichever doctor/dentist profile this user has one on. Only doctor
+     * profiles carry this field — nurses, technicians, and other staff don't.
+     */
+    public function getPmdcNumberAttribute(): ?string
+    {
+        return $this->opdDoctorProfiles->first()?->pmdc_number
+            ?? $this->indDoctorProfiles->first()?->pmdc_number
+            ?? $this->emergencyDoctorProfiles->first()?->pmdc_number
+            ?? $this->dentistProfiles->first()?->pmdc_number
+            ?? $this->ultrasoundDoctorProfiles->first()?->pmdc_number;
+    }
+
     public function isPatientManager(): bool
     {
         return $this->patientManagerProfiles()->exists();

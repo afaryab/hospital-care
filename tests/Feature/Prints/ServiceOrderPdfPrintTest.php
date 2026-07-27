@@ -1,6 +1,10 @@
 <?php
 
+use App\Helpers\DateHelper;
+use App\Models\EmergencyDoctor;
 use App\Models\Patient;
+use App\Models\Service;
+use App\Models\ServiceDepartment;
 use App\Models\ServiceOrder;
 use App\Models\TreatmentRecord;
 use App\Models\Triage;
@@ -135,4 +139,119 @@ test('service order pdf shows past history as the last 6 ICD codes from other vi
         ->and($pastDiagnoses)->not->toContain('OLDEST-J45.9')
         ->and($pastDiagnoses)->not->toContain('R07.9')
         ->and($pastDiagnoses)->not->toContain('OTHER-PATIENT-CODE');
+});
+
+test('the PDF shows the treating doctor\'s PMDC number', function () {
+    actingAs(User::factory()->create());
+
+    $doctor = User::factory()->create(['name' => 'Dr. Bilal Khan']);
+    EmergencyDoctor::factory()->create(['user_id' => $doctor->id, 'pmdc_number' => '54321-P']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'doctor_id' => $doctor->id]);
+
+    $serviceOrder = $serviceOrder->fresh(['patient', 'doctor']);
+    $html = view('pdfs.serviceorder', ['serviceOrder' => $serviceOrder, 'patient' => $serviceOrder->patient])->render();
+
+    expect($html)->toContain('Dr. Bilal Khan')
+        ->toContain('PMDC# 54321-P');
+});
+
+test('the PDF shows the service order\'s real department name, not a hardcoded one', function () {
+    actingAs(User::factory()->create());
+
+    $department = ServiceDepartment::factory()->create(['name' => 'Dental']);
+    $service = Service::factory()->create(['service_department_id' => $department->id]);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'DNT', 'service_id' => $service->id]);
+
+    $response = get(route('print-serviceorder', ['id' => $serviceOrder->id]));
+
+    $response->assertOk();
+
+    $serviceOrder = $serviceOrder->fresh(['patient', 'doctor', 'service.department']);
+    $html = view('pdfs.serviceorder', ['serviceOrder' => $serviceOrder, 'patient' => $serviceOrder->patient])->render();
+
+    expect($html)->toContain('DENTAL DEPARTMENT')
+        ->not->toContain('EMERGENCY DEPARTMENT');
+});
+
+test('discharged outcome ticks DISCHARGED HOME and no other disposition checkbox', function () {
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    TreatmentRecord::create([
+        'service_order_id' => $serviceOrder->id,
+        'department_id' => $serviceOrder->service->service_department_id,
+        'treating_doctor_id' => User::factory()->create()->id,
+        'recorded_by' => User::factory()->create()->id,
+        'treated_at' => now(),
+        'outcome' => 'discharged',
+        'outcome_at' => '2026-07-27 15:30:00',
+    ]);
+
+    $html = view('pdfs.serviceorder', ['serviceOrder' => $serviceOrder->fresh(['patient', 'doctor', 'treatmentRecord.treatingDoctor', 'treatmentRecord.vitalSigns']), 'patient' => $serviceOrder->patient])->render();
+
+    expect($html)->toContain('<span class="cb">X</span> DISCHARGED HOME')
+        ->not->toContain('<span class="cb">X</span> TRANSFERRED TO')
+        ->not->toContain('<span class="cb">X</span> DIED IN ED');
+});
+
+test('referred outcome ticks TRANSFERRED TO with the hospital name and time', function () {
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    TreatmentRecord::create([
+        'service_order_id' => $serviceOrder->id,
+        'department_id' => $serviceOrder->service->service_department_id,
+        'treating_doctor_id' => User::factory()->create()->id,
+        'recorded_by' => User::factory()->create()->id,
+        'treated_at' => now(),
+        'outcome' => 'referred',
+        'outcome_at' => '2026-07-27 16:00:00',
+        'referral_to' => 'City General Hospital',
+    ]);
+
+    $html = view('pdfs.serviceorder', ['serviceOrder' => $serviceOrder->fresh(['patient', 'doctor', 'treatmentRecord.treatingDoctor', 'treatmentRecord.vitalSigns']), 'patient' => $serviceOrder->patient])->render();
+
+    expect($html)->toContain('<span class="cb">X</span> TRANSFERRED TO:&nbsp;City General Hospital')
+        ->toContain('City General Hospital')
+        ->not->toContain('<span class="cb">X</span> DISCHARGED HOME')
+        ->not->toContain('<span class="cb">X</span> DIED IN ED');
+});
+
+test('expired outcome ticks DIED IN ED with time of death and cause of death notes', function () {
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    TreatmentRecord::create([
+        'service_order_id' => $serviceOrder->id,
+        'department_id' => $serviceOrder->service->service_department_id,
+        'treating_doctor_id' => User::factory()->create()->id,
+        'recorded_by' => User::factory()->create()->id,
+        'treated_at' => now(),
+        'outcome' => 'expired',
+        'outcome_at' => '2026-07-27 17:45:00',
+        'outcome_notes' => 'Cardiac arrest, resuscitation unsuccessful',
+    ]);
+
+    $html = view('pdfs.serviceorder', ['serviceOrder' => $serviceOrder->fresh(['patient', 'doctor', 'treatmentRecord.treatingDoctor', 'treatmentRecord.vitalSigns']), 'patient' => $serviceOrder->patient])->render();
+
+    expect($html)->toContain('<span class="cb">X</span> DIED IN ED')
+        ->toContain('Cardiac arrest, resuscitation unsuccessful')
+        ->not->toContain('<span class="cb">X</span> DISCHARGED HOME')
+        ->not->toContain('<span class="cb">X</span> TRANSFERRED TO');
+});
+
+test('the drug chart uses each prescription\'s own given_at time instead of the visit\'s treated_at', function () {
+    $treatedAt = '2026-07-27 08:00:00';
+    $givenAt = '2026-07-27 09:45:00';
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    TreatmentRecord::create([
+        'service_order_id' => $serviceOrder->id,
+        'department_id' => $serviceOrder->service->service_department_id,
+        'treating_doctor_id' => User::factory()->create()->id,
+        'recorded_by' => User::factory()->create()->id,
+        'treated_at' => $treatedAt,
+        'prescriptions' => [
+            ['drug_name' => 'Morphine', 'dose' => '2mg', 'given_at' => $givenAt],
+        ],
+    ]);
+
+    $html = view('pdfs.serviceorder', ['serviceOrder' => $serviceOrder->fresh(['patient', 'doctor', 'treatmentRecord.treatingDoctor', 'treatmentRecord.vitalSigns']), 'patient' => $serviceOrder->patient])->render();
+
+    // treated_at legitimately appears elsewhere (triage time, time seen by
+    // doctor), so just confirm the drug's own given_at time is present.
+    expect($html)->toContain(DateHelper::pdfFormat($givenAt, 'H:i'));
 });

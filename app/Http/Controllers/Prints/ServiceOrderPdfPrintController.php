@@ -19,6 +19,7 @@ class ServiceOrderPdfPrintController extends Controller
         $serviceOrder = ServiceOrder::with([
             'patient',
             'doctor',
+            'service.department:id,name',
             'treatmentRecord.triage',
             'treatmentRecord.attachments',
             'treatmentRecord.treatingDoctor',

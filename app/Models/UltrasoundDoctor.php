@@ -11,5 +11,7 @@ class UltrasoundDoctor extends Model
 
     protected $fillable = [
         'user_id',
+        'authority',
+        'pmdc_number',
     ];
 }

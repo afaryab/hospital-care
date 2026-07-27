@@ -1,12 +1,19 @@
 {{-- resources/views/forms/emergency-clinical-performa.blade.php --}}
 @php
     $hospitalName = \App\Models\HospitalSetting::get('hospital_name', config('app.name'));
+    $departmentName = $serviceOrder->service?->department?->name ?? 'Emergency';
     $pastDiagnoses = $pastDiagnoses ?? collect();
     $tr = $serviceOrder->treatmentRecord;
     $lastVital = $tr?->vitalSigns?->last();
-    $treatingDoctorName = $tr?->treatingDoctor?->name ?? $serviceOrder->doctor?->name;
+    $treatingDoctor = $tr?->treatingDoctor ?? $serviceOrder->doctor;
+    $treatingDoctorName = $treatingDoctor?->name ?? '';
+    if ($treatingDoctor?->pmdc_number) {
+        $treatingDoctorName .= " (PMDC# {$treatingDoctor->pmdc_number})";
+    }
     $prescriptions = $tr?->prescriptions ?? [];
     $drugRowCount = max(5, count($prescriptions));
+    $outcomeValue = $tr?->outcome?->value;
+    $checked = fn (string $value) => $outcomeValue === $value ? 'X' : '';
 @endphp
 <!doctype html>
 <html lang="en">
@@ -227,7 +234,7 @@
     <div class="page">
 
         <div class="heading-wrap">
-            <div class="badge d-block text-center">EMERGENCY DEPARTMENT</div>
+            <div class="badge d-block text-center">{{ strtoupper($departmentName) }} DEPARTMENT</div>
             <div class="subhead">CLINICAL PERFORMA SO: <span class="u">{{ $serviceOrder->so_number ?? '' }}{{ $serviceOrder->so_short ? ' ('.$serviceOrder->so_short.')' : '' }}</span> Page 1/2</div>
         </div>
 
@@ -417,7 +424,7 @@
     <div class="page last">
 
         <div class="heading-wrap">
-            <div class="badge d-block text-center">EMERGENCY DEPARTMENT</div>
+            <div class="badge d-block text-center">{{ strtoupper($departmentName) }} DEPARTMENT</div>
             <div class="subhead">CLINICAL PERFORMA SO: <span class="u">{{ $serviceOrder->so_number ?? '' }}</span> Page 2/2</div>
         </div>
 
@@ -449,9 +456,12 @@
             </tr>
 
             @for($i=0; $i<$drugRowCount; $i++)
-                @php $rx = $prescriptions[$i] ?? null; @endphp
+                @php
+                    $rx = $prescriptions[$i] ?? null;
+                    $rxTime = $rx['given_at'] ?? $tr?->treated_at;
+                @endphp
                 <tr>
-                    <td>@hdate($tr?->treated_at, 'd-m-Y')</td>
+                    <td>{{ $rx ? \App\Helpers\DateHelper::pdfFormat($rxTime, 'd-m-Y') : '' }}</td>
                     <td colspan="3">
                         @if($rx)
                             {{ trim(($rx['drug_name'] ?? '').' '.($rx['dose'] ?? '').' '.($rx['frequency'] ?? '').' '.($rx['route'] ?? '')) }}
@@ -459,7 +469,7 @@
                     </td>
                     <td>{{ $rx ? $treatingDoctorName : '' }}</td>
                     <td></td>
-                    <td>@if($rx) @hdate($tr?->treated_at, 'H:i') @endif</td>
+                    <td>{{ $rx ? \App\Helpers\DateHelper::pdfFormat($rxTime, 'H:i') : '' }}</td>
                 </tr>
             @endfor
         </table>
@@ -482,12 +492,12 @@
             @endfor
             <tr>
                 <td>
-                    <div class="bold"><span class="inline-check"><span class="cb"></span>  DISCHARGE PLAN</div>
-                    <td>{{ $tr?->outcome }}</td>
+                    <div class="bold"><span class="inline-check"><span class="cb">{{ $checked('discharged') }}</span>  DISCHARGE PLAN</div>
+                    <td>{{ $tr?->outcome_notes }}</td>
                 </td>
             </tr>
             <tr>
-                <td class="bold"><span class="inline-check"><span class="cb"></span> REFERRED TO:&nbsp; Surgical, Medical, O &amp; G, Paeds, Other: {{ $tr?->referral_to }}</span></td>
+                <td class="bold"><span class="inline-check"><span class="cb">{{ $checked('referred') }}</span> REFERRED TO:&nbsp; Surgical, Medical, O &amp; G, Paeds, Other: {{ $tr?->referral_to }}</span></td>
                 <td></td>
             </tr>
             <tr>
@@ -506,9 +516,9 @@
                 <td class="bold table-container">
                     <table class="border-none">
                         <tr>
-                            <td style="width: 43%;"><span class="inline-check"><span class="cb"></span> TRANSFERRED TO:&nbsp;</span></td>
-                            <td style="width: 20%;"><span class="inline-check"><span class="cb"></span> DATE:&nbsp;</span></td>
-                            <td style="width: 27%;"><span class="inline-check"><span class="cb"></span> TIME:&nbsp;</span></td>
+                            <td style="width: 43%;"><span class="inline-check"><span class="cb">{{ $checked('referred') }}</span> TRANSFERRED TO:&nbsp;{{ $outcomeValue === 'referred' ? $tr?->referral_to : '' }}</span></td>
+                            <td style="width: 20%;"><span class="inline-check"><span class="cb"></span> DATE:&nbsp;{{ $outcomeValue === 'referred' ? $tr?->outcome_at?->format('d-m-Y') : '' }}</span></td>
+                            <td style="width: 27%;"><span class="inline-check"><span class="cb"></span> TIME:&nbsp;{{ $outcomeValue === 'referred' ? $tr?->outcome_at?->format('H:i') : '' }}</span></td>
                         </tr>
                     </table>
                 </td>
@@ -518,9 +528,9 @@
                 <td class="bold table-container">
                     <table class="border-none">
                         <tr>
-                            <td style="width: 43%;"><span class="inline-check"><span class="cb"></span> DISCHARGED HOME:&nbsp;</span></td>
-                            <td style="width: 20%;"><span class="inline-check"><span class="cb"></span> DATE:&nbsp;</span></td>
-                            <td style="width: 27%;"><span class="inline-check"><span class="cb"></span> TIME:&nbsp;</span></td>
+                            <td style="width: 43%;"><span class="inline-check"><span class="cb">{{ $checked('discharged') }}</span> DISCHARGED HOME:&nbsp;</span></td>
+                            <td style="width: 20%;"><span class="inline-check"><span class="cb"></span> DATE:&nbsp;{{ $outcomeValue === 'discharged' ? $tr?->outcome_at?->format('d-m-Y') : '' }}</span></td>
+                            <td style="width: 27%;"><span class="inline-check"><span class="cb"></span> TIME:&nbsp;{{ $outcomeValue === 'discharged' ? $tr?->outcome_at?->format('H:i') : '' }}</span></td>
                         </tr>
                     </table>
                 </td>
@@ -561,8 +571,8 @@
                 <td class="bold table-container" rowspan="2">
                     <table class="border-none">
                         <tr>
-                            <td style="width: 50%;"><span class="inline-check"><span class="cb"></span> DIED IN ED Date&nbsp;</span></td>
-                            <td style="width: 50%;"><span class="inline-check"><span class="cb"></span> Time&nbsp;</span></td>
+                            <td style="width: 50%;"><span class="inline-check"><span class="cb">{{ $checked('expired') }}</span> DIED IN ED Date&nbsp;{{ $outcomeValue === 'expired' ? $tr?->outcome_at?->format('d-m-Y') : '' }}</span></td>
+                            <td style="width: 50%;"><span class="inline-check"><span class="cb"></span> Time&nbsp;{{ $outcomeValue === 'expired' ? $tr?->outcome_at?->format('H:i') : '' }}</span></td>
                         </tr>
                         <tr>
                             <td style="width: 50%;"><span class="inline-check"><span class="cb"></span> Left Against Medical Advice&nbsp;</span></td>
@@ -570,7 +580,7 @@
                         </tr>
                     </table>
                 </td>
-                <td></td>
+                <td>{{ $outcomeValue === 'expired' ? $tr?->outcome_notes : '' }}</td>
             </tr>
             <tr>
                 <td></td>
