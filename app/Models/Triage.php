@@ -39,6 +39,7 @@ class Triage extends Model
             'blue' => '🔵 Blue',
             'sky' => '🩵 Sky Blue',
             'green' => '🟢 Green',
+            'black' => '⚫ Black',
         ];
     }
 }

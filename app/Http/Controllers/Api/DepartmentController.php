@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enum\TreatmentOutcome;
 use App\Http\Controllers\Controller;
 use App\Models\Icd10Code;
 use App\Models\ServiceDepartment;
@@ -17,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Enum;
 
 /**
  * Shared treatment-record handler for EMG, DNT, LAB (PTH), ULT, and XRAY
@@ -28,6 +30,15 @@ class DepartmentController extends Controller
     public function saveTreatmentRecord(Request $request, ServiceOrder $serviceOrder): JsonResponse
     {
         $isEmergency = $serviceOrder->type === 'EMG';
+        $finalize = $request->boolean('finalize');
+
+        // Discharging an EMG patient (finalize) is a doctor-only action —
+        // nursing staff can chart (vitals, notes, treatment, medications)
+        // but cannot close out the encounter. Enforced here, not just hidden
+        // in the UI, since this endpoint has no route-level role middleware.
+        if ($isEmergency && $finalize && ! auth()->user()->emergencyDoctorProfiles()->exists()) {
+            abort(403, 'Only emergency doctors can discharge a patient.');
+        }
 
         $data = $request->validate([
             'chief_complaint' => ['nullable', 'string', 'max:1000'],
@@ -44,9 +55,15 @@ class DepartmentController extends Controller
             'prescriptions.*.duration' => ['nullable', 'string', 'max:100'],
             'prescriptions.*.route' => ['nullable', 'string', 'max:100'],
             'prescriptions.*.instructions' => ['nullable', 'string', 'max:500'],
+            'prescriptions.*.given_at' => ['nullable', 'date'],
             'follow_up_date' => ['nullable', 'date'],
-            'outcome' => ['nullable', 'string', 'max:50'],
-            'referral_to' => ['nullable', 'string', 'max:255'],
+            'outcome' => [Rule::requiredIf($isEmergency && $finalize), 'nullable', new Enum(TreatmentOutcome::class)],
+            'outcome_at' => [Rule::requiredIf($isEmergency && $finalize), 'nullable', 'date'],
+            'outcome_notes' => ['nullable', 'string', 'max:2000'],
+            'referral_to' => [
+                Rule::requiredIf(fn () => $isEmergency && $finalize && $request->input('outcome') === TreatmentOutcome::Referred->value),
+                'nullable', 'string', 'max:255',
+            ],
             'department_specific_data' => ['nullable', 'array'],
             'dental_chart' => ['nullable', 'array'],
             'triage_id' => [Rule::requiredIf($isEmergency), 'nullable', 'integer', 'exists:triages,id'],
@@ -63,7 +80,6 @@ class DepartmentController extends Controller
             'vitals.height' => ['nullable', 'numeric'],
         ]);
 
-        $finalize = (bool) ($data['finalize'] ?? false);
         unset($data['finalize']);
 
         $vitals = $data['vitals'] ?? null;

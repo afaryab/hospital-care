@@ -16,19 +16,27 @@ class EmergencyDoctorController extends Controller
     {
         $user = $request->user();
         $isEmgDoctor = $user->emergencyDoctorProfiles()->exists();
+        $isEmgNurse = $user->nursingStaffProfiles()->exists();
+        $hasAccess = $isEmgDoctor || $isEmgNurse;
 
         $recentOrders = collect();
         $todayStats = ['open' => 0, 'in_progress' => 0, 'treated' => 0, 'total' => 0];
 
-        if ($isEmgDoctor) {
-            $recentOrders = ServiceOrder::query()
-                ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text'])
+        if ($hasAccess) {
+            $query = ServiceOrder::query()
+                ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text,triage_id', 'treatmentRecord.triage:id,name,color'])
                 ->where('type', 'EMG')
-                ->where('doctor_id', $user->id)
                 ->orderByRaw("CASE WHEN LOWER(status) = 'in-progress' THEN 0 WHEN LOWER(status) = 'open' THEN 1 WHEN LOWER(status) = 'treated' THEN 2 ELSE 3 END ASC")
                 ->orderBy('created_at', 'DESC')
-                ->limit(30)
-                ->get();
+                ->limit(30);
+
+            // Nurses aren't assigned specific patients by doctor_id — they
+            // work the whole EMG queue, not a per-doctor slice of it.
+            if ($isEmgDoctor) {
+                $query->where('doctor_id', $user->id);
+            }
+
+            $recentOrders = $query->get();
 
             $todayStats = [
                 'open' => $recentOrders->filter(fn ($o) => strtolower($o->status) === 'open')->count(),
@@ -39,7 +47,8 @@ class EmergencyDoctorController extends Controller
         }
 
         return Inertia::render('emg/index', [
-            'isEmgDoctor' => $isEmgDoctor,
+            'isEmgDoctor' => $hasAccess,
+            'isDoctorScoped' => $isEmgDoctor,
             'recentOrders' => $recentOrders->values(),
             'todayStats' => $todayStats,
         ]);
@@ -75,6 +84,7 @@ class EmergencyDoctorController extends Controller
             'previousVisits' => $previousVisits,
             'formConfig' => TreatmentFormConfig::resolve('EMG', $serviceOrder->service?->treatment_form_config),
             'triages' => Triage::query()->where('is_active', true)->orderBy('priority')->get(['id', 'name', 'color', 'priority']),
+            'canDischarge' => $request->user()->emergencyDoctorProfiles()->exists(),
         ]);
     }
 

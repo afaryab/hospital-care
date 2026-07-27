@@ -60,6 +60,7 @@ const TRIAGE_BADGE_CLASSES: Record<string, string> = {
     blue: 'bg-blue-100 text-blue-700 ring-blue-200',
     sky: 'bg-sky-100 text-sky-700 ring-sky-200',
     green: 'bg-green-100 text-green-700 ring-green-200',
+    black: 'bg-slate-800 text-white ring-slate-900',
 };
 
 /** Tailwind classes for a triage badge, keyed by the triage's stored color name. */
@@ -76,6 +77,7 @@ const TRIAGE_DOT_CLASSES: Record<string, string> = {
     blue: 'bg-blue-500',
     sky: 'bg-sky-500',
     green: 'bg-green-500',
+    black: 'bg-slate-900',
 };
 
 /** Solid Tailwind background class for a small triage color dot/circle. */

@@ -15,7 +15,7 @@ const breadcrumbs = [
 ];
 
 export default function EmgDashboard() {
-    const { isEmgDoctor, recentOrders, todayStats, flash } =
+    const { isEmgDoctor, isDoctorScoped, recentOrders, todayStats, flash } =
         usePage<any>().props;
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -35,11 +35,12 @@ export default function EmgDashboard() {
                         total: 0,
                     }
                 }
-                noAccessMessage="You need an Emergency Doctor profile to access this portal."
+                noAccessMessage="You need an Emergency Doctor or Nursing Staff profile to access this portal."
                 patientUrl={(id) => emgPatient({ id }).url}
                 myQueueUrl={apiEmgMyQueue().url}
                 searchApiUrl={apiEmgSearch().url}
                 searchTypes={['EMG']}
+                doctorScoped={isDoctorScoped}
                 showCallButton={false}
                 flashError={(flash as any)?.searchError}
             />

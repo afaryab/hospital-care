@@ -1,4 +1,8 @@
-import { formatPatientAge, triageBadgeClass } from '@/lib/constants';
+import {
+    formatPatientAge,
+    triageBadgeClass,
+    triageDotClass,
+} from '@/lib/constants';
 import { type ServiceOrder } from '@/types';
 import { router } from '@inertiajs/react';
 import { clsx } from 'clsx';
@@ -464,6 +468,22 @@ export default function DeptQueueDashboard({
 
                                     <div className="min-w-0 flex-1">
                                         <div className="flex flex-wrap items-center gap-2">
+                                            {order.treatment_record?.triage && (
+                                                <span
+                                                    title={
+                                                        order.treatment_record
+                                                            .triage.name
+                                                    }
+                                                    className={clsx(
+                                                        'h-2.5 w-2.5 shrink-0 rounded-full',
+                                                        triageDotClass(
+                                                            order
+                                                                .treatment_record
+                                                                .triage.color,
+                                                        ),
+                                                    )}
+                                                />
+                                            )}
                                             <span className="truncate text-sm font-semibold text-slate-900">
                                                 {order.patient?.name}
                                             </span>
