@@ -70,6 +70,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'xray_technician' => ['patient.view', 'service_order.view'],
             'nursing_staff' => ['patient.view', 'service_order.view'],
             'patient_manager' => ['patient.view', 'patient.create', 'patient.edit'],
+            'lcd_opd' => ['patient.view', 'service_order.view'],
+            'lcd_ind' => ['patient.view', 'service_order.view'],
+            'lcd_emergency' => ['patient.view', 'service_order.view'],
+            'lcd_dental' => ['patient.view', 'service_order.view'],
+            'lcd_laboratory' => ['patient.view', 'service_order.view'],
+            'lcd_ultrasound' => ['patient.view', 'service_order.view'],
+            'lcd_xray' => ['patient.view', 'service_order.view'],
         ];
 
         foreach ($roles as $roleName => $permissions) {
@@ -122,6 +129,34 @@ class RolesAndPermissionsSeeder extends Seeder
 
             if ($user->patientManagerProfiles()->exists()) {
                 $assignedRoles[] = 'patient_manager';
+            }
+
+            if ($user->lcdOpdProfiles()->exists()) {
+                $assignedRoles[] = 'lcd_opd';
+            }
+
+            if ($user->lcdIndProfiles()->exists()) {
+                $assignedRoles[] = 'lcd_ind';
+            }
+
+            if ($user->lcdEmergencyProfiles()->exists()) {
+                $assignedRoles[] = 'lcd_emergency';
+            }
+
+            if ($user->lcdDentalProfiles()->exists()) {
+                $assignedRoles[] = 'lcd_dental';
+            }
+
+            if ($user->lcdLaboratoryProfiles()->exists()) {
+                $assignedRoles[] = 'lcd_laboratory';
+            }
+
+            if ($user->lcdUltrasoundProfiles()->exists()) {
+                $assignedRoles[] = 'lcd_ultrasound';
+            }
+
+            if ($user->lcdXrayProfiles()->exists()) {
+                $assignedRoles[] = 'lcd_xray';
             }
 
             if (! empty($assignedRoles)) {

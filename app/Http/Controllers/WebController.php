@@ -219,8 +219,8 @@ class WebController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->isAnyDoctor()) {
-            abort(403, 'Doctors only.');
+        if ($user->isPatientManager()) {
+            return $this->myPaymentsForManagedPatients($request, $user);
         }
 
         $filters = $request->only(['status', 'q', 'from', 'until']);
@@ -259,12 +259,64 @@ class WebController extends Controller
             ->sum('amount');
 
         return Inertia::render('doctor/my-payments', [
+            'mode' => 'vouchers',
             'vouchers' => $vouchers,
             'filters' => $filters,
             'totals' => [
                 'paid' => $paidTotal,
                 'pending' => $pendingTotal,
                 'total' => $paidTotal + $pendingTotal,
+            ],
+        ]);
+    }
+
+    /**
+     * Patient managers don't personally receive vouchers/petty cash, so "My
+     * Payments" shows the transactions paid by the patients they manage
+     * instead of the vouchers view every other profile gets.
+     */
+    private function myPaymentsForManagedPatients(Request $request, User $user)
+    {
+        $patientIds = PatientManager::where('user_id', $user->id)->pluck('patient_id')->filter()->values();
+
+        $filters = $request->only(['q', 'from', 'until']);
+
+        $query = Transaction::query()
+            ->whereIn('patient_id', $patientIds)
+            ->where('income_or_expense', 'INCOME')
+            ->with(['patient:id,name,ps_number', 'closing:id,ct_number']);
+
+        if (! empty($filters['q'])) {
+            $q = $filters['q'];
+            $query->where(function ($sub) use ($q) {
+                $sub->where('tr_number', 'like', "%{$q}%")
+                    ->orWhereHas('patient', fn ($p) => $p
+                        ->where('name', 'like', "%{$q}%")
+                        ->orWhere('ps_number', 'like', "%{$q}%"));
+            });
+        }
+        if (! empty($filters['from'])) {
+            $query->where('created_at', '>=', DateHelper::dayStartUtc($filters['from']));
+        }
+        if (! empty($filters['until'])) {
+            $query->where('created_at', '<=', DateHelper::dayEndUtc($filters['until']));
+        }
+
+        $transactions = $query->latest('id')->paginate(20)->withQueryString();
+
+        $paidTotal = (float) Transaction::query()
+            ->whereIn('patient_id', $patientIds)
+            ->where('income_or_expense', 'INCOME')
+            ->sum('amount');
+
+        return Inertia::render('doctor/my-payments', [
+            'mode' => 'patient_transactions',
+            'transactions' => $transactions,
+            'filters' => $filters,
+            'totals' => [
+                'paid' => $paidTotal,
+                'pending' => 0.0,
+                'total' => $paidTotal,
             ],
         ]);
     }
@@ -1436,8 +1488,13 @@ class WebController extends Controller
         return back();
     }
 
-    public function opdQueue()
+    public function opdQueue(Request $request)
     {
+        $user = $request->user();
+        if ($user->isLcdOperator() && ! $user->hasLcdAccessTo('OPD')) {
+            abort(403, 'This department display is not assigned to your account.');
+        }
+
         $type = 'OPD';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
@@ -1477,8 +1534,12 @@ class WebController extends Controller
         ]);
     }
 
-    public function indoorQueue()
+    public function indoorQueue(Request $request)
     {
+        $user = $request->user();
+        if ($user->isLcdOperator() && ! $user->hasLcdAccessTo('IND')) {
+            abort(403, 'This department display is not assigned to your account.');
+        }
 
         $type = 'IND';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
@@ -1519,8 +1580,13 @@ class WebController extends Controller
         ]);
     }
 
-    public function emergencyQueue()
+    public function emergencyQueue(Request $request)
     {
+        $user = $request->user();
+        if ($user->isLcdOperator() && ! $user->hasLcdAccessTo('EMG')) {
+            abort(403, 'This department display is not assigned to your account.');
+        }
+
         $type = 'EMG';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
@@ -1559,8 +1625,13 @@ class WebController extends Controller
         ]);
     }
 
-    public function dentalQueue()
+    public function dentalQueue(Request $request)
     {
+        $user = $request->user();
+        if ($user->isLcdOperator() && ! $user->hasLcdAccessTo('DNT')) {
+            abort(403, 'This department display is not assigned to your account.');
+        }
+
         $type = 'DNT';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
@@ -1599,8 +1670,13 @@ class WebController extends Controller
         ]);
     }
 
-    public function laboratoryQueue()
+    public function laboratoryQueue(Request $request)
     {
+        $user = $request->user();
+        if ($user->isLcdOperator() && ! $user->hasLcdAccessTo('PTH')) {
+            abort(403, 'This department display is not assigned to your account.');
+        }
+
         $type = 'PTH';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
@@ -1639,8 +1715,13 @@ class WebController extends Controller
         ]);
     }
 
-    public function ultrasoundQueue()
+    public function ultrasoundQueue(Request $request)
     {
+        $user = $request->user();
+        if ($user->isLcdOperator() && ! $user->hasLcdAccessTo('ULT')) {
+            abort(403, 'This department display is not assigned to your account.');
+        }
+
         $type = 'ULT';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
@@ -1679,14 +1760,21 @@ class WebController extends Controller
         ]);
     }
 
-    public function radiologyQueue()
+    public function radiologyQueue(Request $request)
     {
-        $type = 'RAD';
+        $user = $request->user();
+        if ($user->isLcdOperator() && ! $user->hasLcdAccessTo('XRAY')) {
+            abort(403, 'This department display is not assigned to your account.');
+        }
+
+        // Orders are seeded with the canonical 'XRAY' department slug, but
+        // legacy rows may still carry 'RAD' — match both, same as XrayController.
+        $types = ['XRAY', 'RAD'];
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
             ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
-            ->where('type', $type)
+            ->whereIn('type', $types)
             ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
 
         // Filter by rn in an outer query

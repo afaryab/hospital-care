@@ -33,46 +33,59 @@
         </div>
     </div>
 
-    {{-- Income Transactions --}}
-    @if(count($transactions['income']) > 0)
-    <div class="section-title">Income Transactions ({{ $summary['income_count'] }})</div>
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 42px;">Time</th>
-                <th>Patient</th>
-                <th>Service</th>
-                <th class="amount" style="width: 80px;">Amount</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($transactions['income'] as $transaction)
-                @foreach($transaction['elements'] as $element)
-                <tr>
-                    <td>{{ \App\Helpers\DateHelper::pdfFormat($element['created_at'], 'H:i') }}</td>
-                    <td>
-                        @if($element['patient_name'])
-                            {{ $element['patient_name'] }}
-                            @if($element['patient_ps_number'])
-                                <br><span class="text-muted mono">{{ $element['patient_ps_number'] }}</span>
-                            @endif
-                        @else
-                            -
-                        @endif
-                    </td>
-                    <td>{{ $element['service_name'] }}</td>
-                    <td class="amount">{{ number_format($element['amount'], 2) }}</td>
-                </tr>
-                @endforeach
+    {{-- Income Transactions — grouped by Service → Service Provider --}}
+    @if(count($service_groups) > 0)
+        <div class="section-title">Income Transactions ({{ $summary['income_count'] }})</div>
+        @foreach($service_groups as $group)
+            <div class="sub-section">
+                {{ $group['service_name'] }}
+                <span style="float: right; font-size: 10px; font-weight: 400;">
+                    Service Total: {{ number_format($group['total_income'], 2) }}
+                </span>
+            </div>
+
+            @foreach($group['providers'] as $provider)
+                <table>
+                    <thead>
+                        <tr>
+                            <th colspan="4" style="background: #ffffff; text-transform: none; font-size: 10px; font-weight: 600; padding: 3px 8px;">
+                                {{ $provider['doctor_name'] }}
+                            </th>
+                        </tr>
+                        <tr>
+                            <th style="width: 42px;">Time</th>
+                            <th>Patient</th>
+                            <th style="width: 60px;">Method</th>
+                            <th class="amount" style="width: 80px;">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($provider['items'] as $item)
+                        <tr>
+                            <td>{{ \App\Helpers\DateHelper::pdfFormat($item['created_at'], 'H:i') }}</td>
+                            <td>{{ $item['patient_name'] }}</td>
+                            <td><span class="mono">{{ $item['type'] }}</span></td>
+                            <td class="amount">{{ number_format($item['amount'], 2) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr class="subtotal-row">
+                            <td colspan="3" class="text-right">Subtotal &mdash; {{ $provider['doctor_name'] }}</td>
+                            <td class="amount">{{ number_format($provider['total_income'], 2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
             @endforeach
-        </tbody>
-        <tfoot>
-            <tr class="total-row">
-                <td colspan="3" class="text-right">Total Income</td>
-                <td class="amount">{{ number_format($totals['total_income'], 2) }}</td>
-            </tr>
-        </tfoot>
-    </table>
+        @endforeach
+        <table>
+            <tbody>
+                <tr class="total-row">
+                    <td class="text-right">Total Income</td>
+                    <td class="amount" style="width: 80px;">{{ number_format($totals['total_income'], 2) }}</td>
+                </tr>
+            </tbody>
+        </table>
     @endif
 
     {{-- Expense Transactions --}}
@@ -148,6 +161,70 @@
     </table>
     @endif
 
+    {{-- Receivables Created --}}
+    @if(count($receivables['created']) > 0)
+    <div class="section-title" style="background: #7c3aed;">Receivables Created ({{ count($receivables['created']) }})</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 42px;">Time</th>
+                <th>Patient</th>
+                <th>Panel</th>
+                <th style="width: 80px;">Status</th>
+                <th class="amount" style="width: 80px;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($receivables['created'] as $row)
+            <tr>
+                <td>{{ \App\Helpers\DateHelper::pdfFormat($row['created_at'], 'H:i') }}</td>
+                <td>{{ $row['patient_name'] }}</td>
+                <td>{{ $row['panel_name'] }}</td>
+                <td><span class="badge badge-purple">{{ strtoupper($row['status']) }}</span></td>
+                <td class="amount">{{ number_format($row['amount'], 2) }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="4" class="text-right">Total Receivables Created</td>
+                <td class="amount">{{ number_format($totals['receivables_created_total'], 2) }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    @endif
+
+    {{-- Receivables Collected --}}
+    @if(count($receivables['collected']) > 0)
+    <div class="section-title" style="background: #059669;">Receivables Collected ({{ count($receivables['collected']) }})</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 42px;">Time</th>
+                <th>Patient</th>
+                <th style="width: 80px;">Method</th>
+                <th class="amount" style="width: 80px;">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($receivables['collected'] as $row)
+            <tr>
+                <td>{{ \App\Helpers\DateHelper::pdfFormat($row['created_at'], 'H:i') }}</td>
+                <td>{{ $row['patient_name'] }}</td>
+                <td><span class="badge badge-green">{{ $row['method'] }}</span></td>
+                <td class="amount">{{ number_format($row['amount'], 2) }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="3" class="text-right">Total Receivables Collected</td>
+                <td class="amount">{{ number_format($totals['receivables_collected_total'], 2) }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    @endif
+
     {{-- Summary --}}
     @php
         $cashIncome = $totals['income_by_payment_method']['CASH'] ?? 0;
@@ -202,8 +279,20 @@
         </tr>
         @if($receivablesTotal > 0)
         <tr style="background: #faf5ff;">
-            <td>Receivables <span class="text-muted" style="font-size: 9px;">({{ $receivablesCount }} items)</span></td>
+            <td>Receivables Outstanding <span class="text-muted" style="font-size: 9px;">({{ $receivablesCount }} items)</span></td>
             <td class="amount" style="color: #7c3aed;">{{ number_format($receivablesTotal, 2) }}</td>
+        </tr>
+        @endif
+        @if($totals['receivables_created_total'] > 0)
+        <tr style="background: #faf5ff;">
+            <td>Receivables Created</td>
+            <td class="amount" style="color: #7c3aed;">{{ number_format($totals['receivables_created_total'], 2) }}</td>
+        </tr>
+        @endif
+        @if($totals['receivables_collected_total'] > 0)
+        <tr style="background: #ecfdf5;">
+            <td>Receivables Collected</td>
+            <td class="amount" style="color: #059669;">{{ number_format($totals['receivables_collected_total'], 2) }}</td>
         </tr>
         @endif
     </table>

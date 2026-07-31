@@ -36,17 +36,17 @@ class ClosingStatementPdfPrintController extends Controller
             'transactions.elements.service',
             'transactions.elements.doctor',
             'transactions.elements.expenseCategory',
+            // Needed on every print, not just ?report=income/receivables: the
+            // default statement now groups by service/provider and shows
+            // receivables created/collected too.
+            'transactions.elements.serviceRecestation',
+            'transactions.receaveable.patient',
+            'transactions.receaveable.panel',
+            'transactions.settledReceaveable.patient',
         ];
-
-        if ($report === 'receivables' || $report === 'income') {
-            $eagerLoads[] = 'transactions.receaveable.patient';
-            $eagerLoads[] = 'transactions.receaveable.panel';
-        }
 
         if ($report === 'services') {
             $eagerLoads[] = 'transactions.elements.serviceOrder';
-            $eagerLoads[] = 'transactions.elements.serviceRecestation';
-            $eagerLoads[] = 'transactions.elements.expenseCategory';
             $eagerLoads[] = 'transactions.elements.expVoucher.payedTo';
         }
 
@@ -180,6 +180,46 @@ class ClosingStatementPdfPrintController extends Controller
         // Calculate totals
         $netAmount = $totalIncome - $totalExpense;
 
+        // Receivables created during this closing (the creation direction —
+        // Transaction::receaveable() — vs. collected, which may settle a
+        // receivable created in an earlier closing).
+        $receivablesCreated = [];
+        $receivablesCreatedTotal = 0;
+        foreach ($closing->transactions as $transaction) {
+            $receaveable = $transaction->receaveable;
+            if (! $receaveable) {
+                continue;
+            }
+            $originalAmount = $receaveable->orignal_amount ?? $receaveable->amount;
+            $receivablesCreated[] = [
+                'transaction_number' => $transaction->tr_number,
+                'created_at' => $transaction->created_at,
+                'patient_name' => $receaveable->patient?->name ?? 'N/A',
+                'panel_name' => $receaveable->panel?->name ?? 'N/A',
+                'amount' => $originalAmount,
+                'status' => $receaveable->status ?? 'PENDING',
+            ];
+            $receivablesCreatedTotal += $originalAmount;
+        }
+
+        // Receivables collected during this closing (settlement direction —
+        // Transaction::settledReceaveable() / Transaction.receaveable_id).
+        $receivablesCollected = [];
+        $receivablesCollectedTotal = 0;
+        foreach ($closing->transactions as $transaction) {
+            if (! $transaction->receaveable_id) {
+                continue;
+            }
+            $receivablesCollected[] = [
+                'transaction_number' => $transaction->tr_number,
+                'created_at' => $transaction->created_at,
+                'patient_name' => $transaction->settledReceaveable?->patient?->name ?? 'N/A',
+                'method' => $transaction->type,
+                'amount' => $transaction->amount,
+            ];
+            $receivablesCollectedTotal += $transaction->amount;
+        }
+
         return [
             'closing' => [
                 'ct_number' => $closing->ct_number,
@@ -217,14 +257,79 @@ class ClosingStatementPdfPrintController extends Controller
                 'transactions_count' => count($closing->transactions),
                 'edited_count' => $editedCount,
                 'receaveables_count' => $receaveableCount,
+                'receivables_created_total' => $receivablesCreatedTotal,
+                'receivables_collected_total' => $receivablesCollectedTotal,
             ],
             'summary' => [
                 'income_count' => count($incomeTransactions),
                 'expense_count' => count($expenseTransactions),
                 'total_transactions' => count($closing->transactions),
             ],
+            'service_groups' => $this->buildServiceProviderGroups($closing),
+            'receivables' => [
+                'created' => $receivablesCreated,
+                'collected' => $receivablesCollected,
+            ],
             'generated_at' => Carbon::now(),
         ];
+    }
+
+    /**
+     * Group this closing's income transaction elements by Service →
+     * Service Provider (TransactionElement.doctor_id). Shared by the
+     * default closing statement print and the ?report=services report.
+     */
+    private function buildServiceProviderGroups(Closing $closing): array
+    {
+        $serviceGroups = [];
+
+        foreach ($closing->transactions as $transaction) {
+            if ($transaction->income_or_expense !== 'INCOME') {
+                continue;
+            }
+            foreach ($transaction->elements as $element) {
+                // Group elements without a service under "Uncategorized"
+                // rather than dropping them — they still count toward
+                // total_income and must reconcile with the printed total.
+                $serviceName = $element->service->name ?? 'Uncategorized';
+                $doctorName = $element->doctor?->name ?? 'No Provider';
+                $doctorId = $element->doctor_id ?? 0;
+
+                if (! isset($serviceGroups[$serviceName])) {
+                    $serviceGroups[$serviceName] = [
+                        'service_name' => $serviceName,
+                        'providers' => [],
+                        'total_income' => 0,
+                    ];
+                }
+                if (! isset($serviceGroups[$serviceName]['providers'][$doctorId])) {
+                    $serviceGroups[$serviceName]['providers'][$doctorId] = [
+                        'doctor_name' => $doctorName,
+                        'doctor_id' => $doctorId,
+                        'items' => [],
+                        'total_income' => 0,
+                        'total_expense' => 0,
+                    ];
+                }
+                $serviceGroups[$serviceName]['providers'][$doctorId]['items'][] = [
+                    'transaction_number' => $transaction->tr_number,
+                    'patient_name' => $element->patient?->name ?? 'N/A',
+                    'service_recestation' => $element->serviceRecestation?->name,
+                    'amount' => $element->amount,
+                    'type' => $transaction->type,
+                    'created_at' => $transaction->created_at,
+                ];
+                $serviceGroups[$serviceName]['providers'][$doctorId]['total_income'] += $element->amount;
+                $serviceGroups[$serviceName]['total_income'] += $element->amount;
+            }
+        }
+
+        foreach ($serviceGroups as &$group) {
+            $group['providers'] = array_values($group['providers']);
+        }
+        unset($group);
+
+        return array_values($serviceGroups);
     }
 
     /**
@@ -325,50 +430,8 @@ class ClosingStatementPdfPrintController extends Controller
 
         // Build services data grouped by Service → Service Provider, with expenses paid
         if ($report === 'services') {
-            // Group income by service → doctor
-            $serviceGroups = [];
-            $totalServiceIncome = 0;
-            foreach ($closing->transactions as $transaction) {
-                if ($transaction->income_or_expense !== 'INCOME') {
-                    continue;
-                }
-                foreach ($transaction->elements as $element) {
-                    if (! $element->service) {
-                        continue;
-                    }
-                    $serviceName = $element->service->name ?? 'Unknown Service';
-                    $doctorName = $element->doctor?->name ?? 'No Provider';
-                    $doctorId = $element->doctor_id ?? 0;
-
-                    if (! isset($serviceGroups[$serviceName])) {
-                        $serviceGroups[$serviceName] = [
-                            'service_name' => $serviceName,
-                            'providers' => [],
-                            'total_income' => 0,
-                        ];
-                    }
-                    if (! isset($serviceGroups[$serviceName]['providers'][$doctorId])) {
-                        $serviceGroups[$serviceName]['providers'][$doctorId] = [
-                            'doctor_name' => $doctorName,
-                            'doctor_id' => $doctorId,
-                            'items' => [],
-                            'total_income' => 0,
-                            'total_expense' => 0,
-                        ];
-                    }
-                    $serviceGroups[$serviceName]['providers'][$doctorId]['items'][] = [
-                        'transaction_number' => $transaction->tr_number,
-                        'patient_name' => $element->patient?->name ?? 'N/A',
-                        'service_recestation' => $element->serviceRecestation?->name,
-                        'amount' => $element->amount,
-                        'type' => $transaction->type,
-                        'created_at' => $transaction->created_at,
-                    ];
-                    $serviceGroups[$serviceName]['providers'][$doctorId]['total_income'] += $element->amount;
-                    $serviceGroups[$serviceName]['total_income'] += $element->amount;
-                    $totalServiceIncome += $element->amount;
-                }
-            }
+            $serviceGroups = $this->buildServiceProviderGroups($closing);
+            $totalServiceIncome = array_sum(array_column($serviceGroups, 'total_income'));
 
             // Collect expenses paid to each doctor from this closing
             $expensesByDoctor = [];
@@ -402,21 +465,18 @@ class ClosingStatementPdfPrintController extends Controller
 
                     // Also attach to the provider in service groups
                     foreach ($serviceGroups as &$sg) {
-                        if (isset($sg['providers'][$payedToId])) {
-                            $sg['providers'][$payedToId]['total_expense'] += $element->amount;
+                        foreach ($sg['providers'] as &$provider) {
+                            if ($provider['doctor_id'] === $payedToId) {
+                                $provider['total_expense'] += $element->amount;
+                            }
                         }
+                        unset($provider);
                     }
                     unset($sg);
                 }
             }
 
-            // Convert providers arrays from keyed to indexed
-            foreach ($serviceGroups as &$sg) {
-                $sg['providers'] = array_values($sg['providers']);
-            }
-            unset($sg);
-
-            $reportData['service_groups'] = array_values($serviceGroups);
+            $reportData['service_groups'] = $serviceGroups;
             $reportData['expenses_by_doctor'] = array_values($expensesByDoctor);
             $reportData['total_service_income'] = $totalServiceIncome;
             $reportData['total_expense_paid'] = $totalExpensePaid;

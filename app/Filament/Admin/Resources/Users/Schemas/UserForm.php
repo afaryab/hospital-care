@@ -280,6 +280,132 @@ class UserForm
                     ->collapsible()
                     ->collapsed()
                     ->columnSpanFull(),
+
+                Repeater::make('lcdOpdProfiles')
+                    ->label('LCD Display — OPD Profiles')
+                    ->relationship()
+                    ->schema([
+                        Select::make('authority')
+                            ->options([
+                                'operator' => 'Operator',
+                                'supervisor' => 'Supervisor',
+                            ])
+                            ->default('operator')
+                            ->required(),
+                    ])
+                    ->defaultItems(0)
+                    ->addActionLabel('Add LCD OPD Profile')
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpanFull(),
+
+                Repeater::make('lcdIndProfiles')
+                    ->label('LCD Display — Indoor Profiles')
+                    ->relationship()
+                    ->schema([
+                        Select::make('authority')
+                            ->options([
+                                'operator' => 'Operator',
+                                'supervisor' => 'Supervisor',
+                            ])
+                            ->default('operator')
+                            ->required(),
+                    ])
+                    ->defaultItems(0)
+                    ->addActionLabel('Add LCD Indoor Profile')
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpanFull(),
+
+                Repeater::make('lcdEmergencyProfiles')
+                    ->label('LCD Display — Emergency Profiles')
+                    ->relationship()
+                    ->schema([
+                        Select::make('authority')
+                            ->options([
+                                'operator' => 'Operator',
+                                'supervisor' => 'Supervisor',
+                            ])
+                            ->default('operator')
+                            ->required(),
+                    ])
+                    ->defaultItems(0)
+                    ->addActionLabel('Add LCD Emergency Profile')
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpanFull(),
+
+                Repeater::make('lcdDentalProfiles')
+                    ->label('LCD Display — Dental Profiles')
+                    ->relationship()
+                    ->schema([
+                        Select::make('authority')
+                            ->options([
+                                'operator' => 'Operator',
+                                'supervisor' => 'Supervisor',
+                            ])
+                            ->default('operator')
+                            ->required(),
+                    ])
+                    ->defaultItems(0)
+                    ->addActionLabel('Add LCD Dental Profile')
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpanFull(),
+
+                Repeater::make('lcdLaboratoryProfiles')
+                    ->label('LCD Display — Laboratory Profiles')
+                    ->relationship()
+                    ->schema([
+                        Select::make('authority')
+                            ->options([
+                                'operator' => 'Operator',
+                                'supervisor' => 'Supervisor',
+                            ])
+                            ->default('operator')
+                            ->required(),
+                    ])
+                    ->defaultItems(0)
+                    ->addActionLabel('Add LCD Laboratory Profile')
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpanFull(),
+
+                Repeater::make('lcdUltrasoundProfiles')
+                    ->label('LCD Display — Ultrasound Profiles')
+                    ->relationship()
+                    ->schema([
+                        Select::make('authority')
+                            ->options([
+                                'operator' => 'Operator',
+                                'supervisor' => 'Supervisor',
+                            ])
+                            ->default('operator')
+                            ->required(),
+                    ])
+                    ->defaultItems(0)
+                    ->addActionLabel('Add LCD Ultrasound Profile')
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpanFull(),
+
+                Repeater::make('lcdXrayProfiles')
+                    ->label('LCD Display — X-Ray Profiles')
+                    ->relationship()
+                    ->schema([
+                        Select::make('authority')
+                            ->options([
+                                'operator' => 'Operator',
+                                'supervisor' => 'Supervisor',
+                            ])
+                            ->default('operator')
+                            ->required(),
+                    ])
+                    ->defaultItems(0)
+                    ->addActionLabel('Add LCD X-Ray Profile')
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpanFull(),
             ]);
     }
 }
