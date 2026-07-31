@@ -122,12 +122,12 @@ test('closing statement print groups income by service and provider, including u
     $groups = collect($data['service_groups'])->keyBy('service_name');
 
     expect($groups->has('Consultation'))->toBeTrue()
-        ->and($groups['Consultation']['total_income'])->toBe(700.0)
+        ->and((float) $groups['Consultation']['total_income'])->toBe(700.0)
         ->and($groups['Consultation']['providers'][0]['doctor_name'])->toBe('Dr. X')
         ->and($groups->has('Ultrasound Scan'))->toBeTrue()
-        ->and($groups['Ultrasound Scan']['total_income'])->toBe(300.0)
+        ->and((float) $groups['Ultrasound Scan']['total_income'])->toBe(300.0)
         ->and($groups->has('Uncategorized'))->toBeTrue()
-        ->and($groups['Uncategorized']['total_income'])->toBe(100.0);
+        ->and((float) $groups['Uncategorized']['total_income'])->toBe(100.0);
 });
 
 test('closing statement print reports receivables created and collected as separate totals with row-level records', function () {
