@@ -54,8 +54,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function MyPayments() {
-    const { mode = 'vouchers', vouchers, transactions, filters, totals } =
-        usePage<Props>().props;
+    const {
+        mode = 'vouchers',
+        vouchers,
+        transactions,
+        filters,
+        totals,
+    } = usePage<Props>().props;
     const isPatientTransactions = mode === 'patient_transactions';
     const rows = isPatientTransactions ? transactions! : vouchers!;
     const [form, setForm] = useState(filters);
@@ -244,7 +249,9 @@ export default function MyPayments() {
                                 {rows.data.length === 0 && (
                                     <tr>
                                         <td
-                                            colSpan={isPatientTransactions ? 5 : 6}
+                                            colSpan={
+                                                isPatientTransactions ? 5 : 6
+                                            }
                                             className="px-4 py-12 text-center text-sm text-slate-500"
                                         >
                                             {isPatientTransactions
