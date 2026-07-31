@@ -21,6 +21,16 @@ type VoucherRow = {
     };
 };
 
+type PatientTransactionRow = {
+    id: number;
+    tr_number: string;
+    type: string;
+    amount: number;
+    created_at: string;
+    patient?: { id: number; name: string; ps_number: string };
+    closing?: { id: number; ct_number: string };
+};
+
 type Paginated<T> = {
     data: T[];
     current_page: number;
@@ -30,7 +40,9 @@ type Paginated<T> = {
 };
 
 type Props = {
-    vouchers: Paginated<VoucherRow>;
+    mode?: 'vouchers' | 'patient_transactions';
+    vouchers?: Paginated<VoucherRow>;
+    transactions?: Paginated<PatientTransactionRow>;
     filters: { q?: string; from?: string; until?: string };
     totals: { paid: number; pending: number; total: number };
     [key: string]: unknown;
@@ -42,7 +54,15 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function MyPayments() {
-    const { vouchers, filters, totals } = usePage<Props>().props;
+    const {
+        mode = 'vouchers',
+        vouchers,
+        transactions,
+        filters,
+        totals,
+    } = usePage<Props>().props;
+    const isPatientTransactions = mode === 'patient_transactions';
+    const rows = isPatientTransactions ? transactions! : vouchers!;
     const [form, setForm] = useState(filters);
 
     const apply = () => {
@@ -71,8 +91,9 @@ export default function MyPayments() {
                                 My Payments
                             </h1>
                             <p className="text-xs text-slate-500">
-                                Expense vouchers issued to you ({vouchers.total}{' '}
-                                total).
+                                {isPatientTransactions
+                                    ? `Transactions paid by patients you manage (${rows.total} total).`
+                                    : `Expense vouchers issued to you (${rows.total} total).`}
                             </p>
                         </div>
                     </div>
@@ -118,7 +139,11 @@ export default function MyPayments() {
                                     onKeyDown={(e) =>
                                         e.key === 'Enter' && apply()
                                     }
-                                    placeholder="Voucher #, notes…"
+                                    placeholder={
+                                        isPatientTransactions
+                                            ? 'Transaction #, patient name, PS #…'
+                                            : 'Voucher #, notes…'
+                                    }
                                     className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-9 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-100 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
                                 />
                             </div>
@@ -179,109 +204,179 @@ export default function MyPayments() {
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="bg-slate-50 text-xs font-semibold tracking-wide text-slate-600 uppercase dark:bg-gray-800 dark:text-slate-300">
-                                <tr>
-                                    <th className="px-4 py-2 text-left">
-                                        Date
-                                    </th>
-                                    <th className="px-4 py-2 text-left">
-                                        Voucher #
-                                    </th>
-                                    <th className="px-4 py-2 text-left">
-                                        Service Order
-                                    </th>
-                                    <th className="px-4 py-2 text-left">
-                                        Category
-                                    </th>
-                                    <th className="px-4 py-2 text-right">
-                                        Amount
-                                    </th>
-                                    <th className="px-4 py-2 text-left">
-                                        Status
-                                    </th>
-                                </tr>
+                                {isPatientTransactions ? (
+                                    <tr>
+                                        <th className="px-4 py-2 text-left">
+                                            Date
+                                        </th>
+                                        <th className="px-4 py-2 text-left">
+                                            Transaction #
+                                        </th>
+                                        <th className="px-4 py-2 text-left">
+                                            Patient
+                                        </th>
+                                        <th className="px-4 py-2 text-left">
+                                            Method
+                                        </th>
+                                        <th className="px-4 py-2 text-right">
+                                            Amount
+                                        </th>
+                                    </tr>
+                                ) : (
+                                    <tr>
+                                        <th className="px-4 py-2 text-left">
+                                            Date
+                                        </th>
+                                        <th className="px-4 py-2 text-left">
+                                            Voucher #
+                                        </th>
+                                        <th className="px-4 py-2 text-left">
+                                            Service Order
+                                        </th>
+                                        <th className="px-4 py-2 text-left">
+                                            Category
+                                        </th>
+                                        <th className="px-4 py-2 text-right">
+                                            Amount
+                                        </th>
+                                        <th className="px-4 py-2 text-left">
+                                            Status
+                                        </th>
+                                    </tr>
+                                )}
                             </thead>
                             <tbody>
-                                {vouchers.data.length === 0 && (
+                                {rows.data.length === 0 && (
                                     <tr>
                                         <td
-                                            colSpan={6}
+                                            colSpan={
+                                                isPatientTransactions ? 5 : 6
+                                            }
                                             className="px-4 py-12 text-center text-sm text-slate-500"
                                         >
-                                            No payment vouchers yet.
+                                            {isPatientTransactions
+                                                ? 'No transactions yet for your managed patients.'
+                                                : 'No payment vouchers yet.'}
                                         </td>
                                     </tr>
                                 )}
-                                {vouchers.data.map((v) => (
-                                    <tr
-                                        key={v.id}
-                                        className="border-t border-slate-100 hover:bg-slate-50 dark:border-gray-800 dark:hover:bg-gray-800"
-                                    >
-                                        <td className="px-4 py-2 text-xs text-slate-500">
-                                            {new Date(
-                                                v.created_at,
-                                            ).toLocaleDateString()}
-                                        </td>
-                                        <td className="px-4 py-2 font-mono text-xs">
-                                            {v.vc_number}
-                                        </td>
-                                        <td className="px-4 py-2 text-xs">
-                                            {v.service_order ? (
-                                                <>
-                                                    <div className="font-mono">
-                                                        {
-                                                            v.service_order
-                                                                .so_number
-                                                        }
-                                                    </div>
-                                                    <div className="text-slate-500">
-                                                        {
-                                                            v.service_order
-                                                                .patient?.name
-                                                        }
-                                                    </div>
-                                                </>
-                                            ) : (
-                                                <span className="text-slate-400">
-                                                    —
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-2 text-xs text-slate-600">
-                                            {v.exp_category?.name ?? '—'}
-                                        </td>
-                                        <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">
-                                            <Currency
-                                                value={Number(v.amount)}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-2">
-                                            <span
-                                                className={clsx(
-                                                    'rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase',
-                                                    v.status === 'payed'
-                                                        ? 'bg-emerald-100 text-emerald-700'
-                                                        : 'bg-amber-100 text-amber-700',
-                                                )}
-                                            >
-                                                {v.status === 'payed'
-                                                    ? 'PAID'
-                                                    : 'PENDING'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
+                                {isPatientTransactions
+                                    ? transactions!.data.map((t) => (
+                                          <tr
+                                              key={t.id}
+                                              className="border-t border-slate-100 hover:bg-slate-50 dark:border-gray-800 dark:hover:bg-gray-800"
+                                          >
+                                              <td className="px-4 py-2 text-xs text-slate-500">
+                                                  {new Date(
+                                                      t.created_at,
+                                                  ).toLocaleDateString()}
+                                              </td>
+                                              <td className="px-4 py-2 font-mono text-xs">
+                                                  {t.tr_number}
+                                              </td>
+                                              <td className="px-4 py-2 text-xs">
+                                                  {t.patient ? (
+                                                      <>
+                                                          <div>
+                                                              {t.patient.name}
+                                                          </div>
+                                                          <div className="font-mono text-slate-500">
+                                                              {
+                                                                  t.patient
+                                                                      .ps_number
+                                                              }
+                                                          </div>
+                                                      </>
+                                                  ) : (
+                                                      <span className="text-slate-400">
+                                                          —
+                                                      </span>
+                                                  )}
+                                              </td>
+                                              <td className="px-4 py-2 text-xs text-slate-600">
+                                                  {t.type}
+                                              </td>
+                                              <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">
+                                                  <Currency
+                                                      value={Number(t.amount)}
+                                                  />
+                                              </td>
+                                          </tr>
+                                      ))
+                                    : vouchers!.data.map((v) => (
+                                          <tr
+                                              key={v.id}
+                                              className="border-t border-slate-100 hover:bg-slate-50 dark:border-gray-800 dark:hover:bg-gray-800"
+                                          >
+                                              <td className="px-4 py-2 text-xs text-slate-500">
+                                                  {new Date(
+                                                      v.created_at,
+                                                  ).toLocaleDateString()}
+                                              </td>
+                                              <td className="px-4 py-2 font-mono text-xs">
+                                                  {v.vc_number}
+                                              </td>
+                                              <td className="px-4 py-2 text-xs">
+                                                  {v.service_order ? (
+                                                      <>
+                                                          <div className="font-mono">
+                                                              {
+                                                                  v
+                                                                      .service_order
+                                                                      .so_number
+                                                              }
+                                                          </div>
+                                                          <div className="text-slate-500">
+                                                              {
+                                                                  v
+                                                                      .service_order
+                                                                      .patient
+                                                                      ?.name
+                                                              }
+                                                          </div>
+                                                      </>
+                                                  ) : (
+                                                      <span className="text-slate-400">
+                                                          —
+                                                      </span>
+                                                  )}
+                                              </td>
+                                              <td className="px-4 py-2 text-xs text-slate-600">
+                                                  {v.exp_category?.name ?? '—'}
+                                              </td>
+                                              <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">
+                                                  <Currency
+                                                      value={Number(v.amount)}
+                                                  />
+                                              </td>
+                                              <td className="px-4 py-2">
+                                                  <span
+                                                      className={clsx(
+                                                          'rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase',
+                                                          v.status === 'payed'
+                                                              ? 'bg-emerald-100 text-emerald-700'
+                                                              : 'bg-amber-100 text-amber-700',
+                                                      )}
+                                                  >
+                                                      {v.status === 'payed'
+                                                          ? 'PAID'
+                                                          : 'PENDING'}
+                                                  </span>
+                                              </td>
+                                          </tr>
+                                      ))}
                             </tbody>
                         </table>
                     </div>
 
-                    {vouchers.last_page > 1 && (
+                    {rows.last_page > 1 && (
                         <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2 text-xs dark:border-gray-800">
                             <p className="text-slate-500">
-                                Page {vouchers.current_page} of{' '}
-                                {vouchers.last_page} · {vouchers.total} total
+                                Page {rows.current_page} of {rows.last_page} ·{' '}
+                                {rows.total} total
                             </p>
                             <div className="flex gap-1">
-                                {vouchers.links.map((l, i) => (
+                                {rows.links.map((l, i) => (
                                     <Link
                                         key={i}
                                         href={l.url ?? '#'}

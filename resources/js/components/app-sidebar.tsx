@@ -96,6 +96,49 @@ export function AppSidebar() {
         user?.profiles?.patient_manager &&
         user?.profiles?.patient_manager.length > 0;
 
+    const haveLcdOpdProfile =
+        user?.profiles?.lcd_opd && user?.profiles?.lcd_opd.length > 0;
+    const haveLcdIndProfile =
+        user?.profiles?.lcd_ind && user?.profiles?.lcd_ind.length > 0;
+    const haveLcdEmergencyProfile =
+        user?.profiles?.lcd_emergency &&
+        user?.profiles?.lcd_emergency.length > 0;
+    const haveLcdDentalProfile =
+        user?.profiles?.lcd_dental && user?.profiles?.lcd_dental.length > 0;
+    const haveLcdLaboratoryProfile =
+        user?.profiles?.lcd_laboratory &&
+        user?.profiles?.lcd_laboratory.length > 0;
+    const haveLcdUltrasoundProfile =
+        user?.profiles?.lcd_ultrasound &&
+        user?.profiles?.lcd_ultrasound.length > 0;
+    const haveLcdXrayProfile =
+        user?.profiles?.lcd_xray && user?.profiles?.lcd_xray.length > 0;
+
+    const haveAnyDoctorWorkProfile =
+        haveOPDDoctorProfile ||
+        haveIndoorDoctorProfile ||
+        haveEmergencyDoctorProfile ||
+        haveDentistProfile ||
+        haveUltrasoundDoctorProfile ||
+        haveXrayDoctorProfile;
+
+    // My Payments is open to every profile type (see WebController::myPayments) —
+    // used to gate the "My Work" section and the My Payments link specifically.
+    const haveAnyProfileAtAll =
+        haveAnyDoctorWorkProfile ||
+        haveAdminProfile ||
+        haveAccountantProfile ||
+        haveReceptionistProfile ||
+        haveNursingProfile ||
+        havePatientManagerProfile ||
+        haveLcdOpdProfile ||
+        haveLcdIndProfile ||
+        haveLcdEmergencyProfile ||
+        haveLcdDentalProfile ||
+        haveLcdLaboratoryProfile ||
+        haveLcdUltrasoundProfile ||
+        haveLcdXrayProfile;
+
     const adminMenuItems: NavItem[] = [];
 
     if (haveAccountantProfile) {
@@ -299,28 +342,27 @@ export function AppSidebar() {
                         </SidebarMenuItem>
                     )}
                 </SidebarMenu>
-                {(haveOPDDoctorProfile ||
-                    haveIndoorDoctorProfile ||
-                    haveEmergencyDoctorProfile ||
-                    haveDentistProfile ||
-                    haveUltrasoundDoctorProfile ||
-                    haveXrayDoctorProfile) && (
+                {haveAnyProfileAtAll && (
                     <SidebarMenu className="px-2">
                         <span className="sidebar-menu-label text-sm text-[#06df72]">
                             My Work
                         </span>
-                        <SidebarMenuItem>
-                            <SidebarMenuButton
-                                asChild
-                                isActive={page.url.startsWith(myPatients().url)}
-                                tooltip={{ children: 'My Patients' }}
-                            >
-                                <Link href={myPatients().url} prefetch>
-                                    <Users />
-                                    <span>My Patients</span>
-                                </Link>
-                            </SidebarMenuButton>
-                        </SidebarMenuItem>
+                        {haveAnyDoctorWorkProfile && (
+                            <SidebarMenuItem>
+                                <SidebarMenuButton
+                                    asChild
+                                    isActive={page.url.startsWith(
+                                        myPatients().url,
+                                    )}
+                                    tooltip={{ children: 'My Patients' }}
+                                >
+                                    <Link href={myPatients().url} prefetch>
+                                        <Users />
+                                        <span>My Patients</span>
+                                    </Link>
+                                </SidebarMenuButton>
+                            </SidebarMenuItem>
+                        )}
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -470,7 +512,8 @@ export function AppSidebar() {
                         haveAccountantProfile ||
                         haveNursingProfile ||
                         haveEmergencyDoctorProfile ||
-                        haveOPDDoctorProfile) && (
+                        haveOPDDoctorProfile ||
+                        haveLcdOpdProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -493,7 +536,8 @@ export function AppSidebar() {
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
-                        haveXrayDoctorProfile) && (
+                        haveXrayDoctorProfile ||
+                        haveLcdIndProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -516,7 +560,8 @@ export function AppSidebar() {
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
-                        haveXrayDoctorProfile) && (
+                        haveXrayDoctorProfile ||
+                        haveLcdEmergencyProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -547,7 +592,8 @@ export function AppSidebar() {
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
-                        haveXrayDoctorProfile) && (
+                        haveXrayDoctorProfile ||
+                        haveLcdDentalProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -573,7 +619,8 @@ export function AppSidebar() {
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
-                        haveXrayDoctorProfile) && (
+                        haveXrayDoctorProfile ||
+                        haveLcdLaboratoryProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -604,7 +651,8 @@ export function AppSidebar() {
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
-                        haveXrayDoctorProfile) && (
+                        haveXrayDoctorProfile ||
+                        haveLcdUltrasoundProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild
@@ -635,7 +683,8 @@ export function AppSidebar() {
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
-                        haveXrayDoctorProfile) && (
+                        haveXrayDoctorProfile ||
+                        haveLcdXrayProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
                                 asChild

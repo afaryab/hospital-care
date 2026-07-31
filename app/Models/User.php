@@ -112,6 +112,13 @@ class User extends Authenticatable implements FilamentUser
             'xray_technician' => $this->xrayTechnicianProfiles,
             'nursing_staff' => $this->nursingStaffProfiles,
             'patient_manager' => $this->patientManagerProfiles,
+            'lcd_opd' => $this->lcdOpdProfiles,
+            'lcd_ind' => $this->lcdIndProfiles,
+            'lcd_emergency' => $this->lcdEmergencyProfiles,
+            'lcd_dental' => $this->lcdDentalProfiles,
+            'lcd_laboratory' => $this->lcdLaboratoryProfiles,
+            'lcd_ultrasound' => $this->lcdUltrasoundProfiles,
+            'lcd_xray' => $this->lcdXrayProfiles,
         ];
     }
 
@@ -181,6 +188,48 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasMany(PatientManager::class);
     }
 
+    public function lcdOpdProfiles()
+    {
+
+        return $this->hasMany(LcdOpdOperator::class);
+    }
+
+    public function lcdIndProfiles()
+    {
+
+        return $this->hasMany(LcdIndOperator::class);
+    }
+
+    public function lcdEmergencyProfiles()
+    {
+
+        return $this->hasMany(LcdEmergencyOperator::class);
+    }
+
+    public function lcdDentalProfiles()
+    {
+
+        return $this->hasMany(LcdDentalOperator::class);
+    }
+
+    public function lcdLaboratoryProfiles()
+    {
+
+        return $this->hasMany(LcdLaboratoryOperator::class);
+    }
+
+    public function lcdUltrasoundProfiles()
+    {
+
+        return $this->hasMany(LcdUltrasoundOperator::class);
+    }
+
+    public function lcdXrayProfiles()
+    {
+
+        return $this->hasMany(LcdXrayOperator::class);
+    }
+
     // ─── Role helpers ────────────────────────────────────────────────────────
 
     public function isAdmin(): bool
@@ -227,6 +276,54 @@ class User extends Authenticatable implements FilamentUser
         return $this->patientManagerProfiles()->exists();
     }
 
+    /**
+     * Maps a ServiceDepartment slug to the relation name for the LCD
+     * (department queue display) profile scoped to that department.
+     *
+     * @var array<string, string>
+     */
+    public const LCD_DEPARTMENT_RELATIONS = [
+        'OPD' => 'lcdOpdProfiles',
+        'IND' => 'lcdIndProfiles',
+        'EMG' => 'lcdEmergencyProfiles',
+        'DNT' => 'lcdDentalProfiles',
+        'PTH' => 'lcdLaboratoryProfiles',
+        'ULT' => 'lcdUltrasoundProfiles',
+        'XRAY' => 'lcdXrayProfiles',
+    ];
+
+    public function isLcdOperator(): bool
+    {
+        foreach (self::LCD_DEPARTMENT_RELATIONS as $relation) {
+            if ($this->{$relation}()->exists()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public function hasLcdAccessTo(string $departmentSlug): bool
+    {
+        $relation = self::LCD_DEPARTMENT_RELATIONS[$departmentSlug] ?? null;
+
+        return $relation !== null && $this->{$relation}()->exists();
+    }
+
+    /**
+     * Department slugs (ServiceDepartment.slug values) this user operates
+     * an LCD queue display for.
+     *
+     * @return array<int, string>
+     */
+    public function lcdDepartmentSlugs(): array
+    {
+        return array_values(array_filter(
+            array_keys(self::LCD_DEPARTMENT_RELATIONS),
+            fn (string $slug): bool => $this->hasLcdAccessTo($slug)
+        ));
+    }
+
     public function hasAnyProfile(): bool
     {
         return $this->isAdmin()
@@ -234,7 +331,8 @@ class User extends Authenticatable implements FilamentUser
             || $this->isReceptionist()
             || $this->isAnyDoctor()
             || $this->isPatientManager()
-            || $this->nursingStaffProfiles()->exists();
+            || $this->nursingStaffProfiles()->exists()
+            || $this->isLcdOperator();
     }
 
     /**

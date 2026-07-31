@@ -128,6 +128,18 @@ class Transaction extends Model
         return $this->hasOne(Receaveable::class, 'transaction_id');
     }
 
+    /**
+     * The receivable this transaction settles, when this transaction is a
+     * receivable collection payment (see WebController::receaveablesPayment()).
+     * The inverse of receaveable() — that one is the receivable this
+     * transaction originated, this one is the receivable this transaction
+     * pays down.
+     */
+    public function settledReceaveable()
+    {
+        return $this->belongsTo(Receaveable::class, 'receaveable_id');
+    }
+
     public function closing()
     {
         return $this->belongsTo(Closing::class, 'closing_id');
