@@ -31,7 +31,7 @@ class HistoryOverallStats extends StatsOverviewWidget
             )->first();
 
             $evTotals = ExpenseVoucher::selectRaw('COUNT(*) as count, SUM(amount) as amount')->first();
-            $recTotals = Receaveable::selectRaw('SUM(orignal_amount) as total, SUM(CASE WHEN status NOT IN (\'paid\',\'cancelled\') THEN amount ELSE 0 END) as unpaid')->first();
+            $recTotals = Receaveable::selectRaw('SUM(CASE WHEN status != \'draft\' THEN orignal_amount ELSE 0 END) as total, SUM(CASE WHEN status NOT IN (\'paid\',\'cancelled\',\'draft\') THEN amount ELSE 0 END) as unpaid')->first();
 
             return [
                 'total_revenue' => $txTotals->revenue ?? 0,

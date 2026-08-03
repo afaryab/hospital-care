@@ -25,6 +25,7 @@ class Receaveable extends Model
         'patient_id',
         'panel_id',
         'transaction_id',
+        'appointment_id',
         'amount',
         'orignal_amount',
         'due_date',
@@ -34,6 +35,16 @@ class Receaveable extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    /**
+     * The appointment that reserved this receivable as a draft hold. Only
+     * set for Priority-mode appointments — draft receivables have no
+     * transaction yet, so they link back here instead of transaction_id.
+     */
+    public function appointment()
+    {
+        return $this->belongsTo(Appointment::class);
     }
 
     public function transaction()

@@ -61,7 +61,7 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
                 DatePicker::make('until')->label('Until'),
                 Select::make('status')
                     ->label('Status')
-                    ->options(fn () => Receaveable::query()->distinct()->pluck('status', 'status')->toArray())
+                    ->options(fn () => Receaveable::query()->where('status', '!=', 'draft')->distinct()->pluck('status', 'status')->toArray())
                     ->placeholder('All Statuses'),
                 Select::make('panel_id')
                     ->label('Panel')
@@ -86,7 +86,10 @@ class ReceivablesReport extends Page implements Tables\Contracts\HasTable
                         'transaction:id,tr_number',
                         'patient:id,name',
                         'panel:id,name',
-                    ]);
+                    ])
+                    // Draft receivables are appointment holds, not real
+                    // financial obligations yet — never surface them here.
+                    ->where('status', '!=', 'draft');
 
                 if ($this->filters['from'] ?? null) {
                     $query->where('receaveables.created_at', '>=', DateHelper::dayStartUtc($this->filters['from']));

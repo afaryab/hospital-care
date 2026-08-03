@@ -17,6 +17,13 @@ class TransactionElementObserver
             return;
         }
 
+        // An appointment check-in (or recesitation) already carries a
+        // pre-existing service_order_id assigned by the controller — reuse
+        // it rather than spawning a duplicate order.
+        if ($transactionElement->service_order_id) {
+            return;
+        }
+
         // A receivable-payment transaction reuses an existing service order;
         // it must NOT spawn a new one. The parent transaction's receaveable_id
         // marks the transaction as a payment against a prior receivable.

@@ -90,7 +90,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('RECEAVEABLES-PAYMENT', [WebController::class, 'receaveablesPayment'])->name('receaveables-payment');
 
-    Route::get('appointments', [WebController::class, 'counter'])->name('appointments');
+    Route::post('APT-CREATE', [WebController::class, 'appointmentStore'])->name('appointment-store');
+    Route::post('APT-CANCEL/{appointment}', [WebController::class, 'appointmentCancel'])->name('appointment-cancel');
+    Route::get('appointments', [WebController::class, 'appointmentsCalendar'])->name('appointments-calendar');
     Route::get('expenses', [WebController::class, 'counter'])->name('expenses');
 
     /**

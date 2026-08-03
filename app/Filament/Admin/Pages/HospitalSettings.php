@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Enum\AppointmentPriorityMode;
 use App\Helpers\DateHelper;
 use App\Models\HospitalSetting;
 use Filament\Forms\Components\FileUpload;
@@ -42,6 +43,7 @@ class HospitalSettings extends Page implements HasForms
             'strn' => HospitalSetting::get('hospital_strn'),
             'timezone' => HospitalSetting::get('hospital_timezone', 'Asia/Karachi'),
             'abacus_auto_map_accounts' => (bool) HospitalSetting::get('abacus_auto_map_accounts', false),
+            'appointment_priority_mode' => HospitalSetting::get('appointment_priority_mode', AppointmentPriorityMode::Standard->value),
         ]);
     }
 
@@ -87,6 +89,15 @@ class HospitalSettings extends Page implements HasForms
                 Toggle::make('abacus_auto_map_accounts')
                     ->label('Auto Map Accounts (Abacus)')
                     ->helperText('When enabled, receiving a closing statement will automatically create Abacus accounting entries.'),
+                Select::make('appointment_priority_mode')
+                    ->label('Appointment Priority Handling')
+                    ->helperText('Controls how every booked appointment is treated hospital-wide once its day arrives: Priority guarantees the slot with a draft receivable and tops the queue; Medium reserves a token but hides the patient\'s identity until check-in; Standard is informational only.')
+                    ->required()
+                    ->native(false)
+                    ->options(collect(AppointmentPriorityMode::cases())
+                        ->mapWithKeys(fn (AppointmentPriorityMode $mode) => [$mode->value => $mode->label()])
+                        ->toArray())
+                    ->default(AppointmentPriorityMode::Standard->value),
             ])
             ->statePath('data');
     }
@@ -104,6 +115,7 @@ class HospitalSettings extends Page implements HasForms
         HospitalSetting::set('hospital_strn', $state['strn'] ?? null);
         HospitalSetting::set('hospital_timezone', $state['timezone'] ?? 'Asia/Karachi');
         HospitalSetting::set('abacus_auto_map_accounts', $state['abacus_auto_map_accounts'] ?? false);
+        HospitalSetting::set('appointment_priority_mode', $state['appointment_priority_mode'] ?? AppointmentPriorityMode::Standard->value);
 
         DateHelper::flushTimezoneCache();
 

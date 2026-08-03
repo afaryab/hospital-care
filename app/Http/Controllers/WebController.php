@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enum\AppointmentStatus;
 use App\Enum\CounterStatus;
 use App\Enum\TransactionElementType;
 use App\Helpers\DateHelper;
+use App\Models\Appointment;
 use App\Models\Closing;
 use App\Models\ExpenseCategory;
 use App\Models\ExpenseVoucher;
@@ -21,9 +23,11 @@ use App\Models\ServiceRecestation;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
 use App\Models\User;
+use App\Services\AppointmentService;
 use App\Services\BreachDetectionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -672,6 +676,16 @@ class WebController extends Controller
 
                 }
 
+                // Appointments booked for this patient, in this department, for
+                // today — surfaced so reception can check the patient in against
+                // the reserved slot/draft receivable instead of starting fresh.
+                $pageData['todaysAppointments'] = Appointment::with('service')
+                    ->where('patient_id', $pageData['selectedPatient']->id)
+                    ->where('status', AppointmentStatus::Scheduled)
+                    ->whereHas('service', fn ($q) => $q->where('service_department_id', $department->id))
+                    ->whereDate('scheduled_at', now()->toDateString())
+                    ->get();
+
                 // dd($pageData['services']->map(function($service){
                 //     if(!$service->have_service_provider || empty($service->service_provider_types)) {
                 //         dd($service);
@@ -956,6 +970,23 @@ class WebController extends Controller
                 ]);
             }
 
+            // A patient checking in for a today-scheduled appointment (Priority
+            // or Medium mode) reuses the reserved ServiceOrder materialized by
+            // app:materialize-appointments, and settles its draft receivable,
+            // instead of creating a fresh service order/receivable pair.
+            $appointment = null;
+            if (! $isRecesitation && $request->filled('appointment_id')) {
+                $request->validate([
+                    'appointment_id' => 'exists:appointments,id',
+                ]);
+
+                $appointment = Appointment::with('receaveable', 'serviceOrder')
+                    ->where('id', $request->get('appointment_id'))
+                    ->where('patient_id', $validatedData['patient_id'])
+                    ->where('status', AppointmentStatus::Scheduled)
+                    ->first();
+            }
+
             DB::beginTransaction();
 
             try {
@@ -990,7 +1021,9 @@ class WebController extends Controller
                         'patient_id' => $validatedData['patient_id'],
                         'service_id' => ! $isRecesitation ? $item['service_id'] : null,
                         'service_recestation_id' => $isRecesitation ? $item['service_id'] : null,
-                        'service_order_id' => $isRecesitation ? $request->get('service_order_id', null) : null,
+                        'service_order_id' => $isRecesitation
+                            ? $request->get('service_order_id', null)
+                            : (($appointment && $appointment->service_id == $item['service_id']) ? $appointment->service_order_id : null),
                         'doctor_id' => $item['provider_id'] ?? null,
                         'type' => $request->department_key,
                         'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_company'] : null,
@@ -1004,18 +1037,49 @@ class WebController extends Controller
                 $transaction->orignal_amount = $orinalTotal;
                 $transaction->save();
 
+                $appointmentDraftReceaveable = $appointment && $appointment->receaveable && $appointment->receaveable->status === 'draft'
+                    ? $appointment->receaveable
+                    : null;
+
                 if ($validatedData['change_amount'] < 0) {
                     // Create receaveable for the remaining amount
                     $receaveableAmount = abs($validatedData['change_amount']);
 
-                    Receaveable::create([
-                        'patient_id' => $validatedData['patient_id'],
-                        'transaction_id' => $transaction->id,
-                        'amount' => $receaveableAmount,
-                        'orignal_amount' => $receaveableAmount,
-                        'status' => 'unpaid',
-                        'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_company'] : null,
-                    ]);
+                    if ($appointmentDraftReceaveable) {
+                        // Convert the appointment's draft hold into the real
+                        // receivable instead of creating a duplicate one.
+                        $appointmentDraftReceaveable->update([
+                            'transaction_id' => $transaction->id,
+                            'amount' => $receaveableAmount,
+                            'orignal_amount' => $receaveableAmount,
+                            'status' => 'unpaid',
+                            'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_company'] : null,
+                        ]);
+                    } else {
+                        Receaveable::create([
+                            'patient_id' => $validatedData['patient_id'],
+                            'transaction_id' => $transaction->id,
+                            'amount' => $receaveableAmount,
+                            'orignal_amount' => $receaveableAmount,
+                            'status' => 'unpaid',
+                            'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_company'] : null,
+                        ]);
+                    }
+                } elseif ($appointmentDraftReceaveable) {
+                    // Paid in full (or overpaid) — settle the draft hold rather
+                    // than leaving it open.
+                    $appointmentDraftReceaveable->update(['status' => 'paid', 'amount' => 0]);
+                }
+
+                if ($appointment) {
+                    if ($appointment->serviceOrder) {
+                        $appointment->serviceOrder->status = 'open';
+                        $appointment->serviceOrder->save();
+                    }
+
+                    $appointment->status = AppointmentStatus::CheckedIn;
+                    $appointment->checked_in_at = now();
+                    $appointment->save();
                 }
 
             } catch (\Exception $e) {
@@ -1107,6 +1171,49 @@ class WebController extends Controller
             'tNumber' => $newTransaction->number,
         ]);
 
+    }
+
+    public function appointmentStore(Request $request, AppointmentService $appointmentService): RedirectResponse
+    {
+        $validatedData = $request->validate([
+            'patient_id' => 'required|exists:patients,id',
+            'service_id' => 'required|exists:services,id',
+            'doctor_id' => 'nullable|exists:users,id',
+            'scheduled_at' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $validatedData['created_by'] = $request->user()->id;
+
+        $appointmentService->book($validatedData);
+
+        return back();
+    }
+
+    public function appointmentCancel(Request $request, Appointment $appointment, AppointmentService $appointmentService): RedirectResponse
+    {
+        if ($appointment->status !== AppointmentStatus::Scheduled && $appointment->status !== AppointmentStatus::NoShow) {
+            return back()->withErrors(['message' => 'Only scheduled appointments can be cancelled.']);
+        }
+
+        $appointmentService->cancel($appointment);
+
+        return back();
+    }
+
+    public function appointmentsCalendar(Request $request)
+    {
+        $month = $request->input('month') ? Carbon::parse($request->input('month')) : Carbon::now();
+
+        $appointments = Appointment::with(['patient:id,name,ps_number', 'service:id,name', 'doctor:id,name'])
+            ->whereBetween('scheduled_at', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->orderBy('scheduled_at')
+            ->get();
+
+        return Inertia::render('appointments/calendar', [
+            'appointments' => $appointments,
+            'month' => $month->format('Y-m'),
+        ]);
     }
 
     public function transactionView($tYear = null, $tMonth = null, $tDay = null, $tNumber = null)
@@ -1217,7 +1324,11 @@ class WebController extends Controller
 
         $status = $filters['status'] ?? 'unpaid';
 
-        $query = Receaveable::with(['patient', 'transaction']);
+        // Draft receivables are appointment holds pending check-in — they are
+        // resolved automatically when the patient checks in (or cleared by
+        // app:expire-no-show-appointments) and must never be directly
+        // payable from this general receivables-collection screen.
+        $query = Receaveable::with(['patient', 'transaction'])->where('status', '!=', 'draft');
 
         // Receivable statuses are stored inconsistently across the app
         // (unpaid/paid/payed/pending/cancelled, mixed case) — normalize
@@ -1498,16 +1609,17 @@ class WebController extends Controller
         $type = 'OPD';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
-            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number', 'priority'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY priority DESC, created_at ASC) AS rn')
             ->where('type', $type)
-            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS', 'reserved']);
 
         // Filter by rn in an outer query
         $ids = DB::query()
             ->fromSub($base, 't')
             ->where('t.rn', '<=', 50)
             ->orderBy('t.service_id')
+            ->orderBy('t.priority', 'DESC')
             ->orderBy('t.created_at', 'ASC')
             ->pluck('id');
 
@@ -1515,9 +1627,11 @@ class WebController extends Controller
             ->with([
                 'patient:id,name,ps_number',
                 'service:id,name',
+                'appointment:id,priority_mode',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
+            ->orderBy('priority', 'DESC')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
@@ -1544,16 +1658,17 @@ class WebController extends Controller
         $type = 'IND';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
-            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number', 'priority'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY priority DESC, created_at ASC) AS rn')
             ->where('type', $type)
-            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS', 'reserved']);
 
         // Filter by rn in an outer query
         $ids = DB::query()
             ->fromSub($base, 't')
             ->where('t.rn', '<=', 15)
             ->orderBy('t.service_id')
+            ->orderBy('t.priority', 'DESC')
             ->orderBy('t.created_at', 'ASC')
             ->pluck('id');
 
@@ -1561,9 +1676,11 @@ class WebController extends Controller
             ->with([
                 'patient:id,name,ps_number',
                 'service:id,name',
+                'appointment:id,priority_mode',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
+            ->orderBy('priority', 'DESC')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
@@ -1590,16 +1707,17 @@ class WebController extends Controller
         $type = 'EMG';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
-            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number', 'priority'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY priority DESC, created_at ASC) AS rn')
             ->where('type', $type)
-            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS', 'reserved']);
 
         // Filter by rn in an outer query
         $ids = DB::query()
             ->fromSub($base, 't')
             ->where('t.rn', '<=', 50)
             ->orderBy('t.service_id')
+            ->orderBy('t.priority', 'DESC')
             ->orderBy('t.created_at', 'ASC')
             ->pluck('id');
 
@@ -1607,9 +1725,11 @@ class WebController extends Controller
             ->with([
                 'patient:id,name,ps_number',
                 'service:id,name',
+                'appointment:id,priority_mode',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
+            ->orderBy('priority', 'DESC')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
@@ -1635,16 +1755,17 @@ class WebController extends Controller
         $type = 'DNT';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
-            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number', 'priority'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY priority DESC, created_at ASC) AS rn')
             ->where('type', $type)
-            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS', 'reserved']);
 
         // Filter by rn in an outer query
         $ids = DB::query()
             ->fromSub($base, 't')
             ->where('t.rn', '<=', 50)
             ->orderBy('t.service_id')
+            ->orderBy('t.priority', 'DESC')
             ->orderBy('t.created_at', 'ASC')
             ->pluck('id');
 
@@ -1652,9 +1773,11 @@ class WebController extends Controller
             ->with([
                 'patient:id,name,ps_number',
                 'service:id,name',
+                'appointment:id,priority_mode',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
+            ->orderBy('priority', 'DESC')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
@@ -1680,16 +1803,17 @@ class WebController extends Controller
         $type = 'PTH';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
-            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number', 'priority'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY priority DESC, created_at ASC) AS rn')
             ->where('type', $type)
-            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS', 'reserved']);
 
         // Filter by rn in an outer query
         $ids = DB::query()
             ->fromSub($base, 't')
             ->where('t.rn', '<=', 50)
             ->orderBy('t.service_id')
+            ->orderBy('t.priority', 'DESC')
             ->orderBy('t.created_at', 'ASC')
             ->pluck('id');
 
@@ -1697,9 +1821,11 @@ class WebController extends Controller
             ->with([
                 'patient:id,name,ps_number',
                 'service:id,name',
+                'appointment:id,priority_mode',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
+            ->orderBy('priority', 'DESC')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
@@ -1725,16 +1851,17 @@ class WebController extends Controller
         $type = 'ULT';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
-            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number', 'priority'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY priority DESC, created_at ASC) AS rn')
             ->where('type', $type)
-            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS', 'reserved']);
 
         // Filter by rn in an outer query
         $ids = DB::query()
             ->fromSub($base, 't')
             ->where('t.rn', '<=', 50)
             ->orderBy('t.service_id')
+            ->orderBy('t.priority', 'DESC')
             ->orderBy('t.created_at', 'ASC')
             ->pluck('id');
 
@@ -1742,9 +1869,11 @@ class WebController extends Controller
             ->with([
                 'patient:id,name,ps_number',
                 'service:id,name',
+                'appointment:id,priority_mode',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
+            ->orderBy('priority', 'DESC')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
@@ -1772,16 +1901,17 @@ class WebController extends Controller
         $types = ['XRAY', 'RAD'];
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
-            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number'])
-            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY created_at ASC) AS rn')
+            ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number', 'priority'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY service_id ORDER BY priority DESC, created_at ASC) AS rn')
             ->whereIn('type', $types)
-            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS']);
+            ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS', 'reserved']);
 
         // Filter by rn in an outer query
         $ids = DB::query()
             ->fromSub($base, 't')
             ->where('t.rn', '<=', 50)
             ->orderBy('t.service_id')
+            ->orderBy('t.priority', 'DESC')
             ->orderBy('t.created_at', 'ASC')
             ->pluck('id');
 
@@ -1789,9 +1919,11 @@ class WebController extends Controller
             ->with([
                 'patient:id,name,ps_number',
                 'service:id,name',
+                'appointment:id,priority_mode',
             ])
             ->whereIn('id', $ids)
             ->orderBy('service_id')
+            ->orderBy('priority', 'DESC')
             ->orderBy('created_at', 'ASC')
             ->get()
             ->groupBy('service_id')
