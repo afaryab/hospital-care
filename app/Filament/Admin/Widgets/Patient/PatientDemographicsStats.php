@@ -44,12 +44,12 @@ class PatientDemographicsStats extends StatsOverviewWidget
             ->count();
 
         $patientsWithBalance = Receaveable::query()
-            ->whereNotIn('status', ['paid', 'cancelled'])
+            ->whereNotIn('status', ['paid', 'cancelled', 'draft'])
             ->distinct('patient_id')
             ->count('patient_id');
 
         $totalOutstanding = Receaveable::query()
-            ->whereNotIn('status', ['paid', 'cancelled'])
+            ->whereNotIn('status', ['paid', 'cancelled', 'draft'])
             ->sum('amount');
 
         $trend = Patient::query()

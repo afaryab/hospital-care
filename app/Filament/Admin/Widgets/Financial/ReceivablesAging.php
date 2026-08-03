@@ -25,7 +25,7 @@ class ReceivablesAging extends ChartWidget
     protected function getData(): array
     {
         $receivables = Receaveable::query()
-            ->whereNotIn('status', ['paid', 'cancelled'])
+            ->whereNotIn('status', ['paid', 'cancelled', 'draft'])
             ->selectRaw('DATEDIFF(NOW(), created_at) as age, amount')
             ->get();
 

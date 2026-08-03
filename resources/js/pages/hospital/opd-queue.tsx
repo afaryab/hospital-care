@@ -81,6 +81,13 @@ function cn(...classes) {
 
 function TokenCard({ item, variant = 'open', minify }) {
     const isNow = variant === 'in-progress';
+    // Medium-priority appointment reservations hold their queue spot before
+    // the patient arrives, but their identity must stay confidential on
+    // public LCD/queue boards until they actually check in (status flips
+    // from 'reserved' to 'open' at that point).
+    const isConfidential =
+        item.status?.toLowerCase() === 'reserved' &&
+        item.appointment?.priority_mode === 'medium';
     return (
         <div
             className={cn(
@@ -98,7 +105,9 @@ function TokenCard({ item, variant = 'open', minify }) {
                         {item.token_short ? item.token_short : item.so_short}
                     </div>
                     <div className="text-lg leading-tight font-semibold text-slate-900">
-                        {item.patient.name}
+                        {isConfidential
+                            ? 'Reserved Appointment'
+                            : item.patient.name}
                     </div>
                 </div>
 
@@ -114,7 +123,7 @@ function TokenCard({ item, variant = 'open', minify }) {
                 </span>
             </div>
 
-            {minify == false && (
+            {minify == false && !isConfidential && (
                 <>
                     {item.patient?.ps_number && minify == false ? (
                         <div className="text-xs text-slate-500">

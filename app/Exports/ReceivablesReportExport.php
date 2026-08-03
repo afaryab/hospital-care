@@ -22,7 +22,11 @@ class ReceivablesReportExport implements FromQuery, Responsable, ShouldAutoSize,
 
     public function query()
     {
-        $query = Receaveable::query()->with(['transaction', 'patient', 'panel']);
+        $query = Receaveable::query()
+            ->with(['transaction', 'patient', 'panel'])
+            // Draft receivables are appointment holds, not real financial
+            // obligations yet — never surface them in reporting.
+            ->where('status', '!=', 'draft');
 
         if ($this->filters['from'] ?? null) {
             $query->where('receaveables.created_at', '>=', DateHelper::dayStartUtc($this->filters['from']));

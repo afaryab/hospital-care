@@ -40,6 +40,8 @@ class ServiceOrder extends Model
         'service_id',
         'service_recestation_id',
         'doctor_id',
+        'appointment_id',
+        'priority',
         'is_composit',
         'notes',
         'notes_json',
@@ -171,6 +173,16 @@ class ServiceOrder extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    /**
+     * The appointment that materialized this service order (Priority/Medium
+     * modes only — reserved ahead of the patient's arrival on their
+     * scheduled day). Absent for ordinary walk-in service orders.
+     */
+    public function appointment(): BelongsTo
+    {
+        return $this->belongsTo(Appointment::class);
     }
 
     /**

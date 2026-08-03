@@ -100,6 +100,9 @@ class GenericReportPdfController extends Controller
         $query = Receaveable::query()
             ->where('receaveables.created_at', '>=', DateHelper::dayStartUtc($from))
             ->where('receaveables.created_at', '<=', DateHelper::dayEndUtc($until))
+            // Draft receivables are appointment holds, not real financial
+            // obligations yet — never surface them in reporting.
+            ->where('status', '!=', 'draft')
             ->with(['patient', 'panel', 'transaction']);
 
         if ($request->filled('status')) {

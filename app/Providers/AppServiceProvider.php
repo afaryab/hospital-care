@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Helpers\UserTimezone;
+use App\Models\Appointment;
 use App\Models\Asset;
 use App\Models\Closing;
 use App\Models\ExpenseVoucher;
@@ -14,6 +15,7 @@ use App\Models\Task;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
 use App\Models\User;
+use App\Observers\AppointmentObserver;
 use App\Observers\AssetObserver;
 use App\Observers\ClosingObserver;
 use App\Observers\ExpenseVoucherObserver;
@@ -67,6 +69,7 @@ class AppServiceProvider extends ServiceProvider
         PurchaseOrder::observe(PurchaseOrderObserver::class);
         Asset::observe(AssetObserver::class);
         Task::observe(TaskObserver::class);
+        Appointment::observe(AppointmentObserver::class);
 
         Gate::define('viewPulse', function (User $user) {
             return $user->adminProfiles()->count() > 0;

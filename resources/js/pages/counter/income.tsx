@@ -28,6 +28,7 @@ import PatientHistorySideBar from '@/elements/patient/transactions-history-card'
 import AppLayout from '@/layouts/app-layout';
 import {
     apiPatientsStore,
+    appointmentStore,
     counter,
     counterSelectDepartment,
     counterSelectDepartmentService,
@@ -64,6 +65,7 @@ export default function CounterIncome() {
         recesitation,
         existingServiceOrders,
         panelCompanies,
+        todaysAppointments,
     } = usePage().props;
 
     const step = !selectedPatient ? 1 : !departmentKey ? 2 : 3;
@@ -198,6 +200,7 @@ export default function CounterIncome() {
                                 services={services}
                                 providers={providers}
                                 panelCompanies={panelCompanies ?? []}
+                                todaysAppointments={todaysAppointments ?? []}
                             />
                         )}
                     </BulletsWrapper>
@@ -217,6 +220,7 @@ function CollectPayment({
     services,
     providers,
     panelCompanies,
+    todaysAppointments,
 }: any) {
     const [selectedServices, setSelectedServices] = useState<string[]>([]);
     const [mriNumber, setMriNumber] = useState<string>('');
@@ -227,6 +231,9 @@ function CollectPayment({
     const [serviceProviders, setServiceProviders] = useState<any>({});
     const [selectedServiceOrder, setSelectedServiceOrder] = useState<string>();
     const [processing, setProcessing] = useState<boolean>(false);
+    const [checkInAppointmentId, setCheckInAppointmentId] = useState<
+        string | null
+    >(null);
 
     const [formData, setFormData] = useState<any>({
         total: 0,
@@ -278,6 +285,7 @@ function CollectPayment({
                 patient_number: patient.number,
                 department_key: departmentKey,
                 service_order_id: selectedServiceOrder || null,
+                appointment_id: checkInAppointmentId || null,
                 income_or_expense: 'INCOME',
                 items: formData.items.map((item: any) => ({
                     service_id: item.serviceId,
@@ -478,6 +486,32 @@ function CollectPayment({
                             className="col-span-3 w-full"
                         />
                     </div>
+
+                    {!recesitation && todaysAppointments?.length > 0 && (
+                        <AppointmentCheckInBanner
+                            appointments={todaysAppointments}
+                            checkInAppointmentId={checkInAppointmentId}
+                            onSelect={(appointment: any) => {
+                                setCheckInAppointmentId(
+                                    appointment ? String(appointment.id) : null,
+                                );
+                                if (appointment) {
+                                    setSelectedServices([
+                                        String(appointment.service_id),
+                                    ]);
+                                }
+                            }}
+                        />
+                    )}
+
+                    {!recesitation && (
+                        <BookAppointmentAccordion
+                            patient={patient}
+                            services={services}
+                            providers={providers}
+                        />
+                    )}
+
                     <div className="mb-2 rounded-xl border p-4 dark:border-neutral-950">
                         {recesitation && (
                             <div className="mb-2 grid gap-2">
@@ -948,6 +982,196 @@ function CollectPayment({
                     </div>
                 </div>
             </div>
+        </div>
+    );
+}
+
+function AppointmentCheckInBanner({
+    appointments,
+    checkInAppointmentId,
+    onSelect,
+}: any) {
+    return (
+        <div className="mb-2 rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950">
+            <h4 className="mb-2 text-sm font-semibold text-amber-800 dark:text-amber-200">
+                This patient has an appointment today
+            </h4>
+            <div className="flex flex-col gap-2">
+                {appointments.map((appointment: any) => {
+                    const isSelected =
+                        checkInAppointmentId === String(appointment.id);
+                    return (
+                        <label
+                            key={appointment.id}
+                            className={clsx(
+                                'flex cursor-pointer items-center justify-between rounded-lg border p-2 text-sm',
+                                isSelected
+                                    ? 'border-amber-500 bg-amber-100 dark:bg-amber-900'
+                                    : 'border-amber-200 bg-white dark:bg-neutral-900',
+                            )}
+                        >
+                            <span>
+                                <strong>
+                                    {appointment.appointment_number}
+                                </strong>{' '}
+                                — {appointment.service?.name} (
+                                {appointment.priority_mode})
+                            </span>
+                            <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() =>
+                                    onSelect(isSelected ? null : appointment)
+                                }
+                            />
+                        </label>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+function BookAppointmentAccordion({ patient, services, providers }: any) {
+    const [open, setOpen] = useState(false);
+    const [serviceId, setServiceId] = useState<string>('');
+    const [doctorId, setDoctorId] = useState<string>('');
+    const [scheduledAt, setScheduledAt] = useState<string>('');
+    const [notes, setNotes] = useState<string>('');
+    const [processing, setProcessing] = useState(false);
+    const [errors, setErrors] = useState<any>({});
+
+    const selectedService = services.find((s: any) => s.id == serviceId);
+    const availableProviders = selectedService?.service_provider_types
+        ? (providers?.[selectedService.service_provider_types[0]] ?? [])
+        : [];
+
+    const submit = () => {
+        setProcessing(true);
+        setErrors({});
+        router.post(
+            appointmentStore().url,
+            {
+                patient_id: patient.id,
+                service_id: serviceId,
+                doctor_id: doctorId || null,
+                scheduled_at: scheduledAt,
+                notes: notes || null,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    toast.success('Appointment booked successfully.');
+                    setServiceId('');
+                    setDoctorId('');
+                    setScheduledAt('');
+                    setNotes('');
+                    setOpen(false);
+                },
+                onError: (validationErrors) => setErrors(validationErrors),
+                onFinish: () => setProcessing(false),
+            },
+        );
+    };
+
+    return (
+        <div className="mb-2 rounded-xl border p-4 dark:border-neutral-950">
+            <button
+                type="button"
+                className="flex w-full items-center justify-between text-left text-sm font-semibold"
+                onClick={() => setOpen(!open)}
+            >
+                <span>Book Future Appointment</span>
+                <span>{open ? '−' : '+'}</span>
+            </button>
+
+            {open && (
+                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <div className="grid gap-1">
+                        <Label htmlFor="appointment_service">Service</Label>
+                        <Select value={serviceId} onValueChange={setServiceId}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select service" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {services.map((service: any) => (
+                                    <SelectItem
+                                        key={service.id}
+                                        value={String(service.id)}
+                                    >
+                                        {service.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <InputError message={errors.service_id} />
+                    </div>
+
+                    {availableProviders.length > 0 && (
+                        <div className="grid gap-1">
+                            <Label htmlFor="appointment_doctor">
+                                Doctor (optional)
+                            </Label>
+                            <Select
+                                value={doctorId}
+                                onValueChange={setDoctorId}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Any doctor" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableProviders.map((doctor: any) => (
+                                        <SelectItem
+                                            key={doctor.id}
+                                            value={String(doctor.id)}
+                                        >
+                                            {doctor.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    <div className="grid gap-1">
+                        <Label htmlFor="appointment_scheduled_at">
+                            Date &amp; Time
+                        </Label>
+                        <Input
+                            id="appointment_scheduled_at"
+                            type="datetime-local"
+                            value={scheduledAt}
+                            onChange={(e) => setScheduledAt(e.target.value)}
+                        />
+                        <InputError message={errors.scheduled_at} />
+                    </div>
+
+                    <div className="grid gap-1">
+                        <Label htmlFor="appointment_notes">
+                            Notes (optional)
+                        </Label>
+                        <Input
+                            id="appointment_notes"
+                            type="text"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="md:col-span-2">
+                        <Button
+                            type="button"
+                            onClick={submit}
+                            disabled={!serviceId || !scheduledAt || processing}
+                        >
+                            {processing && (
+                                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                            )}
+                            Book Appointment
+                        </Button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

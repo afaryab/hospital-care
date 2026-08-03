@@ -116,6 +116,9 @@ class ReceaveableResource extends Resource
             ->query(
                 Receaveable::query()
                     ->with(['patient:id,name,ps_number', 'panel:id,name', 'transaction:id,tr_number'])
+                    // Draft receivables are appointment holds pending check-in —
+                    // manage those from the Appointments resource, not here.
+                    ->where('status', '!=', 'draft')
             )
             ->defaultSort('created_at', 'desc')
             ->columns([

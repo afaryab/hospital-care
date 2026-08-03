@@ -25,7 +25,7 @@ class OutstandingReceivablesStats extends ChartWidget
     protected function getData(): array
     {
         $data = Receaveable::query()
-            ->whereNotIn('status', ['paid', 'cancelled'])
+            ->whereNotIn('status', ['paid', 'cancelled', 'draft'])
             ->join('patients', 'receaveables.patient_id', '=', 'patients.id')
             ->selectRaw('patients.name, SUM(receaveables.amount) as total_owed')
             ->groupBy('patients.id', 'patients.name')

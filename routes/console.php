@@ -10,6 +10,10 @@ Artisan::command('inspire', function () {
 
 Schedule::command('app:close-old-service-orders')->everyFiveSeconds()->runInBackground()->withoutOverlapping();
 
+Schedule::command('app:materialize-appointments')->everyFiveMinutes()->runInBackground()->withoutOverlapping();
+
+Schedule::command('app:expire-no-show-appointments')->dailyAt('23:55')->runInBackground()->withoutOverlapping();
+
 Schedule::command('telescope:prune')->daily();
 
 Schedule::command('bank:link-transactions')->hourly()->runInBackground()->withoutOverlapping();

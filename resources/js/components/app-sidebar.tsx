@@ -10,6 +10,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import {
+    appointmentsCalendar,
     counter,
     counterExpenseVouchersList,
     dntDashboard,
@@ -40,6 +41,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     BookAIcon,
     BriefcaseMedical,
+    CalendarDays,
     ChartLine,
     Cog,
     FlaskConical,
@@ -447,6 +449,21 @@ export function AppSidebar() {
                                 <Link href={receaveables().url} prefetch>
                                     <LucideWaypoints />
                                     <span>Receaveables</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={routeName === 'appointments-calendar'}
+                                tooltip={{ children: 'Appointments' }}
+                            >
+                                <Link
+                                    href={appointmentsCalendar().url}
+                                    prefetch
+                                >
+                                    <CalendarDays />
+                                    <span>Appointments</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>

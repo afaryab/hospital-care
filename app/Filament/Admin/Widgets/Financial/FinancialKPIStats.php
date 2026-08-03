@@ -56,7 +56,7 @@ class FinancialKPIStats extends StatsOverviewWidget
             ->sum('amount');
 
         $outstandingReceivables = Receaveable::query()
-            ->whereNotIn('status', ['paid', 'cancelled'])
+            ->whereNotIn('status', ['paid', 'cancelled', 'draft'])
             ->sum('amount');
 
         $pendingVouchers = ExpenseVoucher::query()
