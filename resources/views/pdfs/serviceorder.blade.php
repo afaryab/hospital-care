@@ -11,7 +11,11 @@
         $treatingDoctorName .= " (PMDC# {$treatingDoctor->pmdc_number})";
     }
     $prescriptions = $tr?->prescriptions ?? [];
-    $drugRowCount = max(5, count($prescriptions));
+    // Blank forms keep a full set of writing lines for alignment when printed
+    // before any treatment is recorded; once real entries exist, only pad
+    // with one trailing blank row instead of filling out to the minimum.
+    $drugRowCount = count($prescriptions) > 0 ? count($prescriptions) + 1 : 5;
+    $treatmentGivenRowCount = $tr?->treatment_plan ? 2 : 7;
     $outcomeValue = $tr?->outcome?->value;
     $checked = fn (string $value) => $outcomeValue === $value ? 'X' : '';
 @endphp
@@ -435,7 +439,7 @@
                 <td class="bold" style="width:30%;">INVESTIGATION DONE:</td>
             </tr>
 
-            @for($i=0; $i<7; $i++)
+            @for($i=0; $i<$treatmentGivenRowCount; $i++)
                 <tr>
                     <td>{{ $i === 0 ? $tr?->treatment_plan : '' }}</td>
                     <td></td>

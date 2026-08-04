@@ -54,6 +54,7 @@ class IndDoctorController extends Controller
             'isIndDoctor' => $isIndDoctor,
             'wards' => $wards,
             'unassignedQueue' => $unassignedQueue->values(),
+            'searchPrefill' => ServiceOrder::latestSoShortPrefix(['IND'], 'IND'),
         ]);
     }
 

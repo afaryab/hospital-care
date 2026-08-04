@@ -57,6 +57,7 @@ interface Props {
     myQueueUrl: string; // GET — /api/{dept}/my-queue?types[]=...
     searchApiUrl: string; // POST — /api/{dept}/search
     searchTypes: string[]; // SO types to search, e.g. ['EMG']
+    searchPrefill?: string; // department's current so_short minus its last digit
     doctorScoped?: boolean; // whether queue is filtered by doctor_id (default true)
     showCallButton?: boolean; // departments like EMG don't call patients by turn (default true)
     flashError?: string;
@@ -109,6 +110,7 @@ export default function DeptQueueDashboard({
     myQueueUrl,
     searchApiUrl,
     searchTypes,
+    searchPrefill,
     doctorScoped = true,
     showCallButton = true,
     flashError,
@@ -116,7 +118,7 @@ export default function DeptQueueDashboard({
 }: Props) {
     const [orders, setOrders] = useState<DeptOrder[]>(initialOrders ?? []);
     const [stats, setStats] = useState(initialStats);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(searchPrefill ?? '');
     const [searchResults, setSearchResults] = useState<DeptOrder[] | null>(
         null,
     );
@@ -181,6 +183,13 @@ export default function DeptQueueDashboard({
         },
         [searchApiUrl, searchTypes],
     );
+
+    // Run the pre-filled search immediately on load so staff see the latest
+    // matching service orders straight away instead of an empty list.
+    useEffect(() => {
+        if (searchPrefill) handleSearch(searchPrefill);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const onSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         const v = e.target.value;

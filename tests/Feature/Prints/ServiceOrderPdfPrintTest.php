@@ -255,3 +255,67 @@ test('the drug chart uses each prescription\'s own given_at time instead of the 
     // doctor), so just confirm the drug's own given_at time is present.
     expect($html)->toContain(DateHelper::pdfFormat($givenAt, 'H:i'));
 });
+
+function rowCountBetween(string $html, string $startMarker, string $endMarker): int
+{
+    $start = strpos($html, $startMarker);
+    $end = strpos($html, $endMarker, $start);
+    $segment = substr($html, $start, $end - $start);
+
+    return substr_count($segment, '<tr>');
+}
+
+test('drug chart keeps a full set of blank writing lines when no prescriptions exist yet', function () {
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+
+    $html = view('pdfs.serviceorder', ['serviceOrder' => $serviceOrder->fresh(['patient', 'doctor']), 'patient' => $serviceOrder->patient])->render();
+
+    // 1 header row + 5 blank alignment rows.
+    expect(rowCountBetween($html, '<table class="drug-table">', '</table>'))->toBe(6);
+});
+
+test('drug chart only pads with one blank row once prescriptions are recorded', function () {
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    TreatmentRecord::create([
+        'service_order_id' => $serviceOrder->id,
+        'department_id' => $serviceOrder->service->service_department_id,
+        'treating_doctor_id' => User::factory()->create()->id,
+        'recorded_by' => User::factory()->create()->id,
+        'treated_at' => now(),
+        'prescriptions' => [
+            ['drug_name' => 'Aspirin', 'dose' => '300mg'],
+            ['drug_name' => 'Morphine', 'dose' => '2mg'],
+        ],
+    ]);
+
+    $html = view('pdfs.serviceorder', ['serviceOrder' => $serviceOrder->fresh(['patient', 'doctor', 'treatmentRecord']), 'patient' => $serviceOrder->patient])->render();
+
+    // 1 header row + 2 prescription rows + 1 trailing blank row.
+    expect(rowCountBetween($html, '<table class="drug-table">', '</table>'))->toBe(4);
+});
+
+test('treatment given section keeps a full set of blank writing lines when no treatment is recorded yet', function () {
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+
+    $html = view('pdfs.serviceorder', ['serviceOrder' => $serviceOrder->fresh(['patient', 'doctor']), 'patient' => $serviceOrder->patient])->render();
+
+    // 7 blank alignment rows (marker sits inside the header row, so it's excluded).
+    expect(rowCountBetween($html, 'TREATMENT GIVEN:', '</table>'))->toBe(7);
+});
+
+test('treatment given section only pads with one blank row once a treatment plan is recorded', function () {
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    TreatmentRecord::create([
+        'service_order_id' => $serviceOrder->id,
+        'department_id' => $serviceOrder->service->service_department_id,
+        'treating_doctor_id' => User::factory()->create()->id,
+        'recorded_by' => User::factory()->create()->id,
+        'treated_at' => now(),
+        'treatment_plan' => 'Aspirin, oxygen, cardiology referral',
+    ]);
+
+    $html = view('pdfs.serviceorder', ['serviceOrder' => $serviceOrder->fresh(['patient', 'doctor', 'treatmentRecord']), 'patient' => $serviceOrder->patient])->render();
+
+    // 1 content row + 1 trailing blank row (marker sits inside the header row, so it's excluded).
+    expect(rowCountBetween($html, 'TREATMENT GIVEN:', '</table>'))->toBe(2);
+});

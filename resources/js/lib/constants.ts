@@ -84,3 +84,34 @@ const TRIAGE_DOT_CLASSES: Record<string, string> = {
 export function triageDotClass(color?: string | null): string {
     return TRIAGE_DOT_CLASSES[color ?? ''] ?? 'bg-slate-400';
 }
+
+const TRIAGE_ACCENT_CLASSES: Record<string, string> = {
+    red: 'text-red-600',
+    yellow: 'text-yellow-500',
+    blue: 'text-blue-600',
+    sky: 'text-sky-500',
+    green: 'text-green-600',
+    black: 'text-slate-900',
+};
+
+/** Tailwind text-color class controlling a native radio input's accent color, keyed by triage color name. */
+export function triageAccentClass(color?: string | null): string {
+    return TRIAGE_ACCENT_CLASSES[color ?? ''] ?? 'text-slate-500';
+}
+
+const TRIAGE_SELECTED_CLASSES: Record<string, string> = {
+    red: 'border-red-300 bg-red-50 ring-1 ring-red-200',
+    yellow: 'border-yellow-300 bg-yellow-50 ring-1 ring-yellow-200',
+    blue: 'border-blue-300 bg-blue-50 ring-1 ring-blue-200',
+    sky: 'border-sky-300 bg-sky-50 ring-1 ring-sky-200',
+    green: 'border-green-300 bg-green-50 ring-1 ring-green-200',
+    black: 'border-slate-500 bg-slate-100 ring-1 ring-slate-400',
+};
+
+/** Tailwind classes for a triage radio pill's selected state, keyed by triage color name. */
+export function triageSelectedClass(color?: string | null): string {
+    return (
+        TRIAGE_SELECTED_CLASSES[color ?? ''] ??
+        'border-slate-400 bg-slate-100 ring-1 ring-slate-300'
+    );
+}

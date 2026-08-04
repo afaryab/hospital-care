@@ -45,6 +45,7 @@ class OpdDoctorController extends Controller
             'isOpdDoctor' => $isOpdDoctor,
             'recentOrders' => $recentOrders->values(),
             'todayStats' => $todayStats,
+            'searchPrefill' => ServiceOrder::latestSoShortPrefix(['OPD'], 'OPD'),
         ]);
     }
 

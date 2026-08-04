@@ -15,8 +15,14 @@ const breadcrumbs = [
 ];
 
 export default function EmgDashboard() {
-    const { isEmgDoctor, isDoctorScoped, recentOrders, todayStats, flash } =
-        usePage<any>().props;
+    const {
+        isEmgDoctor,
+        isDoctorScoped,
+        recentOrders,
+        todayStats,
+        searchPrefill,
+        flash,
+    } = usePage<any>().props;
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Emergency Portal" />
@@ -40,6 +46,7 @@ export default function EmgDashboard() {
                 myQueueUrl={apiEmgMyQueue().url}
                 searchApiUrl={apiEmgSearch().url}
                 searchTypes={['EMG']}
+                searchPrefill={searchPrefill}
                 doctorScoped={isDoctorScoped}
                 showCallButton={false}
                 flashError={(flash as any)?.searchError}

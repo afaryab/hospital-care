@@ -15,7 +15,8 @@ const breadcrumbs = [
 ];
 
 export default function DntDashboard() {
-    const { isDentist, recentOrders, todayStats, flash } = usePage<any>().props;
+    const { isDentist, recentOrders, todayStats, searchPrefill, flash } =
+        usePage<any>().props;
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dental Portal" />
@@ -39,6 +40,7 @@ export default function DntDashboard() {
                 myQueueUrl={apiDntMyQueue().url}
                 searchApiUrl={apiDntSearch().url}
                 searchTypes={['DNT']}
+                searchPrefill={searchPrefill}
                 flashError={(flash as any)?.searchError}
             />
         </AppLayout>

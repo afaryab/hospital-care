@@ -220,6 +220,8 @@ class DepartmentController extends Controller
      *   - "PS/{y}/{m}/{n}" (plain patient number) → patient.ps_number
      *   - starts with "SO" → so_number
      *   - starts with "TR" → transaction number, resolved to its service order(s)
+     *   - "{DEPT}/{digits}" (e.g. "EMG/0000133" — the dashboard's search-box
+     *     prefill, the department's current so_short minus its last digit) → so_short
      *   - all-digits → so_short
      *   - anything else → patient name
      *
@@ -256,13 +258,15 @@ class DepartmentController extends Controller
                 ->whereNotNull('service_order_id')
                 ->pluck('service_order_id');
             $query->whereIn('id', $serviceOrderIds);
+        } elseif (preg_match('/^[A-Za-z]+\/\d+$/', $q)) {
+            $query->where('so_short', 'like', "{$q}%");
         } elseif (ctype_digit($q)) {
             $query->where('so_short', 'like', "{$q}%");
         } else {
             $query->whereHas('patient', fn ($pq) => $pq->where('name', 'like', "%{$q}%"));
         }
 
-        $results = $query->latest('id')->limit(15)->get();
+        $results = $query->latest('id')->limit(20)->get();
 
         return response()->json(['data' => $results->values()]);
     }

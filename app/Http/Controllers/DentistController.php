@@ -43,6 +43,7 @@ class DentistController extends Controller
             'isDentist' => $isDentist,
             'recentOrders' => $recentOrders->values(),
             'todayStats' => $todayStats,
+            'searchPrefill' => ServiceOrder::latestSoShortPrefix(['DNT'], 'DNT'),
         ]);
     }
 
