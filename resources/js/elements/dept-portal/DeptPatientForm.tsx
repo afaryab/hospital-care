@@ -3,13 +3,7 @@ import DentalChart, {
 } from '@/components/ui/dental-chart';
 import DrugPicker from '@/components/ui/drug-picker';
 import Icd10Picker from '@/components/ui/icd10-picker';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { RadioInput } from '@/components/ui/input-radio';
 import TreatmentAttachments, {
     type TreatmentAttachmentData,
 } from '@/components/ui/treatment-attachments';
@@ -19,8 +13,10 @@ import {
 } from '@/elements/dept-portal/DischargeDialog';
 import {
     formatPatientAge,
+    triageAccentClass,
     triageBadgeClass,
     triageDotClass,
+    triageSelectedClass,
 } from '@/lib/constants';
 import { printServiceorder } from '@/routes';
 import { router } from '@inertiajs/react';
@@ -919,82 +915,76 @@ export default function DeptPatientForm({
                         >
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 {showTriage && (
-                                    <div>
-                                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                                    <div className="sm:col-span-2">
+                                        <label className="mb-1.5 block text-xs font-medium text-slate-500">
                                             Triage Level{' '}
                                             <span className="text-red-500">
                                                 *
                                             </span>
                                         </label>
-                                        <Select
-                                            disabled={isFinalized}
-                                            value={
-                                                triageId ? String(triageId) : ''
-                                            }
-                                            onValueChange={(value) => {
-                                                const newId = value
-                                                    ? Number(value)
-                                                    : null;
-                                                const newTriage = triages.find(
-                                                    (t) => t.id === newId,
-                                                );
-                                                if (
-                                                    newTriage?.color === 'black'
-                                                ) {
-                                                    setPendingBlackTriageId(
-                                                        newId,
-                                                    );
-                                                    setDeathConfirmOpen(true);
-                                                } else {
-                                                    setTriageId(newId);
-                                                }
-                                            }}
+                                        <div
+                                            role="radiogroup"
+                                            aria-label="Triage Level"
+                                            className="flex flex-wrap gap-2"
                                         >
-                                            <SelectTrigger className="w-full">
-                                                <SelectValue placeholder="Select triage level…" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {triages.map((t) => (
-                                                    <SelectItem
+                                            {triages.map((t) => {
+                                                const selected =
+                                                    triageId === t.id;
+                                                return (
+                                                    <label
                                                         key={t.id}
-                                                        value={String(t.id)}
+                                                        className={clsx(
+                                                            'flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+                                                            isFinalized
+                                                                ? 'cursor-not-allowed opacity-50'
+                                                                : 'cursor-pointer hover:bg-slate-50',
+                                                            selected
+                                                                ? triageSelectedClass(
+                                                                      t.color,
+                                                                  )
+                                                                : 'border-slate-200 bg-white',
+                                                        )}
                                                     >
-                                                        <span className="flex items-center gap-2">
-                                                            <span
-                                                                className={clsx(
-                                                                    'h-2.5 w-2.5 shrink-0 rounded-full',
-                                                                    triageDotClass(
-                                                                        t.color,
-                                                                    ),
-                                                                )}
-                                                            />
-                                                            {t.name}
-                                                        </span>
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        {triageId && (
-                                            <span
-                                                className={clsx(
-                                                    'mt-1.5 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ring-1',
-                                                    triageBadgeClass(
-                                                        triages.find(
-                                                            (t) =>
-                                                                t.id ===
-                                                                triageId,
-                                                        )?.color,
-                                                    ),
-                                                )}
-                                            >
-                                                {
-                                                    triages.find(
-                                                        (t) =>
-                                                            t.id === triageId,
-                                                    )?.name
-                                                }
-                                            </span>
-                                        )}
+                                                        <RadioInput
+                                                            name="triage_level"
+                                                            disabled={
+                                                                isFinalized
+                                                            }
+                                                            checked={selected}
+                                                            className={triageAccentClass(
+                                                                t.color,
+                                                            )}
+                                                            onChange={() => {
+                                                                if (
+                                                                    t.color ===
+                                                                    'black'
+                                                                ) {
+                                                                    setPendingBlackTriageId(
+                                                                        t.id,
+                                                                    );
+                                                                    setDeathConfirmOpen(
+                                                                        true,
+                                                                    );
+                                                                } else {
+                                                                    setTriageId(
+                                                                        t.id,
+                                                                    );
+                                                                }
+                                                            }}
+                                                        />
+                                                        <span
+                                                            className={clsx(
+                                                                'h-2.5 w-2.5 shrink-0 rounded-full',
+                                                                triageDotClass(
+                                                                    t.color,
+                                                                ),
+                                                            )}
+                                                        />
+                                                        {t.name}
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
                                 {requireTreatmentTime && (

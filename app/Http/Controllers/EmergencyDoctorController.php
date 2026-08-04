@@ -51,6 +51,7 @@ class EmergencyDoctorController extends Controller
             'isDoctorScoped' => $isEmgDoctor,
             'recentOrders' => $recentOrders->values(),
             'todayStats' => $todayStats,
+            'searchPrefill' => ServiceOrder::latestSoShortPrefix(['EMG'], 'EMG'),
         ]);
     }
 

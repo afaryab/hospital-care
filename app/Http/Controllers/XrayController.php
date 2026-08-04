@@ -43,6 +43,7 @@ class XrayController extends Controller
             'isXrayTech' => $isXrayTech,
             'recentOrders' => $recentOrders->values(),
             'todayStats' => $todayStats,
+            'searchPrefill' => ServiceOrder::latestSoShortPrefix(['XRAY', 'RAD'], 'XRAY'),
         ]);
     }
 

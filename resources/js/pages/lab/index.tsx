@@ -15,7 +15,8 @@ const breadcrumbs = [
 ];
 
 export default function LabDashboard() {
-    const { hasAccess, recentOrders, todayStats, flash } = usePage<any>().props;
+    const { hasAccess, recentOrders, todayStats, searchPrefill, flash } =
+        usePage<any>().props;
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Laboratory Portal" />
@@ -39,6 +40,7 @@ export default function LabDashboard() {
                 myQueueUrl={apiLabMyQueue().url}
                 searchApiUrl={apiLabSearch().url}
                 searchTypes={['PTH']}
+                searchPrefill={searchPrefill}
                 doctorScoped={false}
                 flashError={(flash as any)?.searchError}
             />

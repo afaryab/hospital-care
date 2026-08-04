@@ -15,7 +15,7 @@ const breadcrumbs = [
 ];
 
 export default function UltDashboard() {
-    const { isUltDoctor, recentOrders, todayStats, flash } =
+    const { isUltDoctor, recentOrders, todayStats, searchPrefill, flash } =
         usePage<any>().props;
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -40,6 +40,7 @@ export default function UltDashboard() {
                 myQueueUrl={apiUltMyQueue().url}
                 searchApiUrl={apiUltSearch().url}
                 searchTypes={['ULT']}
+                searchPrefill={searchPrefill}
                 flashError={(flash as any)?.searchError}
             />
         </AppLayout>

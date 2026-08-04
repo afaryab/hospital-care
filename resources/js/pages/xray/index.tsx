@@ -15,7 +15,7 @@ const breadcrumbs = [
 ];
 
 export default function XrayDashboard() {
-    const { isXrayTech, recentOrders, todayStats, flash } =
+    const { isXrayTech, recentOrders, todayStats, searchPrefill, flash } =
         usePage<any>().props;
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -40,6 +40,7 @@ export default function XrayDashboard() {
                 myQueueUrl={apiXrayMyQueue().url}
                 searchApiUrl={apiXraySearch().url}
                 searchTypes={['XRAY', 'RAD']}
+                searchPrefill={searchPrefill}
                 flashError={(flash as any)?.searchError}
             />
         </AppLayout>

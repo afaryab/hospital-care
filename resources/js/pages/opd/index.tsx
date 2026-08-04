@@ -51,6 +51,7 @@ interface OpdDashboardProps {
         treated: number;
         total: number;
     };
+    searchPrefill: string;
     [key: string]: unknown;
 }
 
@@ -123,6 +124,7 @@ export default function OpdDashboard() {
         isOpdDoctor,
         recentOrders: initialOrders,
         todayStats: initialStats,
+        searchPrefill,
         flash,
     } = usePage<OpdDashboardProps>().props;
 
@@ -130,7 +132,7 @@ export default function OpdDashboard() {
         initialOrders ?? [],
     );
     const [stats, setStats] = useState(initialStats);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(searchPrefill ?? '');
     const [searchResults, setSearchResults] = useState<{
         exact: OpdServiceOrder[];
         possible: OpdServiceOrder[];
@@ -198,6 +200,13 @@ export default function OpdDashboard() {
         } finally {
             setSearching(false);
         }
+    }, []);
+
+    // Run the pre-filled search immediately on load so staff see the latest
+    // matching service orders straight away instead of an empty list.
+    useEffect(() => {
+        if (searchPrefill) handleSearch(searchPrefill);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const onSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {

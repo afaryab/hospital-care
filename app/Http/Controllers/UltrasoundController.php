@@ -43,6 +43,7 @@ class UltrasoundController extends Controller
             'isUltDoctor' => $isUltDoctor,
             'recentOrders' => $recentOrders->values(),
             'todayStats' => $todayStats,
+            'searchPrefill' => ServiceOrder::latestSoShortPrefix(['ULT'], 'ULT'),
         ]);
     }
 

@@ -88,6 +88,7 @@ interface IndDashboardProps {
     isIndDoctor: boolean;
     wards: WardData[];
     unassignedQueue: IndServiceOrder[];
+    searchPrefill: string;
     [key: string]: unknown;
 }
 
@@ -159,11 +160,12 @@ export default function IndDashboard() {
         isIndDoctor,
         wards: initialWards,
         unassignedQueue: initialQueue,
+        searchPrefill,
     } = usePage<IndDashboardProps>().props;
 
     const [wards, setWards] = useState<WardData[]>(initialWards ?? []);
     const [queue, setQueue] = useState<IndServiceOrder[]>(initialQueue ?? []);
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, setSearchQuery] = useState(searchPrefill ?? '');
     const [searchResults, setSearchResults] = useState<{
         exact: IndServiceOrder[];
         possible: IndServiceOrder[];
@@ -253,6 +255,13 @@ export default function IndDashboard() {
         } finally {
             setSearching(false);
         }
+    }, []);
+
+    // Run the pre-filled search immediately on load so staff see the latest
+    // matching service orders straight away instead of an empty list.
+    useEffect(() => {
+        if (searchPrefill) handleSearch(searchPrefill);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const onSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {

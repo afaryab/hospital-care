@@ -306,6 +306,24 @@ class ServiceOrder extends Model
         });
     }
 
+    /**
+     * The department's current so_short with its last digit stripped, e.g.
+     * "EMG/0000133" for latest so_short "EMG/00001334" — used to pre-fill a
+     * department dashboard's search box so staff only need to type the
+     * digit(s) that differ from the most recent order they already know.
+     * Falls back to a zero-based prefix when the department has no orders yet.
+     */
+    public static function latestSoShortPrefix(array $types, string $fallbackType): string
+    {
+        $latest = self::whereIn('type', $types)->latest('id')->value('so_short');
+
+        if (empty($latest)) {
+            return "{$fallbackType}/0000000";
+        }
+
+        return strlen($latest) > 1 ? substr($latest, 0, -1) : $latest;
+    }
+
     public function expenseVouchers(): BelongsToMany
     {
         return $this->belongsToMany(ExpenseVoucher::class, 'expense_voucher_service_order')

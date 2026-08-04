@@ -44,6 +44,7 @@ class LabController extends Controller
             'hasAccess' => $hasAccess,
             'recentOrders' => $recentOrders->values(),
             'todayStats' => $todayStats,
+            'searchPrefill' => ServiceOrder::latestSoShortPrefix(['PTH'], 'PTH'),
         ]);
     }
 

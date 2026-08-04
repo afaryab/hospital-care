@@ -27,7 +27,7 @@ class OpdController extends Controller
         ]);
 
         $query = trim($filters['q']);
-        $limit = $filters['limit'] ?? 10;
+        $limit = $filters['limit'] ?? 20;
 
         $exact = collect();
         $possible = collect();
@@ -66,12 +66,15 @@ class OpdController extends Controller
             }
         }
 
-        // Partial SO number match
+        // Partial SO number / so_short match — so_short is what the dashboard
+        // pre-fills the search box with (department prefix + running
+        // sequence minus the last digit), so staff only need to type the end.
         if ($exact->isEmpty() && $possible->isEmpty()) {
             $possible = ServiceOrder::query()
                 ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name'])
                 ->where('type', 'OPD')
-                ->where('so_number', 'like', "%{$query}%")
+                ->where(fn ($q) => $q->where('so_number', 'like', "%{$query}%")
+                    ->orWhere('so_short', 'like', "{$query}%"))
                 ->latest('created_at')
                 ->limit($limit)
                 ->get();
