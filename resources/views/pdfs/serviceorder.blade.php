@@ -270,9 +270,6 @@
                             <td class="kv-label">Address:</td>
                             <td class="kv-line w-long">{{ $patient->address ?? '' }}</td>
                         </tr>
-                        <tr>
-                            <td  class="kv-line w-long" colspan="2" ></td>
-                        </tr>
                     </table>
                 </td>
                 <td style="width:50%; vertical-align:top;">
@@ -299,9 +296,6 @@
                         <tr>
                             <td class="kv-label">Complain:</td>
                             <td class="kv-line w-long">{{ $tr?->chief_complaint }}</td>
-                        </tr>
-                        <tr>
-                            <td  class="kv-line w-long" colspan="2" ></td>
                         </tr>
                     </table>
                 </td>
