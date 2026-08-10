@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enum\TreatmentOutcome;
 use App\Http\Controllers\Controller;
 use App\Models\Bed;
 use App\Models\BedAssignment;
 use App\Models\Icd10Code;
 use App\Models\Patient;
+use App\Models\ReferralCertificate;
 use App\Models\ServiceOrder;
 use App\Models\TreatmentRecord;
 use App\Models\VitalSign;
@@ -187,6 +189,7 @@ class IndController extends Controller
             'follow_up_date' => ['nullable', 'date'],
             'outcome' => ['nullable', 'string', 'max:50'],
             'referral_to' => ['nullable', 'string', 'max:255'],
+            'referral_notes' => ['nullable', 'string', 'max:10000'],
             'department_specific_data' => ['nullable', 'array'],
             'finalize' => ['nullable', 'boolean'],
             'vitals' => ['nullable', 'array'],
@@ -204,6 +207,8 @@ class IndController extends Controller
         unset($data['finalize']);
         $vitals = $data['vitals'] ?? null;
         unset($data['vitals']);
+        $referralNotes = $data['referral_notes'] ?? null;
+        unset($data['referral_notes']);
 
         // Auto-sync diagnosis_code from the ICD-10 FK when provided.
         if (! empty($data['icd10_code_id'])) {
@@ -234,6 +239,12 @@ class IndController extends Controller
                 'is_finalized' => $finalize,
                 'finalized_at' => $finalize ? Carbon::now() : null,
                 ...$data,
+            ]);
+        }
+
+        if ($treatmentRecord->outcome === TreatmentOutcome::Referred && $referralNotes !== null) {
+            $serviceOrder->referralCertificate?->update([
+                'notes' => ReferralCertificate::sanitizeNotes($referralNotes),
             ]);
         }
 

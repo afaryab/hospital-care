@@ -9,6 +9,7 @@ use App\Http\Controllers\OpdDoctorController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
 use App\Http\Controllers\Prints\ServiceOrderPdfPrintController;
 use App\Http\Controllers\Prints\TransactionPdfPrintController;
+use App\Http\Controllers\PublicCertificateController;
 use App\Http\Controllers\Reports\BankPaymentReportController;
 use App\Http\Controllers\Reports\GenericReportPdfController;
 use App\Http\Controllers\Reports\IncomeCashFlowReportController;
@@ -211,5 +212,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
 /**
  * Print routes (no auth required for printing)
  */
+
+// Public QR-code verification pages for Death/Birth certificates — gated by
+// an unguessable token, not authentication. Short path on purpose: keeps the
+// printed QR code small and easy to scan.
+Route::get('v/dc/{token}', [PublicCertificateController::class, 'deathCertificate'])
+    ->name('public-death-certificate');
+Route::get('v/bc/{token}', [PublicCertificateController::class, 'birthCertificate'])
+    ->name('public-birth-certificate');
 
 require __DIR__.'/settings.php';

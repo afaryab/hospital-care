@@ -25,6 +25,9 @@ class ServiceOrderPdfPrintController extends Controller
             'treatmentRecord.attachments',
             'treatmentRecord.treatingDoctor',
             'treatmentRecord.vitalSigns',
+            'deathCertificate',
+            'referralCertificate',
+            'birthCertificate.attendingDoctor',
         ])->findOrFail($id);
 
         $patient = $serviceOrder->patient;
@@ -47,6 +50,43 @@ class ServiceOrderPdfPrintController extends Controller
             'patient' => $patient,
             'pastDiagnoses' => $pastDiagnoses,
         ])->render();
+
+        $extraPages = '';
+
+        if ($certificate = $serviceOrder->deathCertificate) {
+            $extraPages .= view('pdfs.death-certificate', [
+                'serviceOrder' => $serviceOrder,
+                'patient' => $patient,
+                'certificate' => $certificate,
+            ])->render();
+        }
+
+        if ($referral = $serviceOrder->referralCertificate) {
+            $extraPages .= view('pdfs.referral-certificate', [
+                'serviceOrder' => $serviceOrder,
+                'patient' => $patient,
+                'referral' => $referral,
+            ])->render();
+        }
+
+        // Birth certificates are admin-authored and only print once reviewed
+        // and locked — an unlocked draft never appears on the SO printout.
+        if (($birth = $serviceOrder->birthCertificate) && $birth->is_locked) {
+            $extraPages .= view('pdfs.birth-certificate', [
+                'serviceOrder' => $serviceOrder,
+                'patient' => $patient,
+                'certificate' => $birth,
+            ])->render();
+        }
+
+        if ($extraPages !== '') {
+            // The base templates are full HTML documents; splice the extra
+            // pages in before the closing </body> so dompdf parses one
+            // document instead of concatenated, technically-invalid markup.
+            $html = str_contains($html, '</body>')
+                ? str_replace('</body>', $extraPages.'</body>', $html)
+                : $html.$extraPages;
+        }
 
         $fileName = 'ED-Clinical-Performa-'.($serviceOrder->id ?? Str::uuid()).'.pdf';
 

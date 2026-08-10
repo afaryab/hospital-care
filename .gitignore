@@ -29,6 +29,13 @@ yarn-error.log
 supervisord.log
 supervisord.log
 .pnpm-store
+# Auto-written by newer local pnpm versions (e.g. v11) when a build script is
+# ignored, even though the project isn't a workspace and Docker/CI's pinned
+# pnpm@9 doesn't need it — approval lives in package.json's
+# pnpm.onlyBuiltDependencies instead. Committing this file breaks the Docker
+# build (`packages field missing or empty`), since it gets copied in before
+# `pnpm run build` runs.
+/pnpm-workspace.yaml
 /storybook-static
 public/vendor/blade-health-icons/
 

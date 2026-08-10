@@ -370,6 +370,21 @@ class ServiceOrder extends Model
         return $this->hasOne(TreatmentRecord::class);
     }
 
+    public function deathCertificate(): HasOne
+    {
+        return $this->hasOne(DeathCertificate::class);
+    }
+
+    public function referralCertificate(): HasOne
+    {
+        return $this->hasOne(ReferralCertificate::class);
+    }
+
+    public function birthCertificate(): HasOne
+    {
+        return $this->hasOne(BirthCertificate::class);
+    }
+
     public function versions(): HasMany
     {
         return $this->hasMany(ServiceOrderVersion::class)->latest('changed_at');

@@ -45,8 +45,14 @@ import {
     Wind,
     X,
 } from 'lucide-react';
-import { useCallback, useState } from 'react';
+import { lazy, Suspense, useCallback, useState } from 'react';
 import { toast } from 'sonner';
+
+// CKEditor5 adds ~700KB to this chunk — lazy-load it so departments/visits
+// that never hit outcome === 'referred' don't pay that cost upfront.
+const ReferralNotesEditor = lazy(
+    () => import('@/elements/dept-portal/ReferralNotesEditor'),
+);
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -368,6 +374,7 @@ export default function DeptPatientForm({
         existing?.outcome_notes ?? '',
     );
     const [referralTo, setReferralTo] = useState(existing?.referral_to ?? '');
+    const [referralNotes, setReferralNotes] = useState('');
     const [examFindings, setExamFindings] = useState<Record<string, string>>(
         existing?.examination_findings ?? {},
     );
@@ -441,6 +448,11 @@ export default function DeptPatientForm({
                 showFollowUp || requireDischargeDetails
                     ? referralTo || null
                     : null,
+            referral_notes:
+                (showFollowUp || requireDischargeDetails) &&
+                outcome === 'referred'
+                    ? referralNotes || null
+                    : null,
             vitals:
                 showVitals && Object.values(vitals).some((v) => v !== '')
                     ? vitals
@@ -472,6 +484,7 @@ export default function DeptPatientForm({
             outcomeAt,
             outcomeNotes,
             referralTo,
+            referralNotes,
             vitals,
             dentalChart,
             triageId,
@@ -1664,6 +1677,40 @@ export default function DeptPatientForm({
                                     </>
                                 )}
                             </div>
+                            {!requireDischargeDetails &&
+                                outcome === 'referred' && (
+                                    <div className="mt-3">
+                                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                                            Referral Letter Notes
+                                        </label>
+                                        <Suspense
+                                            fallback={
+                                                <div className="flex h-[180px] items-center justify-center rounded-lg border border-slate-200 text-xs text-slate-400">
+                                                    Loading editor…
+                                                </div>
+                                            }
+                                        >
+                                            <ReferralNotesEditor
+                                                value={referralNotes}
+                                                onChange={setReferralNotes}
+                                                disabled={isFinalized}
+                                            />
+                                        </Suspense>
+                                        <p className="mt-1 text-[11px] text-slate-400">
+                                            Type{' '}
+                                            <span className="font-mono">#</span>{' '}
+                                            for a drug,{' '}
+                                            <span className="font-mono">@</span>{' '}
+                                            for a doctor,{' '}
+                                            <span className="font-mono">
+                                                &amp;
+                                            </span>{' '}
+                                            for an ICD-10 code, or{' '}
+                                            <span className="font-mono">!</span>{' '}
+                                            for a closing/transaction number.
+                                        </p>
+                                    </div>
+                                )}
                             {requireDischargeDetails && outcome && (
                                 <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                                     Disposition recorded via Discharge:{' '}

@@ -2,8 +2,12 @@
 
 use App\Enum\ServiceOrderTemplate;
 use App\Helpers\DateHelper;
+use App\Helpers\QrCodeHelper;
+use App\Models\BirthCertificate;
+use App\Models\DeathCertificate;
 use App\Models\EmergencyDoctor;
 use App\Models\Patient;
+use App\Models\ReferralCertificate;
 use App\Models\Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceOrder;
@@ -425,4 +429,133 @@ test('treatment given section only pads with one blank row once a treatment plan
 
     // 1 content row + 1 trailing blank row (marker sits inside the header row, so it's excluded).
     expect(rowCountBetween($html, 'TREATMENT GIVEN:', '</table>'))->toBe(2);
+});
+
+test('a death certificate is appended as extra pages when one exists for the service order', function () {
+    actingAs(User::factory()->create());
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    DeathCertificate::factory()->create(['service_order_id' => $serviceOrder->id]);
+
+    Pdf::shouldReceive('loadHTML')
+        ->once()
+        ->withArgs(fn (string $html) => str_contains($html, 'MEDICAL CERTIFICATE OF CAUSE OF DEATH'))
+        ->andReturnSelf();
+    Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('a referral certificate is appended as extra pages when one exists for the service order', function () {
+    actingAs(User::factory()->create());
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    ReferralCertificate::factory()->create([
+        'service_order_id' => $serviceOrder->id,
+        'notes' => '<p>Stable for transfer.</p>',
+    ]);
+
+    Pdf::shouldReceive('loadHTML')
+        ->once()
+        ->withArgs(fn (string $html) => str_contains($html, 'REFERRAL CERTIFICATE') && str_contains($html, 'Stable for transfer'))
+        ->andReturnSelf();
+    Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('no extra certificate pages are appended when none exist for the service order', function () {
+    actingAs(User::factory()->create());
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+
+    Pdf::shouldReceive('loadHTML')
+        ->once()
+        ->withArgs(fn (string $html) => ! str_contains($html, 'MEDICAL CERTIFICATE OF CAUSE OF DEATH')
+            && ! str_contains($html, 'REFERRAL CERTIFICATE')
+            && ! str_contains($html, 'BIRTH CERTIFICATE'))
+        ->andReturnSelf();
+    Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('a locked birth certificate is appended as extra pages when printing the service order', function () {
+    actingAs(User::factory()->create());
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'IND']);
+    BirthCertificate::factory()->locked()->create([
+        'service_order_id' => $serviceOrder->id,
+        'child_name' => 'Baby Ahmed',
+    ]);
+
+    Pdf::shouldReceive('loadHTML')
+        ->once()
+        ->withArgs(fn (string $html) => str_contains($html, 'BIRTH CERTIFICATE') && str_contains($html, 'Baby Ahmed'))
+        ->andReturnSelf();
+    Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('an unlocked birth certificate is never appended when printing the service order', function () {
+    actingAs(User::factory()->create());
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'IND']);
+    BirthCertificate::factory()->create([
+        'service_order_id' => $serviceOrder->id,
+        'child_name' => 'Baby Ahmed',
+        'is_locked' => false,
+    ]);
+
+    Pdf::shouldReceive('loadHTML')
+        ->once()
+        ->withArgs(fn (string $html) => ! str_contains($html, 'BIRTH CERTIFICATE'))
+        ->andReturnSelf();
+    Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('the appended death certificate page embeds a scannable QR verification code', function () {
+    actingAs(User::factory()->create());
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $certificate = DeathCertificate::factory()->create(['service_order_id' => $serviceOrder->id]);
+
+    $expectedUrl = QrCodeHelper::verificationUrl('v/dc/'.$certificate->verification_token);
+    $expectedDataUri = QrCodeHelper::dataUri($expectedUrl, 48);
+
+    Pdf::shouldReceive('loadHTML')
+        ->once()
+        ->withArgs(fn (string $html) => str_contains($html, $expectedDataUri))
+        ->andReturnSelf();
+    Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('the appended birth certificate page embeds a scannable QR verification code', function () {
+    actingAs(User::factory()->create());
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'IND']);
+    $certificate = BirthCertificate::factory()->locked()->create(['service_order_id' => $serviceOrder->id]);
+
+    $expectedUrl = QrCodeHelper::verificationUrl('v/bc/'.$certificate->verification_token);
+    $expectedDataUri = QrCodeHelper::dataUri($expectedUrl, 48);
+
+    Pdf::shouldReceive('loadHTML')
+        ->once()
+        ->withArgs(fn (string $html) => str_contains($html, $expectedDataUri))
+        ->andReturnSelf();
+    Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
 });
