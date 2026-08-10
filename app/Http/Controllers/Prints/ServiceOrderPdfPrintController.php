@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Prints;
 
+use App\Enum\ServiceOrderTemplate;
 use App\Http\Controllers\Controller;
 use App\Models\ServiceOrder;
 use App\Models\TreatmentRecord;
@@ -19,7 +20,7 @@ class ServiceOrderPdfPrintController extends Controller
         $serviceOrder = ServiceOrder::with([
             'patient',
             'doctor',
-            'service.department:id,name',
+            'service.department:id,name,service_order_template',
             'treatmentRecord.triage',
             'treatmentRecord.attachments',
             'treatmentRecord.treatingDoctor',
@@ -39,7 +40,9 @@ class ServiceOrderPdfPrintController extends Controller
             ->limit(6)
             ->get(['id', 'service_order_id', 'diagnosis_code', 'icd10_code_id', 'treated_at']);
 
-        $html = view('pdfs.serviceorder', [
+        $template = $serviceOrder->service?->department?->service_order_template ?? ServiceOrderTemplate::default();
+
+        $html = view($template->view(), [
             'serviceOrder' => $serviceOrder,
             'patient' => $patient,
             'pastDiagnoses' => $pastDiagnoses,

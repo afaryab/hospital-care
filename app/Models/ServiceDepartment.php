@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enum\ServiceOrderTemplate;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,10 +17,12 @@ class ServiceDepartment extends Model
         'slug',
         'image',
         'have_composit_services',
+        'service_order_template',
     ];
 
     protected $casts = [
         'have_composit_services' => 'boolean',
+        'service_order_template' => ServiceOrderTemplate::class,
     ];
 
     public function services()
