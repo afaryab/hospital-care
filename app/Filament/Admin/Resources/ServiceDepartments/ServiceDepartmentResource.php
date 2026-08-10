@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources\ServiceDepartments;
 
+use App\Enum\ServiceOrderTemplate;
 use App\Filament\Admin\Resources\ServiceDepartments\Pages\ManageServiceDepartments;
 use App\Models\ServiceDepartment;
 use BackedEnum;
@@ -10,6 +11,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -44,6 +46,14 @@ class ServiceDepartmentResource extends Resource
                 TextInput::make('have_composit_services')
                     ->required()
                     ->numeric(),
+                Select::make('service_order_template')
+                    ->label('Service Order Print Template')
+                    ->helperText('Template used when staff print a service order for this department. Leave empty to use the default detailed template.')
+                    ->native(false)
+                    ->options(collect(ServiceOrderTemplate::cases())
+                        ->mapWithKeys(fn (ServiceOrderTemplate $template) => [$template->value => $template->label()])
+                        ->toArray())
+                    ->placeholder('Default ('.ServiceOrderTemplate::default()->label().')'),
             ]);
     }
 
@@ -70,6 +80,10 @@ class ServiceDepartmentResource extends Resource
                 TextColumn::make('have_composit_services')
                     ->numeric()
                     ->sortable(),
+                TextColumn::make('service_order_template')
+                    ->label('Print Template')
+                    ->formatStateUsing(fn (?ServiceOrderTemplate $state) => $state?->label() ?? 'Default ('.ServiceOrderTemplate::default()->label().')')
+                    ->badge(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

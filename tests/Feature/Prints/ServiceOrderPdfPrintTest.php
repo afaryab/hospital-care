@@ -1,5 +1,6 @@
 <?php
 
+use App\Enum\ServiceOrderTemplate;
 use App\Helpers\DateHelper;
 use App\Models\EmergencyDoctor;
 use App\Models\Patient;
@@ -10,6 +11,7 @@ use App\Models\TreatmentRecord;
 use App\Models\Triage;
 use App\Models\User;
 use App\Models\VitalSign;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -171,6 +173,111 @@ test('the PDF shows the service order\'s real department name, not a hardcoded o
 
     expect($html)->toContain('DENTAL DEPARTMENT')
         ->not->toContain('EMERGENCY DEPARTMENT');
+});
+
+test('the pdf falls back to the detailed 2-page template when the department has no print template configured', function () {
+    actingAs(User::factory()->create());
+
+    $department = ServiceDepartment::factory()->create(['service_order_template' => null]);
+    $service = Service::factory()->create(['service_department_id' => $department->id]);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'service_id' => $service->id]);
+
+    Pdf::shouldReceive('loadHTML')
+        ->once()
+        ->withArgs(fn (string $html) => str_contains($html, 'Page 1/2') && str_contains($html, 'CLINICAL PERFORMA SO'))
+        ->andReturnSelf();
+    Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('the pdf uses the compact 1-page template when configured on the department', function () {
+    actingAs(User::factory()->create());
+
+    $department = ServiceDepartment::factory()->create([
+        'service_order_template' => ServiceOrderTemplate::EmergencyTriageCompact,
+    ]);
+    $service = Service::factory()->create(['service_department_id' => $department->id]);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'service_id' => $service->id]);
+
+    Pdf::shouldReceive('loadHTML')
+        ->once()
+        ->withArgs(fn (string $html) => str_contains($html, 'TRIAGE NOTE SO') && ! str_contains($html, 'Page 1/2'))
+        ->andReturnSelf();
+    Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('the compact triage pdf includes patient info, triage category, and prescriptions', function () {
+    $patient = Patient::factory()->create(['guardian' => 'Muhammad Ali', 'relation' => 'S/o']);
+    $doctor = User::factory()->create(['name' => 'Dr. Sara Ahmed']);
+    $serviceOrder = ServiceOrder::factory()->create([
+        'type' => 'EMG',
+        'patient_id' => $patient->id,
+        'doctor_id' => $doctor->id,
+    ]);
+    $triage = Triage::factory()->create(['name' => 'Priority Custom']);
+
+    TreatmentRecord::create([
+        'service_order_id' => $serviceOrder->id,
+        'department_id' => $serviceOrder->service->service_department_id,
+        'treating_doctor_id' => $doctor->id,
+        'recorded_by' => $doctor->id,
+        'treated_at' => now(),
+        'chief_complaint' => 'Severe chest pain radiating to left arm',
+        'triage_id' => $triage->id,
+        'prescriptions' => [
+            ['drug_name' => 'Aspirin', 'dose' => '300mg', 'frequency' => 'stat', 'route' => 'PO'],
+        ],
+    ]);
+
+    $serviceOrder = $serviceOrder->fresh([
+        'patient', 'doctor', 'treatmentRecord.triage', 'treatmentRecord.treatingDoctor', 'treatmentRecord.vitalSigns',
+    ]);
+
+    $html = view('pdfs.serviceorder-triage-compact', ['serviceOrder' => $serviceOrder, 'patient' => $serviceOrder->patient])->render();
+
+    expect($html)->toContain('Severe chest pain radiating to left arm')
+        ->toContain('Priority Custom')
+        ->toContain('S/o Muhammad Ali')
+        ->toContain('Aspirin 300mg stat PO')
+        ->not->toContain('Page 1/2');
+});
+
+test('the compact triage pdf shows the real department name, not a hardcoded one', function () {
+    $department = ServiceDepartment::factory()->create(['name' => 'Dental']);
+    $service = Service::factory()->create(['service_department_id' => $department->id]);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'DNT', 'service_id' => $service->id]);
+
+    $serviceOrder = $serviceOrder->fresh(['patient', 'doctor', 'service.department']);
+    $html = view('pdfs.serviceorder-triage-compact', ['serviceOrder' => $serviceOrder, 'patient' => $serviceOrder->patient])->render();
+
+    expect($html)->toContain('DENTAL DEPARTMENT')
+        ->not->toContain('EMERGENCY DEPARTMENT');
+});
+
+test('the compact triage pdf ticks the referred disposition checkbox', function () {
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    TreatmentRecord::create([
+        'service_order_id' => $serviceOrder->id,
+        'department_id' => $serviceOrder->service->service_department_id,
+        'treating_doctor_id' => User::factory()->create()->id,
+        'recorded_by' => User::factory()->create()->id,
+        'treated_at' => now(),
+        'outcome' => 'referred',
+        'outcome_at' => '2026-07-27 16:00:00',
+        'referral_to' => 'City General Hospital',
+    ]);
+
+    $html = view('pdfs.serviceorder-triage-compact', ['serviceOrder' => $serviceOrder->fresh(['patient', 'doctor', 'treatmentRecord.treatingDoctor', 'treatmentRecord.vitalSigns']), 'patient' => $serviceOrder->patient])->render();
+
+    expect($html)->toContain('<span class="cb">X</span> REFERRED')
+        ->toContain('City General Hospital')
+        ->not->toContain('<span class="cb">X</span> DISCHARGED HOME')
+        ->not->toContain('<span class="cb">X</span> DIED IN ED');
 });
 
 test('discharged outcome ticks DISCHARGED HOME and no other disposition checkbox', function () {
