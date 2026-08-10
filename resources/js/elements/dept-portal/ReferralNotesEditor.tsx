@@ -1,4 +1,9 @@
-import { apiClosingsSearch, apiDrugsSearch, apiIcd10Codes, apiUsersSearch } from '@/routes';
+import {
+    apiClosingsSearch,
+    apiDrugsSearch,
+    apiIcd10Codes,
+    apiUsersSearch,
+} from '@/routes';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import {
     Bold,
@@ -78,7 +83,10 @@ async function doctorFeed(queryText: string): Promise<MentionItem[]> {
             seen.add(user.id);
             return true;
         })
-        .map((user: { name: string }) => ({ id: `@${user.name}`, label: user.name }));
+        .map((user: { name: string }) => ({
+            id: `@${user.name}`,
+            label: user.name,
+        }));
 }
 
 async function icdFeed(queryText: string): Promise<MentionItem[]> {
@@ -156,7 +164,15 @@ export default function ReferralNotesEditor({
                 onChange={(_event, editor) => onChange(editor.getData())}
                 config={{
                     licenseKey: 'GPL',
-                    plugins: [Essentials, Paragraph, Bold, Italic, Underline, List, Mention],
+                    plugins: [
+                        Essentials,
+                        Paragraph,
+                        Bold,
+                        Italic,
+                        Underline,
+                        List,
+                        Mention,
+                    ],
                     toolbar: [
                         'bold',
                         'italic',
@@ -169,10 +185,30 @@ export default function ReferralNotesEditor({
                     ],
                     mention: {
                         feeds: [
-                            { marker: '#', feed: drugFeed, itemRenderer: renderMentionItem, minimumCharacters: 1 },
-                            { marker: '@', feed: doctorFeed, itemRenderer: renderMentionItem, minimumCharacters: 1 },
-                            { marker: '&', feed: icdFeed, itemRenderer: renderMentionItem, minimumCharacters: 1 },
-                            { marker: '!', feed: closingFeed, itemRenderer: renderMentionItem, minimumCharacters: 1 },
+                            {
+                                marker: '#',
+                                feed: drugFeed,
+                                itemRenderer: renderMentionItem,
+                                minimumCharacters: 1,
+                            },
+                            {
+                                marker: '@',
+                                feed: doctorFeed,
+                                itemRenderer: renderMentionItem,
+                                minimumCharacters: 1,
+                            },
+                            {
+                                marker: '&',
+                                feed: icdFeed,
+                                itemRenderer: renderMentionItem,
+                                minimumCharacters: 1,
+                            },
+                            {
+                                marker: '!',
+                                feed: closingFeed,
+                                itemRenderer: renderMentionItem,
+                                minimumCharacters: 1,
+                            },
                         ],
                     },
                 }}

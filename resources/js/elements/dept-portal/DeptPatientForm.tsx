@@ -1677,32 +1677,40 @@ export default function DeptPatientForm({
                                     </>
                                 )}
                             </div>
-                            {!requireDischargeDetails && outcome === 'referred' && (
-                                <div className="mt-3">
-                                    <label className="mb-1 block text-xs font-medium text-slate-500">
-                                        Referral Letter Notes
-                                    </label>
-                                    <Suspense
-                                        fallback={
-                                            <div className="flex h-[180px] items-center justify-center rounded-lg border border-slate-200 text-xs text-slate-400">
-                                                Loading editor…
-                                            </div>
-                                        }
-                                    >
-                                        <ReferralNotesEditor
-                                            value={referralNotes}
-                                            onChange={setReferralNotes}
-                                            disabled={isFinalized}
-                                        />
-                                    </Suspense>
-                                    <p className="mt-1 text-[11px] text-slate-400">
-                                        Type <span className="font-mono">#</span> for a drug,{' '}
-                                        <span className="font-mono">@</span> for a doctor,{' '}
-                                        <span className="font-mono">&amp;</span> for an ICD-10 code, or{' '}
-                                        <span className="font-mono">!</span> for a closing/transaction number.
-                                    </p>
-                                </div>
-                            )}
+                            {!requireDischargeDetails &&
+                                outcome === 'referred' && (
+                                    <div className="mt-3">
+                                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                                            Referral Letter Notes
+                                        </label>
+                                        <Suspense
+                                            fallback={
+                                                <div className="flex h-[180px] items-center justify-center rounded-lg border border-slate-200 text-xs text-slate-400">
+                                                    Loading editor…
+                                                </div>
+                                            }
+                                        >
+                                            <ReferralNotesEditor
+                                                value={referralNotes}
+                                                onChange={setReferralNotes}
+                                                disabled={isFinalized}
+                                            />
+                                        </Suspense>
+                                        <p className="mt-1 text-[11px] text-slate-400">
+                                            Type{' '}
+                                            <span className="font-mono">#</span>{' '}
+                                            for a drug,{' '}
+                                            <span className="font-mono">@</span>{' '}
+                                            for a doctor,{' '}
+                                            <span className="font-mono">
+                                                &amp;
+                                            </span>{' '}
+                                            for an ICD-10 code, or{' '}
+                                            <span className="font-mono">!</span>{' '}
+                                            for a closing/transaction number.
+                                        </p>
+                                    </div>
+                                )}
                             {requireDischargeDetails && outcome && (
                                 <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
                                     Disposition recorded via Discharge:{' '}
