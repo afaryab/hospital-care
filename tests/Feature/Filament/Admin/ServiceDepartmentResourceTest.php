@@ -59,3 +59,33 @@ test('service department print template is left unset when not chosen', function
         'service_order_template' => null,
     ]);
 });
+
+test('the uploaded image resolves to a working public storage URL, not a bare filename', function () {
+    Livewire\Livewire::test(ManageServiceDepartments::class)
+        ->callAction('create', data: [
+            'name' => 'Radiology',
+            'slug' => 'RAD-2',
+            'image' => UploadedFile::fake()->image('xray.jpg'),
+            'have_composit_services' => 0,
+        ])
+        ->assertNotified();
+
+    $department = ServiceDepartment::where('name', 'Radiology')->firstOrFail();
+
+    // Filament's FileUpload saves a bare disk-relative path (e.g.
+    // "service-departments/01AB....jpg", no leading slash) — that's exactly
+    // what broke <img src> before this fix, since the browser resolves it
+    // relative to the current page URL instead of the site root. The
+    // accessor must turn it into a root-relative or absolute URL that
+    // actually points at the file.
+    expect($department->image)->not->toStartWith('http')
+        ->and($department->image)->not->toStartWith('/img/')
+        ->and($department->image_url)->toStartWith('/storage/service-departments/');
+});
+
+test('the service department table renders the resolved image_url, not a broken raw path', function () {
+    $department = ServiceDepartment::factory()->create(['image' => '/img/emergency.png']);
+
+    Livewire\Livewire::test(ManageServiceDepartments::class)
+        ->assertTableColumnStateSet('image_url', $department->image_url, record: $department);
+});

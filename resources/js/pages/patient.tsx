@@ -81,7 +81,7 @@ export default function PatientView() {
                                     className="flex cursor-pointer flex-row gap-2 p-4"
                                 >
                                     <img
-                                        src={dept.image}
+                                        src={dept.image_url}
                                         alt={dept.name}
                                         className="h-12 w-12"
                                     />
