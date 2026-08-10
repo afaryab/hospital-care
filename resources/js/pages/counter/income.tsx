@@ -1201,7 +1201,7 @@ function SelectDepartment({ openCounter, patient, departments }: any) {
                                 className="flex h-32 w-32 flex-col items-center justify-center rounded-xl border"
                             >
                                 <img
-                                    src={department.image}
+                                    src={department.image_url}
                                     alt={department.name}
                                     className="h-12 w-12 object-contain"
                                 />
@@ -1236,7 +1236,7 @@ function SelectDepartment({ openCounter, patient, departments }: any) {
                                     className="flex h-32 w-32 flex-col items-center justify-center rounded-xl border"
                                 >
                                     <img
-                                        src={department.image}
+                                        src={department.image_url}
                                         alt={department.name}
                                         className="h-12 w-12 object-contain"
                                     />

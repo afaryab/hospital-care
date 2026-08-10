@@ -76,6 +76,8 @@ export interface ServiceDepartment {
     name: string;
     slug: string;
     image?: string;
+    /** Resolved, renderable URL — always use this over `image` for <img src>. */
+    image_url?: string;
 }
 
 export interface Service {

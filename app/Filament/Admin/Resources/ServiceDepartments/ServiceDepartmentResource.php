@@ -18,7 +18,6 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Support\Str;
 use UnitEnum;
 
 class ServiceDepartmentResource extends Resource
@@ -42,6 +41,8 @@ class ServiceDepartmentResource extends Resource
                 FileUpload::make('image')
                     ->image()
                     ->disk('public')
+                    ->directory('service-departments')
+                    ->visibility('public')
                     ->required(),
                 TextInput::make('have_composit_services')
                     ->required()
@@ -65,18 +66,8 @@ class ServiceDepartmentResource extends Resource
                     ->searchable(),
                 TextColumn::make('slug')
                     ->searchable(),
-                ImageColumn::make('image')
-                    ->disk('public')
-                    ->state(function ($record) {
-                        // Edit the state before rendering
-                        if (Str::startsWith($record->image, 'http://') || Str::startsWith($record->image, 'https://')) {
-                            return $record->image;
-                        } elseif (Str::startsWith($record->image, '/img/')) {
-                            return asset($record->image);
-                        }
-
-                        return asset('storage/'.$record->image);
-                    }),
+                ImageColumn::make('image_url')
+                    ->label('Image'),
                 TextColumn::make('have_composit_services')
                     ->numeric()
                     ->sortable(),

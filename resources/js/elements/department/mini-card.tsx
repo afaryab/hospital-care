@@ -36,7 +36,7 @@ export default function DepartmentMiniCard({
                 className="flex h-full w-32 flex-col items-center justify-center"
             >
                 <img
-                    src={department.image}
+                    src={department.image_url}
                     alt={department.name}
                     className="h-12 w-12 object-contain"
                 />

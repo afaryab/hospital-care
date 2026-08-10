@@ -14,7 +14,7 @@ services:
       - APP_NAME=HospitalCare
       - APP_ENV=local
       - APP_DEBUG=true
-      - APP_URL=http://localhost:8000
+      - APP_URL=http://localhost
       - REGISTER_PATIENT_PUBLICLY=true
       - TAKE_APPOINTMENTS_PUBLICLY=true
       - SESSION_DOMAIN=localhost
@@ -33,7 +33,7 @@ services:
       - APP_NAME=HospitalCare
       - APP_ENV=local
       - APP_DEBUG=true
-      - APP_URL=http://localhost:8000
+      - APP_URL=http://localhost
       - REGISTER_PATIENT_PUBLICLY=true
       - TAKE_APPOINTMENTS_PUBLICLY=true
       - SESSION_DOMAIN=localhost
