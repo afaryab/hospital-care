@@ -2,6 +2,7 @@
 
 use App\Models\EmergencyDoctor;
 use App\Models\NursingStaff;
+use App\Models\ReferralCertificate;
 use App\Models\ServiceOrder;
 use App\Models\Triage;
 use App\Models\User;
@@ -64,6 +65,56 @@ test('a doctor can discharge an EMG patient with a full disposition', function (
     expect($treatmentRecord->outcome->value)->toBe('discharged');
     expect($treatmentRecord->outcome_notes)->toBe('Stable, advised rest');
     expect($treatmentRecord->is_finalized)->toBeTrue();
+});
+
+test('referral_notes are written to the auto-created referral certificate on finalize', function () {
+    $doctor = User::factory()->create();
+    EmergencyDoctor::factory()->create(['user_id' => $doctor->id]);
+    $this->actingAs($doctor);
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $triage = Triage::factory()->create();
+
+    $response = $this->postJson("/api/emg/service-orders/{$serviceOrder->id}/treatment-record", [
+        'triage_id' => $triage->id,
+        'treated_at' => now()->toIso8601String(),
+        'outcome' => 'referred',
+        'outcome_at' => now()->toIso8601String(),
+        'referral_to' => 'City General Hospital',
+        'referral_notes' => '<p>Stable for transfer. #Aspirin given.</p>',
+        'finalize' => true,
+    ]);
+
+    $response->assertOk();
+
+    $certificate = ReferralCertificate::where('service_order_id', $serviceOrder->id)->first();
+    expect($certificate)->not->toBeNull()
+        ->and($certificate->receiving_facility_name)->toBe('City General Hospital')
+        ->and($certificate->notes)->toContain('Stable for transfer')
+        ->and($certificate->notes)->toContain('#Aspirin given');
+});
+
+test('referral_notes are sanitized before being stored on the referral certificate', function () {
+    $doctor = User::factory()->create();
+    EmergencyDoctor::factory()->create(['user_id' => $doctor->id]);
+    $this->actingAs($doctor);
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $triage = Triage::factory()->create();
+
+    $this->postJson("/api/emg/service-orders/{$serviceOrder->id}/treatment-record", [
+        'triage_id' => $triage->id,
+        'treated_at' => now()->toIso8601String(),
+        'outcome' => 'referred',
+        'outcome_at' => now()->toIso8601String(),
+        'referral_to' => 'City General Hospital',
+        'referral_notes' => '<p onclick="alert(1)">Notes</p><script>alert(2)</script>',
+        'finalize' => true,
+    ])->assertOk();
+
+    $certificate = ReferralCertificate::where('service_order_id', $serviceOrder->id)->first();
+    expect($certificate->notes)->not->toContain('<script>')
+        ->and($certificate->notes)->not->toContain('onclick');
 });
 
 test('a nursing-staff-only user cannot discharge (finalize) an EMG patient', function () {

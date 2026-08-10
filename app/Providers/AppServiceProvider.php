@@ -14,6 +14,7 @@ use App\Models\ServiceOrder;
 use App\Models\Task;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
+use App\Models\TreatmentRecord;
 use App\Models\User;
 use App\Observers\AppointmentObserver;
 use App\Observers\AssetObserver;
@@ -24,6 +25,7 @@ use App\Observers\PurchaseOrderObserver;
 use App\Observers\TaskObserver;
 use App\Observers\TransactionElementObserver;
 use App\Observers\TransactionObserver;
+use App\Observers\TreatmentRecordObserver;
 use App\Policies\ClosingPolicy;
 use App\Policies\ExpenseVoucherPolicy;
 use App\Policies\PatientPolicy;
@@ -70,6 +72,7 @@ class AppServiceProvider extends ServiceProvider
         Asset::observe(AssetObserver::class);
         Task::observe(TaskObserver::class);
         Appointment::observe(AppointmentObserver::class);
+        TreatmentRecord::observe(TreatmentRecordObserver::class);
 
         Gate::define('viewPulse', function (User $user) {
             return $user->adminProfiles()->count() > 0;

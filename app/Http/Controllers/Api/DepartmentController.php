@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Enum\TreatmentOutcome;
 use App\Http\Controllers\Controller;
 use App\Models\Icd10Code;
+use App\Models\ReferralCertificate;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceOrder;
 use App\Models\Transaction;
@@ -64,6 +65,7 @@ class DepartmentController extends Controller
                 Rule::requiredIf(fn () => $isEmergency && $finalize && $request->input('outcome') === TreatmentOutcome::Referred->value),
                 'nullable', 'string', 'max:255',
             ],
+            'referral_notes' => ['nullable', 'string', 'max:10000'],
             'department_specific_data' => ['nullable', 'array'],
             'dental_chart' => ['nullable', 'array'],
             'triage_id' => [Rule::requiredIf($isEmergency), 'nullable', 'integer', 'exists:triages,id'],
@@ -84,6 +86,12 @@ class DepartmentController extends Controller
 
         $vitals = $data['vitals'] ?? null;
         unset($data['vitals']);
+
+        // referral_notes (CKEditor-authored referral letter body) lives on
+        // ReferralCertificate, not TreatmentRecord — pulled out of $data so
+        // it doesn't hit an unknown-column error on create()/update().
+        $referralNotes = $data['referral_notes'] ?? null;
+        unset($data['referral_notes']);
 
         if (! empty($data['icd10_code_id'])) {
             $icd = Icd10Code::find($data['icd10_code_id']);
@@ -113,6 +121,15 @@ class DepartmentController extends Controller
                 'is_finalized' => $finalize,
                 'finalized_at' => $finalize ? Carbon::now() : null,
                 ...$data,
+            ]);
+        }
+
+        if ($treatmentRecord->outcome === TreatmentOutcome::Referred && $referralNotes !== null) {
+            // The observer already ensured a ReferralCertificate exists for
+            // this outcome transition (fired synchronously during the save
+            // above) — fill in the doctor-authored letter body.
+            $serviceOrder->referralCertificate?->update([
+                'notes' => ReferralCertificate::sanitizeNotes($referralNotes),
             ]);
         }
 

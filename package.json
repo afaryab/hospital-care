@@ -31,6 +31,7 @@
         "typescript-eslint": "^8.53.0"
     },
     "dependencies": {
+        "@ckeditor/ckeditor5-react": "^11.2.0",
         "@headlessui/react": "^2.2.9",
         "@inertiajs/react": "^2.3.10",
         "@radix-ui/react-avatar": "^1.1.11",
@@ -53,6 +54,7 @@
         "@types/react": "^19.2.8",
         "@types/react-dom": "^19.2.3",
         "@vitejs/plugin-react": "^5.1.2",
+        "ckeditor5": "^48.4.0",
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "concurrently": "^9.2.1",
