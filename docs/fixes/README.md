@@ -18,3 +18,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 1 | [#3](https://github.com/afaryab/hospital-care/issues/3) | Race condition in CT and SO number generation | High | ✅ Fixed |
 | 2 | [#4](https://github.com/afaryab/hospital-care/issues/4) | Missing authorization — resource-level access control | Critical | ✅ Fixed |
 | 3 | [#5](https://github.com/afaryab/hospital-care/issues/5) | CNIC patient search uses wrong variable | High | ✅ Fixed |
+| 4 | [#34](https://github.com/afaryab/hospital-care/issues/34) | Configurable 1-page compact emergency triage print template | Enhancement | ✅ Implemented (PR #35) |
