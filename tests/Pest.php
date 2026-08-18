@@ -1,5 +1,6 @@
 <?php
 
+use Filament\Actions\Imports\Models\Import;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -47,7 +48,18 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * A lightweight, unsaved Filament\Actions\Imports\Models\Import instance for
+ * unit-testing an Importer's resolveRecord()/fillRecord()/save() pipeline
+ * directly — new Importer($import, $columnMap, $options)($rowData) — without
+ * simulating an actual file upload through the Livewire action.
+ */
+function makeFilamentImport(string $importerClass): Import
 {
-    // ..
+    return new Import([
+        'importer' => $importerClass,
+        'file_name' => 'test.csv',
+        'file_path' => 'imports/test.csv',
+        'total_rows' => 1,
+    ]);
 }
