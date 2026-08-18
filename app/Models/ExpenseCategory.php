@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Concerns\Cacheable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class ExpenseCategory extends Model
 {
-    use HasFactory;
+    use Cacheable, HasFactory;
 
     protected $fillable = [
         'old_id',
@@ -31,4 +33,13 @@ class ExpenseCategory extends Model
         'allow_petty_cash' => 'boolean',
         'allow_voucher' => 'boolean',
     ];
+
+    /**
+     * The full expense category list, used by expense voucher and transaction
+     * forms. Small and rarely changes.
+     */
+    public static function cachedAll(): Collection
+    {
+        return static::rememberCache(fn () => static::query()->orderBy('name')->get());
+    }
 }

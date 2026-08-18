@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Concerns\Cacheable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class StockCategory extends Model
 {
-    use HasFactory;
+    use Cacheable, HasFactory;
 
     protected $fillable = [
         'name',
@@ -37,5 +39,14 @@ class StockCategory extends Model
     public function stockItems(): HasMany
     {
         return $this->hasMany(StockItem::class, 'category_id');
+    }
+
+    /**
+     * The full stock category list, used across inventory forms. Small and
+     * rarely changes.
+     */
+    public static function cachedAll(): Collection
+    {
+        return static::rememberCache(fn () => static::query()->orderBy('name')->get());
     }
 }

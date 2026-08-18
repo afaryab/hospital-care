@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Concerns\Cacheable;
 use App\Enum\ServiceOrderTemplate;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class ServiceDepartment extends Model
 {
-    use HasFactory;
+    use Cacheable, HasFactory;
 
     protected $table = 'service_departments';
 
@@ -57,5 +59,14 @@ class ServiceDepartment extends Model
         }
 
         return Storage::disk('public')->url($this->image);
+    }
+
+    /**
+     * The full department list, used across navigation, filters, and
+     * service-order forms. Small and rarely changes.
+     */
+    public static function cachedAll(): Collection
+    {
+        return static::rememberCache(fn () => static::query()->orderBy('name')->get());
     }
 }

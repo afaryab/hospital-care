@@ -18,8 +18,12 @@ services:
       - REGISTER_PATIENT_PUBLICLY=true
       - TAKE_APPOINTMENTS_PUBLICLY=true
       - SESSION_DOMAIN=localhost
+      - CACHE_STORE=redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - db
+      - redis
 
   cli:
     build:
@@ -37,8 +41,21 @@ services:
       - REGISTER_PATIENT_PUBLICLY=true
       - TAKE_APPOINTMENTS_PUBLICLY=true
       - SESSION_DOMAIN=localhost
+      - CACHE_STORE=redis
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - db
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
 
   db:
     image: mysql:8.0
@@ -75,3 +92,4 @@ services:
 volumes:
   db_data:
   mysql_data:
+  redis_data:
