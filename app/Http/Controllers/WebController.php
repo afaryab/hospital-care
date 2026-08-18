@@ -390,6 +390,8 @@ class WebController extends Controller
 
         $patientData = Patient::with('treatments')->where('ps_number', $psNumber)->firstOrFail();
 
+        $this->authorize('view', $patientData);
+
         $serviceDepartments = ServiceDepartment::all();
         $serviceOrder = null;
 
@@ -1589,6 +1591,8 @@ class WebController extends Controller
 
     public function updateServiceOrderStatus(Request $request, ServiceOrder $serviceOrder): RedirectResponse
     {
+        $this->authorize('update', $serviceOrder);
+
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:OPEN,CLOSED,IN-PROGRESS'],
         ]);

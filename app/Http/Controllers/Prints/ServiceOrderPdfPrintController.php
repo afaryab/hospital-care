@@ -30,6 +30,8 @@ class ServiceOrderPdfPrintController extends Controller
             'birthCertificate.attendingDoctor',
         ])->findOrFail($id);
 
+        $this->authorize('view', $serviceOrder);
+
         $patient = $serviceOrder->patient;
 
         // Past History: the patient's last 6 diagnosed conditions from other

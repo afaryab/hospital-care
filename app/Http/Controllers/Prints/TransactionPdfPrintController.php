@@ -35,6 +35,8 @@ class TransactionPdfPrintController extends Controller
             abort(404, 'Transaction not found');
         }
 
+        $this->authorize('view', $transaction);
+
         // Get variant from query parameter (full, dot-printer, or thermal)
         $variant = $request->get('variant', 'full');
         $variant = in_array($variant, ['full', 'dot-printer', 'thermal']) ? $variant : 'full';
@@ -138,6 +140,8 @@ class TransactionPdfPrintController extends Controller
         if (! $transaction) {
             abort(404, 'Transaction not found');
         }
+
+        $this->authorize('view', $transaction);
 
         $variant = $request->get('variant', 'full');
         $variant = in_array($variant, ['full', 'dot-printer', 'thermal']) ? $variant : 'full';
