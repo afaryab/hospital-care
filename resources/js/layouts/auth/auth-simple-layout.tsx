@@ -1,4 +1,5 @@
-import AppLogoIcon from '@/components/app-logo-icon';
+import AppFooter from '@/components/app-footer';
+import HospitalBrand from '@/components/hospital-brand';
 import { home } from '@/routes';
 import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
@@ -23,9 +24,7 @@ export default function AuthSimpleLayout({
                             href={home()}
                             className="flex flex-col items-center gap-2 font-medium"
                         >
-                            <div className="mb-1 flex items-center justify-center rounded-md">
-                                <AppLogoIcon size={20} direction="horizontal" />
-                            </div>
+                            <HospitalBrand className="flex-col text-center" />
                             <span className="sr-only">{title}</span>
                         </Link>
 
@@ -39,6 +38,7 @@ export default function AuthSimpleLayout({
                     {children}
                 </div>
             </div>
+            <AppFooter />
         </div>
     );
 }

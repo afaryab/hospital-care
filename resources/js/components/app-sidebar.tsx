@@ -1,3 +1,5 @@
+import AppFooter from '@/components/app-footer';
+import HospitalBrand from '@/components/hospital-brand';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -58,8 +60,6 @@ import {
     Users,
     Waypoints,
 } from 'lucide-react';
-import AppLogoIcon from './app-logo-icon';
-
 export function AppSidebar() {
     const page = usePage<SharedData>();
 
@@ -182,7 +182,7 @@ export function AppSidebar() {
                             className="hover:bg-transparent"
                         >
                             <Link href={home()} prefetch>
-                                <AppLogoIcon size={10} direction="horizontal" />
+                                <HospitalBrand />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -726,6 +726,7 @@ export function AppSidebar() {
             <SidebarFooter>
                 <NavFooter items={adminMenuItems} className="mt-auto" />
                 <NavUser />
+                <AppFooter className="group-data-[collapsible=icon]:hidden" />
             </SidebarFooter>
         </Sidebar>
     );
