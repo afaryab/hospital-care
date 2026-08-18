@@ -85,6 +85,8 @@ class AuditLogsTable
                         'App\\Models\\User' => 'User',
                         'App\\Models\\Service' => 'Service',
                         'App\\Models\\Reception' => 'Reception',
+                        'App\\Models\\DmsFolder' => 'DMS Folder',
+                        'App\\Models\\DmsDocument' => 'DMS Document',
                     ]),
 
                 Filter::make('date_range')
