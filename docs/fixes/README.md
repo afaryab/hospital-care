@@ -20,3 +20,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 3 | [#5](https://github.com/afaryab/hospital-care/issues/5) | CNIC patient search uses wrong variable | High | ✅ Fixed |
 | 4 | [#34](https://github.com/afaryab/hospital-care/issues/34) | Configurable 1-page compact emergency triage print template | Enhancement | ✅ Implemented (PR #35) |
 | 5 | [#38](https://github.com/afaryab/hospital-care/issues/38) | Service department image breaks after editing via Filament | Medium | ✅ Fixed |
+| 9 | [#54](https://github.com/afaryab/hospital-care/issues/54) | Slow admin dashboard & patient dropdown (unscoped query + uncached aggregates) | Critical | ✅ Fixed |
