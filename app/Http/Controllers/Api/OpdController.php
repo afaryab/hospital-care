@@ -14,6 +14,7 @@ use App\Models\VitalSign;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 
 class OpdController extends Controller
 {
@@ -100,7 +101,7 @@ class OpdController extends Controller
             'history_of_present_illness' => ['nullable', 'string', 'max:3000'],
             'examination_findings' => ['nullable', 'array'],
             'diagnosis_code' => ['nullable', 'string', 'max:50'],
-            'icd10_code_id' => ['nullable', 'integer', 'exists:icd10_codes,id'],
+            'icd10_code_id' => ['nullable', 'integer', Rule::exists('icd10_codes', 'id')->where('is_active', true)],
             'diagnosis_text' => ['nullable', 'string', 'max:500'],
             'treatment_plan' => ['nullable', 'string', 'max:3000'],
             'prescriptions' => ['nullable', 'array'],
