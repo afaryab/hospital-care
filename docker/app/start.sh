@@ -9,6 +9,7 @@ cd /var/www/html
 chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || true
 mkdir -p /var/www/html/storage/app/pdf-tmp
+mkdir -p /var/www/html/storage/app/private/dms-tmp
 
 # Run Laravel optimizations and migrations if artisan exists
 if [ -f "/var/www/html/artisan" ]; then

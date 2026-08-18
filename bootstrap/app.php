@@ -26,6 +26,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'browser_timezone']);
 
+        // The OnlyOffice Document Server posts its save callback directly
+        // (no browser, no Laravel session, no CSRF token) — it's protected
+        // instead by the signed URL plus OnlyOffice's own JWT, checked
+        // inside CallbackController.
+        $middleware->validateCsrfTokens(except: ['onlyoffice/callback/*']);
+
         $middleware->web(append: [
             HandleAppearance::class,
             // Process captive portal redirects early

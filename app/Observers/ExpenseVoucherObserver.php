@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Jobs\PersistExpenseVoucherPdfJob;
 use App\Models\ExpenseVoucher;
 
 class ExpenseVoucherObserver
@@ -51,6 +52,13 @@ class ExpenseVoucherObserver
             $expenseVoucher->saveQuietly(); // Save without triggering observer again
         }
 
+        // Once a voucher is newly marked paid (both transaction fields just
+        // became set), file its PDF into the paid-to doctor's DMS folder.
+        if (($expenseVoucher->isDirty('transaction_id') || $expenseVoucher->isDirty('transaction_element_id'))
+            && $expenseVoucher->transaction_id
+            && $expenseVoucher->transaction_element_id) {
+            PersistExpenseVoucherPdfJob::dispatch($expenseVoucher->id);
+        }
     }
 
     /**
