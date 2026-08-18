@@ -38,6 +38,9 @@ ENV SENTRY_RELEASE=${SENTRY_RELEASE} \
 
 # Install runtime packages; compile PHP extensions inside a virtual build-dep
 # group that gets removed afterwards — keeps build tools out of the final image.
+# Node/pnpm are kept (not used to build on boot — see start.sh — but needed
+# for `docker-compose exec app pnpm run build`, the documented local-dev step
+# for when the compose bind-mount shadows this image's baked-in public/build).
 RUN apk add --no-cache \
         bash curl git unzip zip \
         libpng libxml2 oniguruma icu-libs freetype libjpeg-turbo nodejs npm libzip \
