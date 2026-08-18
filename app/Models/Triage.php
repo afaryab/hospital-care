@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Concerns\Cacheable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Triage extends Model
 {
-    use HasFactory;
+    use Cacheable, HasFactory;
 
     protected $fillable = [
         'name',
@@ -41,5 +43,14 @@ class Triage extends Model
             'green' => '🟢 Green',
             'black' => '⚫ Black',
         ];
+    }
+
+    /**
+     * Active triage levels, used across EMG queue and treatment forms.
+     * Small and rarely changes.
+     */
+    public static function cachedActive(): Collection
+    {
+        return static::rememberCache(fn () => static::query()->where('is_active', true)->orderBy('priority')->get());
     }
 }

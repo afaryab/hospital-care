@@ -3,12 +3,14 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Concerns\Cacheable;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
@@ -17,7 +19,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable;
+    use Cacheable, HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -245,6 +247,32 @@ class User extends Authenticatable implements FilamentUser
     public function isReceptionist(): bool
     {
         return $this->receptionistProfiles()->exists();
+    }
+
+    /**
+     * Every user holding at least one doctor/provider profile (OPD, IND,
+     * EMG, dentist, ultrasound, X-ray) — the "Doctor / Provider" dropdown
+     * repeated across transaction, service order, and treatment forms.
+     * Cached under its own key rather than the model-wide one: this is a
+     * filtered subset of users, not "all users".
+     */
+    public static function cacheKey(): string
+    {
+        return 'model-cache:users:doctors';
+    }
+
+    public static function cachedDoctors(): Collection
+    {
+        return static::rememberCache(fn () => static::query()
+            ->where(fn ($q) => $q
+                ->whereHas('opdDoctorProfiles')
+                ->orWhereHas('indDoctorProfiles')
+                ->orWhereHas('emergencyDoctorProfiles')
+                ->orWhereHas('dentistProfiles')
+                ->orWhereHas('ultrasoundDoctorProfiles')
+                ->orWhereHas('xrayTechnicianProfiles'))
+            ->orderBy('name')
+            ->get());
     }
 
     public function isAnyDoctor(): bool

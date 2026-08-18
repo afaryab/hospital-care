@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Concerns\Cacheable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
 class Service extends Model
 {
-    use HasFactory, LogsActivity;
+    use Cacheable, HasFactory, LogsActivity;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -112,5 +114,15 @@ class Service extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * The full services list, as used by every Select "Service" dropdown
+     * across the app. Cached because it's re-queried on nearly every form
+     * render and rarely changes.
+     */
+    public static function cachedActive(): Collection
+    {
+        return static::rememberCache(fn () => static::query()->orderBy('name')->get());
     }
 }

@@ -49,19 +49,12 @@ class TransactionForm
                                 ->required(),
                             Select::make('service_id')
                                 ->label('Service')
-                                ->options(fn () => Service::query()->orderBy('name')->pluck('name', 'id'))
+                                ->options(fn () => Service::cachedActive()->pluck('name', 'id'))
                                 ->searchable()
                                 ->nullable(),
                             Select::make('doctor_id')
                                 ->label('Doctor / Provider')
-                                ->options(fn () => User::query()
-                                    ->whereHas('opdDoctorProfiles')
-                                    ->orWhereHas('indDoctorProfiles')
-                                    ->orWhereHas('emergencyDoctorProfiles')
-                                    ->orWhereHas('dentistProfiles')
-                                    ->orWhereHas('ultrasoundDoctorProfiles')
-                                    ->orderBy('name')
-                                    ->pluck('name', 'id'))
+                                ->options(fn () => User::cachedDoctors()->pluck('name', 'id'))
                                 ->searchable()
                                 ->nullable(),
                             TextInput::make('amount')
