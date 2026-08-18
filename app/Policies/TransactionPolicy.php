@@ -18,12 +18,30 @@ class TransactionPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->can('transaction.view') || $user->hasAnyProfile();
+        return $this->hasBroadAccess($user);
     }
 
+    /**
+     * See PatientPolicy for the same reasoning. Doctors are scoped to
+     * transactions containing at least one element they're the assigned
+     * doctor for (TransactionElement.doctor_id).
+     */
     public function view(User $user, Transaction $transaction): bool
     {
-        return $user->can('transaction.view') || $user->hasAnyProfile();
+        if ($this->hasBroadAccess($user)) {
+            return true;
+        }
+
+        if ($user->isAnyDoctor()) {
+            return $transaction->elements()->where('doctor_id', $user->id)->exists();
+        }
+
+        return false;
+    }
+
+    protected function hasBroadAccess(User $user): bool
+    {
+        return $user->isReceptionist() || $user->isAccountant();
     }
 
     public function create(User $user): bool

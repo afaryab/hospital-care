@@ -1,8 +1,10 @@
 <?php
 
 use App\Models\Administrator;
+use App\Models\OpdDoctor;
 use App\Models\Receptionist;
 use App\Models\Transaction;
+use App\Models\TransactionElement;
 use App\Models\User;
 
 test('admin can do anything with transactions', function () {
@@ -48,4 +50,21 @@ test('user without profile cannot access transactions', function () {
 
     expect($user->can('view', $transaction))->toBeFalse()
         ->and($user->can('create', Transaction::class))->toBeFalse();
+});
+
+test('a doctor cannot view a transaction with no element assigned to them', function () {
+    $doctor = User::factory()->create();
+    OpdDoctor::create(['user_id' => $doctor->id]);
+    $transaction = Transaction::factory()->create();
+
+    expect($doctor->can('view', $transaction))->toBeFalse();
+});
+
+test('a doctor can view a transaction containing an element assigned to them', function () {
+    $doctor = User::factory()->create();
+    OpdDoctor::create(['user_id' => $doctor->id]);
+    $transaction = Transaction::factory()->create();
+    TransactionElement::factory()->create(['transaction_id' => $transaction->id, 'doctor_id' => $doctor->id]);
+
+    expect($doctor->can('view', $transaction))->toBeTrue();
 });

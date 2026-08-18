@@ -172,6 +172,8 @@ class IndController extends Controller
      */
     public function saveTreatmentRecord(Request $request, ServiceOrder $serviceOrder): JsonResponse
     {
+        $this->authorize('update', $serviceOrder);
+
         $data = $request->validate([
             'chief_complaint' => ['nullable', 'string', 'max:1000'],
             'history_of_present_illness' => ['nullable', 'string', 'max:5000'],
