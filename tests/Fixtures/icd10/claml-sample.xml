@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ClaML version="2.0.0">
+	<Meta name="lang" value="en"/>
+	<Identifier authority="WHO" uid="icd10_test"/>
+	<Title date="2020-03-22" name="ICD-10-EN" version="test">Test fixture</Title>
+	<ClassKinds>
+		<ClassKind name="category"/>
+		<ClassKind name="block"/>
+		<ClassKind name="chapter"/>
+	</ClassKinds>
+
+	<Class code="I" kind="chapter">
+		<SubClass code="A00-A09"/>
+		<Rubric id="r-1" kind="preferred">
+			<Label xml:lang="en">Certain infectious and parasitic diseases</Label>
+		</Rubric>
+	</Class>
+
+	<Class code="A00-A09" kind="block">
+		<SuperClass code="I"/>
+		<SubClass code="A00"/>
+		<Rubric id="r-2" kind="preferred">
+			<Label xml:lang="en">Intestinal infectious diseases</Label>
+		</Rubric>
+	</Class>
+
+	<Class code="A00" kind="category">
+		<SuperClass code="A00-A09"/>
+		<SubClass code="A00.0"/>
+		<Rubric id="r-3" kind="preferred">
+			<Label xml:lang="en">Cholera</Label>
+		</Rubric>
+	</Class>
+
+	<Class code="A00.0" kind="category">
+		<SuperClass code="A00"/>
+		<Rubric id="r-4" kind="preferred">
+			<Label xml:lang="en">Cholera due to Vibrio cholerae 01, biovar cholerae</Label>
+		</Rubric>
+	</Class>
+
+	<Class code="II" kind="chapter">
+		<SubClass code="C00-C00"/>
+		<Rubric id="r-5" kind="preferred">
+			<Label xml:lang="en">Neoplasms</Label>
+		</Rubric>
+	</Class>
+
+	<Class code="C00-C00" kind="block">
+		<SuperClass code="II"/>
+		<SubClass code="C00"/>
+		<Rubric id="r-6" kind="preferred">
+			<Label xml:lang="en">Malignant neoplasm of lip</Label>
+		</Rubric>
+	</Class>
+
+	<Class code="C00" kind="category">
+		<SuperClass code="C00-C00"/>
+		<SubClass code="C00.0"/>
+		<Rubric id="r-7" kind="preferred">
+			<Label xml:lang="en">Lip, unspecified</Label>
+		</Rubric>
+	</Class>
+
+	<!-- Has both preferred and preferredLong: preferredLong should win as the description. -->
+	<Class code="C00.0" kind="category">
+		<SuperClass code="C00"/>
+		<Rubric id="r-8" kind="preferredLong">
+			<Label xml:lang="en">Malignant neoplasm: External upper lip</Label>
+		</Rubric>
+		<Rubric id="r-9" kind="preferred">
+			<Label xml:lang="en">External upper lip</Label>
+		</Rubric>
+	</Class>
+
+	<!-- Preferred label carries a dagger/asterisk cross-reference: the
+	     Reference's own text must not leak into the extracted description. -->
+	<Class code="K77.0" kind="category">
+		<SuperClass code="C00"/>
+		<Rubric id="r-10" kind="preferred">
+			<Label xml:lang="en">Amoebic liver abscess<Reference class="in brackets" usage="aster">B90.0</Reference></Label>
+		</Rubric>
+	</Class>
+
+	<!-- No preferred/preferredLong rubric at all: must be skipped, not
+	     imported as a blank row. -->
+	<Class code="Z99" kind="category">
+		<SuperClass code="C00"/>
+		<Rubric id="r-11" kind="inclusion">
+			<Label xml:lang="en">some inclusion note only</Label>
+		</Rubric>
+	</Class>
+</ClaML>

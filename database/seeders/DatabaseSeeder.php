@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             AssetCategorySeeder::class,
             RolesAndPermissionsSeeder::class,
             PaymentMethodSeeder::class,
+            Icd10CodeSeeder::class,
         ]);
     }
 }
