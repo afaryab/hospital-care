@@ -22,12 +22,18 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+export interface Hospital {
+    name: string;
+    logoUrl: string | null;
+}
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
     timezone: string;
+    hospital: Hospital;
     [key: string]: unknown;
 }
 
