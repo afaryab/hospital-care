@@ -19,11 +19,8 @@ if [ -f "/var/www/html/artisan" ]; then
     php artisan view:cache 2>/dev/null || true
 fi
 
-if [ -f "/var/www/html/package.json" ]; then
-    echo "Running pnpm build..."
-    pnpm install 2>/dev/null || true
-    pnpm build 2>/dev/null || true
-fi
+# Frontend assets are compiled into the image at build time (see the
+# "frontend" stage in docker/app/Dockerfile) — never rebuilt here.
 
 # Create log directories for supervisor
 mkdir -p /var/log/supervisor
