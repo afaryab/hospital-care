@@ -15,6 +15,13 @@ class EditTransaction extends EditRecord
 {
     protected static string $resource = TransactionResource::class;
 
+    protected ?float $originalAmount = null;
+
+    protected function beforeSave(): void
+    {
+        $this->originalAmount = (float) $this->record->getOriginal('amount');
+    }
+
     protected function getHeaderActions(): array
     {
         return [
@@ -76,11 +83,19 @@ class EditTransaction extends EditRecord
 
     protected function afterSave(): void
     {
-        // Re-sync the transaction's total amount from its elements
-        $newAmount = $this->record->elements()->where('income_or_expense', 'INCOME')->sum('amount')
-            - $this->record->elements()->where('income_or_expense', 'EXPENSE')->sum('amount');
+        if ($this->record->receaveable_id) {
+            // This transaction is itself a payment against a receivable — the
+            // admin edits "amount" (what was collected) directly, and the
+            // linked receivable's remaining balance absorbs the change.
+            $delta = (float) $this->record->amount - $this->originalAmount;
+            $this->record->applyCollectedAmountDelta($delta);
+        } else {
+            // Re-derive the recognized amount, change, and any outstanding
+            // receivable from the line items and customer_payed.
+            $this->record->recalculatePayment();
+        }
 
-        $this->record->updateQuietly(['amount' => abs($newAmount)]);
+        $this->refreshFormData(['amount', 'change', 'orignal_amount']);
 
         // Prompt to update service orders if any elements are linked
         if ($this->record->elements()->whereNotNull('service_order_id')->exists()) {

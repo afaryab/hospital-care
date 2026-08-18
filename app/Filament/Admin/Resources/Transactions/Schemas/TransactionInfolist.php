@@ -27,13 +27,37 @@ class TransactionInfolist
                                     TextEntry::make('income_or_expense')->label('Direction')
                                         ->badge()
                                         ->color(fn (string $state): string => $state === 'INCOME' ? 'success' : 'danger'),
-                                    TextEntry::make('amount')->label('Amount')->money('PKR'),
+                                    TextEntry::make('amount')->label('Recognized Amount')->money('PKR'),
                                     TextEntry::make('is_refunded')->label('Refunded')
                                         ->badge()
                                         ->formatStateUsing(fn (bool $state): string => $state ? 'Yes' : 'No')
                                         ->color(fn (bool $state): string => $state ? 'danger' : 'success'),
                                     TextEntry::make('notes')->placeholder('-')->columnSpanFull(),
                                     TextEntry::make('created_at')->dateTime('d M Y, H:i'),
+                                ])
+                                ->columns(3),
+
+                            Section::make('Payment')
+                                ->schema([
+                                    TextEntry::make('customer_payed')->label('Amount Customer Paid')->money('PKR')
+                                        ->visible(fn ($record) => ! $record->receaveable_id),
+                                    TextEntry::make('change')->label('Change Given')->money('PKR')
+                                        ->visible(fn ($record) => ! $record->receaveable_id),
+                                    TextEntry::make('receaveable.amount')->label('Outstanding Receivable')->money('PKR')
+                                        ->placeholder('None')
+                                        ->visible(fn ($record) => ! $record->receaveable_id),
+                                    TextEntry::make('receaveable.status')->label('Receivable Status')
+                                        ->badge()
+                                        ->placeholder('-')
+                                        ->visible(fn ($record) => ! $record->receaveable_id),
+                                    TextEntry::make('settledReceaveable.transaction.tr_number')
+                                        ->label('Settles Receivable From')
+                                        ->placeholder('-')
+                                        ->visible(fn ($record) => (bool) $record->receaveable_id),
+                                    TextEntry::make('settledReceaveable.amount')
+                                        ->label('Receivable Remaining Balance')
+                                        ->money('PKR')
+                                        ->visible(fn ($record) => (bool) $record->receaveable_id),
                                 ])
                                 ->columns(3),
                         ]),
