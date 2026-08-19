@@ -6,6 +6,7 @@ use App\Enum\AppointmentStatus;
 use App\Enum\CounterStatus;
 use App\Enum\TransactionElementType;
 use App\Helpers\DateHelper;
+use App\Helpers\PiiHasher;
 use App\Models\Appointment;
 use App\Models\Closing;
 use App\Models\ExpenseCategory;
@@ -362,7 +363,7 @@ class WebController extends Controller
             // the same lookup pattern used by Api\PateintController::search().
             $normalizedContact = preg_replace('/\D+/', '', $filters['contact']);
             if ($normalizedContact !== '') {
-                $query->where('contact_hash', hash('sha256', $normalizedContact));
+                $query->where('contact_hash', PiiHasher::contact($normalizedContact));
             }
         }
 

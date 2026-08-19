@@ -1,5 +1,6 @@
 <?php
 
+use App\Helpers\PiiHasher;
 use App\Models\Patient;
 use App\Models\User;
 
@@ -95,5 +96,5 @@ test('cnic duplicate check works with encrypted data via cnic hash', function ()
         ->assertStatus(409)
         ->assertJsonPath('warning', true);
 
-    expect($existingPatient->cnic_hash)->toBe(hash('sha256', '35202-5555555-1'));
+    expect($existingPatient->cnic_hash)->toBe(PiiHasher::cnic('35202-5555555-1'));
 });
