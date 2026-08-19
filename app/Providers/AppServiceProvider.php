@@ -37,11 +37,13 @@ use App\Policies\ReceaveablePolicy;
 use App\Policies\ServiceOrderPolicy;
 use App\Policies\TransactionPolicy;
 use App\Policies\UserPolicy;
+use App\Services\BackupComplianceGuard;
 use App\Services\BreachDetectionService;
 use BezhanSalleh\PanelSwitch\PanelSwitch;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -134,6 +136,12 @@ class AppServiceProvider extends ServiceProvider
 
         Event::listen(Login::class, function (Login $event): void {
             app(BreachDetectionService::class)->recordSuccessfulLogin($event->user, request());
+        });
+
+        Event::listen(CommandStarting::class, function (CommandStarting $event): void {
+            if ($event->command === 'backup:run') {
+                BackupComplianceGuard::ensureProductionBackupsAreEncrypted();
+            }
         });
 
         TextColumn::configureUsing(function (TextColumn $column): void {
