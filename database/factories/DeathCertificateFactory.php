@@ -41,4 +41,13 @@ class DeathCertificateFactory extends Factory
             'manner_of_death' => $manner,
         ]);
     }
+
+    public function locked(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_locked' => true,
+            'locked_at' => now(),
+            'locked_by' => User::factory(),
+        ]);
+    }
 }
