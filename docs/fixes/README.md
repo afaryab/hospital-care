@@ -21,3 +21,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 4 | [#34](https://github.com/afaryab/hospital-care/issues/34) | Configurable 1-page compact emergency triage print template | Enhancement | ✅ Implemented (PR #35) |
 | 5 | [#38](https://github.com/afaryab/hospital-care/issues/38) | Service department image breaks after editing via Filament | Medium | ✅ Fixed |
 | 6 | [#48](https://github.com/afaryab/hospital-care/issues/48) | Broken access control — any staff account could read/print/write any patient's record | Critical | ✅ Fixed |
+| 12 | [#60](https://github.com/afaryab/hospital-care/issues/60) | No genuine per-view audit log of PHI access | High | ✅ Fixed |
