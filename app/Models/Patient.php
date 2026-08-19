@@ -179,6 +179,11 @@ class Patient extends Model
         return $this->hasMany(PatientVersion::class)->latest('changed_at');
     }
 
+    public function consents(): HasMany
+    {
+        return $this->hasMany(Consent::class)->latest('consented_at');
+    }
+
     public function getOutstandingsAttribute()
     {
         // Sum all unpaid receaveables for this patient

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enum\ConsentType;
 use App\Enum\TreatmentOutcome;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -58,6 +59,25 @@ class TreatmentRecord extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (TreatmentRecord $treatmentRecord): void {
+            if (! HospitalSetting::get('require_consent_before_treatment', false)) {
+                return;
+            }
+
+            $patientId = ServiceOrder::where('id', $treatmentRecord->service_order_id)->value('patient_id');
+
+            $hasTreatmentConsent = $patientId && Consent::query()
+                ->where('patient_id', $patientId)
+                ->where('consent_type', ConsentType::Treatment)
+                ->exists();
+
+            if (! $hasTreatmentConsent) {
+                throw ValidationException::withMessages([
+                    'consent' => 'Patient consent must be recorded before treatment can begin.',
+                ]);
+            }
+        });
+
         static::updating(function (TreatmentRecord $treatmentRecord): void {
             $dirtyAttributes = array_diff(array_keys($treatmentRecord->getDirty()), ['updated_at']);
 
