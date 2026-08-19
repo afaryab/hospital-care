@@ -59,6 +59,7 @@ class AuditLogsTable
                         return strlen($state) > 60 ? $state : null;
                     }),
             ])
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('causer'))
             ->filters([
                 SelectFilter::make('event')
                     ->options([
