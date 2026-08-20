@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\AdministrativeTransactions\Pages\ListAdministra
 use App\Filament\Admin\Resources\AdministrativeTransactions\Pages\ViewAdministrativeTransaction;
 use App\Models\Administrator;
 use App\Models\ExpenseCategory;
+use App\Models\Patient;
 use App\Models\PaymentMethod;
 use App\Models\Transaction;
 use App\Models\User;
@@ -82,6 +83,38 @@ test('admin can edit an administrative transaction notes', function () {
         'notes' => 'updated note',
         'closing_id' => null,
     ]);
+});
+
+test('the patient field does not eagerly load every patient into the create form', function () {
+    // The old ->options(fn () => Patient::query()->...->pluck(...)) pattern
+    // embedded every patient's name directly in the initial Livewire
+    // payload. A lazy-search field fetches nothing until the user types,
+    // so none of these names should appear on first render.
+    $patients = Patient::factory()->count(20)->create();
+
+    $response = Livewire\Livewire::test(CreateAdministrativeTransaction::class);
+
+    foreach ($patients as $patient) {
+        $response->assertDontSee($patient->name);
+    }
+});
+
+test('creating an administrative transaction still works when a patient is attached', function () {
+    $patient = Patient::factory()->create(['name' => 'Ayesha Khan']);
+    $method = PaymentMethod::factory()->create(['name' => 'Cash', 'slug' => 'CASH']);
+
+    Livewire\Livewire::test(CreateAdministrativeTransaction::class)
+        ->fillForm([
+            'income_or_expense' => 'INCOME',
+            'patient_id' => $patient->id,
+            'amount' => 500,
+            'payment_method_id' => $method->id,
+        ])
+        ->call('create')
+        ->assertNotified()
+        ->assertRedirect();
+
+    expect(Transaction::query()->where('patient_id', $patient->id)->exists())->toBeTrue();
 });
 
 test('creating administrative transaction requires amount and payment method', function () {
