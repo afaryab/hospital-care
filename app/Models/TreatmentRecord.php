@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
+use App\Casts\SafeEncryptedJson;
 use App\Enum\TreatmentOutcome;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -43,10 +45,16 @@ class TreatmentRecord extends Model
     protected function casts(): array
     {
         return [
-            'examination_findings' => 'json',
-            'prescriptions' => 'json',
-            'department_specific_data' => 'json',
-            'dental_chart' => 'json',
+            'chief_complaint' => SafeEncrypted::class,
+            'history_of_present_illness' => SafeEncrypted::class,
+            'diagnosis_text' => SafeEncrypted::class,
+            'treatment_plan' => SafeEncrypted::class,
+            'outcome_notes' => SafeEncrypted::class,
+            'referral_to' => SafeEncrypted::class,
+            'examination_findings' => SafeEncryptedJson::class,
+            'prescriptions' => SafeEncryptedJson::class,
+            'department_specific_data' => SafeEncryptedJson::class,
+            'dental_chart' => SafeEncryptedJson::class,
             'is_finalized' => 'boolean',
             'treated_at' => 'datetime',
             'finalized_at' => 'datetime',

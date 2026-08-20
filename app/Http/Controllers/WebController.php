@@ -6,6 +6,7 @@ use App\Enum\AppointmentStatus;
 use App\Enum\CounterStatus;
 use App\Enum\TransactionElementType;
 use App\Helpers\DateHelper;
+use App\Helpers\PiiHasher;
 use App\Models\Appointment;
 use App\Models\Closing;
 use App\Models\ExpenseCategory;
@@ -362,7 +363,7 @@ class WebController extends Controller
             // the same lookup pattern used by Api\PateintController::search().
             $normalizedContact = preg_replace('/\D+/', '', $filters['contact']);
             if ($normalizedContact !== '') {
-                $query->where('contact_hash', hash('sha256', $normalizedContact));
+                $query->where('contact_hash', PiiHasher::contact($normalizedContact));
             }
         }
 
@@ -449,6 +450,17 @@ class WebController extends Controller
         }
 
         app(BreachDetectionService::class)->recordPatientAccess($request->user(), $patientData, $request);
+
+        // BreachDetectionService only persists something once a bulk-access
+        // threshold is crossed — it's an anomaly detector, not an audit
+        // trail. HIPAA/PHC both require every individual PHI read to be
+        // logged (user, patient, timestamp), which this call provides.
+        activity()
+            ->causedBy($request->user())
+            ->performedOn($patientData)
+            ->event('viewed')
+            ->withProperties(['service_order_id' => $serviceOrder?->id])
+            ->log('Patient record viewed');
 
         return Inertia::render('patient', [
             'departmentKey' => $departmentKey,
