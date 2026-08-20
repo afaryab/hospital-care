@@ -42,9 +42,12 @@ use BezhanSalleh\PanelSwitch\PanelSwitch;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Spatie\Activitylog\Models\Activity;
 
@@ -80,6 +83,17 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::define('viewPulse', function (User $user) {
             return $user->adminProfiles()->count() > 0;
+        });
+
+        // Previously undefined, which made bootstrap/app.php's ->throttleApi()
+        // a no-op — every one of the 55 routes in routes/api.php could be hit
+        // without limit by any authenticated token holder. 120/min per user
+        // (falling back to per-IP for the rare unauthenticated case) is
+        // generous enough for legitimate search-as-you-type UX on the
+        // department dashboards while still bounding abuse/retry storms
+        // against the financial/clinical mutation endpoints in this group.
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());
         });
 
         Gate::policy(Closing::class, ClosingPolicy::class);

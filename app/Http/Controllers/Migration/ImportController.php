@@ -34,6 +34,12 @@ class ImportController extends Controller
      */
     public function index(Request $request)
     {
+        // One-time legacy data migration tool — bulk-writes Patient, User,
+        // Transaction, Closing, Expense, and ExpenseVoucher records from a
+        // secondary DB connection. Admin-only: nobody else has a legitimate
+        // reason to trigger this, and repeated/unauthenticated hits were
+        // previously an unbounded-resource DoS vector.
+        abort_unless($request->user()?->isAdmin(), 403);
 
         // Prevent time out give execution as much time as it needs and memory
         set_time_limit(0);
