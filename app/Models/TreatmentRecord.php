@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
+use App\Casts\SafeEncryptedJson;
+use App\Enum\ConsentType;
 use App\Enum\TreatmentOutcome;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -43,10 +46,16 @@ class TreatmentRecord extends Model
     protected function casts(): array
     {
         return [
-            'examination_findings' => 'json',
-            'prescriptions' => 'json',
-            'department_specific_data' => 'json',
-            'dental_chart' => 'json',
+            'chief_complaint' => SafeEncrypted::class,
+            'history_of_present_illness' => SafeEncrypted::class,
+            'diagnosis_text' => SafeEncrypted::class,
+            'treatment_plan' => SafeEncrypted::class,
+            'outcome_notes' => SafeEncrypted::class,
+            'referral_to' => SafeEncrypted::class,
+            'examination_findings' => SafeEncryptedJson::class,
+            'prescriptions' => SafeEncryptedJson::class,
+            'department_specific_data' => SafeEncryptedJson::class,
+            'dental_chart' => SafeEncryptedJson::class,
             'is_finalized' => 'boolean',
             'treated_at' => 'datetime',
             'finalized_at' => 'datetime',
@@ -58,6 +67,25 @@ class TreatmentRecord extends Model
 
     protected static function booted(): void
     {
+        static::creating(function (TreatmentRecord $treatmentRecord): void {
+            if (! HospitalSetting::get('require_consent_before_treatment', false)) {
+                return;
+            }
+
+            $patientId = ServiceOrder::where('id', $treatmentRecord->service_order_id)->value('patient_id');
+
+            $hasTreatmentConsent = $patientId && Consent::query()
+                ->where('patient_id', $patientId)
+                ->where('consent_type', ConsentType::Treatment)
+                ->exists();
+
+            if (! $hasTreatmentConsent) {
+                throw ValidationException::withMessages([
+                    'consent' => 'Patient consent must be recorded before treatment can begin.',
+                ]);
+            }
+        });
+
         static::updating(function (TreatmentRecord $treatmentRecord): void {
             $dirtyAttributes = array_diff(array_keys($treatmentRecord->getDirty()), ['updated_at']);
 

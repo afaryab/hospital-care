@@ -9,8 +9,6 @@ use App\Models\DeathCertificate;
 use App\Models\ServiceOrder;
 use App\Models\User;
 
-use function Pest\Laravel\assertDatabaseHas;
-
 beforeEach(function () {
     $this->user = User::factory()->create();
     Administrator::create(['user_id' => $this->user->id, 'authority' => 'administrator']);
@@ -39,11 +37,13 @@ test('admin can create a death certificate for a service order', function () {
         ->assertNotified()
         ->assertRedirect();
 
-    assertDatabaseHas(DeathCertificate::class, [
-        'service_order_id' => $serviceOrder->id,
-        'place_of_death' => 'Emergency Ward',
-        'manner_of_death' => DeathCertificateManner::Natural->value,
-    ]);
+    // place_of_death is encrypted at rest (SafeEncrypted), so it can't be
+    // matched via assertDatabaseHas against the raw column — check it
+    // through the model instead, where the cast transparently decrypts it.
+    $certificate = DeathCertificate::where('service_order_id', $serviceOrder->id)->first();
+    expect($certificate)->not->toBeNull()
+        ->and($certificate->place_of_death)->toBe('Emergency Ward')
+        ->and($certificate->manner_of_death)->toBe(DeathCertificateManner::Natural);
 });
 
 test('admin can update a death certificate', function () {
@@ -54,8 +54,5 @@ test('admin can update a death certificate', function () {
         ->call('save')
         ->assertNotified();
 
-    assertDatabaseHas(DeathCertificate::class, [
-        'id' => $certificate->id,
-        'antecedent_cause' => 'Chronic renal failure',
-    ]);
+    expect($certificate->fresh()->antecedent_cause)->toBe('Chronic renal failure');
 });

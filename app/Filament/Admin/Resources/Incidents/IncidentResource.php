@@ -2,7 +2,11 @@
 
 namespace App\Filament\Admin\Resources\Incidents;
 
+use App\Filament\Admin\Resources\Incidents\Pages\CreateIncident;
 use App\Filament\Admin\Resources\Incidents\Pages\ListIncidents;
+use App\Filament\Admin\Resources\Incidents\Pages\ViewIncident;
+use App\Filament\Admin\Resources\Incidents\Schemas\IncidentForm;
+use App\Filament\Admin\Resources\Incidents\Schemas\IncidentInfolist;
 use App\Filament\Admin\Resources\Incidents\Tables\IncidentsTable;
 use App\Models\Incident;
 use BackedEnum;
@@ -30,7 +34,12 @@ class IncidentResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([]);
+        return IncidentForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return IncidentInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
@@ -42,11 +51,8 @@ class IncidentResource extends Resource
     {
         return [
             'index' => ListIncidents::route('/'),
+            'create' => CreateIncident::route('/create'),
+            'view' => ViewIncident::route('/{record}'),
         ];
-    }
-
-    public static function canCreate(): bool
-    {
-        return false;
     }
 }

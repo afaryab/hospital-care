@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncryptedJson;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,7 +22,12 @@ class PatientVersion extends Model
     protected function casts(): array
     {
         return [
-            'snapshot' => 'array',
+            // getOriginal() on the parent Patient decrypts SafeEncrypted
+            // fields (cnic/contact/address) before it reaches this
+            // snapshot — encrypt it going in so the audit trail doesn't
+            // itself become a plaintext copy of the PII it's meant to be
+            // logging changes to.
+            'snapshot' => SafeEncryptedJson::class,
             'changed_at' => 'datetime',
         ];
     }

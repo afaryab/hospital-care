@@ -8,8 +8,6 @@ use App\Models\BirthCertificate;
 use App\Models\ServiceOrder;
 use App\Models\User;
 
-use function Pest\Laravel\assertDatabaseHas;
-
 beforeEach(function () {
     $this->user = User::factory()->create();
     Administrator::create(['user_id' => $this->user->id, 'authority' => 'administrator']);
@@ -38,11 +36,13 @@ test('admin can create a birth certificate for a service order', function () {
         ->assertNotified()
         ->assertRedirect();
 
-    assertDatabaseHas(BirthCertificate::class, [
-        'service_order_id' => $serviceOrder->id,
-        'child_name' => 'Baby Ahmed',
-        'is_locked' => false,
-    ]);
+    // child_name is encrypted at rest (SafeEncrypted), so it can't be
+    // matched via assertDatabaseHas against the raw column — check it
+    // through the model instead, where the cast transparently decrypts it.
+    $certificate = BirthCertificate::where('service_order_id', $serviceOrder->id)->first();
+    expect($certificate)->not->toBeNull()
+        ->and($certificate->child_name)->toBe('Baby Ahmed')
+        ->and($certificate->is_locked)->toBeFalse();
 });
 
 test('admin can update an unlocked birth certificate', function () {
@@ -53,10 +53,7 @@ test('admin can update an unlocked birth certificate', function () {
         ->call('save')
         ->assertNotified();
 
-    assertDatabaseHas(BirthCertificate::class, [
-        'id' => $certificate->id,
-        'child_name' => 'Updated Name',
-    ]);
+    expect($certificate->fresh()->child_name)->toBe('Updated Name');
 });
 
 test('the lock action is visible for an unlocked certificate and hidden for a locked one', function () {
