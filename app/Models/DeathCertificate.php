@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class DeathCertificate extends Model
 {
@@ -29,6 +30,9 @@ class DeathCertificate extends Model
         'informant_relation',
         'informant_cnic',
         'remarks',
+        'is_locked',
+        'locked_at',
+        'locked_by',
         'created_by',
     ];
 
@@ -43,6 +47,8 @@ class DeathCertificate extends Model
             'remarks' => SafeEncrypted::class,
             'date_of_death' => 'date',
             'manner_of_death' => DeathCertificateManner::class,
+            'is_locked' => 'boolean',
+            'locked_at' => 'datetime',
         ];
     }
 
@@ -51,6 +57,16 @@ class DeathCertificate extends Model
         static::creating(function (DeathCertificate $certificate): void {
             if (empty($certificate->certificate_number)) {
                 $certificate->certificate_number = static::generateCertificateNumber();
+            }
+        });
+
+        static::updating(function (DeathCertificate $certificate): void {
+            $dirtyAttributes = array_diff(array_keys($certificate->getDirty()), ['updated_at']);
+
+            if ($certificate->getOriginal('is_locked') && count($dirtyAttributes) > 0) {
+                throw ValidationException::withMessages([
+                    'death_certificate' => 'Locked death certificates cannot be modified.',
+                ]);
             }
         });
 
@@ -69,6 +85,11 @@ class DeathCertificate extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function lockedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'locked_by');
     }
 
     public static function generateCertificateNumber(): string

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ReferralCertificate extends Model
 {
@@ -19,6 +20,9 @@ class ReferralCertificate extends Model
         'referral_number',
         'receiving_facility_name',
         'notes',
+        'is_locked',
+        'locked_at',
+        'locked_by',
         'created_by',
     ];
 
@@ -26,6 +30,8 @@ class ReferralCertificate extends Model
     {
         return [
             'notes' => SafeEncrypted::class,
+            'is_locked' => 'boolean',
+            'locked_at' => 'datetime',
         ];
     }
 
@@ -34,6 +40,16 @@ class ReferralCertificate extends Model
         static::creating(function (ReferralCertificate $certificate): void {
             if (empty($certificate->referral_number)) {
                 $certificate->referral_number = static::generateReferralNumber();
+            }
+        });
+
+        static::updating(function (ReferralCertificate $certificate): void {
+            $dirtyAttributes = array_diff(array_keys($certificate->getDirty()), ['updated_at']);
+
+            if ($certificate->getOriginal('is_locked') && count($dirtyAttributes) > 0) {
+                throw ValidationException::withMessages([
+                    'referral_certificate' => 'Locked referral certificates cannot be modified.',
+                ]);
             }
         });
 
@@ -52,6 +68,11 @@ class ReferralCertificate extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function lockedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'locked_by');
     }
 
     /**

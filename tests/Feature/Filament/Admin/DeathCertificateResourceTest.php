@@ -56,3 +56,27 @@ test('admin can update a death certificate', function () {
 
     expect($certificate->fresh()->antecedent_cause)->toBe('Chronic renal failure');
 });
+
+test('the lock action is visible for an unlocked certificate and hidden for a locked one', function () {
+    $unlocked = DeathCertificate::factory()->create();
+    $locked = DeathCertificate::factory()->locked()->create();
+
+    Livewire\Livewire::test(EditDeathCertificate::class, ['record' => $unlocked->getRouteKey()])
+        ->assertActionVisible('lock');
+
+    Livewire\Livewire::test(EditDeathCertificate::class, ['record' => $locked->getRouteKey()])
+        ->assertActionHidden('lock');
+});
+
+test('admin can lock a death certificate via the lock action', function () {
+    $certificate = DeathCertificate::factory()->create();
+
+    Livewire\Livewire::test(EditDeathCertificate::class, ['record' => $certificate->getRouteKey()])
+        ->callAction('lock')
+        ->assertNotified();
+
+    $certificate->refresh();
+    expect($certificate->is_locked)->toBeTrue()
+        ->and($certificate->locked_at)->not->toBeNull()
+        ->and($certificate->locked_by)->toBe($this->user->id);
+});

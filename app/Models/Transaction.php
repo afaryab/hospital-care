@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -117,6 +118,11 @@ class Transaction extends Model
     public function elements()
     {
         return $this->hasMany(TransactionElement::class);
+    }
+
+    public function versions(): HasMany
+    {
+        return $this->hasMany(TransactionVersion::class)->latest('changed_at');
     }
 
     public function patient()

@@ -26,4 +26,13 @@ class ReferralCertificateFactory extends Factory
             'created_by' => User::factory(),
         ];
     }
+
+    public function locked(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_locked' => true,
+            'locked_at' => now(),
+            'locked_by' => User::factory(),
+        ]);
+    }
 }
