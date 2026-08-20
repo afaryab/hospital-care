@@ -24,3 +24,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 7 | [#50](https://github.com/afaryab/hospital-care/issues/50) | 11 vulnerable dependencies with in-constraint upgrade paths | Critical | ✅ Fixed |
 | 8 | [#52](https://github.com/afaryab/hospital-care/issues/52) | Financial records (Transaction/Closing/ExpenseVoucher/Receaveable) were hard-deletable | Critical | ✅ Fixed |
 | 9 | [#54](https://github.com/afaryab/hospital-care/issues/54) | Slow admin dashboard & patient dropdown (unscoped query + uncached aggregates) | Critical | ✅ Fixed |
+| 10 | [#56](https://github.com/afaryab/hospital-care/issues/56) | Unauthenticated /import-old route + verified middleware was a silent no-op app-wide | Critical | ✅ Fixed |

@@ -34,10 +34,13 @@ use Laravel\Fortify\Features;
 //     ]);
 // })->name('home');
 
-Route::get('/import-old', [ImportController::class, 'index'])->name('import-old');
-
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', [WebController::class, 'index'])->name('home');
+
+    // One-time legacy data migration tool — admin-only (see ImportController::index()).
+    // Was previously registered above the auth group entirely, requiring no
+    // login at all.
+    Route::get('/import-old', [ImportController::class, 'index'])->name('import-old');
 
     /**
      * Doctor: own service orders & expense vouchers
