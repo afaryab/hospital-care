@@ -23,3 +23,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 6 | [#48](https://github.com/afaryab/hospital-care/issues/48) | Broken access control — any staff account could read/print/write any patient's record | Critical | ✅ Fixed |
 | 7 | [#50](https://github.com/afaryab/hospital-care/issues/50) | 11 vulnerable dependencies with in-constraint upgrade paths | Critical | ✅ Fixed |
 | 8 | [#52](https://github.com/afaryab/hospital-care/issues/52) | Financial records (Transaction/Closing/ExpenseVoucher/Receaveable) were hard-deletable | Critical | ✅ Fixed |
+| 9 | [#54](https://github.com/afaryab/hospital-care/issues/54) | Slow admin dashboard & patient dropdown (unscoped query + uncached aggregates) | Critical | ✅ Fixed |

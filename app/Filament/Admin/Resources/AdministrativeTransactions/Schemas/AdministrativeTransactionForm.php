@@ -40,8 +40,13 @@ class AdministrativeTransactionForm
 
                     Select::make('patient_id')
                         ->label('Patient (Optional)')
-                        ->options(fn () => Patient::query()->orderBy('name')->pluck('name', 'id')->toArray())
                         ->searchable()
+                        ->getSearchResultsUsing(fn (string $search): array => Patient::query()
+                            ->where('name', 'like', "%{$search}%")
+                            ->limit(30)
+                            ->pluck('name', 'id')
+                            ->toArray())
+                        ->getOptionLabelUsing(fn ($value): ?string => Patient::find($value)?->name)
                         ->nullable(),
 
                     TextInput::make('amount')
