@@ -119,8 +119,8 @@ export default function CommandPaletteLayout({
                     name: string;
                     url?: string;
                     type?: string;
-                }> = Array.isArray(data.results)
-                    ? data.results.map((item: any) => ({
+                }> = Array.isArray(data.data)
+                    ? data.data.map((item: any) => ({
                           name: item?.name ?? 'Untitled',
                           url: item?.url,
                           type: item?.type,

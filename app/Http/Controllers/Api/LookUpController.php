@@ -161,9 +161,7 @@ class LookUpController extends Controller
         }
 
         return response()->json([
-            'results' => $results,
-            'keyWord' => $keyWord,
-            'strlen' => strlen($keyWord),
+            'data' => $results,
         ]);
     }
 }

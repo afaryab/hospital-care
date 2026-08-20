@@ -35,3 +35,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 18 | [#72](https://github.com/afaryab/hospital-care/issues/72) | Incident model had no manual reporting, no lifecycle, and no authorization | Medium | ✅ Fixed |
 | 19 | [#74](https://github.com/afaryab/hospital-care/issues/74) | Backups unencrypted by default in production; retention short of the 6-year minimum | Medium | ✅ Fixed |
 | 20 | [#76](https://github.com/afaryab/hospital-care/issues/76) | Transaction had no version history and hard-deleted; DeathCertificate/ReferralCertificate had no finalization lock | Medium | ✅ Fixed |
+| 21 | [#78](https://github.com/afaryab/hospital-care/issues/78) | GET route writes to DB, duplicate route, dead code, inconsistent API envelope, swallowed route:cache failures | Low/Medium | ✅ Fixed |

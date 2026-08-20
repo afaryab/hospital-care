@@ -13,13 +13,20 @@ chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache 2>/dev/null || 
 # worker that processes BuildFolderZipJob/SafeExtractZipJob.
 mkdir -p /var/www/html/storage/app/private/dms-tmp
 
-# Run Laravel optimizations and migrations if artisan exists
+# Run Laravel optimizations and migrations if artisan exists. Failures are
+# intentionally non-fatal (a broken cache shouldn't stop the container from
+# starting), but they must stay visible — previously stderr and the exit
+# code were both suppressed, so a broken route:cache (e.g. a route file
+# syntax error) would boot the container with a stale or missing route
+# cache and leave zero trace in the logs. optimize:clear also now runs
+# *before* the cache builds, not after — it was previously wiping out the
+# caches this same block had just built two lines earlier.
 if [ -f "/var/www/html/artisan" ]; then
     echo "Running Laravel optimizations..."
-    php artisan config:cache 2>/dev/null || true
-    php artisan route:cache 2>/dev/null || true
-    php artisan view:cache 2>/dev/null || true
-    php artisan optimize:clear 2>/dev/null || true
+    php artisan optimize:clear || echo "WARNING: optimize:clear failed (exit $?)."
+    php artisan config:cache || echo "WARNING: config:cache failed (exit $?) — app may run without a fresh config cache."
+    php artisan route:cache || echo "WARNING: route:cache failed (exit $?) — app may run with a stale or missing route cache."
+    php artisan view:cache || echo "WARNING: view:cache failed (exit $?) — views will compile on demand instead of being precompiled."
 
     echo "Waiting for database and applying migrations..."
     tries=0
