@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Enum;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * Shared treatment-record handler for EMG, DNT, LAB (PTH), ULT, and XRAY
@@ -296,6 +297,8 @@ class DepartmentController extends Controller
      */
     public function uploadAttachment(Request $request, ServiceOrder $serviceOrder): JsonResponse
     {
+        $this->authorize('update', $serviceOrder);
+
         $data = $request->validate([
             'file' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:10240'],
             'label' => ['nullable', 'string', 'max:255'],
@@ -310,7 +313,10 @@ class DepartmentController extends Controller
         ]);
 
         $file = $data['file'];
-        $path = $file->store("treatment-attachments/{$treatmentRecord->id}", 'public');
+        // Stored on the private disk — attachments are clinical images/PDFs
+        // (PHI) and must never be reachable via a guessable public URL.
+        // Served back out through showAttachment(), which is auth-checked.
+        $path = $file->store("treatment-attachments/{$treatmentRecord->id}", 'local');
 
         $attachment = TreatmentAttachment::create([
             'treatment_record_id' => $treatmentRecord->id,
@@ -329,12 +335,31 @@ class DepartmentController extends Controller
     }
 
     /**
+     * Stream a treatment attachment's bytes to an authorized viewer.
+     * Route: GET /api/attachments/{attachment}
+     */
+    public function showAttachment(TreatmentAttachment $attachment): BinaryFileResponse
+    {
+        $this->authorize('view', $attachment->treatmentRecord->serviceOrder);
+
+        if (! Storage::disk('local')->exists($attachment->file_path)) {
+            abort(404);
+        }
+
+        return response()->file(Storage::disk('local')->path($attachment->file_path), [
+            'Content-Type' => $attachment->file_type,
+        ]);
+    }
+
+    /**
      * Delete a treatment attachment.
      * Route: DELETE /api/{dept}/attachments/{attachment}
      */
     public function deleteAttachment(TreatmentAttachment $attachment): JsonResponse
     {
-        Storage::disk('public')->delete($attachment->file_path);
+        $this->authorize('update', $attachment->treatmentRecord->serviceOrder);
+
+        Storage::disk('local')->delete($attachment->file_path);
         $attachment->delete();
 
         return response()->json(['message' => 'Attachment deleted.']);

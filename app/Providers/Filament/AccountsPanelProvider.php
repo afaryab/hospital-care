@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use Andreia\FilamentUiSwitcher\FilamentUiSwitcherPlugin;
 use App\Filament\Pages\Dashboard;
+use App\Http\Middleware\EnsureTwoFactorAuthenticationIsEnabled;
 use App\Services\Filament\FilamentThemeService;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -58,6 +59,7 @@ class AccountsPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                EnsureTwoFactorAuthenticationIsEnabled::class,
             ])
             ->plugins([
                 AbacusPlugin::make(),

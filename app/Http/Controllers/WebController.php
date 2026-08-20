@@ -451,6 +451,17 @@ class WebController extends Controller
 
         app(BreachDetectionService::class)->recordPatientAccess($request->user(), $patientData, $request);
 
+        // BreachDetectionService only persists something once a bulk-access
+        // threshold is crossed — it's an anomaly detector, not an audit
+        // trail. HIPAA/PHC both require every individual PHI read to be
+        // logged (user, patient, timestamp), which this call provides.
+        activity()
+            ->causedBy($request->user())
+            ->performedOn($patientData)
+            ->event('viewed')
+            ->withProperties(['service_order_id' => $serviceOrder?->id])
+            ->log('Patient record viewed');
+
         return Inertia::render('patient', [
             'departmentKey' => $departmentKey,
             'patientData' => $patientData,
