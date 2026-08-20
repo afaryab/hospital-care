@@ -33,3 +33,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 16 | [#68](https://github.com/afaryab/hospital-care/issues/68) | N+1 queries on admin tables, missing indexes, reference-data cache bypass, unmemoized isAdmin() | Medium | ✅ Fixed |
 | 17 | [#70](https://github.com/afaryab/hospital-care/issues/70) | Consent resource had no create/view UI; no way to require recorded consent before treatment | Medium | ✅ Fixed |
 | 18 | [#72](https://github.com/afaryab/hospital-care/issues/72) | Incident model had no manual reporting, no lifecycle, and no authorization | Medium | ✅ Fixed |
+| 19 | [#74](https://github.com/afaryab/hospital-care/issues/74) | Backups unencrypted by default in production; retention short of the 6-year minimum | Medium | ✅ Fixed |
