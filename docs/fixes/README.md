@@ -26,3 +26,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 9 | [#54](https://github.com/afaryab/hospital-care/issues/54) | Slow admin dashboard & patient dropdown (unscoped query + uncached aggregates) | Critical | ✅ Fixed |
 | 10 | [#56](https://github.com/afaryab/hospital-care/issues/56) | Unauthenticated /import-old route + verified middleware was a silent no-op app-wide | Critical | ✅ Fixed |
 | 11 | [#58](https://github.com/afaryab/hospital-care/issues/58) | No rate limiting on any API route — throttler was never registered | High | ✅ Fixed |
+| 12 | [#60](https://github.com/afaryab/hospital-care/issues/60) | No genuine per-view audit log of PHI access | High | ✅ Fixed |
