@@ -11,7 +11,7 @@ test('lookup endpoint returns expected structure', function () {
     $response = $this->getJson('/api/lookup');
 
     $response->assertOk()
-        ->assertJsonStructure(['results', 'keyWord', 'strlen']);
+        ->assertJsonStructure(['data']);
 });
 
 test('unauthenticated users cannot access lookup', function () {

@@ -25,14 +25,6 @@ use App\Http\Controllers\UltrasoundController;
 use App\Http\Controllers\WebController;
 use App\Http\Controllers\XrayController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Laravel\Fortify\Features;
-
-// Route::get('/', function () {
-//     return Inertia::render('welcome', [
-//         'canRegister' => Features::enabled(Features::registration()),
-//     ]);
-// })->name('home');
 
 Route::get('/import-old', [ImportController::class, 'index'])->name('import-old');
 

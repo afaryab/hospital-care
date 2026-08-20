@@ -47,7 +47,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/opd/my-queue', [OpdController::class, 'myQueue'])->name('api-opd-my-queue');
     Route::post('/opd/service-orders/{serviceOrder}/treatment-record', [OpdController::class, 'saveTreatmentRecord'])->name('api-opd-save-treatment');
     Route::patch('/opd/service-orders/{serviceOrder}/status', [OpdController::class, 'updateStatus'])->name('api-opd-update-status');
-    Route::post('/closings/search', [ClosingController::class, 'index'])->name('api-closings-search');
 
     // Shared treatment-record API for EMG, DNT, LAB, ULT, XRAY
     Route::get('/emg/my-queue', [DepartmentController::class, 'myQueue'])->name('api-emg-my-queue');

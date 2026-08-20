@@ -581,11 +581,17 @@ class WebController extends Controller
                 ]));
             }
 
+            // GET only renders the close-confirmation screen — the totals
+            // below are computed for display and set on the in-memory model
+            // only (never persisted). Actually closing the counter, and
+            // recomputing/persisting the final amount, happens in the POST
+            // branch above. A GET request must never have a write side
+            // effect (browser prefetch, refresh, or a link scanner could
+            // otherwise silently mutate this record).
             $totalIncAmount = $openCounter->transactions()->where('income_or_expense', 'INCOME')->sum('amount');
             $totalExpAmount = $openCounter->transactions()->where('income_or_expense', 'EXPENSE')->sum('amount');
             $openCounter->closing_amount = $totalIncAmount - $totalExpAmount;
             $openCounter->expense_payed = $totalExpAmount;
-            $openCounter->save();
 
             return Inertia::render('counter/close', [
                 'openCounter' => $openCounter,
