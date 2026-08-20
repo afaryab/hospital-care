@@ -1,10 +1,17 @@
 <?php
 
 use App\Http\Controllers\DentistController;
+use App\Http\Controllers\Dms\DocumentDownloadController;
+use App\Http\Controllers\Dms\FolderZipController;
+use App\Http\Controllers\Dms\PreparedZipDownloadController;
+use App\Http\Controllers\Dms\PublicShareDownloadController;
 use App\Http\Controllers\EmergencyDoctorController;
 use App\Http\Controllers\IndDoctorController;
 use App\Http\Controllers\LabController;
 use App\Http\Controllers\Migration\ImportController;
+use App\Http\Controllers\OnlyOffice\CallbackController;
+use App\Http\Controllers\OnlyOffice\DocumentContentController;
+use App\Http\Controllers\OnlyOffice\EditorPageController;
 use App\Http\Controllers\OpdDoctorController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
 use App\Http\Controllers\Prints\ServiceOrderPdfPrintController;
@@ -207,7 +214,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports/panel-payments/pending', [PanelPaymentReportController::class, 'pending'])
         ->name('reports.panel-payments.pending');
 
+    /**
+     * Document Management System — session-authed actions. Folder/document
+     * CRUD lives in the Filament admin page's Livewire actions; these are
+     * the plain-HTTP endpoints browsers navigate to directly (downloads,
+     * the OnlyOffice editor tab).
+     */
+    Route::get('dms/documents/{document:uuid}/download', DocumentDownloadController::class)
+        ->name('dms.documents.download');
+    Route::get('dms/folders/{folder:uuid}/zip', FolderZipController::class)
+        ->name('dms.folders.zip');
+    Route::get('onlyoffice/editor/{document:uuid}', EditorPageController::class)
+        ->name('onlyoffice.editor');
 });
+
+/**
+ * Document Management System — endpoints reached without a browser session:
+ * hit by the OnlyOffice Document Server container itself (content fetch,
+ * save callback), by a signed download-when-ready email link, or by an
+ * externally shared document link. All are gated by a signed URL rather
+ * than `auth`/`verified`, with the OnlyOffice pair additionally verifying
+ * OnlyOffice's own JWT inside the controller.
+ */
+Route::get('onlyoffice/content/{document:uuid}', DocumentContentController::class)
+    ->name('onlyoffice.content');
+Route::post('onlyoffice/callback/{document:uuid}', CallbackController::class)
+    ->name('onlyoffice.callback');
+Route::get('dms/zip-download/{filename}', PreparedZipDownloadController::class)
+    ->name('dms.folders.zip-download');
+Route::get('dms/shares/{share}/download', PublicShareDownloadController::class)
+    ->name('dms.shares.download');
 
 /**
  * Print routes (no auth required for printing)

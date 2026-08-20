@@ -21,9 +21,12 @@ services:
       - CACHE_STORE=redis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - ONLYOFFICE_INTERNAL_URL=http://onlyoffice-documentserver
+      - ONLYOFFICE_JWT_SECRET=${ONLYOFFICE_JWT_SECRET:-change-me-onlyoffice-jwt-secret}
     depends_on:
       - db
       - redis
+      - onlyoffice-documentserver
 
   cli:
     build:
@@ -47,6 +50,22 @@ services:
     depends_on:
       - db
       - redis
+
+  # Self-hosted document editor powering in-browser Word/Excel/PowerPoint
+  # editing from the Document Manager. Reached only via the `app` nginx
+  # proxy (see docker/app/default.conf's /onlyoffice/ location) and the
+  # internal Docker network — no public port is exposed for it directly.
+  # Recommend 2+ vCPU / 4GB+ RAM for this container in production.
+  onlyoffice-documentserver:
+    image: onlyoffice/documentserver:8.1
+    restart: unless-stopped
+    environment:
+      - JWT_ENABLED=true
+      - JWT_SECRET=${ONLYOFFICE_JWT_SECRET:-change-me-onlyoffice-jwt-secret}
+      - JWT_HEADER=Authorization
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_logs:/var/log/onlyoffice
 
   redis:
     image: redis:7-alpine
@@ -93,3 +112,5 @@ volumes:
   db_data:
   mysql_data:
   redis_data:
+  onlyoffice_data:
+  onlyoffice_logs:

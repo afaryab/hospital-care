@@ -20,4 +20,7 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 3 | [#5](https://github.com/afaryab/hospital-care/issues/5) | CNIC patient search uses wrong variable | High | ✅ Fixed |
 | 4 | [#34](https://github.com/afaryab/hospital-care/issues/34) | Configurable 1-page compact emergency triage print template | Enhancement | ✅ Implemented (PR #35) |
 | 5 | [#38](https://github.com/afaryab/hospital-care/issues/38) | Service department image breaks after editing via Filament | Medium | ✅ Fixed |
+| 6 | [#48](https://github.com/afaryab/hospital-care/issues/48) | Broken access control — any staff account could read/print/write any patient's record | Critical | ✅ Fixed |
+| 7 | [#50](https://github.com/afaryab/hospital-care/issues/50) | 11 vulnerable dependencies with in-constraint upgrade paths | Critical | ✅ Fixed |
+| 8 | [#52](https://github.com/afaryab/hospital-care/issues/52) | Financial records (Transaction/Closing/ExpenseVoucher/Receaveable) were hard-deletable | Critical | ✅ Fixed |
 | 9 | [#54](https://github.com/afaryab/hospital-care/issues/54) | Slow admin dashboard & patient dropdown (unscoped query + uncached aggregates) | Critical | ✅ Fixed |
