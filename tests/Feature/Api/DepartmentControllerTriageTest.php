@@ -142,9 +142,9 @@ test('my-queue is not restricted to today — older open orders still show', fun
 });
 
 test('doctor can upload and delete a treatment attachment', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'XRAY']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'XRAY', 'doctor_id' => $this->doctor->id]);
     $file = UploadedFile::fake()->image('xray.jpg');
 
     $uploadResponse = $this->postJson("/api/xray/service-orders/{$serviceOrder->id}/attachments", [
@@ -158,19 +158,19 @@ test('doctor can upload and delete a treatment attachment', function () {
         'id' => $attachmentId,
         'file_name' => 'xray.jpg',
     ]);
-    Storage::disk('public')->assertExists($uploadResponse->json('data.file_path'));
+    Storage::disk('local')->assertExists($uploadResponse->json('data.file_path'));
 
     $deleteResponse = $this->deleteJson("/api/xray/attachments/{$attachmentId}");
     $deleteResponse->assertOk();
 
     $this->assertDatabaseMissing('treatment_attachments', ['id' => $attachmentId]);
-    Storage::disk('public')->assertMissing($uploadResponse->json('data.file_path'));
+    Storage::disk('local')->assertMissing($uploadResponse->json('data.file_path'));
 });
 
 test('attachment upload rejects disallowed file types', function () {
-    Storage::fake('public');
+    Storage::fake('local');
 
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'XRAY']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'XRAY', 'doctor_id' => $this->doctor->id]);
     $file = UploadedFile::fake()->create('malware.exe', 10);
 
     $response = $this->postJson("/api/xray/service-orders/{$serviceOrder->id}/attachments", [

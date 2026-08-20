@@ -21,4 +21,18 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 4 | [#34](https://github.com/afaryab/hospital-care/issues/34) | Configurable 1-page compact emergency triage print template | Enhancement | ✅ Implemented (PR #35) |
 | 5 | [#38](https://github.com/afaryab/hospital-care/issues/38) | Service department image breaks after editing via Filament | Medium | ✅ Fixed |
 | 6 | [#48](https://github.com/afaryab/hospital-care/issues/48) | Broken access control — any staff account could read/print/write any patient's record | Critical | ✅ Fixed |
+| 7 | [#50](https://github.com/afaryab/hospital-care/issues/50) | 11 vulnerable dependencies with in-constraint upgrade paths | Critical | ✅ Fixed |
+| 8 | [#52](https://github.com/afaryab/hospital-care/issues/52) | Financial records (Transaction/Closing/ExpenseVoucher/Receaveable) were hard-deletable | Critical | ✅ Fixed |
+| 9 | [#54](https://github.com/afaryab/hospital-care/issues/54) | Slow admin dashboard & patient dropdown (unscoped query + uncached aggregates) | Critical | ✅ Fixed |
+| 10 | [#56](https://github.com/afaryab/hospital-care/issues/56) | Unauthenticated /import-old route + verified middleware was a silent no-op app-wide | Critical | ✅ Fixed |
+| 11 | [#58](https://github.com/afaryab/hospital-care/issues/58) | No rate limiting on any API route — throttler was never registered | High | ✅ Fixed |
+| 12 | [#60](https://github.com/afaryab/hospital-care/issues/60) | No genuine per-view audit log of PHI access | High | ✅ Fixed |
+| 13 | [#62](https://github.com/afaryab/hospital-care/issues/62) | Two-factor authentication available but never enforced for Admin/Accounts panels | High | ✅ Fixed |
+| 14 | [#64](https://github.com/afaryab/hospital-care/issues/64) | Treatment attachments (X-ray/ultrasound images) had no auth and could be deleted by anyone | High | ✅ Fixed |
+| 15 | [#66](https://github.com/afaryab/hospital-care/issues/66) | Clinical narrative fields and certificate CNIC/name columns were plaintext; CNIC hash was unsalted SHA-256; version-snapshot audit trail leaked plaintext PII | High | ✅ Fixed |
+| 16 | [#68](https://github.com/afaryab/hospital-care/issues/68) | N+1 queries on admin tables, missing indexes, reference-data cache bypass, unmemoized isAdmin() | Medium | ✅ Fixed |
+| 17 | [#70](https://github.com/afaryab/hospital-care/issues/70) | Consent resource had no create/view UI; no way to require recorded consent before treatment | Medium | ✅ Fixed |
+| 18 | [#72](https://github.com/afaryab/hospital-care/issues/72) | Incident model had no manual reporting, no lifecycle, and no authorization | Medium | ✅ Fixed |
+| 19 | [#74](https://github.com/afaryab/hospital-care/issues/74) | Backups unencrypted by default in production; retention short of the 6-year minimum | Medium | ✅ Fixed |
+| 20 | [#76](https://github.com/afaryab/hospital-care/issues/76) | Transaction had no version history and hard-deleted; DeathCertificate/ReferralCertificate had no finalization lock | Medium | ✅ Fixed |
 | 21 | [#78](https://github.com/afaryab/hospital-care/issues/78) | GET route writes to DB, duplicate route, dead code, inconsistent API envelope, swallowed route:cache failures | Low/Medium | ✅ Fixed |

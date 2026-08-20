@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enum\IncidentStatus;
 use App\Models\Incident;
 use App\Models\Patient;
 use App\Models\User;
@@ -126,7 +127,7 @@ class BreachDetectionService
         $incident = Incident::create([
             'type' => $type,
             'severity' => $severity,
-            'status' => 'open',
+            'status' => IncidentStatus::Reported,
             'user_id' => $user?->id,
             'patient_id' => $patient?->id,
             'ip_address' => $ipAddress,

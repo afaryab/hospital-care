@@ -34,6 +34,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/service-orders/completed-unpaid', [ServiceOrderController::class, 'completedUnpaid'])->name('api-service-orders-completed-unpaid');
     Route::post('/closings/search', [ClosingController::class, 'index'])->name('api-closings-search');
 
+    Route::get('/attachments/{attachment}', [DepartmentController::class, 'showAttachment'])->name('api-attachments-show');
+
     // IND Doctor API routes
     Route::post('/ind/search', [IndController::class, 'search'])->name('api-ind-search');
     Route::get('/ind/ward-snapshot', [IndController::class, 'wardSnapshot'])->name('api-ind-ward-snapshot');

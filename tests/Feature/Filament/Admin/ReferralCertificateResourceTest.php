@@ -55,3 +55,27 @@ test('admin can update a referral certificate', function () {
         'receiving_facility_name' => 'Updated Hospital',
     ]);
 });
+
+test('the lock action is visible for an unlocked certificate and hidden for a locked one', function () {
+    $unlocked = ReferralCertificate::factory()->create();
+    $locked = ReferralCertificate::factory()->locked()->create();
+
+    Livewire\Livewire::test(EditReferralCertificate::class, ['record' => $unlocked->getRouteKey()])
+        ->assertActionVisible('lock');
+
+    Livewire\Livewire::test(EditReferralCertificate::class, ['record' => $locked->getRouteKey()])
+        ->assertActionHidden('lock');
+});
+
+test('admin can lock a referral certificate via the lock action', function () {
+    $certificate = ReferralCertificate::factory()->create();
+
+    Livewire\Livewire::test(EditReferralCertificate::class, ['record' => $certificate->getRouteKey()])
+        ->callAction('lock')
+        ->assertNotified();
+
+    $certificate->refresh();
+    expect($certificate->is_locked)->toBeTrue()
+        ->and($certificate->locked_at)->not->toBeNull()
+        ->and($certificate->locked_by)->toBe($this->user->id);
+});

@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Concerns\Cacheable;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -16,10 +17,20 @@ use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser
+/**
+ * Implementing MustVerifyEmail is not cosmetic: Laravel's `verified`
+ * middleware — already applied throughout routes/web.php and
+ * routes/settings.php — checks `$user instanceof MustVerifyEmail` and is a
+ * silent no-op for any model that doesn't implement it, regardless of
+ * `email_verified_at`. Fortify's Features::emailVerification() being
+ * enabled in config/fortify.php only wires up the verification *flow*
+ * (sending the email, the /email/verify routes) — it does not, by itself,
+ * make anything actually require verification.
+ */
+class User extends Authenticatable implements FilamentUser, MustVerifyEmailContract
 {
     /** @use HasFactory<UserFactory> */
-    use Cacheable, HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable;
+    use Cacheable, HasFactory, HasRoles, LogsActivity, MustVerifyEmail, Notifiable, TwoFactorAuthenticatable;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -234,9 +245,17 @@ class User extends Authenticatable implements FilamentUser
 
     // ─── Role helpers ────────────────────────────────────────────────────────
 
+    /**
+     * Memoized per-instance: every Policy's before() hook calls this first,
+     * so on a Filament table with row-level actions it previously ran once
+     * per row per action visibility check — a single admin-panel page load
+     * could fire dozens of identical `adminProfiles` existence queries.
+     */
+    protected ?bool $isAdminMemo = null;
+
     public function isAdmin(): bool
     {
-        return $this->adminProfiles()->exists();
+        return $this->isAdminMemo ??= $this->adminProfiles()->exists();
     }
 
     public function isAccountant(): bool

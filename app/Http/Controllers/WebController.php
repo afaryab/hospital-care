@@ -6,6 +6,7 @@ use App\Enum\AppointmentStatus;
 use App\Enum\CounterStatus;
 use App\Enum\TransactionElementType;
 use App\Helpers\DateHelper;
+use App\Helpers\PiiHasher;
 use App\Models\Appointment;
 use App\Models\Closing;
 use App\Models\ExpenseCategory;
@@ -362,13 +363,13 @@ class WebController extends Controller
             // the same lookup pattern used by Api\PateintController::search().
             $normalizedContact = preg_replace('/\D+/', '', $filters['contact']);
             if ($normalizedContact !== '') {
-                $query->where('contact_hash', hash('sha256', $normalizedContact));
+                $query->where('contact_hash', PiiHasher::contact($normalizedContact));
             }
         }
 
         $data = $query->orderBy('created_at', 'DESC')->paginate(8)->withQueryString();
 
-        $serviceDepartments = ServiceDepartment::all();
+        $serviceDepartments = ServiceDepartment::cachedAll();
 
         return Inertia::render('register', [
             'yearSelected' => $year,
@@ -392,7 +393,7 @@ class WebController extends Controller
 
         $this->authorize('view', $patientData);
 
-        $serviceDepartments = ServiceDepartment::all();
+        $serviceDepartments = ServiceDepartment::cachedAll();
         $serviceOrder = null;
 
         if ($serviceNumber) {
@@ -449,6 +450,17 @@ class WebController extends Controller
         }
 
         app(BreachDetectionService::class)->recordPatientAccess($request->user(), $patientData, $request);
+
+        // BreachDetectionService only persists something once a bulk-access
+        // threshold is crossed — it's an anomaly detector, not an audit
+        // trail. HIPAA/PHC both require every individual PHI read to be
+        // logged (user, patient, timestamp), which this call provides.
+        activity()
+            ->causedBy($request->user())
+            ->performedOn($patientData)
+            ->event('viewed')
+            ->withProperties(['service_order_id' => $serviceOrder?->id])
+            ->log('Patient record viewed');
 
         return Inertia::render('patient', [
             'departmentKey' => $departmentKey,
@@ -641,18 +653,18 @@ class WebController extends Controller
 
         if (! $departmentKey || $departmentKey == '') {
 
-            $pageData['departments'] = ServiceDepartment::all();
+            $pageData['departments'] = ServiceDepartment::cachedAll();
 
         } else {
 
-            // $pageData['panels'] = Panel::all();
+            // $pageData['panels'] = Panel::cachedActive();
 
             $isRecesitation = Str::startsWith($departmentKey, 'RECES-');
             $departmentKey = $isRecesitation ? Str::replaceFirst('RECES-', '', $departmentKey) : $departmentKey;
 
             $department = ServiceDepartment::where('slug', $departmentKey)->firstOrFail();
 
-            $pageData['departments'] = ServiceDepartment::all();
+            $pageData['departments'] = ServiceDepartment::cachedAll();
 
             if ($isRecesitation) {
                 $pageData['recesitation'] = true;
@@ -665,7 +677,7 @@ class WebController extends Controller
 
                 $pageData['services'] = ServiceRecestation::where('service_department_id', $department->id)->get();
             } else {
-                $pageData['services'] = Service::where('service_department_id', $department->id)->get();
+                $pageData['services'] = Service::cachedActive()->where('service_department_id', $department->id)->values();
 
                 $providerTypes = $pageData['services']->pluck('service_provider_types')->flatten()->unique()->filter();
 
@@ -710,8 +722,8 @@ class WebController extends Controller
         // dd(Service::where('id', 33)->first()->available_providers);
         // dd($pageData['services']);
 
-        $pageData['panelCompanies'] = Panel::all();
-        $pageData['paymentMethods'] = PaymentMethod::all();
+        $pageData['panelCompanies'] = Panel::cachedActive();
+        $pageData['paymentMethods'] = PaymentMethod::cachedAll();
 
         return Inertia::render('counter/income', $pageData);
     }
@@ -1381,8 +1393,8 @@ class WebController extends Controller
         return Inertia::render('counter/receaveables', [
             'openCounter' => $openCounter,
             'receaveables' => $receaveables,
-            'paymentMethods' => PaymentMethod::all(),
-            'panelCompanies' => Panel::all(),
+            'paymentMethods' => PaymentMethod::cachedAll(),
+            'panelCompanies' => Panel::cachedActive(),
             'filters' => [
                 'status' => $status,
                 'search' => $filters['search'] ?? '',
@@ -1465,10 +1477,10 @@ class WebController extends Controller
         //         'payed_to_other' => $payedToOtherInUrl,
         //     ]);
 
-        $expenseCategories = ExpenseCategory::query()
+        $expenseCategories = ExpenseCategory::cachedAll()
             ->where('allow_petty_cash', true)
             ->whereNotIn('name', ['Outdoor Doctors Payments'])
-            ->get();
+            ->values();
 
         return Inertia::render('counter/expense', [
             'openCounter' => $openCounter,
@@ -1979,11 +1991,11 @@ class WebController extends Controller
     public function newVoucher()
     {
 
-        $expenseCategories = ExpenseCategory::query()
+        $expenseCategories = ExpenseCategory::cachedAll()
             ->where('allow_voucher', true)
             ->where('pay_doc', false)
             ->where('pay_users', false)
-            ->get();
+            ->values();
 
         $users = User::where(function ($query) {
             $query->whereHas('opdDoctorProfiles')
@@ -2003,10 +2015,10 @@ class WebController extends Controller
     public function newVoucherForDoctor()
     {
 
-        $expenseCategories = ExpenseCategory::query()
+        $expenseCategories = ExpenseCategory::cachedAll()
             ->where('allow_voucher', true)
             ->where('pay_doc', true)
-            ->get();
+            ->values();
 
         $users = User::where(function ($query) {
             $query->whereHas('opdDoctorProfiles')
@@ -2026,10 +2038,10 @@ class WebController extends Controller
     public function newVoucherForUser()
     {
 
-        $expenseCategories = ExpenseCategory::query()
+        $expenseCategories = ExpenseCategory::cachedAll()
             ->where('allow_voucher', true)
             ->where('pay_users', true)
-            ->get();
+            ->values();
 
         $users = User::where(function ($query) {
             $query->whereHas('opdDoctorProfiles')
