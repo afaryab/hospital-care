@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
 use App\Enum\DeathCertificateManner;
 use App\Models\Concerns\HasVerificationToken;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,6 +35,12 @@ class DeathCertificate extends Model
     protected function casts(): array
     {
         return [
+            'place_of_death' => SafeEncrypted::class,
+            'antecedent_cause' => SafeEncrypted::class,
+            'informant_name' => SafeEncrypted::class,
+            'informant_relation' => SafeEncrypted::class,
+            'informant_cnic' => SafeEncrypted::class,
+            'remarks' => SafeEncrypted::class,
             'date_of_death' => 'date',
             'manner_of_death' => DeathCertificateManner::class,
         ];

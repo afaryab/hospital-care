@@ -32,6 +32,12 @@ class ServiceOrderPdfPrintController extends Controller
 
         $this->authorize('view', $serviceOrder);
 
+        activity()
+            ->causedBy($request->user())
+            ->performedOn($serviceOrder)
+            ->event('downloaded')
+            ->log('Service order PDF printed');
+
         $patient = $serviceOrder->patient;
 
         // Past History: the patient's last 6 diagnosed conditions from other

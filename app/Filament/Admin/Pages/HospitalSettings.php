@@ -45,6 +45,7 @@ class HospitalSettings extends Page implements HasForms
             'abacus_auto_map_accounts' => (bool) HospitalSetting::get('abacus_auto_map_accounts', false),
             'appointment_priority_mode' => HospitalSetting::get('appointment_priority_mode', AppointmentPriorityMode::Standard->value),
             'certificate_verification_domain' => HospitalSetting::get('certificate_verification_domain', config('app.url')),
+            'require_consent_before_treatment' => (bool) HospitalSetting::get('require_consent_before_treatment', false),
         ]);
     }
 
@@ -104,6 +105,9 @@ class HospitalSettings extends Page implements HasForms
                     ->helperText('Public domain used to build the QR code link printed on Death and Birth certificates (e.g. https://verify.example.com). Defaults to this app\'s URL when left blank.')
                     ->url()
                     ->maxLength(255),
+                Toggle::make('require_consent_before_treatment')
+                    ->label('Require Recorded Consent Before Treatment')
+                    ->helperText('When enabled, saving a treatment record is blocked unless a "treatment" consent has already been recorded for that patient (via Compliance → Consents). Off by default — turn this on only once your existing patients\' consent has been backfilled, or every patient without a recorded consent will be blocked from receiving treatment.'),
             ])
             ->statePath('data');
     }
@@ -123,6 +127,7 @@ class HospitalSettings extends Page implements HasForms
         HospitalSetting::set('abacus_auto_map_accounts', $state['abacus_auto_map_accounts'] ?? false);
         HospitalSetting::set('appointment_priority_mode', $state['appointment_priority_mode'] ?? AppointmentPriorityMode::Standard->value);
         HospitalSetting::set('certificate_verification_domain', $state['certificate_verification_domain'] ?? null);
+        HospitalSetting::set('require_consent_before_treatment', $state['require_consent_before_treatment'] ?? false);
 
         DateHelper::flushTimezoneCache();
 

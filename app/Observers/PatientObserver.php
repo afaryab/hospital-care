@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Helpers\PiiHasher;
 use App\Models\Patient;
 
 class PatientObserver
@@ -20,12 +21,12 @@ class PatientObserver
 
         // Compute blind index for CNIC deduplication (stored unhashed for searchability)
         if (! empty($patient->cnic)) {
-            $patient->cnic_hash = hash('sha256', strtoupper(trim($patient->cnic)));
+            $patient->cnic_hash = PiiHasher::cnic($patient->cnic);
         }
 
         if (! empty($patient->contact)) {
             $normalizedContact = preg_replace('/\D+/', '', $patient->contact);
-            $patient->contact_hash = $normalizedContact ? hash('sha256', $normalizedContact) : null;
+            $patient->contact_hash = $normalizedContact ? PiiHasher::contact($patient->contact) : null;
         }
     }
 
@@ -50,12 +51,12 @@ class PatientObserver
 
         // Recompute CNIC hash if CNIC is changing
         if ($patient->isDirty('cnic') && ! empty($patient->cnic)) {
-            $patient->cnic_hash = hash('sha256', strtoupper(trim($patient->cnic)));
+            $patient->cnic_hash = PiiHasher::cnic($patient->cnic);
         }
 
         if ($patient->isDirty('contact')) {
             $normalizedContact = preg_replace('/\D+/', '', (string) $patient->contact);
-            $patient->contact_hash = $normalizedContact ? hash('sha256', $normalizedContact) : null;
+            $patient->contact_hash = $normalizedContact ? PiiHasher::contact((string) $patient->contact) : null;
         }
     }
 

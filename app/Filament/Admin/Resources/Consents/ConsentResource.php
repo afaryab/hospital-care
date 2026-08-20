@@ -2,9 +2,19 @@
 
 namespace App\Filament\Admin\Resources\Consents;
 
+use App\Enum\ConsentMethod;
+use App\Enum\ConsentType;
+use App\Filament\Admin\Resources\Consents\Pages\CreateConsent;
 use App\Filament\Admin\Resources\Consents\Pages\ListConsents;
+use App\Filament\Admin\Resources\Consents\Pages\ViewConsent;
+use App\Filament\Admin\Resources\Consents\Schemas\ConsentInfolist;
 use App\Models\Consent;
+use App\Models\Patient;
+use App\Models\ServiceOrder;
 use BackedEnum;
+use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -27,7 +37,47 @@ class ConsentResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([]);
+        return $schema->components([
+            Select::make('patient_id')
+                ->label('Patient')
+                ->searchable()
+                ->required()
+                ->getSearchResultsUsing(fn (string $search): array => Patient::query()
+                    ->where('name', 'like', "%{$search}%")
+                    ->limit(30)
+                    ->pluck('name', 'id')
+                    ->toArray())
+                ->getOptionLabelUsing(fn ($value): ?string => Patient::find($value)?->name),
+            Select::make('service_order_id')
+                ->label('Service Order (Optional)')
+                ->searchable()
+                ->nullable()
+                ->getSearchResultsUsing(fn (string $search): array => ServiceOrder::query()
+                    ->where('so_number', 'like', "%{$search}%")
+                    ->limit(30)
+                    ->pluck('so_number', 'id')
+                    ->toArray())
+                ->getOptionLabelUsing(fn ($value): ?string => ServiceOrder::find($value)?->so_number),
+            Select::make('consent_type')
+                ->label('Type')
+                ->options(collect(ConsentType::cases())->mapWithKeys(fn (ConsentType $t) => [$t->value => $t->label()]))
+                ->required(),
+            Select::make('consent_method')
+                ->label('Method')
+                ->options(collect(ConsentMethod::cases())->mapWithKeys(fn (ConsentMethod $m) => [$m->value => $m->label()]))
+                ->required(),
+            DateTimePicker::make('consented_at')
+                ->label('Consented At')
+                ->required()
+                ->default(now()),
+            Textarea::make('notes')
+                ->columnSpanFull(),
+        ]);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return ConsentInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
@@ -45,23 +95,27 @@ class ConsentResource extends Resource
                 TextColumn::make('consent_type')
                     ->label('Type')
                     ->badge()
-                    ->color(fn (string $state) => match ($state) {
-                        'treatment' => 'info',
-                        'procedure' => 'warning',
-                        'data_sharing' => 'gray',
-                        default => 'gray',
+                    ->formatStateUsing(fn (ConsentType $state): string => $state->label())
+                    ->color(fn (ConsentType $state): string => match ($state) {
+                        ConsentType::Treatment => 'info',
+                        ConsentType::Procedure => 'warning',
+                        ConsentType::DataSharing => 'gray',
                     }),
-                TextColumn::make('consent_method')->label('Method')->badge(),
+                TextColumn::make('consent_method')
+                    ->label('Method')
+                    ->badge()
+                    ->formatStateUsing(fn (ConsentMethod $state): string => $state->label()),
                 TextColumn::make('recordedBy.name')->label('Recorded By')->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('consent_type')
                     ->label('Type')
-                    ->options(['treatment' => 'Treatment', 'procedure' => 'Procedure', 'data_sharing' => 'Data Sharing']),
+                    ->options(collect(ConsentType::cases())->mapWithKeys(fn (ConsentType $t) => [$t->value => $t->label()])),
                 SelectFilter::make('consent_method')
                     ->label('Method')
-                    ->options(['digital_checkbox' => 'Digital', 'paper_signed' => 'Paper', 'verbal_recorded' => 'Verbal']),
+                    ->options(collect(ConsentMethod::cases())->mapWithKeys(fn (ConsentMethod $m) => [$m->value => $m->label()])),
             ])
+            ->recordUrl(fn (Consent $record) => ViewConsent::getUrl([$record->id]))
             ->striped()
             ->paginated([25, 50, 100]);
     }
@@ -70,6 +124,8 @@ class ConsentResource extends Resource
     {
         return [
             'index' => ListConsents::route('/'),
+            'create' => CreateConsent::route('/create'),
+            'view' => ViewConsent::route('/{record}'),
         ];
     }
 }
