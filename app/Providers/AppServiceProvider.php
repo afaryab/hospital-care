@@ -6,6 +6,7 @@ use App\Helpers\UserTimezone;
 use App\Models\Appointment;
 use App\Models\Asset;
 use App\Models\Closing;
+use App\Models\Consent;
 use App\Models\DmsDocument;
 use App\Models\DmsFolder;
 use App\Models\ExpenseVoucher;
@@ -29,6 +30,7 @@ use App\Observers\TransactionElementObserver;
 use App\Observers\TransactionObserver;
 use App\Observers\TreatmentRecordObserver;
 use App\Policies\ClosingPolicy;
+use App\Policies\ConsentPolicy;
 use App\Policies\DmsDocumentPolicy;
 use App\Policies\DmsFolderPolicy;
 use App\Policies\ExpenseVoucherPolicy;
@@ -105,6 +107,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(DmsFolder::class, DmsFolderPolicy::class);
         Gate::policy(DmsDocument::class, DmsDocumentPolicy::class);
+        Gate::policy(Consent::class, ConsentPolicy::class);
 
         Activity::created(function (Activity $activity): void {
             // properties is cast to a Collection — (array) on it would dump the
