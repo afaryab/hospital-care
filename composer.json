@@ -13,6 +13,7 @@
         "blade-ui-kit/blade-heroicons": "^2.7",
         "endroid/qr-code": "^6.1",
         "filament/filament": "^4.0",
+        "firebase/php-jwt": "^6.0",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/fortify": "^1.30",
         "laravel/framework": "^12.0",

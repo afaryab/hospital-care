@@ -12,7 +12,7 @@ test('finalizing an EMG treatment record requires an outcome', function () {
     EmergencyDoctor::factory()->create(['user_id' => $doctor->id]);
     $this->actingAs($doctor);
 
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'doctor_id' => $doctor->id]);
     $triage = Triage::factory()->create();
 
     $response = $this->postJson("/api/emg/service-orders/{$serviceOrder->id}/treatment-record", [
@@ -29,7 +29,7 @@ test('finalizing with outcome=referred requires referral_to', function () {
     EmergencyDoctor::factory()->create(['user_id' => $doctor->id]);
     $this->actingAs($doctor);
 
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'doctor_id' => $doctor->id]);
     $triage = Triage::factory()->create();
 
     $response = $this->postJson("/api/emg/service-orders/{$serviceOrder->id}/treatment-record", [
@@ -48,7 +48,7 @@ test('a doctor can discharge an EMG patient with a full disposition', function (
     EmergencyDoctor::factory()->create(['user_id' => $doctor->id]);
     $this->actingAs($doctor);
 
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'doctor_id' => $doctor->id]);
     $triage = Triage::factory()->create();
 
     $response = $this->postJson("/api/emg/service-orders/{$serviceOrder->id}/treatment-record", [
@@ -72,7 +72,7 @@ test('referral_notes are written to the auto-created referral certificate on fin
     EmergencyDoctor::factory()->create(['user_id' => $doctor->id]);
     $this->actingAs($doctor);
 
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'doctor_id' => $doctor->id]);
     $triage = Triage::factory()->create();
 
     $response = $this->postJson("/api/emg/service-orders/{$serviceOrder->id}/treatment-record", [
@@ -99,7 +99,7 @@ test('referral_notes are sanitized before being stored on the referral certifica
     EmergencyDoctor::factory()->create(['user_id' => $doctor->id]);
     $this->actingAs($doctor);
 
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'doctor_id' => $doctor->id]);
     $triage = Triage::factory()->create();
 
     $this->postJson("/api/emg/service-orders/{$serviceOrder->id}/treatment-record", [

@@ -12,7 +12,7 @@ test('a deactivated ICD-10 code is rejected when saving an OPD treatment record'
     $this->actingAs($doctor);
 
     $inactive = Icd10Code::factory()->create(['is_active' => false]);
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'OPD']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'OPD', 'doctor_id' => $doctor->id]);
 
     $response = $this->postJson("/api/opd/service-orders/{$serviceOrder->id}/treatment-record", [
         'icd10_code_id' => $inactive->id,
@@ -27,7 +27,7 @@ test('an active ICD-10 code is accepted when saving a treatment record', functio
     $this->actingAs($doctor);
 
     $active = Icd10Code::factory()->create(['is_active' => true]);
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'DNT']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'DNT', 'doctor_id' => $doctor->id]);
 
     $response = $this->postJson("/api/dnt/service-orders/{$serviceOrder->id}/treatment-record", [
         'icd10_code_id' => $active->id,
@@ -43,7 +43,7 @@ test('a deactivated ICD-10 code is rejected when saving an IND treatment record'
     $this->actingAs($doctor);
 
     $inactive = Icd10Code::factory()->create(['is_active' => false]);
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'IND']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'IND', 'doctor_id' => $doctor->id]);
 
     $response = $this->postJson("/api/ind/service-orders/{$serviceOrder->id}/treatment-record", [
         'icd10_code_id' => $inactive->id,
@@ -58,7 +58,7 @@ test('a deactivated ICD-10 code is rejected when saving a shared-department (Dep
     $this->actingAs($doctor);
 
     $inactive = Icd10Code::factory()->create(['is_active' => false]);
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'DNT']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'DNT', 'doctor_id' => $doctor->id]);
 
     $response = $this->postJson("/api/dnt/service-orders/{$serviceOrder->id}/treatment-record", [
         'icd10_code_id' => $inactive->id,

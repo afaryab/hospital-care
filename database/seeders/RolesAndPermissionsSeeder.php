@@ -22,6 +22,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'expense_voucher',
             'receaveable',
             'user',
+            'document',
+            'folder',
         ];
 
         $actions = ['view', 'create', 'edit', 'delete'];
