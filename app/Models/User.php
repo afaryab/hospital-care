@@ -245,9 +245,17 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmailContr
 
     // ─── Role helpers ────────────────────────────────────────────────────────
 
+    /**
+     * Memoized per-instance: every Policy's before() hook calls this first,
+     * so on a Filament table with row-level actions it previously ran once
+     * per row per action visibility check — a single admin-panel page load
+     * could fire dozens of identical `adminProfiles` existence queries.
+     */
+    protected ?bool $isAdminMemo = null;
+
     public function isAdmin(): bool
     {
-        return $this->adminProfiles()->exists();
+        return $this->isAdminMemo ??= $this->adminProfiles()->exists();
     }
 
     public function isAccountant(): bool
