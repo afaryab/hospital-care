@@ -15,7 +15,7 @@ beforeEach(function () {
 });
 
 test('triage_id and treated_at are required for EMG service orders', function () {
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'doctor_id' => $this->doctor->id]);
 
     $response = $this->postJson("/api/emg/service-orders/{$serviceOrder->id}/treatment-record", [
         'chief_complaint' => 'Chest pain',
@@ -26,7 +26,7 @@ test('triage_id and treated_at are required for EMG service orders', function ()
 });
 
 test('triage_id and treated_at are not required for non-EMG departments', function () {
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'DNT']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'DNT', 'doctor_id' => $this->doctor->id]);
 
     $response = $this->postJson("/api/dnt/service-orders/{$serviceOrder->id}/treatment-record", [
         'chief_complaint' => 'Toothache',
@@ -36,7 +36,7 @@ test('triage_id and treated_at are not required for non-EMG departments', functi
 });
 
 test('assigning a triage on a new EMG treatment record logs initial triage history', function () {
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'doctor_id' => $this->doctor->id]);
     $triage = Triage::factory()->create();
 
     $response = $this->postJson("/api/emg/service-orders/{$serviceOrder->id}/treatment-record", [
@@ -58,7 +58,7 @@ test('assigning a triage on a new EMG treatment record logs initial triage histo
 });
 
 test('changing triage on an existing treatment record logs the transition', function () {
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'doctor_id' => $this->doctor->id]);
     $initialTriage = Triage::factory()->create();
     $newTriage = Triage::factory()->create();
 
@@ -82,7 +82,7 @@ test('changing triage on an existing treatment record logs the transition', func
 });
 
 test('resaving with the same triage does not create a duplicate history entry', function () {
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'doctor_id' => $this->doctor->id]);
     $triage = Triage::factory()->create();
 
     $this->postJson("/api/emg/service-orders/{$serviceOrder->id}/treatment-record", [
@@ -101,7 +101,7 @@ test('resaving with the same triage does not create a duplicate history entry', 
 });
 
 test('submitted treated_at is persisted rather than overwritten with now', function () {
-    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'doctor_id' => $this->doctor->id]);
     $triage = Triage::factory()->create();
     $treatedAt = now()->subHours(2);
 

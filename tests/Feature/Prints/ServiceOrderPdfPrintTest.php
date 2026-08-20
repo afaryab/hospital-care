@@ -6,6 +6,7 @@ use App\Helpers\QrCodeHelper;
 use App\Models\BirthCertificate;
 use App\Models\DeathCertificate;
 use App\Models\EmergencyDoctor;
+use App\Models\OpdDoctor;
 use App\Models\Patient;
 use App\Models\ReferralCertificate;
 use App\Models\Service;
@@ -21,9 +22,31 @@ use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
 
 test('service order pdf renders successfully', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/pdf');
+});
+
+test('a doctor with no relation to the service order cannot print it', function () {
+    $doctor = User::factory()->create();
+    OpdDoctor::factory()->create(['user_id' => $doctor->id]);
+    actingAs($doctor);
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'OPD']);
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertForbidden();
+});
+
+test('the assigned doctor can print their own service order', function () {
+    $doctor = User::factory()->create();
+    OpdDoctor::factory()->create(['user_id' => $doctor->id]);
+    actingAs($doctor);
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'OPD', 'doctor_id' => $doctor->id]);
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))
         ->assertOk()
@@ -86,7 +109,7 @@ test('service order pdf includes treatment, triage, history, and prescriber/time
 });
 
 test('service order pdf shows past history as the last 6 ICD codes from other visits, not the current one', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $patient = Patient::factory()->create();
     $doctor = User::factory()->create();
@@ -148,7 +171,7 @@ test('service order pdf shows past history as the last 6 ICD codes from other vi
 });
 
 test('the PDF shows the treating doctor\'s PMDC number', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $doctor = User::factory()->create(['name' => 'Dr. Bilal Khan']);
     EmergencyDoctor::factory()->create(['user_id' => $doctor->id, 'pmdc_number' => '54321-P']);
@@ -162,7 +185,7 @@ test('the PDF shows the treating doctor\'s PMDC number', function () {
 });
 
 test('the PDF shows the service order\'s real department name, not a hardcoded one', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $department = ServiceDepartment::factory()->create(['name' => 'Dental']);
     $service = Service::factory()->create(['service_department_id' => $department->id]);
@@ -180,7 +203,7 @@ test('the PDF shows the service order\'s real department name, not a hardcoded o
 });
 
 test('the pdf falls back to the detailed 2-page template when the department has no print template configured', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $department = ServiceDepartment::factory()->create(['service_order_template' => null]);
     $service = Service::factory()->create(['service_department_id' => $department->id]);
@@ -197,7 +220,7 @@ test('the pdf falls back to the detailed 2-page template when the department has
 });
 
 test('the pdf uses the compact 1-page template when configured on the department', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $department = ServiceDepartment::factory()->create([
         'service_order_template' => ServiceOrderTemplate::EmergencyTriageCompact,
@@ -432,7 +455,7 @@ test('treatment given section only pads with one blank row once a treatment plan
 });
 
 test('a death certificate is appended as extra pages when one exists for the service order', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
     DeathCertificate::factory()->create(['service_order_id' => $serviceOrder->id]);
@@ -448,7 +471,7 @@ test('a death certificate is appended as extra pages when one exists for the ser
 });
 
 test('a referral certificate is appended as extra pages when one exists for the service order', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
     ReferralCertificate::factory()->create([
@@ -467,7 +490,7 @@ test('a referral certificate is appended as extra pages when one exists for the 
 });
 
 test('no extra certificate pages are appended when none exist for the service order', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
 
@@ -484,7 +507,7 @@ test('no extra certificate pages are appended when none exist for the service or
 });
 
 test('a locked birth certificate is appended as extra pages when printing the service order', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'IND']);
     BirthCertificate::factory()->locked()->create([
@@ -503,7 +526,7 @@ test('a locked birth certificate is appended as extra pages when printing the se
 });
 
 test('an unlocked birth certificate is never appended when printing the service order', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'IND']);
     BirthCertificate::factory()->create([
@@ -523,7 +546,7 @@ test('an unlocked birth certificate is never appended when printing the service 
 });
 
 test('the appended death certificate page embeds a scannable QR verification code', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
     $certificate = DeathCertificate::factory()->create(['service_order_id' => $serviceOrder->id]);
@@ -542,7 +565,7 @@ test('the appended death certificate page embeds a scannable QR verification cod
 });
 
 test('the appended birth certificate page embeds a scannable QR verification code', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'IND']);
     $certificate = BirthCertificate::factory()->locked()->create(['service_order_id' => $serviceOrder->id]);

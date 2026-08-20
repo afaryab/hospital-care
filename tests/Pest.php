@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Administrator;
+use App\Models\User;
 use Filament\Actions\Imports\Models\Import;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -62,4 +64,18 @@ function makeFilamentImport(string $importerClass): Import
         'file_path' => 'imports/test.csv',
         'total_rows' => 1,
     ]);
+}
+
+/**
+ * A user with an Administrator profile — every Policy's before() hook
+ * bypasses all object-level scoping for admins, so this is the right
+ * "just let me hit this route" user for tests that exercise something
+ * other than authorization itself (PDF rendering, view content, etc.).
+ */
+function adminUser(): User
+{
+    $user = User::factory()->create();
+    Administrator::create(['user_id' => $user->id, 'authority' => 'administrator']);
+
+    return $user;
 }

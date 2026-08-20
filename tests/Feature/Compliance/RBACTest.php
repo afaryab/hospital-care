@@ -57,12 +57,12 @@ test('receptionist can create transactions but not edit closings from another us
         ->and(Gate::forUser($user)->allows('update', $closing))->toBeFalse();
 });
 
-test('doctor can view service orders but cannot create transactions', function () {
+test('doctor can view their assigned service orders but cannot create transactions', function () {
     $user = User::factory()->create();
     OpdDoctor::factory()->create(['user_id' => $user->id]);
     $user->assignRole('opd_doctor');
 
-    $serviceOrder = ServiceOrder::factory()->create();
+    $serviceOrder = ServiceOrder::factory()->create(['doctor_id' => $user->id]);
 
     expect(Gate::forUser($user)->allows('view', $serviceOrder))->toBeTrue()
         ->and(Gate::forUser($user)->allows('create', Transaction::class))->toBeFalse();

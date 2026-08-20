@@ -47,6 +47,7 @@ import {
     ChartLine,
     Cog,
     FlaskConical,
+    FolderOpen,
     ListTree,
     LucideBlinds,
     LucideHome,
@@ -145,12 +146,6 @@ export function AppSidebar() {
 
     if (haveAccountantProfile) {
         adminMenuItems.push({
-            title: 'Summaries',
-            href: '/summeries',
-            icon: ListTree,
-        });
-
-        adminMenuItems.push({
             title: 'Accounts',
             href: '/accounts',
             icon: ChartLine,
@@ -162,6 +157,12 @@ export function AppSidebar() {
             title: 'Administration',
             href: '/admin',
             icon: Cog,
+        });
+
+        adminMenuItems.push({
+            title: 'Documents',
+            href: '/admin/document-manager',
+            icon: FolderOpen,
         });
     }
 

@@ -3,6 +3,7 @@
 use App\Models\Closing;
 use App\Models\Patient;
 use App\Models\Reception;
+use App\Models\ServiceOrder;
 use App\Models\Transaction;
 use App\Models\User;
 
@@ -186,7 +187,7 @@ test('admin can update any transaction', function () {
 
 // ─── PatientPolicy ────────────────────────────────────────────────────────────
 
-test('any staff profile can view patient records', function () {
+test('a doctor cannot view a patient they have never treated', function () {
     $doctor = User::factory()->create();
     $doctor->opdDoctorProfiles()->create(['authority' => 'assistant']);
 
@@ -194,6 +195,24 @@ test('any staff profile can view patient records', function () {
         'ps_number' => 'PS/2026/03/0001',
         'name' => 'Test Patient',
         'gender' => 'm',
+    ]);
+
+    expect($doctor->can('view', $patient))->toBeFalse();
+});
+
+test('a doctor can view a patient they have an assigned service order for', function () {
+    $doctor = User::factory()->create();
+    $doctor->opdDoctorProfiles()->create(['authority' => 'assistant']);
+
+    $patient = Patient::create([
+        'ps_number' => 'PS/2026/03/0001',
+        'name' => 'Test Patient',
+        'gender' => 'm',
+    ]);
+
+    ServiceOrder::factory()->create([
+        'patient_id' => $patient->id,
+        'doctor_id' => $doctor->id,
     ]);
 
     expect($doctor->can('view', $patient))->toBeTrue();

@@ -14,7 +14,7 @@ use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
 
 test('patient page loads full service order detail including receivables and divided voucher shares', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $patient = Patient::factory()->create(['ps_number' => 'PS/2026/07/2620']);
     $serviceOrder = ServiceOrder::factory()->create([

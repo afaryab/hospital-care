@@ -30,6 +30,8 @@ class DepartmentController extends Controller
 {
     public function saveTreatmentRecord(Request $request, ServiceOrder $serviceOrder): JsonResponse
     {
+        $this->authorize('update', $serviceOrder);
+
         $isEmergency = $serviceOrder->type === 'EMG';
         $finalize = $request->boolean('finalize');
 
