@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enum\ConsentMethod;
+use App\Enum\ConsentType;
 use App\Models\Consent;
 use App\Models\Patient;
 use App\Models\User;
@@ -16,11 +18,16 @@ class ConsentFactory extends Factory
         return [
             'patient_id' => Patient::factory(),
             'service_order_id' => null,
-            'consent_type' => fake()->randomElement(['treatment', 'procedure', 'data_sharing']),
-            'consent_method' => fake()->randomElement(['digital_checkbox', 'paper_signed', 'verbal_recorded']),
+            'consent_type' => fake()->randomElement(ConsentType::cases()),
+            'consent_method' => fake()->randomElement(ConsentMethod::cases()),
             'consented_at' => now(),
             'recorded_by' => User::factory(),
             'notes' => null,
         ];
+    }
+
+    public function treatment(): static
+    {
+        return $this->state(fn (array $attributes) => ['consent_type' => ConsentType::Treatment]);
     }
 }

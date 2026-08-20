@@ -365,15 +365,29 @@ return [
             /*
              * After the "keep_monthly_backups_for_months" period is over, the most recent backup
              * of that year will be kept. Older backups within the same year will be removed.
+             *
+             * HIPAA (.ai/hippa-compliance §12) and PHC guideline (.ai/punjab-
+             * health-care-commission-guideline-compliance §13.1) both call for
+             * a 6-year minimum retention on patient/financial records, which
+             * this backup archive is a copy of — defaults to 6, not Spatie's
+             * stock 2, for that reason. Override via BACKUP_KEEP_YEARLY_YEARS
+             * only with a documented reason, not to save storage.
              */
-            'keep_yearly_backups_for_years' => 2,
+            'keep_yearly_backups_for_years' => (int) env('BACKUP_KEEP_YEARLY_YEARS', 6),
 
             /*
              * After cleaning up the backups remove the oldest backup until
              * this amount of megabytes has been reached.
              * Set null for unlimited size.
+             *
+             * Raised from Spatie's stock 5000MB default — at that ceiling,
+             * cleanup could start deleting yearly backups well before the
+             * 6-year retention above is actually honored. Still a real cap,
+             * not unlimited — size this to your hospital's actual DB volume
+             * via BACKUP_MAX_STORAGE_MEGABYTES rather than leaving the
+             * default unexamined.
              */
-            'delete_oldest_backups_when_using_more_megabytes_than' => 5000,
+            'delete_oldest_backups_when_using_more_megabytes_than' => (int) env('BACKUP_MAX_STORAGE_MEGABYTES', 20000),
         ],
 
         /*

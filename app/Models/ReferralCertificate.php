@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,6 +29,7 @@ class ReferralCertificate extends Model
     protected function casts(): array
     {
         return [
+            'notes' => SafeEncrypted::class,
             'is_locked' => 'boolean',
             'locked_at' => 'datetime',
         ];

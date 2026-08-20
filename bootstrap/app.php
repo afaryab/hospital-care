@@ -43,6 +43,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             EnsureFrontendRequestsAreStateful::class,
         ]);
+
+        // No RateLimiter::for('api', ...) was ever registered, so this was
+        // previously a no-op — every one of the 55 routes in routes/api.php
+        // (patient search/create/edit, transaction refund, service-order
+        // status changes, bed discharge, treatment records) could be hit
+        // without limit by any authenticated token holder. The actual
+        // limiter is registered in AppServiceProvider::boot().
+        $middleware->throttleApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         Integration::handles($exceptions);

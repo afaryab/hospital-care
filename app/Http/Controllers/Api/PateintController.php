@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Helpers\PiiHasher;
 use App\Http\Controllers\Controller;
 use App\Models\Patient;
 use App\Models\ServiceOrder;
@@ -42,7 +43,7 @@ class PateintController extends Controller
 
             if ($cnicNumber && Str::length($cnicNumber) === 15) {
                 $normalizedCnic = strtoupper(trim((string) $cnicNumber));
-                $cnicHash = hash('sha256', $normalizedCnic);
+                $cnicHash = PiiHasher::cnic($normalizedCnic);
 
                 $cnicMatches = Patient::where('cnic_hash', $cnicHash)->get();
 
@@ -92,7 +93,7 @@ class PateintController extends Controller
                 $normalizedContact = preg_replace('/\D+/', '', (string) $patientContact) ?: '';
 
                 if ($normalizedContact !== '') {
-                    $contactHash = hash('sha256', $normalizedContact);
+                    $contactHash = PiiHasher::contact($normalizedContact);
                     $contactMatches = Patient::where('contact_hash', $contactHash)->get();
 
                     // Fallback: scan patients without contact_hash (legacy data)
@@ -226,10 +227,10 @@ class PateintController extends Controller
 
             $cnicHash = null;
             if (! empty($validated['cnic'])) {
-                $cnicHash = hash('sha256', strtoupper(trim((string) $validated['cnic'])));
+                $cnicHash = PiiHasher::cnic((string) $validated['cnic']);
             }
 
-            $contactHash = hash('sha256', preg_replace('/\D+/', '', (string) $validated['contact']) ?: '');
+            $contactHash = PiiHasher::contact((string) $validated['contact']);
 
             $duplicatesQuery = Patient::query()->where(function ($query) use ($cnicHash, $contactHash) {
                 if (! empty($cnicHash)) {
