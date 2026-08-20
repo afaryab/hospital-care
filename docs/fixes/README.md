@@ -29,3 +29,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 12 | [#60](https://github.com/afaryab/hospital-care/issues/60) | No genuine per-view audit log of PHI access | High | ✅ Fixed |
 | 13 | [#62](https://github.com/afaryab/hospital-care/issues/62) | Two-factor authentication available but never enforced for Admin/Accounts panels | High | ✅ Fixed |
 | 14 | [#64](https://github.com/afaryab/hospital-care/issues/64) | Treatment attachments (X-ray/ultrasound images) had no auth and could be deleted by anyone | High | ✅ Fixed |
+| 15 | [#66](https://github.com/afaryab/hospital-care/issues/66) | Clinical narrative fields and certificate CNIC/name columns were plaintext; CNIC hash was unsalted SHA-256; version-snapshot audit trail leaked plaintext PII | High | ✅ Fixed |
