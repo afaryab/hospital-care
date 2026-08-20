@@ -2,6 +2,7 @@
 
 namespace App\Filament\Imports;
 
+use App\Helpers\PiiHasher;
 use App\Models\Patient;
 use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
@@ -48,7 +49,7 @@ class PatientImporter extends Importer
         $cnic = trim((string) ($this->data['cnic'] ?? ''));
 
         if ($cnic !== '') {
-            $existing = Patient::where('cnic_hash', hash('sha256', strtoupper($cnic)))->first();
+            $existing = Patient::where('cnic_hash', PiiHasher::cnic($cnic))->first();
 
             if ($existing) {
                 return $existing;

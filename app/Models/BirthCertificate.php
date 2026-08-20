@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SafeEncrypted;
 use App\Models\Concerns\HasVerificationToken;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,6 +41,13 @@ class BirthCertificate extends Model
     protected function casts(): array
     {
         return [
+            'child_name' => SafeEncrypted::class,
+            'mother_name' => SafeEncrypted::class,
+            'mother_cnic' => SafeEncrypted::class,
+            'father_name' => SafeEncrypted::class,
+            'father_cnic' => SafeEncrypted::class,
+            'place_of_birth' => SafeEncrypted::class,
+            'remarks' => SafeEncrypted::class,
             'date_of_birth' => 'date',
             'weight_at_birth' => 'decimal:2',
             'is_locked' => 'boolean',

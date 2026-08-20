@@ -33,6 +33,8 @@ class AuditLogsTable
                         'created' => 'success',
                         'updated' => 'warning',
                         'deleted' => 'danger',
+                        'viewed', 'opened', 'downloaded' => 'info',
+                        'shared' => 'primary',
                         default => 'gray',
                     }),
 
@@ -59,6 +61,7 @@ class AuditLogsTable
                         return strlen($state) > 60 ? $state : null;
                     }),
             ])
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('causer'))
             ->filters([
                 SelectFilter::make('event')
                     ->options([

@@ -84,7 +84,7 @@ class EmergencyDoctorController extends Controller
             'serviceOrder' => $serviceOrder,
             'previousVisits' => $previousVisits,
             'formConfig' => TreatmentFormConfig::resolve('EMG', $serviceOrder->service?->treatment_form_config),
-            'triages' => Triage::query()->where('is_active', true)->orderBy('priority')->get(['id', 'name', 'color', 'priority']),
+            'triages' => Triage::cachedActive(),
             'canDischarge' => $request->user()->emergencyDoctorProfiles()->exists(),
         ]);
     }
