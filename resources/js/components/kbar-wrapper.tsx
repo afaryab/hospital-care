@@ -169,7 +169,7 @@ export default function CommandPaletteLayout({
                         setOpen(true);
                         setTimeout(() => inputRef.current?.focus(), 0);
                     }}
-                    className="fixed right-5 bottom-5 z-[99] inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/80 px-4 py-2 shadow-lg backdrop-blur-md transition hover:shadow-xl dark:bg-neutral-900/70 dark:text-neutral-100"
+                    className="fixed right-48 bottom-5 z-[99] inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/80 px-4 py-2 shadow-lg backdrop-blur-md transition hover:shadow-xl dark:bg-neutral-900/70 dark:text-neutral-100"
                     aria-label="Open command palette"
                 >
                     <kbd className="rounded-md bg-neutral-100 px-1.5 py-0.5 text-[10px] dark:bg-neutral-800">

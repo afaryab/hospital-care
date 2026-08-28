@@ -7,15 +7,14 @@ import AppLogoIcon from '@/components/app-logo-icon';
 export default function AppFooter({ className = '' }: { className?: string }) {
     return (
         <div
-            className={`flex flex-col items-center gap-1 py-3 text-center ${className}`}
+            className={`fixed right-2 bottom-5 z-[99] inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/80 px-4 py-2 shadow-lg backdrop-blur-md transition hover:shadow-xl dark:bg-neutral-900/70 dark:text-neutral-100 ${className}`}
         >
             <AppLogoIcon
-                size={6}
+                size={3}
                 direction="horizontal"
                 className="opacity-70"
             />
-            <span className="text-[11px] text-muted-foreground">
-                Developed by{' '}
+            <span className="text-[9px] text-muted-foreground">
                 <a
                     href="https://hospitalos.pk"
                     target="_blank"
