@@ -1,0 +1,27 @@
+
+Impliment create appointment screen and api for public use.
+
+--------------------------------------------------------------------
+
+Filament admin dashboards filter drawer is loading slow.
+
+--------------------------------------------------------------------
+
+Work on command window, clicking outside of command window must close, ctrl k is for toggle command window. Improve Command Pannel Impliment smart global search improving current logic and display all posible options.
+
+--------------------------------------------------------------------
+
+
+--------------------------------------------------------------------
+
+we need to add training section to the application enable/disable able from env variables. User will see training link in the left menu above Admin in sidebar. It takes user to the training page we will recomend course based on his profiles. currently we have readme files containing traing text but soon we will have big nested training manual and we will soon have images,videos, quizes and tests and we will keep record of user certifications, and user can even share URL of their certification (Keep Public/Private version different)
+
+---------------------------------------------------------------------
+
+We need to have compliance page, we will add some compliance to follow (some already part of instructions) and compliance section should show status and issues.
+
+----------------------------------------------------------------------
+
+
+
+----------------------------------------------------------------------
