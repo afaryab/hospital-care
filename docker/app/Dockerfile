@@ -7,7 +7,7 @@ RUN apk add --no-cache nodejs npm libzip \
     && apk add --no-cache --virtual .build-deps libzip-dev \
     && docker-php-ext-install zip \
     && apk del .build-deps \
-    && npm install -g pnpm@9
+    && npm install -g pnpm@11.2.2
 ENV CI=true
 WORKDIR /build
 # Composer deps (vendor needed so artisan can bootstrap)
@@ -15,7 +15,7 @@ COPY composer.json composer.lock ./
 COPY packages/ ./packages/
 RUN composer install --no-dev --no-scripts --ignore-platform-reqs --no-interaction
 # JS deps
-COPY package.json pnpm-lock.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 # Application source
 COPY . .
@@ -38,6 +38,9 @@ ENV SENTRY_RELEASE=${SENTRY_RELEASE} \
 
 # Install runtime packages; compile PHP extensions inside a virtual build-dep
 # group that gets removed afterwards — keeps build tools out of the final image.
+# Node/pnpm are kept (not used to build on boot — see start.sh — but needed
+# for `docker-compose exec app pnpm run build`, the documented local-dev step
+# for when the compose bind-mount shadows this image's baked-in public/build).
 RUN apk add --no-cache \
         bash curl git unzip zip \
         libpng libxml2 oniguruma icu-libs freetype libjpeg-turbo nodejs npm libzip \
@@ -51,7 +54,7 @@ RUN apk add --no-cache \
     && docker-php-ext-enable redis \
     && apk del .build-deps \
     && rm -rf /tmp/pear \
-    && npm install -g pnpm@9
+    && npm install -g pnpm@11.2.2
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY docker/app/php.ini /usr/local/etc/php/conf.d/custom-php.ini

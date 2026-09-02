@@ -6,6 +6,8 @@ use App\Helpers\QrCodeHelper;
 use App\Models\BirthCertificate;
 use App\Models\DeathCertificate;
 use App\Models\EmergencyDoctor;
+use App\Models\HospitalSetting;
+use App\Models\OpdDoctor;
 use App\Models\Patient;
 use App\Models\ReferralCertificate;
 use App\Models\Service;
@@ -16,14 +18,37 @@ use App\Models\Triage;
 use App\Models\User;
 use App\Models\VitalSign;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
 
 test('service order pdf renders successfully', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/pdf');
+});
+
+test('a doctor with no relation to the service order cannot print it', function () {
+    $doctor = User::factory()->create();
+    OpdDoctor::factory()->create(['user_id' => $doctor->id]);
+    actingAs($doctor);
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'OPD']);
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertForbidden();
+});
+
+test('the assigned doctor can print their own service order', function () {
+    $doctor = User::factory()->create();
+    OpdDoctor::factory()->create(['user_id' => $doctor->id]);
+    actingAs($doctor);
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'OPD', 'doctor_id' => $doctor->id]);
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))
         ->assertOk()
@@ -86,7 +111,7 @@ test('service order pdf includes treatment, triage, history, and prescriber/time
 });
 
 test('service order pdf shows past history as the last 6 ICD codes from other visits, not the current one', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $patient = Patient::factory()->create();
     $doctor = User::factory()->create();
@@ -148,7 +173,7 @@ test('service order pdf shows past history as the last 6 ICD codes from other vi
 });
 
 test('the PDF shows the treating doctor\'s PMDC number', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $doctor = User::factory()->create(['name' => 'Dr. Bilal Khan']);
     EmergencyDoctor::factory()->create(['user_id' => $doctor->id, 'pmdc_number' => '54321-P']);
@@ -162,7 +187,7 @@ test('the PDF shows the treating doctor\'s PMDC number', function () {
 });
 
 test('the PDF shows the service order\'s real department name, not a hardcoded one', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $department = ServiceDepartment::factory()->create(['name' => 'Dental']);
     $service = Service::factory()->create(['service_department_id' => $department->id]);
@@ -180,7 +205,7 @@ test('the PDF shows the service order\'s real department name, not a hardcoded o
 });
 
 test('the pdf falls back to the detailed 2-page template when the department has no print template configured', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $department = ServiceDepartment::factory()->create(['service_order_template' => null]);
     $service = Service::factory()->create(['service_department_id' => $department->id]);
@@ -197,7 +222,7 @@ test('the pdf falls back to the detailed 2-page template when the department has
 });
 
 test('the pdf uses the compact 1-page template when configured on the department', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $department = ServiceDepartment::factory()->create([
         'service_order_template' => ServiceOrderTemplate::EmergencyTriageCompact,
@@ -213,6 +238,56 @@ test('the pdf uses the compact 1-page template when configured on the department
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('the detailed pdf embeds the branding letterhead flush above the existing report header', function () {
+    actingAs(adminUser());
+    HospitalSetting::set('hospital_name', 'City Care Hospital');
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+
+    Pdf::shouldReceive('loadHTML')
+        ->once()
+        ->withArgs(fn (string $html) => str_contains($html, 'id="letterhead-header"')
+            && str_contains($html, 'id="letterhead-footer"')
+            && str_contains($html, 'CITY CARE HOSPITAL')
+            && str_contains($html, '@page')
+            && str_contains($html, 'margin-top:0'))
+        ->andReturnSelf();
+    Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('the compact pdf also embeds the branding letterhead', function () {
+    $department = ServiceDepartment::factory()->create([
+        'service_order_template' => ServiceOrderTemplate::EmergencyTriageCompact,
+    ]);
+    $service = Service::factory()->create(['service_department_id' => $department->id]);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'service_id' => $service->id])
+        ->fresh(['patient', 'doctor', 'service.department']);
+
+    $html = view('pdfs.serviceorder-triage-compact', [
+        'serviceOrder' => $serviceOrder,
+        'patient' => $serviceOrder->patient,
+    ])->render();
+
+    expect($html)->toContain('id="letterhead-header"')
+        ->toContain('id="letterhead-footer"');
+});
+
+test('the letterhead embeds the hospital logo as a base64 data URI, not a remote URL', function () {
+    Storage::fake('public');
+    Storage::disk('public')->put('hospital-settings/logo.png', 'fake-png-bytes');
+    HospitalSetting::set('hospital_logo', 'hospital-settings/logo.png');
+
+    $html = view('pdfs.partials.letterhead-header')->render();
+
+    expect($html)->toContain('data:image/')
+        ->toContain(';base64,')
+        ->not->toContain('http://')
+        ->not->toContain('https://');
 });
 
 test('the compact triage pdf includes patient info, triage category, and prescriptions', function () {
@@ -432,7 +507,7 @@ test('treatment given section only pads with one blank row once a treatment plan
 });
 
 test('a death certificate is appended as extra pages when one exists for the service order', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
     DeathCertificate::factory()->create(['service_order_id' => $serviceOrder->id]);
@@ -448,7 +523,7 @@ test('a death certificate is appended as extra pages when one exists for the ser
 });
 
 test('a referral certificate is appended as extra pages when one exists for the service order', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
     ReferralCertificate::factory()->create([
@@ -467,7 +542,7 @@ test('a referral certificate is appended as extra pages when one exists for the 
 });
 
 test('no extra certificate pages are appended when none exist for the service order', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
 
@@ -484,7 +559,7 @@ test('no extra certificate pages are appended when none exist for the service or
 });
 
 test('a locked birth certificate is appended as extra pages when printing the service order', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'IND']);
     BirthCertificate::factory()->locked()->create([
@@ -503,7 +578,7 @@ test('a locked birth certificate is appended as extra pages when printing the se
 });
 
 test('an unlocked birth certificate is never appended when printing the service order', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'IND']);
     BirthCertificate::factory()->create([
@@ -523,7 +598,7 @@ test('an unlocked birth certificate is never appended when printing the service 
 });
 
 test('the appended death certificate page embeds a scannable QR verification code', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
     $certificate = DeathCertificate::factory()->create(['service_order_id' => $serviceOrder->id]);
@@ -542,7 +617,7 @@ test('the appended death certificate page embeds a scannable QR verification cod
 });
 
 test('the appended birth certificate page embeds a scannable QR verification code', function () {
-    actingAs(User::factory()->create());
+    actingAs(adminUser());
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'IND']);
     $certificate = BirthCertificate::factory()->locked()->create(['service_order_id' => $serviceOrder->id]);

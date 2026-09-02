@@ -4,10 +4,11 @@ namespace App\Filament\Admin\Resources\ServiceOrders\Pages;
 
 use App\Filament\Admin\Resources\ServiceOrders\ServiceOrderResource;
 use App\Models\Receaveable;
+use App\Models\ServiceOrder;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
 use Filament\Actions\Action;
-use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
@@ -16,8 +17,8 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\HtmlString;
 
 class ViewServiceOrder extends ViewRecord
 {
@@ -133,169 +134,154 @@ class ViewServiceOrder extends ViewRecord
                 ->icon('heroicon-o-banknotes')
                 ->color('warning')
                 ->visible(fn () => auth()->user()?->isAdmin() || auth()->user()?->isAccountant())
-                ->modalHeading('Adjust Service Order Charges')
-                ->modalDescription('Update the amount of each income line. Linked receivables will be recalculated automatically.')
-                ->modalWidth('3xl')
-                ->fillForm(fn () => [
-                    'reason' => null,
-                    'elements' => TransactionElement::query()
-                        ->where('service_order_id', $this->record->id)
-                        ->where('income_or_expense', 'INCOME')
-                        ->with('transaction:id,tr_number')
-                        ->orderBy('created_at')
-                        ->get()
-                        ->map(fn (TransactionElement $el) => [
-                            'id' => $el->id,
-                            'tr_number' => $el->transaction?->tr_number ?? '—',
-                            'amount' => (float) $el->amount,
-                        ])
-                        ->all(),
-                ])
-                ->schema([
-                    Repeater::make('elements')
-                        ->label('Income Lines')
-                        ->schema([
-                            TextInput::make('tr_number')
-                                ->label('TR#')
-                                ->disabled()
-                                ->dehydrated(false),
-                            TextInput::make('amount')
-                                ->label('Amount')
+                ->modalHeading('Adjust Charges, Payment & Receivables')
+                ->modalDescription('Update what each line was charged and how much the customer paid. Recognized amount and any outstanding receivable are recalculated automatically on save — edit a receivable field directly to override that instead.')
+                ->modalWidth('4xl')
+                ->fillForm(function (): array {
+                    $data = ['reason' => null];
+
+                    foreach (static::touchedTransactions($this->record) as $transaction) {
+                        $prefix = "txn_{$transaction->id}";
+                        $receivable = $transaction->receaveable;
+
+                        $data["{$prefix}_customer_payed"] = (float) $transaction->customer_payed;
+
+                        foreach ($transaction->elements->where('service_order_id', $this->record->id)->where('income_or_expense', 'INCOME') as $element) {
+                            $data["{$prefix}_line_{$element->id}"] = (float) $element->amount;
+                        }
+
+                        if ($receivable) {
+                            $data["{$prefix}_receivable_amount"] = (float) $receivable->amount;
+                            $data["{$prefix}_receivable_status"] = $receivable->status;
+                        }
+                    }
+
+                    return $data;
+                })
+                ->schema(function (): array {
+                    $transactions = static::touchedTransactions($this->record);
+
+                    if ($transactions->isEmpty()) {
+                        return [
+                            TextEntry::make('no_transactions')
+                                ->label(false)
+                                ->state('No income transactions are linked to this service order yet.'),
+                        ];
+                    }
+
+                    $components = $transactions->map(function (Transaction $transaction) {
+                        $prefix = "txn_{$transaction->id}";
+                        $receivable = $transaction->receaveable;
+                        $lines = $transaction->elements->where('service_order_id', $this->record->id)->where('income_or_expense', 'INCOME');
+
+                        $fields = $lines->map(fn (TransactionElement $element) => TextInput::make("{$prefix}_line_{$element->id}")
+                            ->label($lines->count() > 1 ? "Charged Amount (line #{$element->id})" : 'Charged Amount')
+                            ->numeric()
+                            ->step('0.01')
+                            ->minValue(0)
+                            ->required())->values()->all();
+
+                        $fields[] = TextInput::make("{$prefix}_customer_payed")
+                            ->label('Amount Customer Paid')
+                            ->helperText('Applies to the whole transaction — other service orders bought in the same visit share it.')
+                            ->numeric()
+                            ->step('0.01')
+                            ->minValue(0)
+                            ->required();
+
+                        if ($receivable) {
+                            $collected = max(0.0, (float) ($receivable->orignal_amount ?? $receivable->amount) - (float) $receivable->amount);
+
+                            $fields[] = TextInput::make("{$prefix}_receivable_amount")
+                                ->label('Receivable Remaining')
+                                ->helperText("Collected so far: {$collected}. Auto-recalculated from paid vs. charged — change it to manually override.")
                                 ->numeric()
                                 ->step('0.01')
                                 ->minValue(0)
-                                ->required(),
-                            TextInput::make('id')
-                                ->hidden()
-                                ->dehydrated(),
-                        ])
-                        ->columns(2)
-                        ->addable(false)
-                        ->deletable(false)
-                        ->reorderable(false)
-                        ->itemLabel(fn (array $state): ?string => $state['tr_number'] ?? null),
-                    TextEntry::make('affected_receivables')
-                        ->label('Affected Receivables')
-                        ->html()
-                        ->state(function (): HtmlString {
-                            $receivables = Receaveable::query()
-                                ->whereIn('transaction_id', TransactionElement::query()
-                                    ->where('service_order_id', $this->record->id)
-                                    ->where('income_or_expense', 'INCOME')
-                                    ->pluck('transaction_id')
-                                    ->unique()
-                                    ->filter())
-                                ->with(['transaction:id,tr_number', 'panel:id,name'])
-                                ->get();
+                                ->required();
 
-                            if ($receivables->isEmpty()) {
-                                return new HtmlString('<p class="text-sm text-gray-500">No receivables linked to this service order.</p>');
-                            }
+                            $fields[] = Select::make("{$prefix}_receivable_status")
+                                ->label('Receivable Status')
+                                ->options(['unpaid' => 'Unpaid', 'paid' => 'Paid', 'cancelled' => 'Cancelled'])
+                                ->native(false)
+                                ->required();
+                        }
 
-                            $rows = $receivables->map(function (Receaveable $r): string {
-                                $original = (float) ($r->orignal_amount ?? $r->amount);
-                                $remaining = (float) $r->amount;
-                                $paid = max(0.0, $original - $remaining);
+                        return Section::make("TR# {$transaction->tr_number}")
+                            ->schema($fields)
+                            ->columns(2);
+                    })->values()->all();
 
-                                return sprintf(
-                                    '<tr><td class="px-2 py-1 font-mono text-xs">%s</td><td class="px-2 py-1">%s</td><td class="px-2 py-1 text-right">%s</td><td class="px-2 py-1 text-right">%s</td><td class="px-2 py-1 text-right text-amber-700">%s</td><td class="px-2 py-1"><span class="rounded bg-gray-100 px-1.5 py-0.5 text-xs">%s</span></td></tr>',
-                                    e($r->transaction?->tr_number ?? '—'),
-                                    e($r->panel?->name ?? 'Patient'),
-                                    number_format($original, 2),
-                                    number_format($paid, 2),
-                                    number_format($remaining, 2),
-                                    e(strtoupper((string) $r->status))
-                                );
-                            })->implode('');
-
-                            $html = '<div class="overflow-x-auto"><table class="w-full text-sm border border-gray-200">'
-                                .'<thead class="bg-gray-50"><tr>'
-                                .'<th class="px-2 py-1 text-left">TR#</th>'
-                                .'<th class="px-2 py-1 text-left">Payer</th>'
-                                .'<th class="px-2 py-1 text-right">Original</th>'
-                                .'<th class="px-2 py-1 text-right">Paid</th>'
-                                .'<th class="px-2 py-1 text-right">Remaining</th>'
-                                .'<th class="px-2 py-1 text-left">Status</th>'
-                                .'</tr></thead><tbody>'.$rows.'</tbody></table></div>'
-                                .'<p class="mt-2 text-xs text-gray-500">When you save, each receivable will be re-sized: <code>new_original = new transaction amount</code>, <code>new_remaining = max(0, new_original − amount already paid)</code>. If a receivable becomes fully covered it will be marked <strong>paid</strong>.</p>';
-
-                            return new HtmlString($html);
-                        }),
-                    Textarea::make('reason')
+                    $components[] = Textarea::make('reason')
                         ->label('Reason for Adjustment')
                         ->rows(2)
                         ->maxLength(1000)
                         ->required()
-                        ->helperText('Required for audit trail.'),
-                ])
+                        ->helperText('Required for audit trail.');
+
+                    return $components;
+                })
                 ->action(function (array $data): void {
+                    $transactions = static::touchedTransactions($this->record);
+
+                    if ($transactions->isEmpty()) {
+                        Notification::make()
+                            ->title('Nothing to update.')
+                            ->body('No income transactions are linked to this service order.')
+                            ->warning()
+                            ->send();
+
+                        return;
+                    }
+
+                    $elementChanges = [];
+                    $paymentChanges = [];
                     $receivableChanges = [];
 
-                    DB::transaction(function () use ($data, &$receivableChanges) {
-                        $touchedTransactionIds = collect();
+                    DB::transaction(function () use ($data, $transactions, &$elementChanges, &$paymentChanges, &$receivableChanges): void {
+                        foreach ($transactions as $transaction) {
+                            $prefix = "txn_{$transaction->id}";
 
-                        foreach ($data['elements'] ?? [] as $row) {
-                            $element = TransactionElement::find($row['id'] ?? null);
-                            if (! $element) {
-                                continue;
-                            }
-
-                            $newAmount = (float) ($row['amount'] ?? 0);
-                            if ((float) $element->amount === $newAmount) {
-                                continue;
-                            }
-
-                            $element->amount = $newAmount;
-                            $element->save();
-
-                            if ($element->transaction_id) {
-                                $touchedTransactionIds->push($element->transaction_id);
-                            }
-                        }
-
-                        foreach ($touchedTransactionIds->unique() as $transactionId) {
-                            $transaction = Transaction::find($transactionId);
-                            if (! $transaction) {
-                                continue;
-                            }
-                            $newTotal = (float) TransactionElement::query()
-                                ->where('transaction_id', $transactionId)
-                                ->where('income_or_expense', 'INCOME')
-                                ->sum('amount');
-                            $transaction->amount = $newTotal;
-                            $transaction->save();
-
-                            $receivables = Receaveable::query()
-                                ->where('transaction_id', $transactionId)
-                                ->get();
-
-                            foreach ($receivables as $receivable) {
-                                $oldOriginal = (float) ($receivable->orignal_amount ?? $receivable->amount);
-                                $oldRemaining = (float) $receivable->amount;
-                                $paid = max(0.0, $oldOriginal - $oldRemaining);
-
-                                $newOriginal = $newTotal;
-                                $newRemaining = max(0.0, $newOriginal - $paid);
-
-                                $receivable->orignal_amount = $newOriginal;
-                                $receivable->amount = $newRemaining;
-
-                                if ($newRemaining <= 0.0 && $newOriginal > 0.0) {
-                                    $receivable->status = 'paid';
-                                } elseif ($newOriginal <= 0.0) {
-                                    $receivable->status = 'cancelled';
-                                } elseif (in_array(strtolower((string) $receivable->status), ['paid', 'payed'], true) && $newRemaining > 0.0) {
-                                    $receivable->status = 'pending';
+                            foreach ($transaction->elements->where('service_order_id', $this->record->id)->where('income_or_expense', 'INCOME') as $element) {
+                                $newAmount = $data["{$prefix}_line_{$element->id}"] ?? null;
+                                if ($newAmount === null || (float) $element->amount === (float) $newAmount) {
+                                    continue;
                                 }
 
-                                $receivable->save();
+                                $elementChanges[] = ['id' => $element->id, 'old' => (float) $element->amount, 'new' => (float) $newAmount];
+                                $element->amount = (float) $newAmount;
+                                $element->save();
+                            }
 
-                                $receivableChanges[] = [
-                                    'id' => $receivable->id,
-                                    'transaction_id' => $transactionId,
-                                    'old' => ['original' => $oldOriginal, 'remaining' => $oldRemaining],
-                                    'new' => ['original' => $newOriginal, 'remaining' => $newRemaining, 'status' => $receivable->status],
-                                ];
+                            $newCustomerPayed = (float) ($data["{$prefix}_customer_payed"] ?? $transaction->customer_payed);
+                            if ((float) $transaction->customer_payed !== $newCustomerPayed) {
+                                $paymentChanges[] = ['transaction_id' => $transaction->id, 'old' => (float) $transaction->customer_payed, 'new' => $newCustomerPayed];
+                                $transaction->customer_payed = $newCustomerPayed;
+                                $transaction->save();
+                            }
+
+                            $transaction->recalculatePayment();
+
+                            // A receivable field is only present in $data when one existed at
+                            // modal-open time — an admin override wins over the recalculation
+                            // above; a receivable freshly created by recalculatePayment() (e.g.
+                            // the edit introduced a new shortfall) has no override to apply.
+                            $overrideAmountKey = "{$prefix}_receivable_amount";
+                            if (array_key_exists($overrideAmountKey, $data)) {
+                                $receivable = $transaction->receaveable()->first();
+                                if ($receivable) {
+                                    $newAmount = (float) $data[$overrideAmountKey];
+                                    $newStatus = $data["{$prefix}_receivable_status"] ?? $receivable->status;
+
+                                    if ((float) $receivable->amount !== $newAmount || $receivable->status !== $newStatus) {
+                                        $receivableChanges[] = [
+                                            'id' => $receivable->id,
+                                            'old' => ['amount' => (float) $receivable->amount, 'status' => $receivable->status],
+                                            'new' => ['amount' => $newAmount, 'status' => $newStatus],
+                                        ];
+                                        $receivable->update(['amount' => $newAmount, 'status' => $newStatus]);
+                                    }
+                                }
                             }
                         }
 
@@ -304,20 +290,15 @@ class ViewServiceOrder extends ViewRecord
                             ->causedBy(auth()->user())
                             ->withProperties([
                                 'reason' => $data['reason'] ?? null,
-                                'adjusted_elements' => collect($data['elements'] ?? [])
-                                    ->map(fn ($r) => ['id' => $r['id'] ?? null, 'amount' => $r['amount'] ?? null])
-                                    ->all(),
+                                'element_changes' => $elementChanges,
+                                'payment_changes' => $paymentChanges,
                                 'receivable_changes' => $receivableChanges,
                             ])
                             ->log('service_order_charges_adjusted');
                     });
 
-                    $msg = count($receivableChanges) > 0
-                        ? sprintf('Charges updated. %d receivable(s) recalculated.', count($receivableChanges))
-                        : 'Charges updated.';
-
                     Notification::make()
-                        ->title($msg)
+                        ->title('Charges, payment, and receivables updated.')
                         ->success()
                         ->send();
                 }),
@@ -327,5 +308,24 @@ class ViewServiceOrder extends ViewRecord
                 ->url(fn () => route('reports.generic.service-order', ['id' => $this->record->id]))
                 ->openUrlInNewTab(),
         ];
+    }
+
+    /**
+     * Every transaction that has an INCOME line item linked to this service
+     * order — almost always one, but a service order can be paid for across
+     * more than one transaction (e.g. panel splits).
+     */
+    protected static function touchedTransactions(ServiceOrder $serviceOrder): EloquentCollection
+    {
+        return Transaction::query()
+            ->whereIn('id', TransactionElement::query()
+                ->where('service_order_id', $serviceOrder->id)
+                ->where('income_or_expense', 'INCOME')
+                ->pluck('transaction_id')
+                ->unique()
+                ->filter())
+            ->with(['elements', 'receaveable'])
+            ->orderBy('created_at')
+            ->get();
     }
 }

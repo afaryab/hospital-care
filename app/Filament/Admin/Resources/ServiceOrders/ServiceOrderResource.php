@@ -159,7 +159,7 @@ class ServiceOrderResource extends Resource
                     ),
                 SelectFilter::make('type')
                     ->label('Department')
-                    ->options(fn () => ServiceDepartment::orderBy('name')->pluck('name', 'slug'))
+                    ->options(fn () => ServiceDepartment::cachedAll()->pluck('name', 'slug'))
                     ->searchable(),
                 SelectFilter::make('status')
                     ->options([
@@ -171,25 +171,15 @@ class ServiceOrderResource extends Resource
                     ]),
                 SelectFilter::make('service_id')
                     ->label('Service')
-                    ->options(fn () => Service::orderBy('name')->pluck('name', 'id'))
+                    ->options(fn () => Service::cachedActive()->pluck('name', 'id'))
                     ->searchable(),
                 SelectFilter::make('doctor_id')
                     ->label('Provider')
-                    ->options(fn () => User::query()
-                        ->where(fn ($q) => $q
-                            ->whereHas('opdDoctorProfiles')
-                            ->orWhereHas('indDoctorProfiles')
-                            ->orWhereHas('emergencyDoctorProfiles')
-                            ->orWhereHas('dentistProfiles')
-                            ->orWhereHas('ultrasoundDoctorProfiles')
-                            ->orWhereHas('xrayTechnicianProfiles')
-                        )
-                        ->orderBy('name')
-                        ->pluck('name', 'id'))
+                    ->options(fn () => User::cachedDoctors()->pluck('name', 'id'))
                     ->searchable(),
                 SelectFilter::make('triage')
                     ->label('Triage')
-                    ->options(fn () => Triage::orderBy('priority')->pluck('name', 'id'))
+                    ->options(fn () => Triage::cachedActive()->pluck('name', 'id'))
                     ->query(fn (Builder $query, array $data): Builder => $query
                         ->when($data['value'] ?? null, fn (Builder $q, $value) => $q
                             ->whereHas('treatmentRecord', fn (Builder $tq) => $tq->where('triage_id', $value))

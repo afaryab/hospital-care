@@ -117,3 +117,60 @@ test('admin can refund transaction from edit page', function () {
     $refundElement = TransactionElement::query()->where('refunded_transaction_id', $transaction->id)->first();
     expect($refundElement)->not->toBeNull();
 });
+
+test('editing customer_payed on the edit page recalculates recognized amount, change, and receivable', function () {
+    $transaction = Transaction::factory()->create([
+        'income_or_expense' => 'INCOME',
+        'customer_payed' => 500,
+        'amount' => 500,
+    ]);
+
+    TransactionElement::factory()->create([
+        'transaction_id' => $transaction->id,
+        'closing_id' => $transaction->closing_id,
+        'patient_id' => $transaction->patient_id,
+        'income_or_expense' => 'INCOME',
+        'amount' => 500,
+        'orignal_amount' => 500,
+    ]);
+
+    Livewire\Livewire::test(EditTransaction::class, ['record' => $transaction->getRouteKey()])
+        ->assertSuccessful()
+        ->fillForm(['customer_payed' => 300])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    $fresh = $transaction->fresh();
+
+    expect((float) $fresh->customer_payed)->toBe(300.0)
+        ->and((float) $fresh->amount)->toBe(300.0)
+        ->and((float) $fresh->change)->toBe(0.0);
+
+    $receivable = Receaveable::where('transaction_id', $transaction->id)->first();
+    expect($receivable)->not->toBeNull()
+        ->and((float) $receivable->amount)->toBe(200.0)
+        ->and($receivable->status)->toBe('unpaid');
+});
+
+test('editing amount on a receivable-payment transaction adjusts the settled receivable balance', function () {
+    $receivable = Receaveable::factory()->create([
+        'amount' => 500,
+        'orignal_amount' => 800,
+        'status' => 'unpaid',
+    ]);
+
+    $payment = Transaction::factory()->create([
+        'receaveable_id' => $receivable->id,
+        'patient_id' => $receivable->patient_id,
+        'amount' => 200,
+    ]);
+
+    Livewire\Livewire::test(EditTransaction::class, ['record' => $payment->getRouteKey()])
+        ->assertSuccessful()
+        ->fillForm(['amount' => 350])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect((float) $payment->fresh()->amount)->toBe(350.0)
+        ->and((float) $receivable->fresh()->amount)->toBe(350.0);
+});

@@ -1,3 +1,5 @@
+import AppFooter from '@/components/app-footer';
+import HospitalBrand from '@/components/hospital-brand';
 import { NavFooter } from '@/components/nav-footer';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -36,6 +38,7 @@ import {
     ultDashboard,
     xrayDashboard,
 } from '@/routes';
+import dms from '@/routes/dms';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
@@ -45,6 +48,7 @@ import {
     ChartLine,
     Cog,
     FlaskConical,
+    FolderOpen,
     ListTree,
     LucideBlinds,
     LucideHome,
@@ -58,8 +62,6 @@ import {
     Users,
     Waypoints,
 } from 'lucide-react';
-import AppLogoIcon from './app-logo-icon';
-
 export function AppSidebar() {
     const page = usePage<SharedData>();
 
@@ -145,12 +147,6 @@ export function AppSidebar() {
 
     if (haveAccountantProfile) {
         adminMenuItems.push({
-            title: 'Summaries',
-            href: '/summeries',
-            icon: ListTree,
-        });
-
-        adminMenuItems.push({
             title: 'Accounts',
             href: '/accounts',
             icon: ChartLine,
@@ -162,6 +158,12 @@ export function AppSidebar() {
             title: 'Administration',
             href: '/admin',
             icon: Cog,
+        });
+
+        adminMenuItems.push({
+            title: 'Documents',
+            href: dms.index().url,
+            icon: FolderOpen,
         });
     }
 
@@ -182,7 +184,7 @@ export function AppSidebar() {
                             className="hover:bg-transparent"
                         >
                             <Link href={home()} prefetch>
-                                <AppLogoIcon size={10} direction="horizontal" />
+                                <HospitalBrand />
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -726,6 +728,7 @@ export function AppSidebar() {
             <SidebarFooter>
                 <NavFooter items={adminMenuItems} className="mt-auto" />
                 <NavUser />
+                <AppFooter className="group-data-[collapsible=icon]:hidden" />
             </SidebarFooter>
         </Sidebar>
     );

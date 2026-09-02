@@ -10,7 +10,7 @@ class HospitalSettingSeeder extends Seeder
     public function run(): void
     {
         $defaults = [
-            'hospital_name' => config('app.name', 'Hospital Care'),
+            'hospital_name' => config('app.name', 'Medical OS'),
             'hospital_logo_path' => '',
             'hospital_address' => '',
             'hospital_phone' => '',

@@ -24,6 +24,13 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
     <style>
+        /* Reserves exactly the letterhead header/footer partials' heights
+           (see resources/views/pdfs/partials/letterhead-*.blade.php) so the
+           header sits flush against .heading-wrap below with no gap. */
+        @page {
+            margin: 72px 15px 34px 15px;
+        }
+
         *{ box-sizing:border-box; }
         body{
             margin:0;
@@ -49,7 +56,7 @@
 
         .heading-wrap{
             text-align:center;
-            margin-top:4px;
+            margin-top:0; /* flush against the letterhead header partial */
         }
         .heading-wrap > *{ display:block; margin: 3px auto; }
         .badge{
@@ -138,6 +145,8 @@
     </style>
 </head>
 <body>
+    @include('pdfs.partials.letterhead-header')
+    @include('pdfs.partials.letterhead-footer')
     <div class="page">
 
         <div class="heading-wrap">

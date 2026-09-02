@@ -58,6 +58,7 @@ class ExpenseVouchersTable
                     ->dateTime()
                     ->sortable(),
             ])
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['expCategory', 'serviceOrder.service', 'payedTo', 'transaction']))
             ->defaultSort('created_at', 'desc')
             ->filters([
                 SelectFilter::make('status')

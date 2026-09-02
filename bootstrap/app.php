@@ -26,6 +26,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'browser_timezone']);
 
+        // The OnlyOffice Document Server posts its save callback directly
+        // (no browser, no Laravel session, no CSRF token) — it's protected
+        // instead by the signed URL plus OnlyOffice's own JWT, checked
+        // inside CallbackController.
+        $middleware->validateCsrfTokens(except: ['onlyoffice/callback/*']);
+
         $middleware->web(append: [
             HandleAppearance::class,
             // Process captive portal redirects early
@@ -37,6 +43,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             EnsureFrontendRequestsAreStateful::class,
         ]);
+
+        // No RateLimiter::for('api', ...) was ever registered, so this was
+        // previously a no-op — every one of the 55 routes in routes/api.php
+        // (patient search/create/edit, transaction refund, service-order
+        // status changes, bed discharge, treatment records) could be hit
+        // without limit by any authenticated token holder. The actual
+        // limiter is registered in AppServiceProvider::boot().
+        $middleware->throttleApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         Integration::handles($exceptions);

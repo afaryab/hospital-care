@@ -6,6 +6,7 @@ use App\Models\OpdDoctor;
 use App\Models\Receptionist;
 use App\Models\User;
 use Filament\Panel;
+use Illuminate\Support\Facades\DB;
 
 test('user isAdmin returns true when user has admin profile', function () {
     $user = User::factory()->create();
@@ -18,6 +19,30 @@ test('user isAdmin returns false when user has no admin profile', function () {
     $user = User::factory()->create();
 
     expect($user->isAdmin())->toBeFalse();
+});
+
+test('user isAdmin is memoized per instance and only queries once', function () {
+    $user = User::factory()->create();
+    Administrator::create(['user_id' => $user->id, 'authority' => 'administrator']);
+
+    DB::enableQueryLog();
+    $user->isAdmin();
+    $user->isAdmin();
+    $user->isAdmin();
+    $queryCount = count(DB::getQueryLog());
+    DB::disableQueryLog();
+
+    expect($queryCount)->toBe(1);
+});
+
+test('a freshly fetched instance of the same user re-queries isAdmin (memoization is per instance, not per user)', function () {
+    $user = User::factory()->create();
+    Administrator::create(['user_id' => $user->id, 'authority' => 'administrator']);
+
+    $user->isAdmin();
+    $sameUserDifferentInstance = User::find($user->id);
+
+    expect($sameUserDifferentInstance->isAdmin())->toBeTrue();
 });
 
 test('user isReceptionist returns true when user has receptionist profile', function () {

@@ -22,12 +22,18 @@ export interface NavItem {
     isActive?: boolean;
 }
 
+export interface Hospital {
+    name: string;
+    logoUrl: string | null;
+}
+
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
     sidebarOpen: boolean;
     timezone: string;
+    hospital: Hospital;
     [key: string]: unknown;
 }
 
@@ -224,4 +230,53 @@ export interface Panel {
     id: number;
     name: string;
     [key: string]: unknown;
+}
+
+export interface DmsClassification {
+    id: number;
+    name: string;
+    code: string;
+    security_level: 'public' | 'internal' | 'confidential' | 'restricted';
+    retention_years?: number | null;
+    description?: string | null;
+    [key: string]: unknown;
+}
+
+export interface DmsFolder {
+    id: number;
+    uuid: string;
+    name: string;
+    parent_id: number | null;
+    path: string;
+    classification_id: number | null;
+    classification?: DmsClassification | null;
+    is_system: boolean;
+    created_by: number;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+}
+
+export interface DmsDocument {
+    id: number;
+    uuid: string;
+    folder_id: number;
+    name: string;
+    classification_id: number | null;
+    classification?: DmsClassification | null;
+    status: string;
+    is_locked: boolean;
+    locked_by: number | null;
+    lockedBy?: User | null;
+    locked_at: string | null;
+    current_version: number;
+    created_by: number;
+    created_at: string;
+    updated_at: string;
+    [key: string]: unknown;
+}
+
+export interface DmsFolderOption {
+    uuid: string;
+    label: string;
 }

@@ -39,6 +39,22 @@ test('admin can update hospital name and address', function () {
         ->and(HospitalSetting::get('hospital_address'))->toBe('Main Boulevard, Lahore');
 });
 
+test('the consent gate defaults to disabled and can be toggled on', function () {
+    $user = User::factory()->create();
+    Administrator::factory()->create(['user_id' => $user->id]);
+    actingAs($user);
+
+    expect(HospitalSetting::get('require_consent_before_treatment', false))->toBeFalse();
+
+    Livewire\Livewire::test(HospitalSettings::class)
+        ->assertSchemaStateSet(['require_consent_before_treatment' => false])
+        ->fillForm(['require_consent_before_treatment' => true])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect((bool) HospitalSetting::get('require_consent_before_treatment'))->toBeTrue();
+});
+
 test('settings appear on printed pdf headers', function () {
     HospitalSetting::set('hospital_name', 'City Care Hospital');
     HospitalSetting::set('hospital_address', 'Main Boulevard, Lahore');

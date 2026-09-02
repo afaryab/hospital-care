@@ -13,7 +13,6 @@ use Spatie\Backup\Notifications\Notifications\UnhealthyBackupWasFoundNotificatio
 use Spatie\Backup\Tasks\Cleanup\Strategies\DefaultStrategy;
 use Spatie\Backup\Tasks\Monitor\HealthChecks\MaximumAgeInDays;
 use Symfony\Component\Process\ExecutableFinder;
-use ZipArchive;
 
 beforeEach(function () {
     config([
@@ -190,6 +189,11 @@ test('backup retention policy cleans old backups', function () {
     ]);
 
     expect($exitCode)->toBe(0);
+});
+
+test('yearly backup retention meets the HIPAA/PHC 6-year minimum by default', function () {
+    expect((int) config('backup.cleanup.default_strategy.keep_yearly_backups_for_years'))
+        ->toBeGreaterThanOrEqual(6);
 });
 
 test('backup health check notifies on failure', function () {

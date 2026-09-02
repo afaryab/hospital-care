@@ -18,8 +18,11 @@ export default function AppLogoIcon({
                       ? '/logo-horizontal.png'
                       : '/logo.png'
             }
-            alt="Hospital Care application logo featuring medical cross symbol in vertical layout"
+            alt="Medical OS application logo featuring medical cross symbol in vertical layout"
             className={clsx({
+                'max-h-2 w-auto': size === 2,
+                'max-h-3 w-auto': size === 3,
+                'max-h-4 w-auto': size === 4,
                 'max-h-6 w-auto': size === 6,
                 'max-h-8 w-auto': size === 8,
                 'max-h-10 w-auto': size === 10,

@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\ServiceOrder;
 use App\Models\Transaction;
+use App\Models\TransactionVersion;
 
 class TransactionObserver
 {
@@ -42,6 +43,19 @@ class TransactionObserver
         if ($transaction->isDirty('tr_number') && ! empty($transaction->getOriginal('tr_number'))) {
             $transaction->tr_number = $transaction->getOriginal('tr_number');
         }
+
+        // Same PatientVersion/ServiceOrderVersion/TreatmentRecordVersion
+        // pattern (see those models' booted()) — a full snapshot of the
+        // pre-change record on every update. Quiet writes (recalculatePayment(),
+        // this observer's own edited_amount tracking below) bypass observers
+        // entirely, so only genuine edits are captured here.
+        TransactionVersion::query()->create([
+            'transaction_id' => $transaction->id,
+            'snapshot' => $transaction->getOriginal(),
+            'change_reason' => 'record_update',
+            'changed_by' => auth()->id(),
+            'changed_at' => now(),
+        ]);
     }
 
     /**
@@ -68,6 +82,16 @@ class TransactionObserver
                 ServiceOrder::whereIn('id', $serviceOrderIds)
                     ->update(['status' => 'refunded']);
             }
+        }
+    }
+
+    /**
+     * Handle the Transaction "deleting" event.
+     */
+    public function deleting(Transaction $transaction): void
+    {
+        if ($transaction->isForceDeleting()) {
+            throw new \RuntimeException('Hard delete is not allowed for transaction records.');
         }
     }
 

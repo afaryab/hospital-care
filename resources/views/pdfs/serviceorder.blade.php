@@ -31,6 +31,13 @@
         /* Fonts are registered via mPDF config; omit @font-face to prevent parser issues */
         /* Remove CSS variables for mPDF compatibility */
 
+        /* Reserves exactly the letterhead header/footer partials' heights
+           (see resources/views/pdfs/partials/letterhead-*.blade.php) so the
+           header sits flush against .heading-wrap below with no gap. */
+        @page {
+            margin: 72px 15px 34px 15px;
+        }
+
         *{ box-sizing:border-box; }
         body{
             margin:0;
@@ -62,7 +69,7 @@
 
         .heading-wrap{
             text-align:center;
-            margin-top:6px;
+            margin-top:0; /* flush against the letterhead header partial */
         }
         .heading-wrap > *{ display:block; margin: 4px auto; }
         .badge{
@@ -235,6 +242,8 @@
     </style>
 </head>
 <body>
+    @include('pdfs.partials.letterhead-header')
+    @include('pdfs.partials.letterhead-footer')
     <div class="page">
 
         <div class="heading-wrap">

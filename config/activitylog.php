@@ -14,8 +14,16 @@ return [
     /*
      * When the clean command is executed, all recording activities older than
      * the number of days specified here will be deleted.
+     *
+     * Set to 6 years (HIPAA §12 / PHC guideline §13.1 minimum retention for
+     * compliance/audit records — activity_log is this app's audit trail).
+     * Note: activitylog:clean is not currently scheduled anywhere in
+     * routes/console.php, so this value is not actively enforced today —
+     * it's here so the default is correct if/when a hospital operator
+     * decides to schedule pruning, rather than defaulting to Spatie's
+     * stock 365 days (which falls short of the compliance minimum).
      */
-    'clean_after_days' => 365,
+    'clean_after_days' => (int) env('ACTIVITYLOG_CLEAN_AFTER_DAYS', 2190),
 
     /*
      * If no log name is passed to the activity() helper

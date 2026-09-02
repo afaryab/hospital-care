@@ -2,22 +2,35 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Concerns\Cacheable;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements FilamentUser
+/**
+ * Implementing MustVerifyEmail is not cosmetic: Laravel's `verified`
+ * middleware — already applied throughout routes/web.php and
+ * routes/settings.php — checks `$user instanceof MustVerifyEmail` and is a
+ * silent no-op for any model that doesn't implement it, regardless of
+ * `email_verified_at`. Fortify's Features::emailVerification() being
+ * enabled in config/fortify.php only wires up the verification *flow*
+ * (sending the email, the /email/verify routes) — it does not, by itself,
+ * make anything actually require verification.
+ */
+class User extends Authenticatable implements FilamentUser, MustVerifyEmailContract
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, LogsActivity, Notifiable, TwoFactorAuthenticatable;
+    use Cacheable, HasFactory, HasRoles, LogsActivity, MustVerifyEmail, Notifiable, TwoFactorAuthenticatable;
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -232,9 +245,17 @@ class User extends Authenticatable implements FilamentUser
 
     // ─── Role helpers ────────────────────────────────────────────────────────
 
+    /**
+     * Memoized per-instance: every Policy's before() hook calls this first,
+     * so on a Filament table with row-level actions it previously ran once
+     * per row per action visibility check — a single admin-panel page load
+     * could fire dozens of identical `adminProfiles` existence queries.
+     */
+    protected ?bool $isAdminMemo = null;
+
     public function isAdmin(): bool
     {
-        return $this->adminProfiles()->exists();
+        return $this->isAdminMemo ??= $this->adminProfiles()->exists();
     }
 
     public function isAccountant(): bool
@@ -245,6 +266,32 @@ class User extends Authenticatable implements FilamentUser
     public function isReceptionist(): bool
     {
         return $this->receptionistProfiles()->exists();
+    }
+
+    /**
+     * Every user holding at least one doctor/provider profile (OPD, IND,
+     * EMG, dentist, ultrasound, X-ray) — the "Doctor / Provider" dropdown
+     * repeated across transaction, service order, and treatment forms.
+     * Cached under its own key rather than the model-wide one: this is a
+     * filtered subset of users, not "all users".
+     */
+    public static function cacheKey(): string
+    {
+        return 'model-cache:users:doctors';
+    }
+
+    public static function cachedDoctors(): Collection
+    {
+        return static::rememberCache(fn () => static::query()
+            ->where(fn ($q) => $q
+                ->whereHas('opdDoctorProfiles')
+                ->orWhereHas('indDoctorProfiles')
+                ->orWhereHas('emergencyDoctorProfiles')
+                ->orWhereHas('dentistProfiles')
+                ->orWhereHas('ultrasoundDoctorProfiles')
+                ->orWhereHas('xrayTechnicianProfiles'))
+            ->orderBy('name')
+            ->get());
     }
 
     public function isAnyDoctor(): bool

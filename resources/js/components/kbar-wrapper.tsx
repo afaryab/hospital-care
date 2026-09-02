@@ -24,6 +24,20 @@ import React, { useEffect, useRef, useState } from 'react';
  *   </CommandPaletteLayout>
  */
 
+// Path prefixes for the unauthenticated auth flow (login, register, password
+// reset, email verification, 2FA challenge) — the command palette's floating
+// trigger is hidden there since its search requires an authenticated session
+// and has nothing useful to offer before one exists.
+const AUTH_PATH_PREFIXES = [
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/two-factor-challenge',
+    '/email/verify',
+    '/user/confirm-password',
+];
+
 export default function CommandPaletteLayout({
     children,
     navigate,
@@ -39,6 +53,24 @@ export default function CommandPaletteLayout({
     const [loading, setLoading] = useState(false);
     const [activeIndex, setActiveIndex] = useState<number>(-1);
     const inputRef = useRef<HTMLInputElement | null>(null);
+
+    // CommandPaletteLayout wraps Inertia's <App> at the React root (see
+    // app.tsx), so it sits outside Inertia's page context and can't use
+    // usePage() — router.on('navigate') is Inertia's context-free event feed
+    // for exactly this kind of "track the current URL from outside" need.
+    const [pathname, setPathname] = useState(() => window.location.pathname);
+    useEffect(() => {
+        return router.on('navigate', (event) => {
+            // page.url is typically a relative path (e.g. "/login") — an
+            // explicit base makes this safe whether it's relative or absolute.
+            setPathname(
+                new URL(event.detail.page.url, window.location.origin).pathname,
+            );
+        });
+    }, []);
+    const isAuthScreen = AUTH_PATH_PREFIXES.some((prefix) =>
+        pathname.startsWith(prefix),
+    );
 
     const go = (url: string) => {
         return navigate ? navigate(url) : router.visit(url);
@@ -87,8 +119,8 @@ export default function CommandPaletteLayout({
                     name: string;
                     url?: string;
                     type?: string;
-                }> = Array.isArray(data.results)
-                    ? data.results.map((item: any) => ({
+                }> = Array.isArray(data.data)
+                    ? data.data.map((item: any) => ({
                           name: item?.name ?? 'Untitled',
                           url: item?.url,
                           type: item?.type,
@@ -130,20 +162,22 @@ export default function CommandPaletteLayout({
         <div className="min-h-dvh bg-blue-800 text-gray-800 antialiased dark:bg-neutral-950 dark:text-neutral-100">
             {children}
 
-            {/* Floating trigger button */}
-            <button
-                onClick={() => {
-                    setOpen(true);
-                    setTimeout(() => inputRef.current?.focus(), 0);
-                }}
-                className="fixed right-5 bottom-5 z-[99] inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/80 px-4 py-2 shadow-lg backdrop-blur-md transition hover:shadow-xl dark:bg-neutral-900/70 dark:text-neutral-100"
-                aria-label="Open command palette"
-            >
-                <kbd className="rounded-md bg-neutral-100 px-1.5 py-0.5 text-[10px] dark:bg-neutral-800">
-                    ⌘K
-                </kbd>
-                <span className="text-sm">Command</span>
-            </button>
+            {/* Floating trigger button — hidden pre-login, see isAuthScreen above */}
+            {!isAuthScreen && (
+                <button
+                    onClick={() => {
+                        setOpen(true);
+                        setTimeout(() => inputRef.current?.focus(), 0);
+                    }}
+                    className="fixed right-48 bottom-5 z-[99] inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/80 px-4 py-2 shadow-lg backdrop-blur-md transition hover:shadow-xl dark:bg-neutral-900/70 dark:text-neutral-100"
+                    aria-label="Open command palette"
+                >
+                    <kbd className="rounded-md bg-neutral-100 px-1.5 py-0.5 text-[10px] dark:bg-neutral-800">
+                        ⌘K
+                    </kbd>
+                    <span className="text-sm">Command</span>
+                </button>
+            )}
 
             {/* Overlay */}
             {open && (

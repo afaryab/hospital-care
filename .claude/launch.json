@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Hospital Care — Full Stack (Docker)",
+      "name": "Medical OS — Full Stack (Docker)",
       "runtimeExecutable": "sh",
       "runtimeArgs": [
         "-c",
@@ -11,7 +11,7 @@
       "port": 8000
     },
     {
-      "name": "Hospital Care — Quick Start (Docker)",
+      "name": "Medical OS — Quick Start (Docker)",
       "runtimeExecutable": "sh",
       "runtimeArgs": [
         "-c",

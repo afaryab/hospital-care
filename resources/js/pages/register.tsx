@@ -119,7 +119,7 @@ export default function Register() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
-                <div className="flex flex-wrap items-end gap-4 rounded-xl bg-[#1c398e] p-2 dark:bg-[#0a0a0a]">
+                <div className="dark :border-sidebar-border flex flex-wrap items-end gap-4 rounded-2xl border border-sidebar-border/70 bg-gradient-to-br from-teal-50 via-white to-sky-50 p-6 shadow-sm dark:from-teal-950/40 dark:via-gray-900 dark:to-sky-950/40">
                     <div className="grid gap-2">
                         <Label htmlFor="year">Year</Label>
                         <Select

@@ -1,10 +1,22 @@
 <?php
 
 use App\Http\Controllers\DentistController;
+use App\Http\Controllers\Dms\DmsBrowserController;
+use App\Http\Controllers\Dms\DmsDocumentController;
+use App\Http\Controllers\Dms\DmsFolderController;
+use App\Http\Controllers\Dms\DmsShareController;
+use App\Http\Controllers\Dms\DmsZipUploadController;
+use App\Http\Controllers\Dms\DocumentDownloadController;
+use App\Http\Controllers\Dms\FolderZipController;
+use App\Http\Controllers\Dms\PreparedZipDownloadController;
+use App\Http\Controllers\Dms\PublicShareDownloadController;
 use App\Http\Controllers\EmergencyDoctorController;
 use App\Http\Controllers\IndDoctorController;
 use App\Http\Controllers\LabController;
 use App\Http\Controllers\Migration\ImportController;
+use App\Http\Controllers\OnlyOffice\CallbackController;
+use App\Http\Controllers\OnlyOffice\DocumentContentController;
+use App\Http\Controllers\OnlyOffice\EditorPageController;
 use App\Http\Controllers\OpdDoctorController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
 use App\Http\Controllers\Prints\ServiceOrderPdfPrintController;
@@ -17,20 +29,16 @@ use App\Http\Controllers\Reports\PanelPaymentReportController;
 use App\Http\Controllers\UltrasoundController;
 use App\Http\Controllers\WebController;
 use App\Http\Controllers\XrayController;
+use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-use Laravel\Fortify\Features;
-
-// Route::get('/', function () {
-//     return Inertia::render('welcome', [
-//         'canRegister' => Features::enabled(Features::registration()),
-//     ]);
-// })->name('home');
-
-Route::get('/import-old', [ImportController::class, 'index'])->name('import-old');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', [WebController::class, 'index'])->name('home');
+
+    // One-time legacy data migration tool — admin-only (see ImportController::index()).
+    // Was previously registered above the auth group entirely, requiring no
+    // login at all.
+    Route::get('/import-old', [ImportController::class, 'index'])->name('import-old');
 
     /**
      * Doctor: own service orders & expense vouchers
@@ -207,7 +215,64 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('reports/panel-payments/pending', [PanelPaymentReportController::class, 'pending'])
         ->name('reports.panel-payments.pending');
 
+    /**
+     * Document Management System — the React "Drive" browser and its
+     * folder/document CRUD, admin-only for now (mirrors the access level
+     * of the Filament page it replaces). The Policies these controllers
+     * authorize against already model broader doctor/patient/share-based
+     * access for when that gate is loosened later — see DmsFolderPolicy /
+     * DmsDocumentPolicy.
+     */
+    Route::middleware(EnsureUserIsAdmin::class)->prefix('dms')->name('dms.')->group(function () {
+        Route::get('/{folder:uuid?}', [DmsBrowserController::class, 'index'])->name('index');
+
+        Route::post('folders', [DmsFolderController::class, 'store'])->name('folders.store');
+        Route::patch('folders/{folder:uuid}', [DmsFolderController::class, 'update'])->name('folders.update');
+        Route::delete('folders/{folder:uuid}', [DmsFolderController::class, 'destroy'])->name('folders.destroy');
+        Route::post('folders/{folder:uuid}/move', [DmsFolderController::class, 'move'])->name('folders.move');
+        Route::post('folders/{folder:uuid}/copy', [DmsFolderController::class, 'copy'])->name('folders.copy');
+
+        Route::post('documents', [DmsDocumentController::class, 'store'])->name('documents.store');
+        Route::patch('documents/{document:uuid}', [DmsDocumentController::class, 'update'])->name('documents.update');
+        Route::delete('documents/{document:uuid}', [DmsDocumentController::class, 'destroy'])->name('documents.destroy');
+        Route::post('documents/{document:uuid}/move', [DmsDocumentController::class, 'move'])->name('documents.move');
+        Route::post('documents/{document:uuid}/copy', [DmsDocumentController::class, 'copy'])->name('documents.copy');
+        Route::post('documents/{document:uuid}/lock', [DmsDocumentController::class, 'lock'])->name('documents.lock');
+        Route::post('documents/{document:uuid}/unlock', [DmsDocumentController::class, 'unlock'])->name('documents.unlock');
+        Route::post('documents/{document:uuid}/share', [DmsShareController::class, 'store'])->name('documents.share');
+
+        Route::post('zip-uploads', [DmsZipUploadController::class, 'store'])->name('zip-uploads.store');
+    });
+
+    /**
+     * Document Management System — session-authed actions reached without
+     * going through the browser UI above (direct downloads, the OnlyOffice
+     * editor tab).
+     */
+    Route::get('dms/documents/{document:uuid}/download', DocumentDownloadController::class)
+        ->name('dms.documents.download');
+    Route::get('dms/folders/{folder:uuid}/zip', FolderZipController::class)
+        ->name('dms.folders.zip');
+    Route::get('onlyoffice/editor/{document:uuid}', EditorPageController::class)
+        ->name('onlyoffice.editor');
 });
+
+/**
+ * Document Management System — endpoints reached without a browser session:
+ * hit by the OnlyOffice Document Server container itself (content fetch,
+ * save callback), by a signed download-when-ready email link, or by an
+ * externally shared document link. All are gated by a signed URL rather
+ * than `auth`/`verified`, with the OnlyOffice pair additionally verifying
+ * OnlyOffice's own JWT inside the controller.
+ */
+Route::get('onlyoffice/content/{document:uuid}', DocumentContentController::class)
+    ->name('onlyoffice.content');
+Route::post('onlyoffice/callback/{document:uuid}', CallbackController::class)
+    ->name('onlyoffice.callback');
+Route::get('dms/zip-download/{filename}', PreparedZipDownloadController::class)
+    ->name('dms.folders.zip-download');
+Route::get('dms/shares/{share}/download', PublicShareDownloadController::class)
+    ->name('dms.shares.download');
 
 /**
  * Print routes (no auth required for printing)
