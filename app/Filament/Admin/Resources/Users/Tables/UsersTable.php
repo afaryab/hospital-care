@@ -110,6 +110,29 @@ class UsersTable
                     ->action(fn ($record) => $record->update(['is_active' => ! $record->is_active]))
                     ->successNotificationTitle(fn ($record) => 'User has been '.($record->is_active ? 'activated' : 'blocked')),
 
+                Actions\Action::make('toggle_email_verification')
+                    ->label(fn ($record) => $record->hasVerifiedEmail() ? 'Unverify Email' : 'Verify Email')
+                    ->icon(fn ($record) => $record->hasVerifiedEmail() ? 'heroicon-o-envelope' : 'heroicon-o-check-badge')
+                    ->color(fn ($record) => $record->hasVerifiedEmail() ? 'gray' : 'success')
+                    ->requiresConfirmation()
+                    ->modalHeading(fn ($record) => ($record->hasVerifiedEmail() ? 'Unverify' : 'Verify').' Email: '.$record->name)
+                    ->modalDescription(fn ($record) => $record->hasVerifiedEmail()
+                        ? 'Are you sure you want to mark this email as unverified? The user will need to verify it again.'
+                        : 'Are you sure you want to manually mark this email address as verified?'
+                    )
+                    ->action(function ($record) {
+                        if ($record->hasVerifiedEmail()) {
+                            // email_verified_at is deliberately not mass-assignable
+                            // (not in User::$fillable) — markEmailAsUnverified()
+                            // uses forceFill() to bypass that, same as Laravel's
+                            // own markEmailAsVerified() does for the other branch.
+                            $record->markEmailAsUnverified();
+                        } else {
+                            $record->markEmailAsVerified();
+                        }
+                    })
+                    ->successNotificationTitle(fn ($record) => 'Email has been '.($record->hasVerifiedEmail() ? 'verified' : 'marked as unverified')),
+
                 Actions\ViewAction::make()
                     ->color('info'),
 
