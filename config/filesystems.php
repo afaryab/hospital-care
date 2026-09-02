@@ -41,7 +41,13 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            // No hardcoded 'url' — leaving it unset makes Laravel generate
+            // root-relative "/storage/..." URLs instead of an absolute
+            // env('APP_URL') one. A hardcoded https:// APP_URL broke every
+            // patient photo, DMS document, and hospital logo when the app
+            // was reached over plain http on the local network (LAN IP),
+            // since the URL always pointed at the public https domain
+            // regardless of how the page itself was loaded.
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
