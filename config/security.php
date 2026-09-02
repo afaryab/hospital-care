@@ -1,6 +1,14 @@
 <?php
 
 return [
+    'two_factor' => [
+        // HIPAA/PHC compliance expects MFA on admin/accountant accounts (full
+        // patient and financial access on password alone otherwise), so this
+        // defaults to enforced. Only disable for environments where the
+        // 2FA setup step is genuinely unwanted (e.g. local development).
+        'enforced' => (bool) env('SECURITY_ENFORCE_TWO_FACTOR', true),
+    ],
+
     'breach' => [
         'failed_login_threshold' => (int) env('SECURITY_FAILED_LOGIN_THRESHOLD', 5),
         'failed_login_window_minutes' => (int) env('SECURITY_FAILED_LOGIN_WINDOW_MINUTES', 10),
