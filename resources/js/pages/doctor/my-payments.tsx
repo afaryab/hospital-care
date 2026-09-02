@@ -80,7 +80,7 @@ export default function MyPayments() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="My Payments" />
-            <div className="flex flex-col gap-4 p-4">
+            <div className="flex flex-col gap-4 p-4 bg-white dark:bg-neutral-900 rounded-lg">
                 <header className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600">
@@ -119,7 +119,7 @@ export default function MyPayments() {
                 </div>
 
                 {/* Filters */}
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+                <div className="rounded-2xl border border-sidebar-border/70 bg-gradient-to-br from-teal-50 via-white to-sky-50 p-4 shadow-sm dark:border-sidebar-border dark:from-teal-950/40 dark:via-gray-900 dark:to-sky-950/40">
                     <div className="grid gap-3 md:grid-cols-4">
                         <div className="md:col-span-2">
                             <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400">
