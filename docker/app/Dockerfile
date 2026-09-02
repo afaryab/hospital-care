@@ -15,7 +15,7 @@ COPY composer.json composer.lock ./
 COPY packages/ ./packages/
 RUN composer install --no-dev --no-scripts --ignore-platform-reqs --no-interaction
 # JS deps
-COPY package.json pnpm-lock.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 # Application source
 COPY . .
