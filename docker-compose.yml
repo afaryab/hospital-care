@@ -17,7 +17,6 @@ services:
       - APP_URL=http://localhost
       - REGISTER_PATIENT_PUBLICLY=true
       - TAKE_APPOINTMENTS_PUBLICLY=true
-      - SESSION_DOMAIN=localhost
       - CACHE_STORE=redis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -43,7 +42,6 @@ services:
       - APP_URL=http://localhost
       - REGISTER_PATIENT_PUBLICLY=true
       - TAKE_APPOINTMENTS_PUBLICLY=true
-      - SESSION_DOMAIN=localhost
       - CACHE_STORE=redis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
