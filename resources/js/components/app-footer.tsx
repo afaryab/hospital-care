@@ -16,12 +16,12 @@ export default function AppFooter({ className = '' }: { className?: string }) {
             />
             <span className="text-[9px] text-muted-foreground">
                 <a
-                    href="https://hospitalos.pk"
+                    href="https://medicalos.pk"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="underline underline-offset-2 hover:text-foreground"
                 >
-                    hospitalos.pk
+                    medicalos.pk
                 </a>
             </span>
         </div>
