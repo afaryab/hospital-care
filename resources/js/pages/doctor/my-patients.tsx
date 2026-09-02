@@ -78,7 +78,7 @@ export default function MyPatients() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="My Patients" />
-            <div className="flex flex-col gap-4 p-4 bg-white dark:bg-neutral-900 rounded-lg">
+            <div className="flex flex-col gap-4 rounded-lg bg-white p-4 dark:bg-neutral-900">
                 <header className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600">

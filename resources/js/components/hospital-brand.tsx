@@ -16,30 +16,34 @@ export default function HospitalBrand({
     const name = hospital?.name || 'Medical OS';
 
     return (
-        <div className={`flex min-w-0 items-center gap-2 my-8 ${className}`}>
-            {hospital?.logoUrl ? (<>
-                <span className="inline-flex shrink-0 items-center justify-center rounded-md bg-white p-1">
-                    <img
-                        src={hospital.logoUrl}
-                        alt={name}
-                        className="h-12 w-auto object-contain"
-                    />
-                </span>
-                <span className="truncate text-md leading-tight font-semibold group-data-[collapsible=icon]:hidden">
-                    {name}
-                </span>
-            </>) : (<>
-                <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold text-sidebar-primary-foreground">
-                    <img
-                        src="/logo.png"
-                        alt={name}
-                        className="h-12 w-auto object-contain"
-                    />
-                </span>
-                <span className="truncate text-md leading-tight font-semibold group-data-[collapsible=icon]:hidden">
-                    {name}
-                </span>
-            </>)}
+        <div className={`my-8 flex min-w-0 items-center gap-2 ${className}`}>
+            {hospital?.logoUrl ? (
+                <>
+                    <span className="inline-flex shrink-0 items-center justify-center rounded-md bg-white p-1">
+                        <img
+                            src={hospital.logoUrl}
+                            alt={name}
+                            className="h-12 w-auto object-contain"
+                        />
+                    </span>
+                    <span className="text-md truncate leading-tight font-semibold group-data-[collapsible=icon]:hidden">
+                        {name}
+                    </span>
+                </>
+            ) : (
+                <>
+                    <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold text-sidebar-primary-foreground">
+                        <img
+                            src="/logo.png"
+                            alt={name}
+                            className="h-12 w-auto object-contain"
+                        />
+                    </span>
+                    <span className="text-md truncate leading-tight font-semibold group-data-[collapsible=icon]:hidden">
+                        {name}
+                    </span>
+                </>
+            )}
         </div>
     );
 }
