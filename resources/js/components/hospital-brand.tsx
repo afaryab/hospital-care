@@ -28,15 +28,18 @@ export default function HospitalBrand({
                 <span className="truncate text-md leading-tight font-semibold group-data-[collapsible=icon]:hidden">
                     {name}
                 </span>
-            </>) : (
-                <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
+            </>) : (<>
+                <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold text-sidebar-primary-foreground">
                     <img
                         src="/logo.png"
                         alt={name}
                         className="h-12 w-auto object-contain"
                     />
                 </span>
-            )}
+                <span className="truncate text-md leading-tight font-semibold group-data-[collapsible=icon]:hidden">
+                    {name}
+                </span>
+            </>)}
         </div>
     );
 }

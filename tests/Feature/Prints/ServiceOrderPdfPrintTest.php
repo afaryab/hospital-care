@@ -6,6 +6,7 @@ use App\Helpers\QrCodeHelper;
 use App\Models\BirthCertificate;
 use App\Models\DeathCertificate;
 use App\Models\EmergencyDoctor;
+use App\Models\HospitalSetting;
 use App\Models\OpdDoctor;
 use App\Models\Patient;
 use App\Models\ReferralCertificate;
@@ -17,6 +18,7 @@ use App\Models\Triage;
 use App\Models\User;
 use App\Models\VitalSign;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
@@ -236,6 +238,56 @@ test('the pdf uses the compact 1-page template when configured on the department
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('the detailed pdf embeds the branding letterhead flush above the existing report header', function () {
+    actingAs(adminUser());
+    HospitalSetting::set('hospital_name', 'City Care Hospital');
+
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG']);
+
+    Pdf::shouldReceive('loadHTML')
+        ->once()
+        ->withArgs(fn (string $html) => str_contains($html, 'id="letterhead-header"')
+            && str_contains($html, 'id="letterhead-footer"')
+            && str_contains($html, 'CITY CARE HOSPITAL')
+            && str_contains($html, '@page')
+            && str_contains($html, 'margin-top:0'))
+        ->andReturnSelf();
+    Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
+
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
+});
+
+test('the compact pdf also embeds the branding letterhead', function () {
+    $department = ServiceDepartment::factory()->create([
+        'service_order_template' => ServiceOrderTemplate::EmergencyTriageCompact,
+    ]);
+    $service = Service::factory()->create(['service_department_id' => $department->id]);
+    $serviceOrder = ServiceOrder::factory()->create(['type' => 'EMG', 'service_id' => $service->id])
+        ->fresh(['patient', 'doctor', 'service.department']);
+
+    $html = view('pdfs.serviceorder-triage-compact', [
+        'serviceOrder' => $serviceOrder,
+        'patient' => $serviceOrder->patient,
+    ])->render();
+
+    expect($html)->toContain('id="letterhead-header"')
+        ->toContain('id="letterhead-footer"');
+});
+
+test('the letterhead embeds the hospital logo as a base64 data URI, not a remote URL', function () {
+    Storage::fake('public');
+    Storage::disk('public')->put('hospital-settings/logo.png', 'fake-png-bytes');
+    HospitalSetting::set('hospital_logo', 'hospital-settings/logo.png');
+
+    $html = view('pdfs.partials.letterhead-header')->render();
+
+    expect($html)->toContain('data:image/')
+        ->toContain(';base64,')
+        ->not->toContain('http://')
+        ->not->toContain('https://');
 });
 
 test('the compact triage pdf includes patient info, triage category, and prescriptions', function () {

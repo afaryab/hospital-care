@@ -1,16 +1,13 @@
 <?php
 
-use App\Filament\Admin\Pages\DocumentManager;
 use App\Models\Administrator;
 use App\Models\DmsShare;
 use App\Models\User;
-use App\Notifications\DocumentSharedNotification;
 use App\Services\Dms\DmsDocumentService;
 use App\Services\Dms\DmsFolderService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
-use Livewire\Livewire;
 
 use function Pest\Laravel\get;
 
@@ -30,17 +27,8 @@ beforeEach(function () {
     );
 });
 
-test('sharing a document from the explorer creates a share and notifies the recipient', function () {
-    Livewire::test(DocumentManager::class)
-        ->call('startShare', $this->document->id)
-        ->set('shareEmail', 'someone@example.com')
-        ->call('confirmShare')
-        ->assertSuccessful();
-
-    expect(DmsShare::query()->where('document_id', $this->document->id)->count())->toBe(1);
-
-    Notification::assertSentOnDemand(DocumentSharedNotification::class);
-});
+// Share creation itself is covered by DmsShareControllerTest — these cover
+// the signed public-download-link behavior once a share exists.
 
 test('a valid signed share link downloads the document', function () {
     $share = DmsShare::query()->create([
