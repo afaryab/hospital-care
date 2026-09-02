@@ -184,8 +184,16 @@ return [
         /*
          * The password to be used for archive encryption.
          * Set to `null` to disable encryption.
+         *
+         * `?: null` matters: .env.example documents this key present but
+         * empty (`BACKUP_ARCHIVE_PASSWORD=`), which env() resolves to `''`,
+         * not null. Spatie's EncryptBackupArchive::shouldEncrypt() only
+         * skips encryption on a strict `=== null` check, so an empty
+         * string slips through and attempts ZipArchive encryption with an
+         * empty password — which breaks ZipArchive::close() with an
+         * "Invalid argument" warning.
          */
-        'password' => env('BACKUP_ARCHIVE_PASSWORD'),
+        'password' => env('BACKUP_ARCHIVE_PASSWORD') ?: null,
 
         /*
          * The encryption algorithm to be used for archive encryption.

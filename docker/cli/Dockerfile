@@ -7,7 +7,7 @@ RUN apk add --no-cache nodejs npm libzip \
     && apk add --no-cache --virtual .build-deps libzip-dev \
     && docker-php-ext-install zip \
     && apk del .build-deps \
-    && npm install -g pnpm@9
+    && npm install -g pnpm@11.2.2
 ENV CI=true
 WORKDIR /build
 # Composer deps (vendor needed so artisan can bootstrap)
@@ -15,7 +15,7 @@ COPY composer.json composer.lock ./
 COPY packages/ ./packages/
 RUN composer install --no-dev --no-scripts --ignore-platform-reqs --no-interaction
 # JS deps
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 # Application source
 COPY . .
