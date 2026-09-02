@@ -3,6 +3,7 @@
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleCaptivePortal;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\TrustProxies;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -18,6 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust Cloudflare's edge IPs + private/internal ranges (Docker
+        // network, Cloudflare Tunnel) for correct scheme detection —
+        // see TrustProxies::$proxies for why '*' isn't used here.
+        $middleware->use([
+            TrustProxies::class,
+        ]);
+
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state', 'browser_timezone']);
 
         // The OnlyOffice Document Server posts its save callback directly
