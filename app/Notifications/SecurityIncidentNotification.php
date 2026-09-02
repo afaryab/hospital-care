@@ -37,7 +37,7 @@ class SecurityIncidentNotification extends Notification
 
         return (new MailMessage)
             ->subject('Security Incident Alert: '.$this->incident->type)
-            ->line('A security incident has been detected by Hospital Care.')
+            ->line('A security incident has been detected by '.config('app.name').'.')
             ->line('Type: '.$this->incident->type)
             ->line('Severity: '.$this->incident->severity)
             ->line('Occurred At: '.$this->incident->occurred_at?->toDateTimeString())

@@ -29,7 +29,7 @@ class DocumentSharedNotification extends Notification
         $media = $this->document->currentVersionMedia();
         $mail = (new MailMessage)
             ->subject("{$this->sharedBy->name} shared a document with you: {$this->document->name}")
-            ->line("{$this->sharedBy->name} shared \"{$this->document->name}\" with you via Hospital Care.");
+            ->line("{$this->sharedBy->name} shared \"{$this->document->name}\" with you via ".config('app.name').'.');
 
         $maxAttachmentBytes = (int) config('dms.email_attachment_max_bytes');
 

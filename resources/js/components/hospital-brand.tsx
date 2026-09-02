@@ -13,7 +13,7 @@ export default function HospitalBrand({
     className?: string;
 }) {
     const { hospital } = usePage<SharedData>().props;
-    const name = hospital?.name || 'Hospital Care';
+    const name = hospital?.name || 'Medical OS';
 
     return (
         <div className={`flex min-w-0 items-center gap-2 my-8 ${className}`}>

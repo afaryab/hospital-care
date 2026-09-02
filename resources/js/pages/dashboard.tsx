@@ -157,7 +157,7 @@ function GreetingCard({ user }: { user: AuthUser }) {
                     {greeting}, {user.name}!
                 </h2>
                 <p className="mt-2 max-w-lg text-sm text-slate-600 dark:text-slate-300">
-                    Welcome back to Hospital Care. Your work keeps every patient
+                    Welcome back to Medical OS. Your work keeps every patient
                     safe — thank you.
                 </p>
             </div>

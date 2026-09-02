@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/logo.png" alt="Hospital Care Logo" width="120" />
+  <img src="public/logo.png" alt="Medical OS Logo" width="120" />
 </p>
 
 <h1 align="center">Hospital All In One Operations Software</h1>
