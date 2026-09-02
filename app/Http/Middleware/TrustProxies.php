@@ -8,9 +8,20 @@ use Illuminate\Http\Request;
 class TrustProxies extends Middleware
 {
     /**
-     * Trust all proxies (Cloudflare + any upstream).
+     * Trust only proxies on private/reserved network ranges (Docker network,
+     * LAN reverse proxy, Cloudflare Tunnel container, loopback). Trusting
+     * '*' let ANY client — including a browser on the local network hitting
+     * the app directly with no proxy in between — set its own
+     * X-Forwarded-Proto: https header and have Laravel believe the request
+     * was secure, which forced https-only behavior (secure cookies, https
+     * asset/storage URLs) even for plain http LAN access.
      */
-    protected $proxies = '*';
+    protected $proxies = [
+        '127.0.0.1/8',
+        '10.0.0.0/8',
+        '172.16.0.0/12',
+        '192.168.0.0/16',
+    ];
 
     /**
      * Headers used to detect original client protocol/host/port.
