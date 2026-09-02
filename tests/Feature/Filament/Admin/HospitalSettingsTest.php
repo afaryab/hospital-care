@@ -47,7 +47,7 @@ test('the consent gate defaults to disabled and can be toggled on', function () 
     expect(HospitalSetting::get('require_consent_before_treatment', false))->toBeFalse();
 
     Livewire\Livewire::test(HospitalSettings::class)
-        ->assertFormSet(['require_consent_before_treatment' => false])
+        ->assertSchemaStateSet(['require_consent_before_treatment' => false])
         ->fillForm(['require_consent_before_treatment' => true])
         ->call('save')
         ->assertHasNoFormErrors();

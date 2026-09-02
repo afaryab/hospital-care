@@ -112,7 +112,7 @@ test('edit charges action recalculates the transaction and receivable from the s
             "txn_{$transaction->id}_customer_payed" => 300,
             'reason' => 'Patient given a discount after the fact.',
         ])
-        ->assertHasNoActionErrors();
+        ->assertHasNoFormErrors();
 
     $freshTransaction = $transaction->fresh();
 
@@ -162,7 +162,7 @@ test('edit charges action honors a manual receivable override over the automatic
             "txn_{$transaction->id}_receivable_status" => 'cancelled',
             'reason' => 'Waiving the outstanding balance.',
         ])
-        ->assertHasNoActionErrors();
+        ->assertHasNoFormErrors();
 
     $freshReceivable = $receivable->fresh();
     expect((float) $freshReceivable->amount)->toBe(0.0)
