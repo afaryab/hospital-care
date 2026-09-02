@@ -38,6 +38,7 @@ import {
     ultDashboard,
     xrayDashboard,
 } from '@/routes';
+import dms from '@/routes/dms';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
@@ -161,7 +162,7 @@ export function AppSidebar() {
 
         adminMenuItems.push({
             title: 'Documents',
-            href: '/admin/document-manager',
+            href: dms.index().url,
             icon: FolderOpen,
         });
     }

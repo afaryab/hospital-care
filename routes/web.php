@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\DentistController;
+use App\Http\Controllers\Dms\DmsBrowserController;
+use App\Http\Controllers\Dms\DmsDocumentController;
+use App\Http\Controllers\Dms\DmsFolderController;
+use App\Http\Controllers\Dms\DmsShareController;
+use App\Http\Controllers\Dms\DmsZipUploadController;
 use App\Http\Controllers\Dms\DocumentDownloadController;
 use App\Http\Controllers\Dms\FolderZipController;
 use App\Http\Controllers\Dms\PreparedZipDownloadController;
@@ -24,6 +29,7 @@ use App\Http\Controllers\Reports\PanelPaymentReportController;
 use App\Http\Controllers\UltrasoundController;
 use App\Http\Controllers\WebController;
 use App\Http\Controllers\XrayController;
+use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
@@ -210,10 +216,38 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('reports.panel-payments.pending');
 
     /**
-     * Document Management System — session-authed actions. Folder/document
-     * CRUD lives in the Filament admin page's Livewire actions; these are
-     * the plain-HTTP endpoints browsers navigate to directly (downloads,
-     * the OnlyOffice editor tab).
+     * Document Management System — the React "Drive" browser and its
+     * folder/document CRUD, admin-only for now (mirrors the access level
+     * of the Filament page it replaces). The Policies these controllers
+     * authorize against already model broader doctor/patient/share-based
+     * access for when that gate is loosened later — see DmsFolderPolicy /
+     * DmsDocumentPolicy.
+     */
+    Route::middleware(EnsureUserIsAdmin::class)->prefix('dms')->name('dms.')->group(function () {
+        Route::get('/{folder:uuid?}', [DmsBrowserController::class, 'index'])->name('index');
+
+        Route::post('folders', [DmsFolderController::class, 'store'])->name('folders.store');
+        Route::patch('folders/{folder:uuid}', [DmsFolderController::class, 'update'])->name('folders.update');
+        Route::delete('folders/{folder:uuid}', [DmsFolderController::class, 'destroy'])->name('folders.destroy');
+        Route::post('folders/{folder:uuid}/move', [DmsFolderController::class, 'move'])->name('folders.move');
+        Route::post('folders/{folder:uuid}/copy', [DmsFolderController::class, 'copy'])->name('folders.copy');
+
+        Route::post('documents', [DmsDocumentController::class, 'store'])->name('documents.store');
+        Route::patch('documents/{document:uuid}', [DmsDocumentController::class, 'update'])->name('documents.update');
+        Route::delete('documents/{document:uuid}', [DmsDocumentController::class, 'destroy'])->name('documents.destroy');
+        Route::post('documents/{document:uuid}/move', [DmsDocumentController::class, 'move'])->name('documents.move');
+        Route::post('documents/{document:uuid}/copy', [DmsDocumentController::class, 'copy'])->name('documents.copy');
+        Route::post('documents/{document:uuid}/lock', [DmsDocumentController::class, 'lock'])->name('documents.lock');
+        Route::post('documents/{document:uuid}/unlock', [DmsDocumentController::class, 'unlock'])->name('documents.unlock');
+        Route::post('documents/{document:uuid}/share', [DmsShareController::class, 'store'])->name('documents.share');
+
+        Route::post('zip-uploads', [DmsZipUploadController::class, 'store'])->name('zip-uploads.store');
+    });
+
+    /**
+     * Document Management System — session-authed actions reached without
+     * going through the browser UI above (direct downloads, the OnlyOffice
+     * editor tab).
      */
     Route::get('dms/documents/{document:uuid}/download', DocumentDownloadController::class)
         ->name('dms.documents.download');
