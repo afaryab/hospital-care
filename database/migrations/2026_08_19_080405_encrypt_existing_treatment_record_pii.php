@@ -17,6 +17,10 @@ return new class extends Migration
      * ciphertext an encrypted value becomes, the same reason
      * service_orders.notes_json was widened in
      * 2026_03_29_094318_encrypt_existing_patient_and_service_order_data.php.
+     * referral_to is widened the same way — it was declared `string`
+     * (VARCHAR 255) when the table was created, and Crypt::encryptString()'s
+     * output (base64 IV + ciphertext + MAC, JSON-wrapped) regularly exceeds
+     * 255 bytes even for a short plaintext value.
      */
     public function up(): void
     {
@@ -25,6 +29,7 @@ return new class extends Migration
             $table->longText('prescriptions')->nullable()->change();
             $table->longText('department_specific_data')->nullable()->change();
             $table->longText('dental_chart')->nullable()->change();
+            $table->text('referral_to')->nullable()->change();
         });
 
         DB::table('treatment_records')
