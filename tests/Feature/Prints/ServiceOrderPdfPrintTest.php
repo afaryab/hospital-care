@@ -33,14 +33,16 @@ test('service order pdf renders successfully', function () {
         ->assertHeader('Content-Type', 'application/pdf');
 });
 
-test('a doctor with no relation to the service order cannot print it', function () {
+test('a doctor with no relation to the service order can still print it', function () {
     $doctor = User::factory()->create();
     OpdDoctor::factory()->create(['user_id' => $doctor->id]);
     actingAs($doctor);
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'OPD']);
 
-    get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertForbidden();
+    get(route('print-serviceorder', ['id' => $serviceOrder->id]))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'application/pdf');
 });
 
 test('the assigned doctor can print their own service order', function () {

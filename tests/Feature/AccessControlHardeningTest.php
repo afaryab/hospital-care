@@ -49,7 +49,7 @@ test('a doctor can open the record of a patient they have treated', function () 
 
 // ─── WebController::updateServiceOrderStatus() ─────────────────────────────
 
-test('a doctor cannot change the status of a service order assigned to someone else', function () {
+test('a doctor can change the status of a service order assigned to someone else', function () {
     $doctor = User::factory()->create();
     OpdDoctor::factory()->create(['user_id' => $doctor->id]);
     actingAs($doctor);
@@ -58,7 +58,9 @@ test('a doctor cannot change the status of a service order assigned to someone e
     $serviceOrder = ServiceOrder::factory()->create(['doctor_id' => $otherDoctor->id]);
 
     $this->patch(route('service-orders.update-status', $serviceOrder), ['status' => 'CLOSED'])
-        ->assertForbidden();
+        ->assertRedirect();
+
+    expect($serviceOrder->fresh()->status)->toBe('CLOSED');
 });
 
 test('the assigned doctor can change the status of their own service order', function () {

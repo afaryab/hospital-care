@@ -35,14 +35,16 @@ test('nursing staff can view and update any service order', function () {
         ->and($nurse->can('update', $serviceOrder))->toBeTrue();
 });
 
-test('a doctor cannot view or update a service order assigned to a different doctor', function () {
+test('a doctor can view and update a service order assigned to a different doctor', function () {
+    // Doctors aren't scoped to their own doctor_id — covering shifts, ward
+    // rounds, and referrals all need a doctor to open a colleague's order.
     $doctor = User::factory()->create();
     OpdDoctor::create(['user_id' => $doctor->id]);
     $otherDoctor = User::factory()->create();
     $serviceOrder = ServiceOrder::factory()->create(['doctor_id' => $otherDoctor->id]);
 
-    expect($doctor->can('view', $serviceOrder))->toBeFalse()
-        ->and($doctor->can('update', $serviceOrder))->toBeFalse();
+    expect($doctor->can('view', $serviceOrder))->toBeTrue()
+        ->and($doctor->can('update', $serviceOrder))->toBeTrue();
 });
 
 test('a doctor can view and update a service order assigned to them', function () {

@@ -37,7 +37,7 @@ test('uploading an attachment stores it on the private disk, not the public disk
     Storage::disk('public')->assertMissing($attachment->file_path);
 });
 
-test('a doctor not assigned to the service order cannot upload an attachment', function () {
+test('a doctor not assigned to the service order can still upload an attachment', function () {
     Storage::fake('local');
 
     $assignedDoctor = xrayTechnician();
@@ -50,11 +50,11 @@ test('a doctor not assigned to the service order cannot upload an attachment', f
         'file' => UploadedFile::fake()->image('chest.jpg'),
     ]);
 
-    $response->assertForbidden();
-    expect(TreatmentAttachment::count())->toBe(0);
+    $response->assertCreated();
+    expect(TreatmentAttachment::count())->toBe(1);
 });
 
-test('a doctor not assigned to the service order cannot delete another doctor\'s attachment', function () {
+test('a doctor not assigned to the service order can still delete another doctor\'s attachment', function () {
     Storage::fake('local');
 
     $assignedDoctor = xrayTechnician();
@@ -69,9 +69,9 @@ test('a doctor not assigned to the service order cannot delete another doctor\'s
 
     $response = $this->deleteJson("/api/xray/attachments/{$attachment->id}");
 
-    $response->assertForbidden();
-    expect(TreatmentAttachment::find($attachment->id))->not->toBeNull();
-    Storage::disk('local')->assertExists($attachment->file_path);
+    $response->assertOk();
+    expect(TreatmentAttachment::find($attachment->id))->toBeNull();
+    Storage::disk('local')->assertMissing($attachment->file_path);
 });
 
 test('the assigned doctor can delete their own attachment', function () {
@@ -92,7 +92,7 @@ test('the assigned doctor can delete their own attachment', function () {
     Storage::disk('local')->assertMissing($attachment->file_path);
 });
 
-test('a doctor not assigned to the service order cannot view another doctor\'s attachment', function () {
+test('a doctor not assigned to the service order can still view another doctor\'s attachment', function () {
     Storage::fake('local');
 
     $assignedDoctor = xrayTechnician();
@@ -100,14 +100,17 @@ test('a doctor not assigned to the service order cannot view another doctor\'s a
 
     $serviceOrder = ServiceOrder::factory()->create(['type' => 'XRAY', 'doctor_id' => $assignedDoctor->id]);
     $treatmentRecord = TreatmentRecord::factory()->create(['service_order_id' => $serviceOrder->id]);
-    $attachment = TreatmentAttachment::factory()->create(['treatment_record_id' => $treatmentRecord->id]);
+    $attachment = TreatmentAttachment::factory()->create([
+        'treatment_record_id' => $treatmentRecord->id,
+        'file_type' => 'image/jpeg',
+    ]);
     Storage::disk('local')->put($attachment->file_path, 'fake-bytes');
 
     $this->actingAs($otherDoctor);
 
     $response = $this->get("/api/attachments/{$attachment->id}");
 
-    $response->assertForbidden();
+    $response->assertOk();
 });
 
 test('the assigned doctor can view their own attachment', function () {
