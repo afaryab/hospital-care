@@ -23,21 +23,15 @@ class ServiceOrderPolicy
 
     /**
      * See PatientPolicy for the same reasoning: broad roles keep full
-     * access, doctors are scoped to orders they're the assigned doctor_id
-     * for. Nursing staff kept broad for the same reason (no scoping column
-     * exists yet).
+     * access. Doctors get full access too — any doctor/provider type may
+     * need to view a service order outside their own assignment (covering
+     * shifts, ward rounds, referrals), and there's no scoping column that
+     * reliably captures "who's actually treating this patient right now"
+     * (see ServiceOrder.doctor_id vs IndDoctorController's unscoped queue).
      */
     public function view(User $user, ServiceOrder $serviceOrder): bool
     {
-        if ($this->hasBroadAccess($user)) {
-            return true;
-        }
-
-        if ($user->isAnyDoctor()) {
-            return (int) $serviceOrder->doctor_id === $user->id;
-        }
-
-        return false;
+        return $this->hasBroadAccess($user) || $user->isAnyDoctor();
     }
 
     protected function hasBroadAccess(User $user): bool
@@ -53,22 +47,9 @@ class ServiceOrderPolicy
         return $user->can('service_order.create') || $user->isReceptionist();
     }
 
-    /**
-     * Was previously "any doctor can update any service order" — the
-     * clinical-write IDOR. Doctors are now restricted to orders they're
-     * actually assigned to.
-     */
     public function update(User $user, ServiceOrder $serviceOrder): bool
     {
-        if ($user->can('service_order.edit') || $this->hasBroadAccess($user)) {
-            return true;
-        }
-
-        if ($user->isAnyDoctor()) {
-            return (int) $serviceOrder->doctor_id === $user->id;
-        }
-
-        return false;
+        return $user->can('service_order.edit') || $this->hasBroadAccess($user) || $user->isAnyDoctor();
     }
 
     public function delete(User $user, ServiceOrder $serviceOrder): bool
