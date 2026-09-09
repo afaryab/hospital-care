@@ -139,7 +139,8 @@ class Patient extends Model
             $month = $now->format('m');
             $prefix = "PS/{$year}/{$month}/";
 
-            $existingNumbers = self::where('ps_number', 'like', "{$prefix}%")
+            $existingNumbers = self::withTrashed()
+                ->where('ps_number', 'like', "{$prefix}%")
                 ->lockForUpdate()
                 ->pluck('ps_number');
 

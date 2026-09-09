@@ -226,7 +226,8 @@ class ServiceOrder extends Model
     public static function generateServiceOrderNumber($type): string
     {
         return DB::transaction(function () use ($type) {
-            $existingNumbers = ServiceOrder::where('type', $type)
+            $existingNumbers = ServiceOrder::withTrashed()
+                ->where('type', $type)
                 ->where('created_at', '>=', Carbon::now()->startOfMonth())
                 ->where('created_at', '<=', Carbon::now()->endOfMonth())
                 ->lockForUpdate()
@@ -247,7 +248,8 @@ class ServiceOrder extends Model
     public static function generateShortServiceOrderNumber($type): string
     {
         return DB::transaction(function () use ($type) {
-            $existingNumbers = ServiceOrder::where('type', $type)
+            $existingNumbers = ServiceOrder::withTrashed()
+                ->where('type', $type)
                 ->lockForUpdate()
                 ->pluck('so_short');
 
@@ -274,7 +276,7 @@ class ServiceOrder extends Model
             $now = Carbon::now();
             $datePrefix = $now->format('Ymd');
 
-            $query = self::query()
+            $query = self::withTrashed()
                 ->where('token', 'like', "{$datePrefix}%")
                 ->where('created_at', '>=', $now->copy()->startOfDay())
                 ->where('created_at', '<=', $now->copy()->endOfDay());

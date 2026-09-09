@@ -65,7 +65,8 @@ class Task extends Model
             $year = now()->format('Y');
             $month = now()->format('m');
 
-            $count = self::where('task_number', 'like', "TSK/{$year}/{$month}/%")
+            $count = self::withTrashed()
+                ->where('task_number', 'like', "TSK/{$year}/{$month}/%")
                 ->lockForUpdate()
                 ->count();
 

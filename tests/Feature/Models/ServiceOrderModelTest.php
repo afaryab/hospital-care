@@ -95,6 +95,23 @@ test('service order generateShortServiceOrderNumber uses highest sequence per ty
     expect(ServiceOrder::generateShortServiceOrderNumber('OPD'))->toBe('00000043');
 });
 
+test('service order generateServiceOrderNumber does not reissue a soft-deleted number', function () {
+    $now = now();
+    $ps = sprintf('PS/%s/%s/0001', $now->format('Y'), $now->format('m'));
+
+    ServiceOrder::factory()->create(['type' => 'OPD', 'so_number' => $ps.'/OPD/00000007']);
+    ServiceOrder::factory()->create(['type' => 'OPD', 'so_number' => $ps.'/OPD/00000008'])->delete();
+
+    expect(ServiceOrder::generateServiceOrderNumber('OPD'))->toBe('00000009');
+});
+
+test('service order generateShortServiceOrderNumber does not reissue a soft-deleted number', function () {
+    ServiceOrder::factory()->create(['type' => 'OPD', 'so_short' => 'OPD/00000007']);
+    ServiceOrder::factory()->create(['type' => 'OPD', 'so_short' => 'OPD/00000008'])->delete();
+
+    expect(ServiceOrder::generateShortServiceOrderNumber('OPD'))->toBe('00000009');
+});
+
 test('service order generateToken returns Ymd prefix with 4-digit sequence starting at 0001', function () {
     $doctor = User::factory()->create();
     $service = Service::factory()->create();
@@ -162,4 +179,15 @@ test('service order generateToken ignores tokens from previous days', function (
     ]);
 
     expect(ServiceOrder::generateToken(doctorId: $doctor->id, serviceId: $service->id))->toBe($today.'0001');
+});
+
+test('service order generateToken does not reissue a soft-deleted token', function () {
+    $today = now()->format('Ymd');
+    $doctor = User::factory()->create();
+    $service = Service::factory()->create();
+
+    ServiceOrder::factory()->create(['doctor_id' => $doctor->id, 'token' => $today.'0004']);
+    ServiceOrder::factory()->create(['doctor_id' => $doctor->id, 'token' => $today.'0005'])->delete();
+
+    expect(ServiceOrder::generateToken(doctorId: $doctor->id, serviceId: $service->id))->toBe($today.'0006');
 });
