@@ -79,7 +79,8 @@ class Asset extends Model
         return DB::transaction(function () {
             $year = now()->format('Y');
 
-            $count = self::where('asset_number', 'like', "AST/{$year}/%")
+            $count = self::withTrashed()
+                ->where('asset_number', 'like', "AST/{$year}/%")
                 ->lockForUpdate()
                 ->count();
 

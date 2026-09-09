@@ -52,6 +52,16 @@ test('expense voucher vc_number increments sequentially', function () {
     expect($secondSeq)->toBeGreaterThan($firstSeq);
 });
 
+test('expense voucher generateExpenseVoucherNumber does not reissue a soft-deleted number', function () {
+    $now = now();
+    $prefix = sprintf('VC/%s/%s/', $now->format('Y'), $now->format('m'));
+
+    ExpenseVoucher::factory()->create(['vc_number' => $prefix.'0030']);
+    ExpenseVoucher::factory()->create(['vc_number' => $prefix.'0031'])->delete();
+
+    expect(ExpenseVoucher::generateExpenseVoucherNumber())->toBe($prefix.'0032');
+});
+
 test('expense voucher belongs to expense category', function () {
     $voucher = ExpenseVoucher::factory()->create();
 

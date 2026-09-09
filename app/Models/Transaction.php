@@ -347,7 +347,8 @@ class Transaction extends Model
             $day = $now->format('d');
             $prefix = "TR/{$year}/{$month}/{$day}/";
 
-            $existingNumbers = self::where('tr_number', 'like', "{$prefix}%")
+            $existingNumbers = self::withTrashed()
+                ->where('tr_number', 'like', "{$prefix}%")
                 ->lockForUpdate()
                 ->pluck('tr_number');
 

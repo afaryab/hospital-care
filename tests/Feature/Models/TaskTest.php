@@ -55,3 +55,13 @@ test('two tasks get unique task numbers', function () {
 
     expect($t1->task_number)->not->toBe($t2->task_number);
 });
+
+test('task generateTaskNumber does not reissue a soft-deleted number', function () {
+    $now = now();
+    $prefix = sprintf('TSK/%s/%s/', $now->format('Y'), $now->format('m'));
+
+    Task::factory()->create(['task_number' => $prefix.'0001']);
+    Task::factory()->create(['task_number' => $prefix.'0002'])->delete();
+
+    expect(Task::generateTaskNumber())->toBe($prefix.'0003');
+});

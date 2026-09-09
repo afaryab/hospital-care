@@ -54,3 +54,12 @@ test('two assets get unique ast numbers', function () {
 
     expect($a1->asset_number)->not->toBe($a2->asset_number);
 });
+
+test('asset generateAssetNumber does not reissue a soft-deleted number', function () {
+    $prefix = sprintf('AST/%s/', now()->format('Y'));
+
+    Asset::factory()->create(['asset_number' => $prefix.'0001']);
+    Asset::factory()->create(['asset_number' => $prefix.'0002'])->delete();
+
+    expect(Asset::generateAssetNumber())->toBe($prefix.'0003');
+});

@@ -47,6 +47,16 @@ test('closing generateCounterNumber uses highest sequence and ignores gaps', fun
     expect(Closing::generateCounterNumber())->toBe($prefix.'0114');
 });
 
+test('closing generateCounterNumber does not reissue a soft-deleted number', function () {
+    $now = now();
+    $prefix = sprintf('CT/%s/%s/', $now->format('Y'), $now->format('m'));
+
+    Closing::factory()->create(['ct_number' => $prefix.'0020']);
+    Closing::factory()->create(['ct_number' => $prefix.'0021'])->delete();
+
+    expect(Closing::generateCounterNumber())->toBe($prefix.'0022');
+});
+
 test('closing generateCounterNumber starts at 0001 when no records exist for the month', function () {
     $now = now();
     $prefix = sprintf('CT/%s/%s/', $now->format('Y'), $now->format('m'));

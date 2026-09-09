@@ -91,7 +91,8 @@ class Closing extends Model
             $month = $now->format('m');
             $prefix = "CT/{$year}/{$month}/";
 
-            $existingNumbers = self::where('ct_number', 'like', "{$prefix}%")
+            $existingNumbers = self::withTrashed()
+                ->where('ct_number', 'like', "{$prefix}%")
                 ->lockForUpdate()
                 ->pluck('ct_number');
 

@@ -66,6 +66,16 @@ test('transaction generateTransactionNumber uses highest sequence and ignores ga
     expect(Transaction::generateTransactionNumber())->toBe($prefix.'0051');
 });
 
+test('transaction generateTransactionNumber does not reissue a soft-deleted number', function () {
+    $now = now();
+    $prefix = sprintf('TR/%s/%s/%s/', $now->format('Y'), $now->format('m'), $now->format('d'));
+
+    Transaction::factory()->create(['tr_number' => $prefix.'0086']);
+    Transaction::factory()->create(['tr_number' => $prefix.'0087'])->delete();
+
+    expect(Transaction::generateTransactionNumber())->toBe($prefix.'0088');
+});
+
 test('transaction belongs to patient relationship', function () {
     $transaction = Transaction::factory()->create();
 

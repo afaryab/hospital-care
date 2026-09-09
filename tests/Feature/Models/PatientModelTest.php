@@ -85,6 +85,16 @@ test('patient generateCounterNumber uses highest sequence and ignores gaps', fun
     expect(Patient::generateCounterNumber())->toBe($prefix.'0251');
 });
 
+test('patient generateCounterNumber does not reissue a soft-deleted number', function () {
+    $now = now();
+    $prefix = sprintf('PS/%s/%s/', $now->format('Y'), $now->format('m'));
+
+    Patient::factory()->withPsNumber($prefix.'0010')->create();
+    Patient::factory()->withPsNumber($prefix.'0011')->create()->delete();
+
+    expect(Patient::generateCounterNumber())->toBe($prefix.'0012');
+});
+
 test('patient has many transactions relationship', function () {
     $patient = Patient::factory()->create();
 

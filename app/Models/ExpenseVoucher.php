@@ -70,7 +70,7 @@ class ExpenseVoucher extends Model
             $year = $now->format('Y');
             $month = $now->format('m');
 
-            $latestVoucher = self::query()
+            $latestVoucher = self::withTrashed()
                 ->where('vc_number', 'like', "VC/{$year}/{$month}/%")
                 ->lockForUpdate()
                 ->latest('id')
