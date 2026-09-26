@@ -85,8 +85,8 @@ These migrations and models already exist and are functional.
 | `jobs` / `job_batches` / `failed_jobs` | — | ✅ | — | ✅ |
 | `telescope_entries` | — | ✅ | — | ✅ |
 | `pulse_*` | — | ✅ | — | ✅ |
-| `migration_logs` | `MigrationLog` | ✅ | — | ✅ |
-| `upgrade_processes` | `UpgradeProcess` | ✅ | — | ✅ |
+| `migration_logs` | — (legacy, model removed) | ✅ | — | ✅ |
+| `upgrade_processes` | — (legacy, model removed) | ✅ | — | ✅ |
 
 **Existing Observers:** `PatientObserver`, `ClosingObserver`, `TransactionObserver`, `TransactionElementObserver`, `ExpenseVoucherObserver`
 

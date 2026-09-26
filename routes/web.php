@@ -13,7 +13,6 @@ use App\Http\Controllers\Dms\PublicShareDownloadController;
 use App\Http\Controllers\EmergencyDoctorController;
 use App\Http\Controllers\IndDoctorController;
 use App\Http\Controllers\LabController;
-use App\Http\Controllers\Migration\ImportController;
 use App\Http\Controllers\OnlyOffice\CallbackController;
 use App\Http\Controllers\OnlyOffice\DocumentContentController;
 use App\Http\Controllers\OnlyOffice\EditorPageController;
@@ -34,11 +33,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', [WebController::class, 'index'])->name('home');
-
-    // One-time legacy data migration tool — admin-only (see ImportController::index()).
-    // Was previously registered above the auth group entirely, requiring no
-    // login at all.
-    Route::get('/import-old', [ImportController::class, 'index'])->name('import-old');
 
     /**
      * Doctor: own service orders & expense vouchers
