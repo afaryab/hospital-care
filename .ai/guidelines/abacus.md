@@ -76,13 +76,11 @@ Each entry links to:
    - Reference: CT number (`CT/YYYY/MM/NNNN`)
    - Logic lives in `AbacusClosingService::createEntriesForClosing()`
 
-2. **Closing sync (migration)** — Same logic via `SyncOldHIMS --entity=abacus-closings`
-
-3. **Expense voucher payment** — When a voucher is paid:
+2. **Expense voucher payment** — When a voucher is paid:
    - Debit appropriate expense account / Credit Cash in Hand (1110)
    - Reference: VC number (`VC/YYYY/MM/NNNN`)
 
-4. **Any new financial event** — Salary payments, asset purchases, etc.
+3. **Any new financial event** — Salary payments, asset purchases, etc.
 
 ---
 

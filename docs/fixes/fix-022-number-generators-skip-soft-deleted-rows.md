@@ -29,7 +29,7 @@ A soft-deleted row is still a row: it keeps its `tr_number` and still occupies t
 
 The May 2026 change (`385ec15`) that moved these generators from `count()` to max-sequence explicitly targeted "gaps from deleted records" — but at that time deletes were *hard* deletes, which remove the row from the unique index. Fix #008 made deletes soft three months later, which changed the failure mode from "gap" to "phantom occupant", and no test covered a soft-deleted max.
 
-**On "we have a command for this":** the only repair command in the repo is `app:fix-closing-ct-numbers`, which renumbers CT numbers after an old-HIMS sync. Nothing ever existed for TR numbers. The May fix was a model change, and so is this one — no command is needed now either (see "No data repair needed" below).
+**On "we have a command for this":** the only repair command in the repo is `app:fix-closing-ct-numbers`, which renumbers CT numbers in closing-date order (its old-HIMS sync phase was removed along with `SyncOldHIMS`). Nothing ever existed for TR numbers. The May fix was a model change, and so is this one — no command is needed now either (see "No data repair needed" below).
 
 ### What was changed
 
@@ -66,7 +66,7 @@ $existingNumbers = self::withTrashed()
 
 **Deliberately not changed:**
 - `PurchaseOrder::generatePoNumber()` — no `SoftDeletes` on that model, so a delete does remove the row from the unique index. Its `count()`-based sequence has a separate, pre-existing gap weakness, unrelated to this bug.
-- `SyncOldHIMS`'s private TR counter (`Transaction::where(...)->count()`, around line 1602) — legacy import path only. Same blind spot in principle; flagged below rather than touched, since that command has its own test surface and cursor logic.
+- `SyncOldHIMS` — its private CT/TR/VC/PS counters had the same blind spot, but the old-HIMS migration is complete, so the command was removed on this branch instead of patched (along with its schedule stub, its env-guard test, and the sync phase of `app:fix-closing-ct-numbers`).
 
 ### No data repair needed
 
@@ -76,6 +76,12 @@ The trashed `TR/2026/09/09/0087` row already holds the true max for the day. Onc
 
 - `app/Models/Transaction.php`, `Patient.php`, `Closing.php`, `ExpenseVoucher.php`, `ServiceOrder.php`, `Task.php`, `Asset.php` — `withTrashed()` on the generator query
 - `tests/Feature/Models/TransactionModelTest.php`, `PatientModelTest.php`, `ClosingModelTest.php`, `ServiceOrderModelTest.php`, `ExpenseVoucherModelTest.php`, `TaskTest.php`, `AssetTest.php` — 9 new regression tests
+- `app/Console/Commands/SyncOldHIMS.php` — deleted (old-HIMS migration complete)
+- `app/Console/Commands/FixClosingCtNumbers.php` — sync phase and `--skip-sync` option removed; CT renumbering unchanged
+- `tests/Feature/Console/FixClosingCtNumbersTest.php` — new: asserts `--skip-sync` is gone and dry run still previews without writing
+- `routes/console.php` — commented-out `app:sync-old-hims` schedule removed
+- `tests/Feature/AbacusClosingIntegrationTest.php` — removed the test that only asserted the sync command's env guard
+- `.ai/guidelines/abacus.md` — removed the `SyncOldHIMS --entity=abacus-closings` entry
 
 ### Tests
 
@@ -93,7 +99,6 @@ php -d memory_limit=1024M vendor/bin/pest --compact tests/Feature/Models tests/F
 ### What is NOT yet covered
 
 - **`patients.ps_number` has no unique index.** Add one (`->unique()`) after a one-time production check that no duplicates already exist: `SELECT ps_number, COUNT(*) FROM patients GROUP BY ps_number HAVING COUNT(*) > 1`.
-- **`SyncOldHIMS` TR counter** still uses `count()` without `withTrashed()`. If a synced-in transaction is later soft-deleted and another sync runs for the same day, the same collision can occur on the import path.
 - **`Task`, `Asset`, `PurchaseOrder` remain `count()`-based** rather than max-sequence. With `withTrashed()` and soft deletes, `count == max` in practice, but a legacy import with gaps would break them. Converting them to the `maxSequence` pattern used by `Transaction` is a small, safe follow-up.
 - Filament `TrashedFilter` / restore UI is still absent on the financial resources (carried over from Fix #008's notes) — an admin cannot see or restore the trashed `0087` without `tinker`.
 
