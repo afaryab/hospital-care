@@ -82,6 +82,7 @@ The trashed `TR/2026/09/09/0087` row already holds the true max for the day. Onc
 - `routes/console.php` — commented-out `app:sync-old-hims` schedule removed
 - `tests/Feature/AbacusClosingIntegrationTest.php` — removed the test that only asserted the sync command's env guard
 - `.ai/guidelines/abacus.md` — removed the `SyncOldHIMS --entity=abacus-closings` entry
+- `database/migrations/2026_09_26_190705_drop_legacy_migration_tooling_tables.php` — drops the now-unused `migration_logs` and `upgrade_processes` tables (irreversible for their data; `down()` recreates the structure only)
 
 ### Tests
 
