@@ -44,3 +44,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 27 | [#94](https://github.com/afaryab/hospital-care/issues/94) | Command palette: outside-click close, Ctrl/⌘K toggle, policy-filtered global search | Medium | ✅ Fixed |
 | 28 | [#95](https://github.com/afaryab/hospital-care/issues/95) | Administrative transactions: panel receivable income (manual per-receivable allocation) | Feature | ✅ Done |
 | 29 | [#96](https://github.com/afaryab/hospital-care/issues/96) | Compliance status page with live PHC/HIPAA checks and attestations | Feature | ✅ Done |
+| 30 | [#97](https://github.com/afaryab/hospital-care/issues/97) | Public appointment requests (page + /api/v1/public) confirmed by reception | Feature | ✅ Done |

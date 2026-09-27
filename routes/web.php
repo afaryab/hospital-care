@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppointmentRequestController;
 use App\Http\Controllers\DentistController;
 use App\Http\Controllers\Dms\DmsBrowserController;
 use App\Http\Controllers\Dms\DmsDocumentController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\PatientPhotoController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
 use App\Http\Controllers\Prints\ServiceOrderPdfPrintController;
 use App\Http\Controllers\Prints\TransactionPdfPrintController;
+use App\Http\Controllers\PublicAppointmentController;
 use App\Http\Controllers\PublicCertificateController;
 use App\Http\Controllers\Reports\BankPaymentReportController;
 use App\Http\Controllers\Reports\GenericReportPdfController;
@@ -31,6 +33,12 @@ use App\Http\Controllers\WebController;
 use App\Http\Controllers\XrayController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
+
+// Public appointment booking — no login. Submissions are rate limited per IP
+// and only create a request that reception confirms (see AppointmentRequestService).
+Route::get('book-appointment', [PublicAppointmentController::class, 'create'])->name('public-appointments.create');
+Route::post('book-appointment', [PublicAppointmentController::class, 'store'])->middleware('throttle:public-booking')->name('public-appointments.store');
+Route::get('book-appointment/{reference}', [PublicAppointmentController::class, 'submitted'])->whereUuid('reference')->name('public-appointments.submitted');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', [WebController::class, 'index'])->name('home');
@@ -99,6 +107,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('APT-CREATE', [WebController::class, 'appointmentStore'])->name('appointment-store');
     Route::post('APT-CANCEL/{appointment}', [WebController::class, 'appointmentCancel'])->name('appointment-cancel');
     Route::get('appointments', [WebController::class, 'appointmentsCalendar'])->name('appointments-calendar');
+    Route::get('appointments/requests', [AppointmentRequestController::class, 'index'])->name('appointment-requests');
+    Route::post('appointments/requests/{appointmentRequest}/confirm', [AppointmentRequestController::class, 'confirm'])->name('appointment-requests.confirm');
+    Route::post('appointments/requests/{appointmentRequest}/reject', [AppointmentRequestController::class, 'reject'])->name('appointment-requests.reject');
     Route::get('expenses', [WebController::class, 'counter'])->name('expenses');
 
     /**

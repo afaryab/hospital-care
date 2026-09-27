@@ -1,8 +1,13 @@
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
-import { appointmentCancel, appointmentsCalendar, home } from '@/routes';
+import {
+    appointmentCancel,
+    appointmentRequests,
+    appointmentsCalendar,
+    home,
+} from '@/routes';
 import { type BreadcrumbItem } from '@/types';
-import { Head, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { clsx } from 'clsx';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -118,6 +123,11 @@ export default function AppointmentsCalendar() {
                             })}
                         </h3>
                         <div className="flex gap-2">
+                            <Button asChild>
+                                <Link href={appointmentRequests().url}>
+                                    Online requests
+                                </Link>
+                            </Button>
                             <Button
                                 variant="outline"
                                 onClick={() => goToMonth(-1)}

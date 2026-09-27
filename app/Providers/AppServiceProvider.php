@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Helpers\UserTimezone;
 use App\Models\Appointment;
+use App\Models\AppointmentRequest;
 use App\Models\Asset;
 use App\Models\Closing;
 use App\Models\Consent;
@@ -30,6 +31,7 @@ use App\Observers\TaskObserver;
 use App\Observers\TransactionElementObserver;
 use App\Observers\TransactionObserver;
 use App\Observers\TreatmentRecordObserver;
+use App\Policies\AppointmentRequestPolicy;
 use App\Policies\ClosingPolicy;
 use App\Policies\ConsentPolicy;
 use App\Policies\DmsDocumentPolicy;
@@ -102,6 +104,15 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());
         });
 
+        // Public booking: a person books a handful of visits, never dozens.
+        RateLimiter::for('public-booking', function (Request $request) {
+            return [
+                Limit::perMinute(5)->by('minute:'.$request->ip()),
+                Limit::perDay(30)->by('day:'.$request->ip()),
+            ];
+        });
+
+        Gate::policy(AppointmentRequest::class, AppointmentRequestPolicy::class);
         Gate::policy(Closing::class, ClosingPolicy::class);
         Gate::policy(Transaction::class, TransactionPolicy::class);
         Gate::policy(Patient::class, PatientPolicy::class);

@@ -7,6 +7,7 @@ import {
 import { useAppearance } from '@/hooks/use-appearance';
 import { abilitiesFor, type Abilities } from '@/lib/abilities';
 import {
+    appointmentRequests,
     appointmentsCalendar,
     counter,
     counterClose,
@@ -176,6 +177,14 @@ function staticCommands(
             icon: CalendarDays,
             href: appointmentsCalendar().url,
             visible: (can) => can.receptionist,
+        },
+        {
+            group: 'Go to',
+            title: 'Online appointment requests',
+            keywords: 'public booking web confirm',
+            icon: CalendarDays,
+            href: appointmentRequests().url,
+            visible: (can) => can.receptionist || can.admin,
         },
         {
             group: 'Go to',
