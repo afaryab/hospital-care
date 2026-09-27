@@ -41,3 +41,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 24 | [#91](https://github.com/afaryab/hospital-care/issues/91) | Dashboard filter drawer slow; preset date ranges silently showed this month | Medium | ✅ Fixed |
 | 25 | [#92](https://github.com/afaryab/hospital-care/issues/92) | Patient register listed every patient; now defaults to current month, stable newest-first | Low | ✅ Fixed |
 | 26 | [#93](https://github.com/afaryab/hospital-care/issues/93) | Patient photo capture via webcam or upload (private, audit-logged) | Feature | ✅ Done |
+| 27 | [#94](https://github.com/afaryab/hospital-care/issues/94) | Command palette: outside-click close, Ctrl/⌘K toggle, policy-filtered global search | Medium | ✅ Fixed |

@@ -4,7 +4,7 @@ import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import CommandPaletteLayout from './components/kbar-wrapper';
+import CommandPaletteLayout from './components/command-palette';
 import { initializeTheme } from './hooks/use-appearance';
 
 import * as Sentry from '@sentry/react'; // e.g., @sentry/react
@@ -45,7 +45,7 @@ createInertiaApp({
 
         root.render(
             <StrictMode>
-                <CommandPaletteLayout>
+                <CommandPaletteLayout initialPage={props.initialPage}>
                     <App {...props} />
                 </CommandPaletteLayout>
             </StrictMode>,
