@@ -6,10 +6,15 @@ use App\Filament\Admin\Resources\AdministrativeTransactions\Pages\ListAdministra
 use App\Filament\Admin\Resources\AdministrativeTransactions\Pages\ViewAdministrativeTransaction;
 use App\Models\Administrator;
 use App\Models\ExpenseCategory;
+use App\Models\Panel;
 use App\Models\Patient;
 use App\Models\PaymentMethod;
+use App\Models\Receaveable;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\ReceivableSettlementService;
+use Filament\Forms\Components\Repeater;
+use Illuminate\Validation\ValidationException;
 
 use function Pest\Laravel\actingAs;
 
@@ -136,4 +141,119 @@ test('administrative transactions list filters by direction', function () {
         ->filterTable('income_or_expense', 'EXPENSE')
         ->assertCanSeeTableRecords([$expense])
         ->assertCanNotSeeTableRecords([$income]);
+});
+
+function panelReceivableSetup(): array
+{
+    $panel = Panel::factory()->create(['is_active' => true]);
+    $method = PaymentMethod::factory()->create(['name' => 'Bank Transfer', 'slug' => 'BANK_TRANSFER']);
+    $first = Receaveable::factory()->create(['panel_id' => $panel->id, 'amount' => 3000, 'orignal_amount' => 3000, 'status' => 'unpaid']);
+    $second = Receaveable::factory()->create(['panel_id' => $panel->id, 'amount' => 2000, 'orignal_amount' => 2000, 'status' => 'unpaid']);
+
+    return [$panel, $method, $first, $second];
+}
+
+test('admin can record a panel payment that settles several receivables', function () {
+    $undoRepeaterFake = Repeater::fake();
+    [$panel, $method, $first, $second] = panelReceivableSetup();
+
+    Livewire\Livewire::test(CreateAdministrativeTransaction::class)
+        ->fillForm([
+            'income_or_expense' => 'INCOME',
+            'income_type' => 'panel_receivable',
+            'panel_id' => $panel->id,
+            'allocations' => [
+                ['receaveable_id' => $first->id, 'amount' => 3000],
+                ['receaveable_id' => $second->id, 'amount' => 500],
+            ],
+            'payment_method_id' => $method->id,
+            'notes' => 'Panel transfer for August',
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors()
+        ->assertNotified()
+        ->assertRedirect();
+
+    $undoRepeaterFake();
+
+    expect(Transaction::query()->where('receaveable_id', $first->id)->first())
+        ->closing_id->toBeNull()
+        ->type->toBe('ADMIN')
+        ->income_or_expense->toBe('INCOME')
+        ->panel_id->toBe($panel->id)
+        ->payment_method_id->toBe($method->id)
+        ->patient_id->toBe($first->patient_id);
+
+    expect((float) Transaction::query()->where('receaveable_id', $second->id)->value('amount'))->toBe(500.0)
+        ->and($first->fresh())->status->toBe('paid')
+        ->and((float) $first->fresh()->amount)->toBe(0.0)
+        ->and($second->fresh())->status->toBe('unpaid')
+        ->and((float) $second->fresh()->amount)->toBe(1500.0);
+});
+
+test('a panel payment cannot allocate more than a receivable owes', function () {
+    $undoRepeaterFake = Repeater::fake();
+    [$panel, $method, $first] = panelReceivableSetup();
+
+    Livewire\Livewire::test(CreateAdministrativeTransaction::class)
+        ->fillForm([
+            'income_or_expense' => 'INCOME',
+            'income_type' => 'panel_receivable',
+            'panel_id' => $panel->id,
+            'allocations' => [
+                ['receaveable_id' => $first->id, 'amount' => 3500],
+            ],
+            'payment_method_id' => $method->id,
+        ])
+        ->call('create')
+        ->assertHasFormErrors();
+
+    $undoRepeaterFake();
+
+    expect(Transaction::query()->where('receaveable_id', $first->id)->exists())->toBeFalse()
+        ->and((float) $first->fresh()->amount)->toBe(3000.0);
+});
+
+test('settlement service refuses receivables of another panel', function () {
+    [$panel, , $first] = panelReceivableSetup();
+    $otherPanel = Panel::factory()->create();
+
+    expect(fn () => app(ReceivableSettlementService::class)
+        ->settleForPanel($otherPanel->id, [['receaveable_id' => $first->id, 'amount' => 100]]))
+        ->toThrow(ValidationException::class);
+
+    expect((float) $first->fresh()->amount)->toBe(3000.0);
+});
+
+test('editing a panel payment amount moves the receivable balance', function () {
+    [$panel, $method, $first] = panelReceivableSetup();
+    $payment = app(ReceivableSettlementService::class)->settle($first, 1000, [
+        'closing_id' => null,
+        'type' => 'ADMIN',
+        'created_by' => auth()->id(),
+        'payment_method_id' => $method->id,
+    ]);
+
+    Livewire\Livewire::test(EditAdministrativeTransaction::class, ['record' => $payment->getRouteKey()])
+        ->fillForm(['amount' => 1500])
+        ->call('save')
+        ->assertHasNoFormErrors();
+
+    expect((float) $first->fresh()->amount)->toBe(1500.0);
+});
+
+test('general income still creates a single administrative transaction', function () {
+    $method = PaymentMethod::factory()->create();
+
+    Livewire\Livewire::test(CreateAdministrativeTransaction::class)
+        ->fillForm([
+            'income_or_expense' => 'INCOME',
+            'income_type' => 'general',
+            'amount' => 750,
+            'payment_method_id' => $method->id,
+        ])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $this->assertDatabaseHas(Transaction::class, ['income_or_expense' => 'INCOME', 'amount' => 750, 'receaveable_id' => null, 'type' => 'ADMIN']);
 });

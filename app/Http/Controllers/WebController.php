@@ -26,6 +26,7 @@ use App\Models\TransactionElement;
 use App\Models\User;
 use App\Services\AppointmentService;
 use App\Services\BreachDetectionService;
+use App\Services\ReceivableSettlementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -1156,43 +1157,18 @@ class WebController extends Controller
             return redirect()->back()->withErrors(['error' => 'Invalid receaveable transaction elements.']);
         }
 
-        DB::beginTransaction();
-
-        try {
-
-            // A receivable settlement is a cash/accounts-receivable movement, not new
-            // service revenue: the full service amount was already recognised on the
-            // original transaction's element. Recording only the payment Transaction
-            // (Dr Cash / Cr A/R, see AbacusClosingService) keeps the shift cash totals
-            // correct while avoiding a duplicate INCOME TransactionElement that would
-            // double-count the income report and the service order's totals when the
-            // receivable is collected within the same shift.
-            $newTransaction = Transaction::create([
-                'closing_id' => $openCounter->id,
-                'created_by' => $request->user()->id,
-                'patient_id' => $receaveable->patient_id,
-                'type' => $validatedData['payment_method'],
-                'income_or_expense' => 'INCOME',
-                'amount' => $validatedData['amount_to_collect'],
-                'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
-                'receaveable_id' => $receaveable->id,
-                'notes' => $validatedData['note'] ?? null,
-            ]);
-
-            $receaveable->amount -= $validatedData['amount_to_collect'];
-            if ($receaveable->amount <= 0) {
-                $receaveable->status = 'paid';
-                $receaveable->amount = 0;
-            }
-            $receaveable->save();
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return redirect()->back()->withErrors(['error' => 'An error occurred while processing the payment: '.$e->getMessage()]);
-        }
-
-        DB::commit();
+        // A receivable settlement is a cash/accounts-receivable movement, not new
+        // service revenue: the full service amount was already recognised on the
+        // original transaction's element. ReceivableSettlementService records only
+        // the payment Transaction (Dr Cash / Cr A/R, see AbacusClosingService), so
+        // the shift cash totals stay correct without double-counting income.
+        $newTransaction = app(ReceivableSettlementService::class)->settle($receaveable, (float) $validatedData['amount_to_collect'], [
+            'closing_id' => $openCounter->id,
+            'created_by' => $request->user()->id,
+            'type' => $validatedData['payment_method'],
+            'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
+            'notes' => $validatedData['note'] ?? null,
+        ]);
 
         return redirect()->route('transaction-view', [
             'tYear' => $newTransaction->year,

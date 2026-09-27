@@ -42,3 +42,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 25 | [#92](https://github.com/afaryab/hospital-care/issues/92) | Patient register listed every patient; now defaults to current month, stable newest-first | Low | ✅ Fixed |
 | 26 | [#93](https://github.com/afaryab/hospital-care/issues/93) | Patient photo capture via webcam or upload (private, audit-logged) | Feature | ✅ Done |
 | 27 | [#94](https://github.com/afaryab/hospital-care/issues/94) | Command palette: outside-click close, Ctrl/⌘K toggle, policy-filtered global search | Medium | ✅ Fixed |
+| 28 | [#95](https://github.com/afaryab/hospital-care/issues/95) | Administrative transactions: panel receivable income (manual per-receivable allocation) | Feature | ✅ Done |
