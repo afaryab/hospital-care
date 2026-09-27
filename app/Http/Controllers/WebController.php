@@ -468,9 +468,13 @@ class WebController extends Controller
             ->withProperties(['service_order_id' => $serviceOrder?->id])
             ->log('Patient record viewed');
 
+        $photo = $patientData->currentPhoto();
+
         return Inertia::render('patient', [
             'departmentKey' => $departmentKey,
             'patientData' => $patientData,
+            'patientPhotoUrl' => $photo ? route('patient-photo-show', ['year' => $year, 'month' => $month, 'number' => $number, 'v' => $photo->id], false) : null,
+            'canUpdatePatient' => $request->user()->can('update', $patientData),
             'serviceDepartments' => $serviceDepartments,
             'serviceOrder' => $serviceOrder,
         ]);

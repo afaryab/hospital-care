@@ -1,4 +1,5 @@
 import PatientMiniCard from '@/elements/patient/mini-card';
+import PatientPhotoDialog from '@/elements/patient/patient-photo-dialog';
 import PatientTreatmentsHistoryCard from '@/elements/patient/treatments-history-card';
 import ServiceOrderView from '@/elements/serviceorder/service-order-view';
 import AppLayout from '@/layouts/app-layout';
@@ -9,17 +10,27 @@ import {
 } from '@/routes';
 import { Patient, type BreadcrumbItem } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
+import { useState } from 'react';
 
 type PatientProps = {
     patientData: Patient;
     departmentKey: string;
     serviceOrder: any;
     serviceDepartments: any[];
+    patientPhotoUrl: string | null;
+    canUpdatePatient: boolean;
 };
 
 export default function PatientView() {
-    const { patientData, departmentKey, serviceOrder, serviceDepartments } =
-        usePage<PatientProps>().props;
+    const {
+        patientData,
+        departmentKey,
+        serviceOrder,
+        serviceDepartments,
+        patientPhotoUrl,
+        canUpdatePatient,
+    } = usePage<PatientProps>().props;
+    const [photoDialogOpen, setPhotoDialogOpen] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         {
@@ -63,7 +74,24 @@ export default function PatientView() {
                 title={`Patient ${patientData?.ps_number} ${patientData?.name} `}
             />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
-                <PatientMiniCard patient={patientData} className="w-full" />
+                <PatientMiniCard
+                    patient={patientData}
+                    className="w-full"
+                    photoUrl={patientPhotoUrl}
+                    onPhotoClick={
+                        canUpdatePatient
+                            ? () => setPhotoDialogOpen(true)
+                            : undefined
+                    }
+                />
+                {canUpdatePatient && (
+                    <PatientPhotoDialog
+                        open={photoDialogOpen}
+                        onOpenChange={setPhotoDialogOpen}
+                        psNumber={patientData.ps_number}
+                        currentPhotoUrl={patientPhotoUrl}
+                    />
+                )}
                 <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950">
                     <div className="flex h-full flex-row divide-x divide-gray-200">
                         <div className="divide-y divide-gray-200">

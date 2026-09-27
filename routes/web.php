@@ -17,6 +17,7 @@ use App\Http\Controllers\OnlyOffice\CallbackController;
 use App\Http\Controllers\OnlyOffice\DocumentContentController;
 use App\Http\Controllers\OnlyOffice\EditorPageController;
 use App\Http\Controllers\OpdDoctorController;
+use App\Http\Controllers\PatientPhotoController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
 use App\Http\Controllers\Prints\ServiceOrderPdfPrintController;
 use App\Http\Controllers\Prints\TransactionPdfPrintController;
@@ -47,6 +48,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('PS/{year}', [WebController::class, 'register'])->name('patients-register-year');
     Route::get('PS/{year}/{month}', [WebController::class, 'register'])->name('patients-register-year-month');
     Route::get('PS/{year}/{month}/{number}', [WebController::class, 'patient'])->name('patients-register-ps-number');
+    Route::get('PS/{year}/{month}/{number}/photo', [PatientPhotoController::class, 'show'])->name('patient-photo-show');
+    Route::post('PS/{year}/{month}/{number}/photo', [PatientPhotoController::class, 'store'])->name('patient-photo-store');
     Route::get('PS/{year}/{month}/{number}/{departmentKey}', [WebController::class, 'patient'])->name('patients-register-ps-number-department');
     Route::get('PS/{year}/{month}/{number}/{departmentKey}/{serviceNumber}', [WebController::class, 'patient'])->name('patients-register-ps-number-department-service');
 
