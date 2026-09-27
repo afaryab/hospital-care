@@ -38,3 +38,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 21 | [#78](https://github.com/afaryab/hospital-care/issues/78) | GET route writes to DB, duplicate route, dead code, inconsistent API envelope, swallowed route:cache failures | Low/Medium | ✅ Fixed |
 | 22 | [#88](https://github.com/afaryab/hospital-care/issues/88) | Number generators ignored soft-deleted rows — duplicate TR/CT/PS/VC/SO/TSK/AST numbers after any delete | Critical | ✅ Fixed |
 | 23 | [#90](https://github.com/afaryab/hospital-care/issues/90) | Service departments could be created/deleted in admin (seeder-managed); seeded departments could not be edited | Medium | ✅ Fixed |
+| 24 | [#91](https://github.com/afaryab/hospital-care/issues/91) | Dashboard filter drawer slow; preset date ranges silently showed this month | Medium | ✅ Fixed |

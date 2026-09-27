@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\HospitalSetting;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 test('hospital setting can be created and retrieved by key', function () {
@@ -58,4 +59,19 @@ test('name returns the configured hospital name once set', function () {
     HospitalSetting::set('hospital_name', 'City Care Hospital');
 
     expect(HospitalSetting::name())->toBe('City Care Hospital');
+});
+
+test('hospital setting get is served from cache and refreshed when a setting changes', function () {
+    HospitalSetting::set('hospital_name', 'First Name');
+
+    expect(HospitalSetting::get('hospital_name'))->toBe('First Name');
+
+    DB::enableQueryLog();
+    HospitalSetting::get('hospital_name');
+    HospitalSetting::get('hospital_phone');
+    expect(DB::getQueryLog())->toBeEmpty();
+
+    HospitalSetting::set('hospital_name', 'Second Name');
+
+    expect(HospitalSetting::get('hospital_name'))->toBe('Second Name');
 });

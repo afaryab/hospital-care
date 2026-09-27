@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\Cacheable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
@@ -9,7 +10,7 @@ use Illuminate\Support\Str;
 
 class HospitalSetting extends Model
 {
-    use HasFactory;
+    use Cacheable, HasFactory;
 
     protected $fillable = [
         'key',
@@ -18,7 +19,17 @@ class HospitalSetting extends Model
 
     public static function get(string $key, mixed $default = null): mixed
     {
-        return static::where('key', $key)->value('value') ?? $default;
+        return static::cachedAll()[$key] ?? $default;
+    }
+
+    /**
+     * Every setting as a key => value map, cached and flushed on any write.
+     *
+     * @return array<string, mixed>
+     */
+    public static function cachedAll(): array
+    {
+        return static::rememberCache(fn (): array => static::query()->pluck('value', 'key')->all());
     }
 
     public static function set(string $key, mixed $value): void

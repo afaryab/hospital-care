@@ -8,7 +8,6 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard\Actions\FilterAction;
 use Filament\Pages\Dashboard\Concerns\HasFiltersAction;
-use Filament\Schemas\Components\Utilities\Set;
 
 trait HasDashboardDateFilters
 {
@@ -29,6 +28,9 @@ trait HasDashboardDateFilters
     {
         return [
             FilterAction::make()
+                ->action(function (array $data): void {
+                    $this->filters = $this->resolveDateFilters($data);
+                })
                 ->schema([
                     Select::make('dateRange')
                         ->label('Date Range')
@@ -44,25 +46,43 @@ trait HasDashboardDateFilters
                             'last_financial_year' => 'Last Financial Year',
                             'custom' => 'Custom Range',
                         ])
-                        ->default('this_month')
-                        ->live()
-                        ->afterStateUpdated(function ($state, Set $set) {
-                            $dates = $this->calculateDateRange($state);
-                            $set('startDate', $dates['start']);
-                            $set('endDate', $dates['end']);
-                        }),
+                        ->default('this_month'),
 
                     DatePicker::make('startDate')
                         ->label('Start Date')
-                        ->visible(fn ($get) => $get('dateRange') === 'custom')
+                        ->visibleJs(<<<'JS'
+                            $get('dateRange') === 'custom'
+                            JS)
                         ->default(Carbon::now(DateHelper::timezone())->startOfMonth()),
 
                     DatePicker::make('endDate')
                         ->label('End Date')
-                        ->visible(fn ($get) => $get('dateRange') === 'custom')
+                        ->visibleJs(<<<'JS'
+                            $get('dateRange') === 'custom'
+                            JS)
                         ->default(Carbon::now(DateHelper::timezone())),
                 ]),
         ];
+    }
+
+    /**
+     * Widgets read startDate/endDate from the page filters, so preset ranges
+     * are expanded into concrete dates when the filter is applied.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public function resolveDateFilters(array $data): array
+    {
+        $range = $data['dateRange'] ?? 'this_month';
+
+        if ($range !== 'custom') {
+            $dates = $this->calculateDateRange($range);
+            $data['startDate'] = $dates['start']->toDateString();
+            $data['endDate'] = $dates['end']->toDateString();
+        }
+
+        return $data;
     }
 
     protected function calculateDateRange(string $range): array
