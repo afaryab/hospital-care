@@ -328,6 +328,12 @@ class WebController extends Controller
 
     public function register(Request $request, $year = false, $month = false)
     {
+        if (! $year && ! $month && ! $request->boolean('all') && ! $request->filled('search') && ! $request->filled('contact')) {
+            $now = now(DateHelper::timezone());
+
+            return to_route('patients-register-year-month', ['year' => $now->format('Y'), 'month' => $now->format('m')]);
+        }
+
         $user = $request->user();
         $query = Patient::query();
 
@@ -367,13 +373,13 @@ class WebController extends Controller
             }
         }
 
-        $data = $query->orderBy('created_at', 'DESC')->paginate(8)->withQueryString();
+        $data = $query->orderByDesc('created_at')->orderByDesc('id')->paginate(8)->withQueryString();
 
         $serviceDepartments = ServiceDepartment::cachedAll();
 
         return Inertia::render('register', [
-            'yearSelected' => $year,
-            'monthSelected' => $month,
+            'yearSelected' => $year ? (string) $year : '0',
+            'monthSelected' => $month ? str_pad((string) $month, 2, '0', STR_PAD_LEFT) : '0',
             'patientsPaginated' => $data,
             'serviceDepartments' => $serviceDepartments,
             'filters' => [

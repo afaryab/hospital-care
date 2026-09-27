@@ -1,5 +1,6 @@
 <?php
 
+use App\Helpers\DateHelper;
 use App\Models\Patient;
 use App\Models\ServiceOrder;
 use App\Models\User;
@@ -73,5 +74,49 @@ test('register contact filter matches by patient contact', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->has('patientsPaginated.data', 1)
             ->where('patientsPaginated.data.0.id', $match->id)
+        );
+});
+
+test('register defaults to the current year and month', function () {
+    actingAs(User::factory()->create());
+
+    $now = now(DateHelper::timezone());
+
+    get(route('patients-register'))
+        ->assertRedirect(route('patients-register-year-month', ['year' => $now->format('Y'), 'month' => $now->format('m')]));
+});
+
+test('register can still list every period when all is requested', function () {
+    actingAs(User::factory()->create());
+
+    $old = Patient::factory()->create(['created_at' => now()->subYears(2)]);
+    $recent = Patient::factory()->create();
+
+    get(route('patients-register', ['all' => 1]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('yearSelected', '0')
+            ->where('monthSelected', '0')
+            ->has('patientsPaginated.data', 2)
+            ->where('patientsPaginated.data.0.id', $recent->id)
+            ->where('patientsPaginated.data.1.id', $old->id)
+        );
+});
+
+test('register lists the selected month newest first with a stable tie-breaker', function () {
+    actingAs(User::factory()->create());
+
+    $sameMoment = now()->startOfMonth()->addDay();
+    $first = Patient::factory()->create(['created_at' => $sameMoment]);
+    $second = Patient::factory()->create(['created_at' => $sameMoment]);
+    $latest = Patient::factory()->create(['created_at' => $sameMoment->copy()->addHour()]);
+
+    get(route('patients-register-year-month', ['year' => $sameMoment->format('Y'), 'month' => $sameMoment->format('m')]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('monthSelected', $sameMoment->format('m'))
+            ->where('patientsPaginated.data.0.id', $latest->id)
+            ->where('patientsPaginated.data.1.id', $second->id)
+            ->where('patientsPaginated.data.2.id', $first->id)
         );
 });

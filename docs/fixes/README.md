@@ -39,3 +39,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 22 | [#88](https://github.com/afaryab/hospital-care/issues/88) | Number generators ignored soft-deleted rows — duplicate TR/CT/PS/VC/SO/TSK/AST numbers after any delete | Critical | ✅ Fixed |
 | 23 | [#90](https://github.com/afaryab/hospital-care/issues/90) | Service departments could be created/deleted in admin (seeder-managed); seeded departments could not be edited | Medium | ✅ Fixed |
 | 24 | [#91](https://github.com/afaryab/hospital-care/issues/91) | Dashboard filter drawer slow; preset date ranges silently showed this month | Medium | ✅ Fixed |
+| 25 | [#92](https://github.com/afaryab/hospital-care/issues/92) | Patient register listed every patient; now defaults to current month, stable newest-first | Low | ✅ Fixed |

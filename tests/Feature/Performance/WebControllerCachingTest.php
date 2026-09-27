@@ -21,7 +21,7 @@ test('the patient register page populates the ServiceDepartment cache instead of
 
     expect(Cache::has(ServiceDepartment::cacheKey()))->toBeFalse();
 
-    get(route('patients-register'))->assertOk();
+    get(route('patients-register', ['all' => 1]))->assertOk();
 
     expect(Cache::has(ServiceDepartment::cacheKey()))->toBeTrue();
 });

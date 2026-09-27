@@ -45,6 +45,7 @@ test('authenticated user can access all patients list', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
+        ->followingRedirects()
         ->get(route('patients-register'))
         ->assertOk();
 });
