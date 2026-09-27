@@ -37,3 +37,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 20 | [#76](https://github.com/afaryab/hospital-care/issues/76) | Transaction had no version history and hard-deleted; DeathCertificate/ReferralCertificate had no finalization lock | Medium | ✅ Fixed |
 | 21 | [#78](https://github.com/afaryab/hospital-care/issues/78) | GET route writes to DB, duplicate route, dead code, inconsistent API envelope, swallowed route:cache failures | Low/Medium | ✅ Fixed |
 | 22 | [#88](https://github.com/afaryab/hospital-care/issues/88) | Number generators ignored soft-deleted rows — duplicate TR/CT/PS/VC/SO/TSK/AST numbers after any delete | Critical | ✅ Fixed |
+| 23 | [#90](https://github.com/afaryab/hospital-care/issues/90) | Service departments could be created/deleted in admin (seeder-managed); seeded departments could not be edited | Medium | ✅ Fixed |

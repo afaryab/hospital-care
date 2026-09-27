@@ -5,10 +5,6 @@ namespace App\Filament\Admin\Resources\ServiceDepartments;
 use App\Enum\ServiceOrderTemplate;
 use App\Filament\Admin\Resources\ServiceDepartments\Pages\ManageServiceDepartments;
 use App\Models\ServiceDepartment;
-use BackedEnum;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -18,6 +14,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
 
 class ServiceDepartmentResource extends Resource
@@ -30,6 +27,27 @@ class ServiceDepartmentResource extends Resource
 
     // protected static string|BackedEnum|null $navigationIcon = 'healthicons-f-hospital';
 
+    /**
+     * Departments are provisioned by ServicesAndDepartmentsSeeder only.
+     */
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Deleting a department cascades to its services, so it is never allowed from the panel.
+     */
+    public static function canDelete(Model $record): bool
+    {
+        return false;
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -37,13 +55,16 @@ class ServiceDepartmentResource extends Resource
                 TextInput::make('name')
                     ->required(),
                 TextInput::make('slug')
-                    ->required(),
+                    ->helperText('Set by the seeder; used as the service order type code.')
+                    ->disabled()
+                    ->dehydrated(false),
                 FileUpload::make('image')
                     ->image()
                     ->disk('public')
                     ->directory('service-departments')
                     ->visibility('public')
-                    ->required(),
+                    ->helperText('Leave empty to keep the current image.')
+                    ->dehydrated(fn ($state): bool => filled($state)),
                 TextInput::make('have_composit_services')
                     ->required()
                     ->numeric(),
@@ -89,12 +110,6 @@ class ServiceDepartmentResource extends Resource
             ])
             ->recordActions([
                 EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
             ]);
     }
 
