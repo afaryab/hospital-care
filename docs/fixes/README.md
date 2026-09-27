@@ -43,3 +43,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 26 | [#93](https://github.com/afaryab/hospital-care/issues/93) | Patient photo capture via webcam or upload (private, audit-logged) | Feature | ✅ Done |
 | 27 | [#94](https://github.com/afaryab/hospital-care/issues/94) | Command palette: outside-click close, Ctrl/⌘K toggle, policy-filtered global search | Medium | ✅ Fixed |
 | 28 | [#95](https://github.com/afaryab/hospital-care/issues/95) | Administrative transactions: panel receivable income (manual per-receivable allocation) | Feature | ✅ Done |
+| 29 | [#96](https://github.com/afaryab/hospital-care/issues/96) | Compliance status page with live PHC/HIPAA checks and attestations | Feature | ✅ Done |
