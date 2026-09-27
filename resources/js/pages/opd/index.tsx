@@ -1,10 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
-import {
-    apiOpdMyQueue,
-    apiOpdSearch,
-    opdDashboard,
-    opdPatient,
-} from '@/routes';
+import { type OutpatientDepartment, withId } from '@/lib/outpatient-department';
 import { type BreadcrumbItem, type ServiceOrder } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import { clsx } from 'clsx';
@@ -52,13 +47,9 @@ interface OpdDashboardProps {
         total: number;
     };
     searchPrefill: string;
+    department: OutpatientDepartment;
     [key: string]: unknown;
 }
-
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/' },
-    { title: 'OPD', href: opdDashboard().url },
-];
 
 function genderLabel(g?: string) {
     return g === 'm'
@@ -126,7 +117,13 @@ export default function OpdDashboard() {
         todayStats: initialStats,
         searchPrefill,
         flash,
+        department,
     } = usePage<OpdDashboardProps>().props;
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Dashboard', href: '/' },
+        { title: department.label, href: department.dashboardUrl },
+    ];
 
     const [orders, setOrders] = useState<OpdServiceOrder[]>(
         initialOrders ?? [],
@@ -147,7 +144,7 @@ export default function OpdDashboard() {
 
     const refreshQueue = useCallback(async () => {
         try {
-            const res = await fetch(apiOpdMyQueue().url, {
+            const res = await fetch(department.apiMyQueueUrl, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                     Accept: 'application/json',
@@ -160,47 +157,51 @@ export default function OpdDashboard() {
         } catch {
             toast.error('Queue refresh failed');
         }
-    }, []);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [department.apiMyQueueUrl]);
 
     useEffect(() => {
         const interval = setInterval(refreshQueue, 30_000);
         return () => clearInterval(interval);
     }, [refreshQueue]);
 
-    const handleSearch = useCallback(async (q: string) => {
-        if (!q.trim()) {
-            setSearchResults(null);
-            return;
-        }
-        setSearching(true);
-        try {
-            const res = await fetch(apiOpdSearch().url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN': decodeURIComponent(
-                        document.cookie
-                            .split('XSRF-TOKEN=')[1]
-                            ?.split(';')[0] ?? '',
-                    ),
-                },
-                body: JSON.stringify({ q }),
-            });
-            if (!res.ok) {
-                setSearching(false);
-                toast.error('Search failed');
+    const handleSearch = useCallback(
+        async (q: string) => {
+            if (!q.trim()) {
+                setSearchResults(null);
                 return;
             }
-            const json = await res.json();
-            setSearchResults(json.data);
-        } catch {
-            toast.error('Network error — search unavailable');
-        } finally {
-            setSearching(false);
-        }
-    }, []);
+            setSearching(true);
+            try {
+                const res = await fetch(department.apiSearchUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-XSRF-TOKEN': decodeURIComponent(
+                            document.cookie
+                                .split('XSRF-TOKEN=')[1]
+                                ?.split(';')[0] ?? '',
+                        ),
+                    },
+                    body: JSON.stringify({ q }),
+                });
+                if (!res.ok) {
+                    setSearching(false);
+                    toast.error('Search failed');
+                    return;
+                }
+                const json = await res.json();
+                setSearchResults(json.data);
+            } catch {
+                toast.error('Network error — search unavailable');
+            } finally {
+                setSearching(false);
+            }
+        },
+        [department.apiSearchUrl],
+    );
 
     // Run the pre-filled search immediately on load so staff see the latest
     // matching service orders straight away instead of an empty list.
@@ -217,7 +218,7 @@ export default function OpdDashboard() {
     };
 
     const openOrder = (order: OpdServiceOrder) => {
-        router.visit(opdPatient({ id: order.id! }).url);
+        router.visit(withId(department.patientUrlTemplate, order.id!));
     };
 
     const callPatient = async (order: OpdServiceOrder, e: React.MouseEvent) => {
@@ -225,7 +226,7 @@ export default function OpdDashboard() {
         setCallingPatient(order.id!);
         try {
             const res = await fetch(
-                `/api/opd/service-orders/${order.id}/status`,
+                withId(department.apiStatusUrlTemplate, order.id!),
                 {
                     method: 'PATCH',
                     headers: {
@@ -257,7 +258,7 @@ export default function OpdDashboard() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="OPD Doctor Dashboard" />
+            <Head title={`${department.label} Doctor Dashboard`} />
 
             <div className="min-h-full bg-gradient-to-br from-teal-50 via-white to-emerald-50 p-4 md:p-6">
                 {/* Header */}
@@ -268,7 +269,7 @@ export default function OpdDashboard() {
                         </div>
                         <div>
                             <h1 className="text-xl font-bold text-slate-900 md:text-2xl">
-                                OPD Dashboard
+                                {department.label} Dashboard
                             </h1>
                             <p className="text-sm text-slate-500">
                                 Outpatient Department
@@ -292,8 +293,9 @@ export default function OpdDashboard() {
                                 Access Restricted
                             </h2>
                             <p className="mt-1 text-sm text-red-600">
-                                You need an <strong>OPD Doctor</strong> profile
-                                to access this dashboard.
+                                You need an{' '}
+                                <strong>{department.profileLabel}</strong>{' '}
+                                profile to access this dashboard.
                             </p>
                         </div>
                     </div>
@@ -351,7 +353,7 @@ export default function OpdDashboard() {
                                     ref={searchRef}
                                     value={searchQuery}
                                     onChange={onSearchInput}
-                                    placeholder="Enter SO number (e.g. PS/2026/04/0001/OPD/01) or Patient MR# (e.g. PS/2026/04/0001)"
+                                    placeholder={`Enter SO number (e.g. PS/2026/04/0001/${department.type}/01) or Patient MR# (e.g. PS/2026/04/0001)`}
                                     className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pr-4 pl-10 text-sm text-slate-800 placeholder:text-slate-400 focus:border-teal-400 focus:bg-white focus:ring-2 focus:ring-teal-100 focus:outline-none"
                                 />
                                 {searching && (

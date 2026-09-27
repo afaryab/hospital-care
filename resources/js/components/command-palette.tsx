@@ -24,6 +24,7 @@ import {
     hospitalIndoorQueue,
     hospitalLaboratoryQueue,
     hospitalOpdQueue,
+    hospitalPedQueue,
     hospitalRadiologyQueue,
     hospitalUltrasoundQueue,
     indDashboard,
@@ -34,6 +35,7 @@ import {
     myPayments,
     opdDashboard,
     patientsRegister,
+    pedDashboard,
     receaveables,
     serviceOrdersOverview,
     transactionSearch,
@@ -312,6 +314,14 @@ function staticCommands(
         },
         {
             group: 'Departments',
+            title: 'Peds dashboard',
+            keywords: 'pediatrics paeds children kids doctor',
+            icon: Stethoscope,
+            href: pedDashboard().url,
+            visible: (can) => can.pedDoctor || can.nursing,
+        },
+        {
+            group: 'Departments',
             title: 'Indoor dashboard',
             keywords: 'ind inpatient ward',
             icon: Stethoscope,
@@ -360,6 +370,7 @@ function staticCommands(
         },
 
         queue('OPD', hospitalOpdQueue().url, 'opd'),
+        queue('Peds', hospitalPedQueue().url, 'ped'),
         queue('Indoor', hospitalIndoorQueue().url, 'ind'),
         queue('Emergency', hospitalEmergencyQueue().url, 'emergency'),
         queue('Dental', hospitalDentalQueue().url, 'dental'),

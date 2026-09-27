@@ -8,6 +8,7 @@ export type Abilities = {
     nursing: boolean;
     patientManager: boolean;
     opdDoctor: boolean;
+    pedDoctor: boolean;
     indDoctor: boolean;
     emergencyDoctor: boolean;
     dentist: boolean;
@@ -29,6 +30,7 @@ export function abilitiesFor(
 
     const anyDoctor =
         has('opd_doctor') ||
+        has('ped_doctor') ||
         has('ind_doctor') ||
         has('emergency_doctor') ||
         has('dentist') ||
@@ -43,6 +45,7 @@ export function abilitiesFor(
         nursing: has('nursing_staff'),
         patientManager: has('patient_manager'),
         opdDoctor: has('opd_doctor'),
+        pedDoctor: has('ped_doctor'),
         indDoctor: has('ind_doctor'),
         emergencyDoctor: has('emergency_doctor'),
         dentist: has('dentist'),

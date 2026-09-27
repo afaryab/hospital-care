@@ -119,6 +119,7 @@ class CacheRegistry
                 'total' => fn () => User::query()
                     ->where(fn ($q) => $q
                         ->whereHas('opdDoctorProfiles')
+                        ->orWhereHas('pedDoctorProfiles')
                         ->orWhereHas('indDoctorProfiles')
                         ->orWhereHas('emergencyDoctorProfiles')
                         ->orWhereHas('dentistProfiles')

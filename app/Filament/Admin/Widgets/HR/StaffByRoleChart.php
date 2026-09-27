@@ -9,6 +9,7 @@ use App\Models\EmergencyDoctor;
 use App\Models\IndDoctor;
 use App\Models\NursingStaff;
 use App\Models\OpdDoctor;
+use App\Models\PedDoctor;
 use App\Models\Receptionist;
 use App\Models\UltrasoundDoctor;
 use App\Models\XrayTechnician;
@@ -32,6 +33,7 @@ class StaffByRoleChart extends ChartWidget
     {
         $roles = [
             'OPD Doctors' => OpdDoctor::count(),
+            'Peds Doctors' => PedDoctor::count(),
             'Indoor Doctors' => IndDoctor::count(),
             'Emergency Doctors' => EmergencyDoctor::count(),
             'Dentists' => Dentist::count(),
@@ -50,7 +52,7 @@ class StaffByRoleChart extends ChartWidget
             'rgba(99, 102, 241, 0.8)', 'rgba(34, 197, 94, 0.8)', 'rgba(239, 68, 68, 0.8)',
             'rgba(234, 179, 8, 0.8)', 'rgba(59, 130, 246, 0.8)', 'rgba(168, 85, 247, 0.8)',
             'rgba(20, 184, 166, 0.8)', 'rgba(249, 115, 22, 0.8)', 'rgba(236, 72, 153, 0.8)',
-            'rgba(6, 182, 212, 0.8)',
+            'rgba(6, 182, 212, 0.8)', 'rgba(132, 204, 22, 0.8)',
         ];
 
         return [

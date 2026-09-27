@@ -65,6 +65,7 @@ class RolesAndPermissionsSeeder extends Seeder
                 'service_order.view',
             ],
             'opd_doctor' => ['patient.view', 'service_order.view'],
+            'ped_doctor' => ['patient.view', 'service_order.view'],
             'ind_doctor' => ['patient.view', 'service_order.view'],
             'emergency_doctor' => ['patient.view', 'service_order.view'],
             'dentist' => ['patient.view', 'service_order.view'],
@@ -103,6 +104,10 @@ class RolesAndPermissionsSeeder extends Seeder
 
             if ($user->opdDoctorProfiles()->exists()) {
                 $assignedRoles[] = 'opd_doctor';
+            }
+
+            if ($user->pedDoctorProfiles()->exists()) {
+                $assignedRoles[] = 'ped_doctor';
             }
 
             if ($user->indDoctorProfiles()->exists()) {

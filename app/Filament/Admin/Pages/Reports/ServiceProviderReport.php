@@ -63,6 +63,7 @@ class ServiceProviderReport extends Page implements Tables\Contracts\HasTable
                     ->label('Provider')
                     ->options(fn () => User::query()
                         ->whereHas('opdDoctorProfiles')
+                        ->orWhereHas('pedDoctorProfiles')
                         ->orWhereHas('indDoctorProfiles')
                         ->orWhereHas('emergencyDoctorProfiles')
                         ->orWhereHas('dentistProfiles')

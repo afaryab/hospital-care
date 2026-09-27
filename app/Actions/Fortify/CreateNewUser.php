@@ -11,6 +11,7 @@ use App\Models\NursingStaff;
 use App\Models\OpdDoctor;
 use App\Models\Patient;
 use App\Models\PatientManager;
+use App\Models\PedDoctor;
 use App\Models\Receptionist;
 use App\Models\UltrasoundDoctor;
 use App\Models\User;
@@ -92,6 +93,10 @@ class CreateNewUser implements CreatesNewUsers
                     'authority' => 'manager',
                 ]);
                 OpdDoctor::create([
+                    'user_id' => $user->id,
+                    'authority' => 'manager',
+                ]);
+                PedDoctor::create([
                     'user_id' => $user->id,
                     'authority' => 'manager',
                 ]);

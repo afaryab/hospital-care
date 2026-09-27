@@ -87,6 +87,7 @@ class ServicePerformanceReport extends Page implements Tables\Contracts\HasTable
                 Select::make('doctor_id')
                     ->label('Provider')
                     ->options(fn () => User::whereHas('opdDoctorProfiles')
+                        ->orWhereHas('pedDoctorProfiles')
                         ->orWhereHas('indDoctorProfiles')
                         ->orWhereHas('emergencyDoctorProfiles')
                         ->orWhereHas('dentistProfiles')

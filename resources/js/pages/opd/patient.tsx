@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import DrugPicker from '@/components/ui/drug-picker';
 import Icd10Picker from '@/components/ui/icd10-picker';
 import AppLayout from '@/layouts/app-layout';
-import { apiOpdSaveTreatment, opdDashboard, opdPatient } from '@/routes';
+import { type OutpatientDepartment, withId } from '@/lib/outpatient-department';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { clsx } from 'clsx';
@@ -112,6 +112,7 @@ interface PreviousVisit {
 interface OpdPatientProps {
     serviceOrder: ServiceOrderData;
     previousVisits: PreviousVisit[];
+    department: OutpatientDepartment;
     [key: string]: unknown;
 }
 
@@ -185,7 +186,8 @@ function getCsrfToken(): string {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function OpdPatient() {
-    const { serviceOrder, previousVisits } = usePage<OpdPatientProps>().props;
+    const { serviceOrder, previousVisits, department } =
+        usePage<OpdPatientProps>().props;
     const patient = serviceOrder.patient;
     const existingRecord = serviceOrder.treatment_record;
     const isFinalized = existingRecord?.is_finalized ?? false;
@@ -251,10 +253,10 @@ export default function OpdPatient() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/' },
-        { title: 'OPD', href: opdDashboard().url },
+        { title: department.label, href: department.dashboardUrl },
         {
             title: patient?.name ?? 'Patient',
-            href: opdPatient({ id: serviceOrder.id }).url,
+            href: withId(department.patientUrlTemplate, serviceOrder.id),
         },
     ];
 
@@ -299,7 +301,10 @@ export default function OpdPatient() {
 
             try {
                 const res = await fetch(
-                    apiOpdSaveTreatment({ serviceOrder: serviceOrder.id }).url,
+                    withId(
+                        department.apiSaveTreatmentUrlTemplate,
+                        serviceOrder.id,
+                    ),
                     {
                         method: 'POST',
                         headers: {
@@ -351,7 +356,9 @@ export default function OpdPatient() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`OPD — ${patient?.name ?? 'Patient'}`} />
+            <Head
+                title={`${department.label} — ${patient?.name ?? 'Patient'}`}
+            />
 
             <div className="min-h-full bg-gradient-to-br from-teal-50 via-white to-emerald-50">
                 {/* ── Patient Banner ──────────────────────────────────────── */}
@@ -360,7 +367,7 @@ export default function OpdPatient() {
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
                                 <a
-                                    href={opdDashboard().url}
+                                    href={department.dashboardUrl}
                                     className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
                                 >
                                     <ArrowLeft className="h-4 w-4" />
@@ -472,7 +479,7 @@ export default function OpdPatient() {
                             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                                 <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                                     <History className="h-4 w-4 text-slate-500" />{' '}
-                                    Previous OPD Visits
+                                    Previous {department.label} Visits
                                 </h3>
                                 <button
                                     type="button"
@@ -484,7 +491,7 @@ export default function OpdPatient() {
                             </div>
                             {previousVisits.length === 0 ? (
                                 <p className="px-4 py-6 text-center text-sm text-slate-500">
-                                    No previous OPD visits.
+                                    No previous {department.label} visits.
                                 </p>
                             ) : (
                                 <div className="divide-y divide-slate-100">

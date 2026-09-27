@@ -8,33 +8,37 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 interface opdQueuePageProps {
     serviceOrdersByService: any;
     services: any;
+    departmentLabel?: string;
     [key: string]: any;
 }
 
 export default function ServiceOrdersList() {
+    const {
+        serviceOrdersByService,
+        services,
+        departmentLabel = 'OPD',
+    } = usePage<opdQueuePageProps>().props;
+
     const breadcrumbs: BreadcrumbItem[] = [
         {
             title: 'Dashboard',
             href: home().url,
         },
         {
-            title: 'Hospital OPD',
+            title: `Hospital ${departmentLabel}`,
             href: counter().url,
         },
     ];
 
-    const { serviceOrdersByService, services } =
-        usePage<opdQueuePageProps>().props;
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="OPD Hospital Queue" />
+            <Head title={`${departmentLabel} Hospital Queue`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
                 <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 p-6 text-[#1c398e] dark:bg-neutral-950">
                     {Object.keys(serviceOrdersByService).length === 0 ? (
                         <div className="flex h-full flex-col items-center justify-center gap-2">
                             <h2 className="text-lg font-semibold">
-                                No active OPD queues
+                                No active {departmentLabel} queues
                             </h2>
                             <p className="text-sm text-slate-500">
                                 All service orders are currently closed.
@@ -47,6 +51,7 @@ export default function ServiceOrdersList() {
                                 return (
                                     <div key={serviceId}>
                                         <OPDQueueSlider
+                                            departmentLabel={departmentLabel}
                                             serviceName={
                                                 service
                                                     ? service.name
@@ -187,12 +192,14 @@ function IconChevronRight(props) {
 }
 
 function OPDQueueSlider({
+    departmentLabel,
     serviceName,
     nowServing,
     waiting,
     countersOpen,
     onViewAll,
 }: {
+    departmentLabel: string;
     serviceName: string;
     nowServing: {
         token: string | number;
@@ -276,7 +283,7 @@ function OPDQueueSlider({
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
                                 <span className="text-sm font-bold text-slate-700">
-                                    OPD
+                                    {departmentLabel}
                                 </span>
                             </div>
                             <div className="min-w-0">

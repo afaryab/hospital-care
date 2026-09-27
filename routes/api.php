@@ -59,6 +59,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/opd/service-orders/{serviceOrder}/treatment-record', [OpdController::class, 'saveTreatmentRecord'])->name('api-opd-save-treatment');
     Route::patch('/opd/service-orders/{serviceOrder}/status', [OpdController::class, 'updateStatus'])->name('api-opd-update-status');
 
+    // Peds doctor API — same outpatient controller, PED department
+    Route::post('/ped/search', [OpdController::class, 'search'])->defaults('department', 'PED')->name('api-ped-search');
+    Route::get('/ped/my-queue', [OpdController::class, 'myQueue'])->defaults('department', 'PED')->name('api-ped-my-queue');
+    Route::post('/ped/service-orders/{serviceOrder}/treatment-record', [OpdController::class, 'saveTreatmentRecord'])->name('api-ped-save-treatment');
+    Route::patch('/ped/service-orders/{serviceOrder}/status', [OpdController::class, 'updateStatus'])->name('api-ped-update-status');
+
     // Shared treatment-record API for EMG, DNT, LAB, ULT, XRAY
     Route::get('/emg/my-queue', [DepartmentController::class, 'myQueue'])->name('api-emg-my-queue');
     Route::post('/emg/search', [DepartmentController::class, 'search'])->name('api-emg-search');

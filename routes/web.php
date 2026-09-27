@@ -119,6 +119,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('OPD/search', [OpdDoctorController::class, 'search'])->name('opd-search');
     Route::get('OPD/{id}', [OpdDoctorController::class, 'show'])->name('opd-patient');
 
+    // Peds doctor workspace — same outpatient controller, PED department
+    Route::get('PED', [OpdDoctorController::class, 'index'])->defaults('department', 'PED')->name('ped-dashboard');
+    Route::get('PED/search', [OpdDoctorController::class, 'search'])->defaults('department', 'PED')->name('ped-search');
+    Route::get('PED/{id}', [OpdDoctorController::class, 'show'])->defaults('department', 'PED')->name('ped-patient');
+
     /**
      * IND Doctor routes
      */
@@ -164,6 +169,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * Hospital Routes
      */
     Route::get('/que/opd', [WebController::class, 'opdQueue'])->name('hospital-opd-queue');
+    Route::get('/que/peds', [WebController::class, 'pedQueue'])->name('hospital-ped-queue');
     Route::get('/que/indoor', [WebController::class, 'indoorQueue'])->name('hospital-indoor-queue');
     Route::get('/que/emergency', [WebController::class, 'emergencyQueue'])->name('hospital-emergency-queue');
     Route::get('/que/dental', [WebController::class, 'dentalQueue'])->name('hospital-dental-queue');

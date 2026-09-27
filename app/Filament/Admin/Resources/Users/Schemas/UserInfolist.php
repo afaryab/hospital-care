@@ -174,6 +174,21 @@ class UserInfolist
                             })
                             ->badge(),
 
+                        TextEntry::make('pedDoctorProfiles')
+                            ->label('Peds Doctor')
+                            ->formatStateUsing(function ($state) {
+                                $profiles = self::normalizeProfiles($state);
+
+                                return $profiles->isEmpty()
+                                    ? '❌ Not assigned'
+                                    : '✅ Assigned ('.$profiles->count().')';
+                            })
+                            ->icon('heroicon-o-user-circle')
+                            ->color(function ($state) {
+                                return self::normalizeProfiles($state)->isEmpty() ? Color::Gray : Color::Green;
+                            })
+                            ->badge(),
+
                         TextEntry::make('indDoctorProfiles')
                             ->label('Inpatient Doctor')
                             ->formatStateUsing(function ($state) {

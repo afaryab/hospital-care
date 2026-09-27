@@ -590,6 +590,7 @@ export default function ServiceOrdersOverview() {
                     {[
                         { label: 'General', value: '' },
                         { label: 'OPD', value: 'OPD' },
+                        { label: 'Peds', value: 'PED' },
                         { label: 'Indoor', value: 'IND' },
                         { label: 'Emergency', value: 'EMG' },
                         { label: 'Dental', value: 'DNT' },

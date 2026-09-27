@@ -70,6 +70,16 @@ class TreatmentFormConfig
             'showAttachments' => false,
             'showDentalChart' => false,
         ],
+        'PED' => [
+            'showVitals' => true,
+            'showExamFindings' => false,
+            'showPrescriptions' => true,
+            'showFollowUp' => true,
+            'showTriage' => false,
+            'requireTreatmentTime' => false,
+            'showAttachments' => false,
+            'showDentalChart' => false,
+        ],
         'IND' => [
             'showVitals' => true,
             'showExamFindings' => true,

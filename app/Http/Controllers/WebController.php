@@ -1489,7 +1489,7 @@ class WebController extends Controller
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'max:50'],
-            'type' => ['nullable', 'string', 'in:OPD,IND,EMG,DNT,LAB,ULT,RAD'],
+            'type' => ['nullable', 'string', 'in:OPD,PED,IND,EMG,DNT,LAB,ULT,RAD'],
             'service_order_id' => ['nullable', 'integer', 'exists:service_orders,id'],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
@@ -1609,12 +1609,21 @@ class WebController extends Controller
 
     public function opdQueue(Request $request)
     {
+        return $this->outpatientQueue($request, 'OPD', 'OPD');
+    }
+
+    public function pedQueue(Request $request)
+    {
+        return $this->outpatientQueue($request, 'PED', 'Peds');
+    }
+
+    private function outpatientQueue(Request $request, string $type, string $label)
+    {
         $user = $request->user();
-        if ($user->isLcdOperator() && ! $user->hasLcdAccessTo('OPD')) {
+        if ($user->isLcdOperator() && ! $user->hasLcdAccessTo($type)) {
             abort(403, 'This department display is not assigned to your account.');
         }
 
-        $type = 'OPD';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
             ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number', 'priority'])
@@ -1653,6 +1662,7 @@ class WebController extends Controller
         return Inertia::render('hospital/opd-queue', [
             'serviceOrdersByService' => $serviceOrdersByService,
             'services' => $services,
+            'departmentLabel' => $label,
         ]);
     }
 
@@ -1985,6 +1995,7 @@ class WebController extends Controller
 
         $users = User::where(function ($query) {
             $query->whereHas('opdDoctorProfiles')
+                ->orWhereHas('pedDoctorProfiles')
                 ->orWhereHas('indDoctorProfiles')
                 ->orWhereHas('emergencyDoctorProfiles')
                 ->orWhereHas('dentistProfiles')
@@ -2008,6 +2019,7 @@ class WebController extends Controller
 
         $users = User::where(function ($query) {
             $query->whereHas('opdDoctorProfiles')
+                ->orWhereHas('pedDoctorProfiles')
                 ->orWhereHas('indDoctorProfiles')
                 ->orWhereHas('emergencyDoctorProfiles')
                 ->orWhereHas('dentistProfiles')
@@ -2031,6 +2043,7 @@ class WebController extends Controller
 
         $users = User::where(function ($query) {
             $query->whereHas('opdDoctorProfiles')
+                ->orWhereHas('pedDoctorProfiles')
                 ->orWhereHas('indDoctorProfiles')
                 ->orWhereHas('emergencyDoctorProfiles')
                 ->orWhereHas('dentistProfiles')

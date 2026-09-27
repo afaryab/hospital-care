@@ -9,6 +9,7 @@ use Filament\Panel;
 use Illuminate\Auth\MustVerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail as MustVerifyEmailContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
@@ -118,6 +119,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmailContr
             'accountant' => $this->accountantProfiles,
             'receptionist' => $this->receptionistProfiles,
             'opd_doctor' => $this->opdDoctorProfiles,
+            'ped_doctor' => $this->pedDoctorProfiles,
             'ind_doctor' => $this->indDoctorProfiles,
             'emergency_doctor' => $this->emergencyDoctorProfiles,
             'dentist' => $this->dentistProfiles,
@@ -157,6 +159,11 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmailContr
     {
 
         return $this->hasMany(OpdDoctor::class);
+    }
+
+    public function pedDoctorProfiles(): HasMany
+    {
+        return $this->hasMany(PedDoctor::class);
     }
 
     public function indDoctorProfiles()
@@ -285,6 +292,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmailContr
         return static::rememberCache(fn () => static::query()
             ->where(fn ($q) => $q
                 ->whereHas('opdDoctorProfiles')
+                ->orWhereHas('pedDoctorProfiles')
                 ->orWhereHas('indDoctorProfiles')
                 ->orWhereHas('emergencyDoctorProfiles')
                 ->orWhereHas('dentistProfiles')
@@ -297,6 +305,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmailContr
     public function isAnyDoctor(): bool
     {
         return $this->opdDoctorProfiles()->exists()
+            || $this->pedDoctorProfiles()->exists()
             || $this->indDoctorProfiles()->exists()
             || $this->emergencyDoctorProfiles()->exists()
             || $this->dentistProfiles()->exists()
@@ -312,6 +321,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmailContr
     public function getPmdcNumberAttribute(): ?string
     {
         return $this->opdDoctorProfiles->first()?->pmdc_number
+            ?? $this->pedDoctorProfiles->first()?->pmdc_number
             ?? $this->indDoctorProfiles->first()?->pmdc_number
             ?? $this->emergencyDoctorProfiles->first()?->pmdc_number
             ?? $this->dentistProfiles->first()?->pmdc_number
