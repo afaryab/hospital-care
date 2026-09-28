@@ -60,6 +60,8 @@ class DepartmentController extends Controller
             'prescriptions.*.route' => ['nullable', 'string', 'max:100'],
             'prescriptions.*.instructions' => ['nullable', 'string', 'max:500'],
             'prescriptions.*.given_at' => ['nullable', 'date'],
+            'prescriptions.*.given_in_er' => ['nullable', 'boolean'],
+            'prescriptions.*.form' => ['nullable', 'string', 'max:50'],
             'follow_up_date' => ['nullable', 'date'],
             'outcome' => [Rule::requiredIf($isEmergency && $finalize), 'nullable', new Enum(TreatmentOutcome::class)],
             'outcome_at' => [Rule::requiredIf($isEmergency && $finalize), 'nullable', 'date'],
@@ -70,6 +72,15 @@ class DepartmentController extends Controller
             ],
             'referral_notes' => ['nullable', 'string', 'max:10000'],
             'department_specific_data' => ['nullable', 'array'],
+            'department_specific_data.investigations_advised' => ['nullable', 'string', 'max:2000'],
+            'department_specific_data.advice' => ['nullable', 'string', 'max:2000'],
+            'department_specific_data.admitted_to' => ['nullable', 'string', 'max:255'],
+            'past_history' => ['nullable', 'array'],
+            'past_history.htn' => ['nullable', 'boolean'],
+            'past_history.dm' => ['nullable', 'boolean'],
+            'past_history.asthma' => ['nullable', 'boolean'],
+            'past_history.ihd' => ['nullable', 'boolean'],
+            'past_history.allergies' => ['nullable', 'string', 'max:500'],
             'dental_chart' => ['nullable', 'array'],
             'triage_id' => [Rule::requiredIf($isEmergency), 'nullable', 'integer', 'exists:triages,id'],
             'treated_at' => [Rule::requiredIf($isEmergency), 'nullable', 'date'],
@@ -81,11 +92,27 @@ class DepartmentController extends Controller
             'vitals.pulse_rate' => ['nullable', 'integer'],
             'vitals.respiratory_rate' => ['nullable', 'integer'],
             'vitals.oxygen_saturation' => ['nullable', 'numeric'],
+            'vitals.gcs' => ['nullable', 'integer', 'between:3,15'],
+            'vitals.blood_glucose' => ['nullable', 'numeric', 'min:0'],
             'vitals.weight' => ['nullable', 'numeric'],
             'vitals.height' => ['nullable', 'numeric'],
         ]);
 
         unset($data['finalize']);
+
+        // Past medical history belongs to the patient, not this visit, so it
+        // carries over to later encounters (PatientVersion records changes).
+        if (array_key_exists('past_history', $data)) {
+            $history = $data['past_history'] ?? [];
+            $serviceOrder->patient?->update([
+                'history_htn' => $history['htn'] ?? null,
+                'history_dm' => $history['dm'] ?? null,
+                'history_asthma' => $history['asthma'] ?? null,
+                'history_ihd' => $history['ihd'] ?? null,
+                'allergies' => $history['allergies'] ?? null,
+            ]);
+        }
+        unset($data['past_history']);
 
         $vitals = $data['vitals'] ?? null;
         unset($data['vitals']);
@@ -156,6 +183,8 @@ class DepartmentController extends Controller
                 'pulse_rate' => $vitals['pulse_rate'] ?? null,
                 'respiratory_rate' => $vitals['respiratory_rate'] ?? null,
                 'oxygen_saturation' => $vitals['oxygen_saturation'] ?? null,
+                'gcs' => $vitals['gcs'] ?? null,
+                'blood_glucose' => $vitals['blood_glucose'] ?? null,
                 'weight' => $vitals['weight'] ?? null,
                 'height' => $vitals['height'] ?? null,
                 'recorded_at' => Carbon::now(),

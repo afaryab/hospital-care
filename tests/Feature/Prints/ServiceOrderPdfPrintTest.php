@@ -218,6 +218,7 @@ test('the pdf falls back to the detailed 2-page template when the department has
         ->withArgs(fn (string $html) => str_contains($html, 'Page 1/2') && str_contains($html, 'CLINICAL PERFORMA SO'))
         ->andReturnSelf();
     Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('setCallbacks')->once()->andReturnSelf();
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
@@ -237,6 +238,7 @@ test('the pdf uses the compact 1-page template when configured on the department
         ->withArgs(fn (string $html) => str_contains($html, 'TRIAGE NOTE SO') && ! str_contains($html, 'Page 1/2'))
         ->andReturnSelf();
     Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('setCallbacks')->once()->andReturnSelf();
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
@@ -257,6 +259,7 @@ test('the detailed pdf embeds the branding letterhead flush above the existing r
             && str_contains($html, 'margin-top:0'))
         ->andReturnSelf();
     Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('setCallbacks')->once()->andReturnSelf();
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
@@ -519,6 +522,7 @@ test('a death certificate is appended as extra pages when one exists for the ser
         ->withArgs(fn (string $html) => str_contains($html, 'MEDICAL CERTIFICATE OF CAUSE OF DEATH'))
         ->andReturnSelf();
     Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('setCallbacks')->once()->andReturnSelf();
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
@@ -538,6 +542,7 @@ test('a referral certificate is appended as extra pages when one exists for the 
         ->withArgs(fn (string $html) => str_contains($html, 'REFERRAL CERTIFICATE') && str_contains($html, 'Stable for transfer'))
         ->andReturnSelf();
     Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('setCallbacks')->once()->andReturnSelf();
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
@@ -555,6 +560,7 @@ test('no extra certificate pages are appended when none exist for the service or
             && ! str_contains($html, 'BIRTH CERTIFICATE'))
         ->andReturnSelf();
     Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('setCallbacks')->once()->andReturnSelf();
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
@@ -574,6 +580,7 @@ test('a locked birth certificate is appended as extra pages when printing the se
         ->withArgs(fn (string $html) => str_contains($html, 'BIRTH CERTIFICATE') && str_contains($html, 'Baby Ahmed'))
         ->andReturnSelf();
     Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('setCallbacks')->once()->andReturnSelf();
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
@@ -594,6 +601,7 @@ test('an unlocked birth certificate is never appended when printing the service 
         ->withArgs(fn (string $html) => ! str_contains($html, 'BIRTH CERTIFICATE'))
         ->andReturnSelf();
     Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('setCallbacks')->once()->andReturnSelf();
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
@@ -613,6 +621,7 @@ test('the appended death certificate page embeds a scannable QR verification cod
         ->withArgs(fn (string $html) => str_contains($html, $expectedDataUri))
         ->andReturnSelf();
     Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('setCallbacks')->once()->andReturnSelf();
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();
@@ -632,6 +641,7 @@ test('the appended birth certificate page embeds a scannable QR verification cod
         ->withArgs(fn (string $html) => str_contains($html, $expectedDataUri))
         ->andReturnSelf();
     Pdf::shouldReceive('setPaper')->once()->with('A4')->andReturnSelf();
+    Pdf::shouldReceive('setCallbacks')->once()->andReturnSelf();
     Pdf::shouldReceive('stream')->once()->andReturn(response('%PDF-1.4 fake', 200, ['Content-Type' => 'application/pdf']));
 
     get(route('print-serviceorder', ['id' => $serviceOrder->id]))->assertOk();

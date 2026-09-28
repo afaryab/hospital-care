@@ -10,6 +10,7 @@ import TreatmentAttachments, {
 import {
     DeathConfirmDialog,
     DischargeDialog,
+    type Disposition,
 } from '@/elements/dept-portal/DischargeDialog';
 import {
     formatPatientAge,
@@ -29,6 +30,7 @@ import {
     CheckCircle,
     ChevronDown,
     ChevronUp,
+    ClipboardList,
     Clock,
     FileText,
     Heart,
@@ -64,6 +66,11 @@ interface Patient {
     age_days?: number;
     age_dob?: string;
     contact?: string;
+    history_htn?: boolean | null;
+    history_dm?: boolean | null;
+    history_asthma?: boolean | null;
+    history_ihd?: boolean | null;
+    allergies?: string | null;
 }
 
 interface VitalSign {
@@ -73,6 +80,8 @@ interface VitalSign {
     pulse_rate?: number | string;
     respiratory_rate?: number | string;
     oxygen_saturation?: number | string;
+    gcs?: number | string;
+    blood_glucose?: number | string;
     weight?: number | string;
     height?: number | string;
 }
@@ -85,6 +94,8 @@ interface Prescription {
     route?: string;
     instructions?: string;
     given_at?: string;
+    given_in_er?: boolean;
+    form?: string;
 }
 
 export interface Triage {
@@ -125,6 +136,7 @@ interface TreatmentRecord {
     triage_histories?: TriageHistoryEntry[];
     dental_chart?: DentalChartValue | null;
     attachments?: TreatmentAttachmentData[];
+    department_specific_data?: Record<string, unknown> | null;
 }
 
 interface PreviousVisit {
@@ -172,6 +184,7 @@ export interface DeptPatientFormProps {
     showCallButton?: boolean; // departments like EMG don't call patients by turn (default true)
     canDischarge?: boolean; // nursing staff can chart but not discharge (default true)
     requireDischargeDetails?: boolean; // EMG: Finalize becomes Discharge with a required outcome dialog
+    showEmergencyDetails?: boolean; // EMG: GCS/BSL, past history, investigations advised, advice, ER-given flag on medicines
     treatmentPlanLabel?: string; // e.g. "Imaging Report" for ULT/XRAY
     treatmentPlanPlaceholder?: string; // pre-filled template text
     chiefComplaintLabel?: string;
@@ -207,6 +220,10 @@ function statusColor(status: string) {
     if (s === 'treated' || s === 'closed')
         return 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200';
     return 'bg-slate-100 text-slate-600';
+}
+
+function fromTriState(value: string): boolean | null {
+    return value === 'yes' ? true : value === 'no' ? false : null;
 }
 
 function blankRx(): Prescription {
@@ -330,6 +347,7 @@ export default function DeptPatientForm({
     showCallButton = true,
     canDischarge = true,
     requireDischargeDetails = false,
+    showEmergencyDetails = false,
     treatmentPlanLabel = 'Treatment Plan / Notes',
     treatmentPlanPlaceholder = 'Management plan, investigations, advice…',
     chiefComplaintLabel = 'Chief Complaint',
@@ -401,8 +419,30 @@ export default function DeptPatientForm({
         pulse_rate: lastVital.pulse_rate ?? '',
         respiratory_rate: lastVital.respiratory_rate ?? '',
         oxygen_saturation: lastVital.oxygen_saturation ?? '',
+        gcs: lastVital.gcs ?? '',
+        blood_glucose: lastVital.blood_glucose ?? '',
         weight: lastVital.weight ?? '',
         height: lastVital.height ?? '',
+    });
+    const existingExtras = (existing?.department_specific_data ?? {}) as Record<
+        string,
+        unknown
+    >;
+    const [emergencyExtras, setEmergencyExtras] = useState({
+        investigations_advised: String(
+            existingExtras.investigations_advised ?? '',
+        ),
+        advice: String(existingExtras.advice ?? ''),
+        admitted_to: String(existingExtras.admitted_to ?? ''),
+    });
+    const toTriState = (v?: boolean | null) =>
+        v === true ? 'yes' : v === false ? 'no' : '';
+    const [pastHistory, setPastHistory] = useState({
+        htn: toTriState(patient?.history_htn),
+        dm: toTriState(patient?.history_dm),
+        asthma: toTriState(patient?.history_asthma),
+        ihd: toTriState(patient?.history_ihd),
+        allergies: patient?.allergies ?? '',
     });
     const [prescriptions, setPrescriptions] = useState<Prescription[]>(
         existing?.prescriptions?.length ? existing.prescriptions : [blankRx()],
@@ -458,6 +498,24 @@ export default function DeptPatientForm({
                     ? vitals
                     : null,
             dental_chart: showDentalChart ? dentalChart : undefined,
+            department_specific_data: showEmergencyDetails
+                ? {
+                      ...existingExtras,
+                      investigations_advised:
+                          emergencyExtras.investigations_advised || null,
+                      advice: emergencyExtras.advice || null,
+                      admitted_to: emergencyExtras.admitted_to || null,
+                  }
+                : undefined,
+            past_history: showEmergencyDetails
+                ? {
+                      htn: fromTriState(pastHistory.htn),
+                      dm: fromTriState(pastHistory.dm),
+                      asthma: fromTriState(pastHistory.asthma),
+                      ihd: fromTriState(pastHistory.ihd),
+                      allergies: pastHistory.allergies || null,
+                  }
+                : undefined,
             // Omitted entirely (not just null) for departments that don't use triage/treatment-time,
             // so the backend's "did triage_id change" check and its default treated_at timestamping
             // are left untouched for those departments.
@@ -497,6 +555,10 @@ export default function DeptPatientForm({
             showTriage,
             requireTreatmentTime,
             requireDischargeDetails,
+            showEmergencyDetails,
+            emergencyExtras,
+            pastHistory,
+            existingExtras,
         ],
     );
 
@@ -533,11 +595,17 @@ export default function DeptPatientForm({
     );
 
     const confirmDischarge = (payload: {
-        outcome: 'discharged' | 'referred';
+        outcome: Disposition;
         outcome_at: string;
         referral_to?: string;
+        admitted_to?: string;
         outcome_notes?: string;
     }) => {
+        const extras = {
+            ...emergencyExtras,
+            admitted_to: payload.admitted_to ?? '',
+        };
+        setEmergencyExtras(extras);
         setOutcome(payload.outcome);
         setOutcomeAt(payload.outcome_at);
         setReferralTo(payload.referral_to ?? '');
@@ -548,6 +616,17 @@ export default function DeptPatientForm({
             outcome_at: new Date(payload.outcome_at).toISOString(),
             referral_to: payload.referral_to || null,
             outcome_notes: payload.outcome_notes || null,
+            ...(showEmergencyDetails
+                ? {
+                      department_specific_data: {
+                          ...existingExtras,
+                          investigations_advised:
+                              extras.investigations_advised || null,
+                          advice: extras.advice || null,
+                          admitted_to: extras.admitted_to || null,
+                      },
+                  }
+                : {}),
         });
     };
 
@@ -1160,6 +1239,22 @@ export default function DeptPatientForm({
                                         ),
                                     },
                                     {
+                                        key: 'gcs',
+                                        label: 'GCS (3–15)',
+                                        placeholder: '15',
+                                        icon: (
+                                            <Activity className="h-3.5 w-3.5" />
+                                        ),
+                                    },
+                                    {
+                                        key: 'blood_glucose',
+                                        label: 'BSL (mg/dL)',
+                                        placeholder: '110',
+                                        icon: (
+                                            <Activity className="h-3.5 w-3.5" />
+                                        ),
+                                    },
+                                    {
                                         key: 'weight',
                                         label: 'Weight (kg)',
                                         placeholder: '70',
@@ -1171,40 +1266,151 @@ export default function DeptPatientForm({
                                         placeholder: '170',
                                         icon: <User className="h-3.5 w-3.5" />,
                                     },
-                                ].map(
-                                    ({
-                                        key,
-                                        label,
-                                        placeholder,
-                                        icon: vIcon,
-                                    }) => (
-                                        <div key={key}>
-                                            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-500">
-                                                {vIcon} {label}
-                                            </label>
-                                            <input
-                                                disabled={isFinalized}
-                                                type="number"
-                                                step="any"
-                                                value={String(
-                                                    vitals[
-                                                        key as keyof typeof vitals
-                                                    ],
-                                                )}
-                                                onChange={(e) =>
-                                                    setVitals((s) => ({
-                                                        ...s,
-                                                        [key]: e.target.value,
-                                                    }))
-                                                }
-                                                placeholder={placeholder}
-                                                className={inputClass(
-                                                    isFinalized,
-                                                )}
-                                            />
-                                        </div>
-                                    ),
-                                )}
+                                ]
+                                    .filter(
+                                        ({ key }) =>
+                                            showEmergencyDetails ||
+                                            (key !== 'gcs' &&
+                                                key !== 'blood_glucose'),
+                                    )
+                                    .map(
+                                        ({
+                                            key,
+                                            label,
+                                            placeholder,
+                                            icon: vIcon,
+                                        }) => (
+                                            <div key={key}>
+                                                <label className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-500">
+                                                    {vIcon} {label}
+                                                </label>
+                                                <input
+                                                    disabled={isFinalized}
+                                                    type="number"
+                                                    step="any"
+                                                    value={String(
+                                                        vitals[
+                                                            key as keyof typeof vitals
+                                                        ],
+                                                    )}
+                                                    onChange={(e) =>
+                                                        setVitals((s) => ({
+                                                            ...s,
+                                                            [key]: e.target
+                                                                .value,
+                                                        }))
+                                                    }
+                                                    placeholder={placeholder}
+                                                    className={inputClass(
+                                                        isFinalized,
+                                                    )}
+                                                />
+                                            </div>
+                                        ),
+                                    )}
+                            </div>
+                        </FormSection>
+                    )}
+
+                    {showEmergencyDetails && (
+                        <FormSection
+                            icon={
+                                <ClipboardList className="h-4 w-4 text-red-600" />
+                            }
+                            title="Past History, Investigations & Advice"
+                        >
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                {(
+                                    [
+                                        ['htn', 'HTN'],
+                                        ['dm', 'DM'],
+                                        ['asthma', 'Asthma'],
+                                        ['ihd', 'IHD'],
+                                    ] as const
+                                ).map(([key, label]) => (
+                                    <div key={key}>
+                                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                                            {label}
+                                        </label>
+                                        <select
+                                            disabled={isFinalized}
+                                            value={pastHistory[key]}
+                                            onChange={(e) =>
+                                                setPastHistory((h) => ({
+                                                    ...h,
+                                                    [key]: e.target.value,
+                                                }))
+                                            }
+                                            className={inputClass(isFinalized)}
+                                        >
+                                            <option value="">—</option>
+                                            <option value="yes">Yes</option>
+                                            <option value="no">No</option>
+                                        </select>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-3">
+                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                    Allergies
+                                </label>
+                                <input
+                                    disabled={isFinalized}
+                                    value={pastHistory.allergies}
+                                    onChange={(e) =>
+                                        setPastHistory((h) => ({
+                                            ...h,
+                                            allergies: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="e.g. Penicillin — rash (leave empty if none known)"
+                                    className={inputClass(isFinalized)}
+                                />
+                                <p className="mt-1 text-xs text-slate-400">
+                                    Past history and allergies are saved to the
+                                    patient and carry over to future visits.
+                                </p>
+                            </div>
+                            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-slate-500">
+                                        Investigations Advised
+                                    </label>
+                                    <textarea
+                                        disabled={isFinalized}
+                                        rows={3}
+                                        value={
+                                            emergencyExtras.investigations_advised
+                                        }
+                                        onChange={(e) =>
+                                            setEmergencyExtras((x) => ({
+                                                ...x,
+                                                investigations_advised:
+                                                    e.target.value,
+                                            }))
+                                        }
+                                        placeholder="CBC, LFTs, X-ray chest…"
+                                        className={inputClass(isFinalized)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-slate-500">
+                                        Advice / Follow-up
+                                    </label>
+                                    <textarea
+                                        disabled={isFinalized}
+                                        rows={3}
+                                        value={emergencyExtras.advice}
+                                        onChange={(e) =>
+                                            setEmergencyExtras((x) => ({
+                                                ...x,
+                                                advice: e.target.value,
+                                            }))
+                                        }
+                                        placeholder="Plenty of fluids, review in OPD after 3 days…"
+                                        className={inputClass(isFinalized)}
+                                    />
+                                </div>
                             </div>
                         </FormSection>
                     )}
@@ -1351,6 +1557,9 @@ export default function DeptPatientForm({
                                                 'Route',
                                                 'Instructions',
                                                 'Given At',
+                                                ...(showEmergencyDetails
+                                                    ? ['Given in ER']
+                                                    : []),
                                                 '',
                                             ].map((h) => (
                                                 <th
@@ -1408,6 +1617,9 @@ export default function DeptPatientForm({
                                                                                           ...r,
                                                                                           drug_name:
                                                                                               drug.name,
+                                                                                          form:
+                                                                                              drug.type ??
+                                                                                              r.form,
                                                                                           dose:
                                                                                               drug.default_dose ??
                                                                                               r.dose,
@@ -1544,6 +1756,43 @@ export default function DeptPatientForm({
                                                         )}
                                                     />
                                                 </td>
+                                                {showEmergencyDetails && (
+                                                    <td className="px-2 py-1.5 text-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            aria-label="Given in ER"
+                                                            disabled={
+                                                                isFinalized
+                                                            }
+                                                            checked={
+                                                                row.given_in_er ??
+                                                                !!row.given_at
+                                                            }
+                                                            onChange={(e) =>
+                                                                setPrescriptions(
+                                                                    (p) =>
+                                                                        p.map(
+                                                                            (
+                                                                                r,
+                                                                                i,
+                                                                            ) =>
+                                                                                i ===
+                                                                                idx
+                                                                                    ? {
+                                                                                          ...r,
+                                                                                          given_in_er:
+                                                                                              e
+                                                                                                  .target
+                                                                                                  .checked,
+                                                                                      }
+                                                                                    : r,
+                                                                        ),
+                                                                )
+                                                            }
+                                                            className="h-4 w-4"
+                                                        />
+                                                    </td>
+                                                )}
                                                 <td className="px-2 py-1.5">
                                                     {!isFinalized &&
                                                         prescriptions.length >

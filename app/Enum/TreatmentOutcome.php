@@ -9,5 +9,7 @@ enum TreatmentOutcome: string
     case Deteriorated = 'deteriorated';
     case Discharged = 'discharged';
     case Referred = 'referred';
+    case Admitted = 'admitted';
+    case LeftAgainstMedicalAdvice = 'lama';
     case Expired = 'expired';
 }

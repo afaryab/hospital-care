@@ -18,7 +18,7 @@ function nowLocal(): string {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-type Disposition = 'discharged' | 'referred';
+export type Disposition = 'discharged' | 'referred' | 'admitted' | 'lama';
 
 interface DischargeDialogProps {
     open: boolean;
@@ -28,6 +28,7 @@ interface DischargeDialogProps {
         outcome: Disposition;
         outcome_at: string;
         referral_to?: string;
+        admitted_to?: string;
         outcome_notes?: string;
     }) => void;
 }
@@ -41,6 +42,7 @@ export function DischargeDialog({
     const [disposition, setDisposition] = useState<Disposition>('discharged');
     const [outcomeAt, setOutcomeAt] = useState(nowLocal);
     const [referralTo, setReferralTo] = useState('');
+    const [admittedTo, setAdmittedTo] = useState('');
     const [notes, setNotes] = useState('');
 
     const canConfirm =
@@ -62,6 +64,8 @@ export function DischargeDialog({
                             [
                                 ['discharged', 'Discharged Home'],
                                 ['referred', 'Referred to Other Hospital'],
+                                ['admitted', 'Admitted'],
+                                ['lama', 'Left Against Medical Advice'],
                             ] as const
                         ).map(([value, label]) => (
                             <button
@@ -93,6 +97,19 @@ export function DischargeDialog({
                             required
                         />
                     </div>
+
+                    {disposition === 'admitted' && (
+                        <div>
+                            <Label htmlFor="admitted-to">Admitted To</Label>
+                            <input
+                                id="admitted-to"
+                                value={admittedTo}
+                                onChange={(e) => setAdmittedTo(e.target.value)}
+                                placeholder="Ward / unit"
+                                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                            />
+                        </div>
+                    )}
 
                     {disposition === 'referred' && (
                         <div>
@@ -136,6 +153,10 @@ export function DischargeDialog({
                                 referral_to:
                                     disposition === 'referred'
                                         ? referralTo
+                                        : undefined,
+                                admitted_to:
+                                    disposition === 'admitted'
+                                        ? admittedTo || undefined
                                         : undefined,
                                 outcome_notes: notes || undefined,
                             })

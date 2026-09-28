@@ -60,6 +60,11 @@ class Patient extends Model implements HasMedia
         'contact_hash',
         'cnic',
         'cnic_hash',
+        'history_htn',
+        'history_dm',
+        'history_asthma',
+        'history_ihd',
+        'allergies',
         'created_at',
         'updated_at',
     ];
@@ -70,6 +75,11 @@ class Patient extends Model implements HasMedia
             'cnic' => SafeEncrypted::class,
             'contact' => SafeEncrypted::class,
             'address' => SafeEncrypted::class,
+            'allergies' => SafeEncrypted::class,
+            'history_htn' => 'boolean',
+            'history_dm' => 'boolean',
+            'history_asthma' => 'boolean',
+            'history_ihd' => 'boolean',
         ];
     }
 

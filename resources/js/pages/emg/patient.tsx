@@ -47,7 +47,8 @@ export default function EmgPatient() {
                 showCallButton={false}
                 canDischarge={canDischarge ?? true}
                 requireDischargeDetails
-                chiefComplaintLabel="Presenting Complaint / Triage"
+                showEmergencyDetails
+                chiefComplaintLabel="Presenting Complaints"
                 examSystems={[
                     'General',
                     'Airway',

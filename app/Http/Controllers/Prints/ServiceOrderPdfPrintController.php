@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Prints;
 
 use App\Enum\ServiceOrderTemplate;
+use App\Helpers\PdfPageNumbers;
 use App\Http\Controllers\Controller;
 use App\Models\ServiceOrder;
 use App\Models\TreatmentRecord;
@@ -20,8 +21,9 @@ class ServiceOrderPdfPrintController extends Controller
         $serviceOrder = ServiceOrder::with([
             'patient',
             'doctor',
-            'service.department:id,name,service_order_template',
+            'service.department:id,name,slug,service_order_template',
             'treatmentRecord.triage',
+            'treatmentRecord.icd10Code:id,code,description',
             'treatmentRecord.attachments',
             'treatmentRecord.treatingDoctor',
             'treatmentRecord.vitalSigns',
@@ -51,9 +53,7 @@ class ServiceOrderPdfPrintController extends Controller
             ->limit(6)
             ->get(['id', 'service_order_id', 'diagnosis_code', 'icd10_code_id', 'treated_at']);
 
-        $template = $serviceOrder->service?->department?->service_order_template ?? ServiceOrderTemplate::default();
-
-        $html = view($template->view(), [
+        $html = view(self::resolveView($serviceOrder), [
             'serviceOrder' => $serviceOrder,
             'patient' => $patient,
             'pastDiagnoses' => $pastDiagnoses,
@@ -100,6 +100,38 @@ class ServiceOrderPdfPrintController extends Controller
 
         return Pdf::loadHTML($html)
             ->setPaper('A4')
+            ->setCallbacks(PdfPageNumbers::callbacks())
             ->stream($fileName);
+    }
+
+    /**
+     * The print view for a service order, most specific first:
+     * pdfs/service/{service}, then pdfs/service_department/{department},
+     * then the template chosen for the department, then the default.
+     * Keys are the service/department slug, lower-cased with any
+     * non-alphanumeric run turned into "_" (e.g. EMG → emg, M.O_MOR → m_o_mor).
+     */
+    public static function resolveView(ServiceOrder $serviceOrder): string
+    {
+        $service = $serviceOrder->service;
+        $department = $service?->department;
+
+        $candidates = array_filter([
+            $service?->slug ? 'pdfs.service.'.self::viewKey($service->slug) : null,
+            $department?->slug ? 'pdfs.service_department.'.self::viewKey($department->slug) : null,
+        ]);
+
+        foreach ($candidates as $candidate) {
+            if (view()->exists($candidate)) {
+                return $candidate;
+            }
+        }
+
+        return ($department?->service_order_template ?? ServiceOrderTemplate::default())->view();
+    }
+
+    private static function viewKey(string $slug): string
+    {
+        return trim(preg_replace('/[^a-z0-9]+/', '_', strtolower($slug)), '_');
     }
 }
