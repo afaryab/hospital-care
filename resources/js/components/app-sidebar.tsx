@@ -166,11 +166,13 @@ export function AppSidebar() {
             icon: Cog,
         });
 
-        adminMenuItems.push({
-            title: 'Documents',
-            href: dms.index().url,
-            icon: FolderOpen,
-        });
+        if (props.features?.documents) {
+            adminMenuItems.push({
+                title: 'Documents',
+                href: dms.index().url,
+                icon: FolderOpen,
+            });
+        }
     }
 
     const isEditingTransaction =

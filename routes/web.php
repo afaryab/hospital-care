@@ -31,6 +31,7 @@ use App\Http\Controllers\Reports\PanelPaymentReportController;
 use App\Http\Controllers\UltrasoundController;
 use App\Http\Controllers\WebController;
 use App\Http\Controllers\XrayController;
+use App\Http\Middleware\EnsureDocumentsAvailable;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -237,7 +238,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * access for when that gate is loosened later — see DmsFolderPolicy /
      * DmsDocumentPolicy.
      */
-    Route::middleware(EnsureUserIsAdmin::class)->prefix('dms')->name('dms.')->group(function () {
+    Route::middleware([EnsureUserIsAdmin::class, EnsureDocumentsAvailable::class])->prefix('dms')->name('dms.')->group(function () {
         Route::get('/{folder:uuid?}', [DmsBrowserController::class, 'index'])->name('index');
 
         Route::post('folders', [DmsFolderController::class, 'store'])->name('folders.store');
@@ -264,8 +265,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * editor tab).
      */
     Route::get('dms/documents/{document:uuid}/download', DocumentDownloadController::class)
+        ->middleware(EnsureDocumentsAvailable::class)
         ->name('dms.documents.download');
     Route::get('dms/folders/{folder:uuid}/zip', FolderZipController::class)
+        ->middleware(EnsureDocumentsAvailable::class)
         ->name('dms.folders.zip');
     Route::get('onlyoffice/editor/{document:uuid}', EditorPageController::class)
         ->name('onlyoffice.editor');

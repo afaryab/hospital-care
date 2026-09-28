@@ -121,6 +121,7 @@ const visit = (href: string, external = false) =>
 function staticCommands(
     toggleTheme: () => void,
     isDark: boolean,
+    documentsAvailable: boolean,
 ): StaticCommand[] {
     const queue = (
         title: string,
@@ -234,7 +235,7 @@ function staticCommands(
             keywords: 'dms files folders',
             icon: FolderOpen,
             href: dms.index().url,
-            visible: (can) => can.admin,
+            visible: (can) => can.admin && documentsAvailable,
         },
         {
             group: 'Go to',
@@ -474,6 +475,9 @@ export default function CommandPaletteLayout({
     const user = (pageProps as { auth?: { user?: unknown } } | undefined)?.auth
         ?.user as Parameters<typeof abilitiesFor>[0];
     const can = useMemo(() => abilitiesFor(user), [user]);
+    const documentsAvailable = !!(
+        pageProps as { features?: { documents?: boolean } } | undefined
+    )?.features?.documents;
 
     const { appearance, updateAppearance } = useAppearance();
     const isDark =
@@ -559,7 +563,7 @@ export default function CommandPaletteLayout({
         const trimmed = query.trim();
         const toggleTheme = () => updateAppearance(isDark ? 'light' : 'dark');
 
-        const commands = staticCommands(toggleTheme, isDark)
+        const commands = staticCommands(toggleTheme, isDark, documentsAvailable)
             .filter((command) => command.visible(can))
             .map((command) => ({
                 command,
@@ -597,7 +601,7 @@ export default function CommandPaletteLayout({
                 : [];
 
         return [...records, ...commands];
-    }, [query, results, can, isDark, updateAppearance]);
+    }, [query, results, can, isDark, updateAppearance, documentsAvailable]);
 
     const groups = useMemo(() => {
         const map = new Map<string, PaletteItem[]>();

@@ -34,6 +34,7 @@ export interface SharedData {
     sidebarOpen: boolean;
     timezone: string;
     hospital: Hospital;
+    features?: { documents: boolean };
     [key: string]: unknown;
 }
 
