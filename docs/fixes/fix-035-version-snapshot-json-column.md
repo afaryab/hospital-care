@@ -27,26 +27,30 @@ The tests run on SQLite, which does not validate JSON, so the suite stayed green
 New migration `2026_09_30_141636_widen_and_encrypt_version_snapshots.php`:
 
 - It changes `patient_versions.snapshot`, `treatment_record_versions.snapshot` and `service_order_versions.snapshot` to `longText`.
-- It encrypts any existing snapshot that is still plaintext. Those were written before #66 and still hold PII/PHI.
-  - It's idempotent: values that already decrypt are left alone, and it works in chunks of 200.
-- `down()` is a no-op, because encrypted snapshots can't go back into a `json` column.
+- It encrypts existing snapshots that are still plain JSON. They were written before #66 and hold PII/PHI.
+  - Only values that are valid JSON get encrypted. Anything else is already ciphertext, possibly under an older key, and is left untouched, so nothing can be double-encrypted.
+  - It's idempotent and works in chunks of 200.
+- `down()` is a real rollback. It first checks that **every** snapshot decrypts to valid JSON and aborts with no changes if any doesn't. Then it decrypts them and restores the `json` columns. Rolling back re-exposes PII/PHI and brings the edit failure back, so use it only in an emergency.
 
 `transaction_versions.snapshot` stays `json`: `TransactionVersion` uses a plain `array` cast, so it is unaffected.
 
 ### Tests
 
-`tests/Feature/Compliance/DataEncryptionTest.php` has a new test, "version snapshot columns are widened and legacy plaintext snapshots get encrypted", with one dataset case per table. It seeds a plaintext snapshot, runs the migration twice (proving it's idempotent), and asserts three things:
-- the column isn't `json`;
-- the raw value contains no plaintext;
-- the value decrypts back to the original.
+`tests/Feature/Compliance/DataEncryptionTest.php` has a new test, "version snapshot columns are widened and legacy plaintext snapshots get encrypted", with one dataset case per table. It seeds a plaintext snapshot, runs the migration twice (proving it's idempotent), and asserts that the column isn't `json`, the raw value has no plaintext, and the value decrypts back to the original. Three more tests prove that:
+- ciphertext from a foreign key is never double-encrypted;
+- rollback restores plain JSON;
+- rollback aborts with no changes when a snapshot can't be decrypted.
 
-The encryption and immutability test files pass: 20 tests, 58 assertions. On local MySQL, all three columns are now `longtext` and no plaintext patient snapshots remain.
+The encryption and immutability test files pass: 23 tests, 63 assertions. On local MySQL, `migrate` → `rollback` → `migrate` round-trips correctly: `json` with plain JSON, then `longtext` with ciphertext that decrypts through the model.
 
 ## For IT / DevOps
 
-- **Deploy:** `php artisan migrate --force`. The migration alters three columns and re-encrypts legacy rows; runtime scales with the number of version rows (about 140 ms locally).
-- **Back up before migrating.** The migration is not reversible. `down()` does nothing, and restoring the old `json` type would need the snapshots decrypted first.
-- `APP_KEY` must be the production key when the migration runs, because it encrypts with it.
+- **Before deploying:**
+  - Take a full database backup.
+  - Confirm `APP_KEY`, plus `APP_PREVIOUS_KEYS` if the key was ever rotated, is the production key and is backed up **outside** the database backups. Without it, encrypted snapshots, like every other encrypted field since #66, can't be read.
+- **Deploy:** `php artisan migrate --force`. It alters three columns (MySQL copies each table, briefly blocking writes to it) and encrypts legacy rows. Runtime grows with the number of version rows; locally it took well under a second.
+- **Rollback:** `php artisan migrate:rollback --step=1` decrypts the snapshots and restores `json`. It refuses to run, changing nothing, if any snapshot can't be decrypted with the current keys. After a rollback, edits fail again, so only roll back together with the code.
+- **Affected releases:** v0.10.2 to v0.10.4 on MySQL, where patient, treatment and service-order edits fail until this migration runs.
 
 ## For Reception Staff
 

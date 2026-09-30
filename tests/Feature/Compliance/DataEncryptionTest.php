@@ -9,6 +9,7 @@ use App\Models\ReferralCertificate;
 use App\Models\ServiceOrder;
 use App\Models\TreatmentRecord;
 use App\Models\TreatmentRecordVersion;
+use Illuminate\Encryption\Encrypter;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -185,6 +186,58 @@ test('version snapshot columns are widened and legacy plaintext snapshots get en
     'treatment record' => ['treatment_record_versions', 'treatment_record_id', fn () => TreatmentRecord::factory()->create()],
     'service order' => ['service_order_versions', 'service_order_id', fn () => ServiceOrder::factory()->create()],
 ]);
+
+function insertPatientVersionSnapshot(string $snapshot): int
+{
+    return DB::table('patient_versions')->insertGetId([
+        'patient_id' => Patient::factory()->create()->id,
+        'snapshot' => $snapshot,
+        'change_reason' => 'record_update',
+        'changed_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+}
+
+function versionSnapshotMigration(): object
+{
+    return require database_path('migrations/2026_09_30_141636_widen_and_encrypt_version_snapshots.php');
+}
+
+test('version snapshot migration never double-encrypts ciphertext from another key', function () {
+    $foreignCiphertext = (new Encrypter(Encrypter::generateKey('aes-256-cbc'), 'aes-256-cbc'))
+        ->encryptString(json_encode(['cnic' => '35202-8888888-1']));
+    $versionId = insertPatientVersionSnapshot($foreignCiphertext);
+
+    versionSnapshotMigration()->up();
+
+    expect(DB::table('patient_versions')->where('id', $versionId)->value('snapshot'))->toBe($foreignCiphertext);
+});
+
+test('version snapshot migration rolls back to plain json snapshots', function () {
+    $versionId = insertPatientVersionSnapshot(json_encode(['cnic' => '35202-9999999-1']));
+    $migration = versionSnapshotMigration();
+
+    $migration->up();
+    $migration->down();
+
+    expect(json_decode(DB::table('patient_versions')->where('id', $versionId)->value('snapshot'), true))
+        ->toBe(['cnic' => '35202-9999999-1']);
+});
+
+test('version snapshot rollback aborts without changes when a snapshot cannot be decrypted', function () {
+    $migration = versionSnapshotMigration();
+    $readableId = insertPatientVersionSnapshot(json_encode(['cnic' => '35202-1111111-1']));
+    $migration->up();
+    $encryptedReadable = DB::table('patient_versions')->where('id', $readableId)->value('snapshot');
+
+    $foreignCiphertext = (new Encrypter(Encrypter::generateKey('aes-256-cbc'), 'aes-256-cbc'))
+        ->encryptString(json_encode(['cnic' => '35202-2222222-1']));
+    insertPatientVersionSnapshot($foreignCiphertext);
+
+    expect(fn () => $migration->down())->toThrow(RuntimeException::class, 'Cannot roll back');
+    expect(DB::table('patient_versions')->where('id', $readableId)->value('snapshot'))->toBe($encryptedReadable);
+});
 
 test('service order notes_json is encrypted at rest', function () {
     $notes = [
