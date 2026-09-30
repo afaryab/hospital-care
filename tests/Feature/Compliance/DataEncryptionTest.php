@@ -9,7 +9,9 @@ use App\Models\ReferralCertificate;
 use App\Models\ServiceOrder;
 use App\Models\TreatmentRecord;
 use App\Models\TreatmentRecordVersion;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 test('patient cnic contact and address are encrypted in database', function () {
     $patient = Patient::factory()->create([
@@ -156,6 +158,33 @@ test('treatment record version snapshots do not leak plaintext PHI', function ()
     expect($rawSnapshot)->not->toContain('Original complaint text');
     expect($version->snapshot['chief_complaint'])->toBe('Original complaint text');
 });
+
+test('version snapshot columns are widened and legacy plaintext snapshots get encrypted', function (string $table, string $foreignKey, Closure $makeParent) {
+    $parentId = $makeParent()->id;
+
+    $versionId = DB::table($table)->insertGetId([
+        $foreignKey => $parentId,
+        'snapshot' => json_encode(['cnic' => '35202-7777777-1']),
+        'change_reason' => 'record_update',
+        'changed_at' => now(),
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $migration = require database_path('migrations/2026_09_30_141636_widen_and_encrypt_version_snapshots.php');
+    $migration->up();
+    $migration->up();
+
+    $rawSnapshot = DB::table($table)->where('id', $versionId)->value('snapshot');
+
+    expect(Schema::getColumnType($table, 'snapshot'))->not->toBe('json')
+        ->and($rawSnapshot)->not->toContain('35202-7777777-1')
+        ->and(json_decode(Crypt::decryptString($rawSnapshot), true))->toBe(['cnic' => '35202-7777777-1']);
+})->with([
+    'patient' => ['patient_versions', 'patient_id', fn () => Patient::factory()->create()],
+    'treatment record' => ['treatment_record_versions', 'treatment_record_id', fn () => TreatmentRecord::factory()->create()],
+    'service order' => ['service_order_versions', 'service_order_id', fn () => ServiceOrder::factory()->create()],
+]);
 
 test('service order notes_json is encrypted at rest', function () {
     $notes = [
