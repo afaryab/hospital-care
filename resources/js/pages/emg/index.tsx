@@ -29,7 +29,7 @@ export default function EmgDashboard() {
             <DeptQueueDashboard
                 deptName="Emergency"
                 accentColor="bg-red-600"
-                accentClass="text-red-600"
+                accentClass="text-red-600 dark:text-red-400"
                 icon={<Siren className="h-6 w-6" />}
                 hasAccess={isEmgDoctor}
                 orders={recentOrders ?? []}

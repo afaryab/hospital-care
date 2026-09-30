@@ -76,7 +76,7 @@ export function DischargeDialog({
                                     'rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors',
                                     disposition === value
                                         ? 'border-slate-800 bg-slate-800 text-white'
-                                        : 'border-slate-200 text-slate-600 hover:bg-slate-50',
+                                        : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/50',
                                 )}
                             >
                                 {label}
@@ -93,7 +93,7 @@ export function DischargeDialog({
                             type="datetime-local"
                             value={outcomeAt}
                             onChange={(e) => setOutcomeAt(e.target.value)}
-                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
                             required
                         />
                     </div>
@@ -106,7 +106,7 @@ export function DischargeDialog({
                                 value={admittedTo}
                                 onChange={(e) => setAdmittedTo(e.target.value)}
                                 placeholder="Ward / unit"
-                                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
                             />
                         </div>
                     )}
@@ -121,7 +121,7 @@ export function DischargeDialog({
                                 value={referralTo}
                                 onChange={(e) => setReferralTo(e.target.value)}
                                 placeholder="Hospital / facility name"
-                                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
                             />
                         </div>
                     )}
@@ -135,7 +135,7 @@ export function DischargeDialog({
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             rows={2}
-                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
                         />
                     </div>
                 </div>
@@ -213,7 +213,7 @@ export function DeathConfirmDialog({
                             type="datetime-local"
                             value={timeOfDeath}
                             onChange={(e) => setTimeOfDeath(e.target.value)}
-                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
                             required
                         />
                     </div>
@@ -226,7 +226,7 @@ export function DeathConfirmDialog({
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             rows={2}
-                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
                         />
                     </div>
                 </div>

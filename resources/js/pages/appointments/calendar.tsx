@@ -30,16 +30,20 @@ type AppointmentsCalendarProps = {
 };
 
 const priorityBadge: Record<string, string> = {
-    priority: 'bg-red-100 text-red-700',
-    medium: 'bg-amber-100 text-amber-700',
-    standard: 'bg-slate-100 text-slate-700',
+    priority: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300',
+    medium: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
+    standard:
+        'bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-200',
 };
 
 const statusBadge: Record<string, string> = {
-    scheduled: 'bg-blue-100 text-blue-700',
-    checked_in: 'bg-emerald-100 text-emerald-700',
-    no_show: 'bg-red-100 text-red-700',
-    cancelled: 'bg-slate-200 text-slate-600',
+    scheduled:
+        'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300',
+    checked_in:
+        'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300',
+    no_show: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300',
+    cancelled:
+        'bg-slate-200 dark:bg-neutral-700 text-slate-600 dark:text-neutral-300',
 };
 
 function displayName(appointment: Appointment): string {
@@ -143,7 +147,7 @@ export default function AppointmentsCalendar() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500">
+                    <div className="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-slate-500 dark:text-neutral-400">
                         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
                             (d) => (
                                 <div key={d}>{d}</div>
@@ -163,7 +167,7 @@ export default function AppointmentsCalendar() {
                             >
                                 {date && (
                                     <>
-                                        <div className="mb-1 font-semibold text-slate-500">
+                                        <div className="mb-1 font-semibold text-slate-500 dark:text-neutral-400">
                                             {Number(date.slice(8, 10))}
                                         </div>
                                         <div className="flex flex-col gap-1">
@@ -228,7 +232,7 @@ export default function AppointmentsCalendar() {
                             </h4>
                             <button
                                 onClick={() => setSelectedDate(null)}
-                                className="text-slate-400 hover:text-slate-600"
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300"
                             >
                                 ✕
                             </button>
@@ -262,7 +266,7 @@ export default function AppointmentsCalendar() {
                                     <div className="font-semibold">
                                         {displayName(appointment)}
                                     </div>
-                                    <div className="text-sm text-slate-500">
+                                    <div className="text-sm text-slate-500 dark:text-neutral-400">
                                         {appointment.service?.name}
                                         {appointment.doctor?.name
                                             ? ` — ${appointment.doctor.name}`
@@ -274,7 +278,7 @@ export default function AppointmentsCalendar() {
                                     {appointment.status === 'scheduled' && (
                                         <Button
                                             variant="outline"
-                                            className="mt-2 text-red-600"
+                                            className="mt-2 text-red-600 dark:text-red-400"
                                             onClick={() =>
                                                 cancelAppointment(appointment)
                                             }

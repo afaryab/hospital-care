@@ -31,18 +31,18 @@ export default function TablePagination({ currentPage, lastPage, makeHref }: Tab
             {currentPage > 1 ? (
                 <a
                     href={makeHref(currentPage - 1)}
-                    className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
+                    className="rounded border bg-white dark:bg-neutral-900 px-3 py-1 text-[#1c398e] hover:underline"
                     aria-label="Previous page"
                 >
                     ‹
                 </a>
             ) : (
-                <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400" aria-hidden="true">‹</span>
+                <span className="rounded border bg-gray-100 dark:bg-neutral-800 px-3 py-1 text-gray-400" aria-hidden="true">‹</span>
             )}
 
             {pages.map((p, idx) =>
                 p === '...' ? (
-                    <span key={`dots-${idx}`} className="px-3 py-1 text-gray-500">…</span>
+                    <span key={`dots-${idx}`} className="px-3 py-1 text-gray-500 dark:text-neutral-400">…</span>
                 ) : p === currentPage ? (
                     <span
                         key={p}
@@ -55,7 +55,7 @@ export default function TablePagination({ currentPage, lastPage, makeHref }: Tab
                     <a
                         key={p}
                         href={makeHref(p)}
-                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
+                        className="rounded border bg-white dark:bg-neutral-900 px-3 py-1 text-[#1c398e] hover:underline"
                     >
                         {p}
                     </a>
@@ -65,13 +65,13 @@ export default function TablePagination({ currentPage, lastPage, makeHref }: Tab
             {currentPage < lastPage ? (
                 <a
                     href={makeHref(currentPage + 1)}
-                    className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
+                    className="rounded border bg-white dark:bg-neutral-900 px-3 py-1 text-[#1c398e] hover:underline"
                     aria-label="Next page"
                 >
                     ›
                 </a>
             ) : (
-                <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400" aria-hidden="true">›</span>
+                <span className="rounded border bg-gray-100 dark:bg-neutral-800 px-3 py-1 text-gray-400" aria-hidden="true">›</span>
             )}
         </nav>
     );

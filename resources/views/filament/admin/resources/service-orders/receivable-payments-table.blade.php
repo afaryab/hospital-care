@@ -1,7 +1,7 @@
 @php $payments = $getState() ?? collect(); @endphp
 
 @if($payments->isEmpty())
-    <p class="text-sm text-gray-500 italic">No receivable payments found.</p>
+    <p class="text-sm text-gray-500 dark:text-gray-400 italic">No receivable payments found.</p>
 @else
 <div class="overflow-x-auto">
     <table class="w-full text-sm text-left">

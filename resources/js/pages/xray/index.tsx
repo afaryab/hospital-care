@@ -23,7 +23,7 @@ export default function XrayDashboard() {
             <DeptQueueDashboard
                 deptName="Radiology / X-Ray"
                 accentColor="bg-orange-600"
-                accentClass="text-orange-600"
+                accentClass="text-orange-600 dark:text-orange-400"
                 icon={<Radiation className="h-6 w-6" />}
                 hasAccess={isXrayTech}
                 orders={recentOrders ?? []}

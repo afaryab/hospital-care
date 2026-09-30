@@ -48,3 +48,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 31 | [#98](https://github.com/afaryab/hospital-care/issues/98) | New Peds (pediatrics) department with doctor profile, dashboard, API and queue | Feature | ✅ Done |
 | 32 | [#99](https://github.com/afaryab/hospital-care/issues/99) | Whole app went down when the OnlyOffice document server was unavailable | High | ✅ Fixed |
 | 33 | [#100](https://github.com/afaryab/hospital-care/issues/100) | Emergency triage note print rework; BP never saved in any department; GCS/BSL/past history not captured | High | ✅ Fixed |
+| 34 | [#102](https://github.com/afaryab/hospital-care/issues/102) | Dark theme: React pages hardcoded the light palette; Filament theme skipped Admin views | Medium | ✅ Fixed |

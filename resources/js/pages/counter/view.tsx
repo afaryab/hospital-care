@@ -102,11 +102,11 @@ export default function CounterView() {
                         <div className="flex h-full w-full flex-col gap-4 rounded-xl">
                             <div className="flex h-full flex-col divide-[#06df72] lg:divide-y">
                                 <div className="flex flex-row gap-4 pb-4 lg:pr-4">
-                                    <div className="w-full flex-1 rounded-xl border bg-white p-4 shadow-lg sm:w-auto xl:p-6">
-                                        <p className="text-3xl font-semibold text-gray-800">
+                                    <div className="w-full flex-1 rounded-xl border bg-white p-4 shadow-lg sm:w-auto xl:p-6 dark:bg-neutral-900">
+                                        <p className="text-3xl font-semibold text-gray-800 dark:text-neutral-100">
                                             {openCounter?.ct_number}
                                         </p>
-                                        <p className="mt-2 text-base leading-4 text-gray-600 xl:mt-4">
+                                        <p className="mt-2 text-base leading-4 text-gray-600 xl:mt-4 dark:text-neutral-300">
                                             CT Number
                                         </p>
                                     </div>
@@ -116,7 +116,7 @@ export default function CounterView() {
                                                 href={
                                                     counterSelectPatient().url
                                                 }
-                                                className="hover:inset-shadow-lg text-neutral-950flex h-full w-full flex-row rounded-xl border bg-white p-4 text-center shadow-lg sm:w-auto md:flex-col xl:p-6"
+                                                className="hover:inset-shadow-lg text-neutral-950flex h-full w-full flex-row rounded-xl border bg-white p-4 text-center shadow-lg sm:w-auto md:flex-col xl:p-6 dark:bg-neutral-900"
                                             >
                                                 <LucideChevronUp className="inline-block h-12 w-12 text-green-500" />
                                                 <span className="inline-block w-full text-xl font-bold">
@@ -125,7 +125,7 @@ export default function CounterView() {
                                             </Link>
                                             <Link
                                                 href={counterExpense().url}
-                                                className="hover:inset-shadow-lg text-neutral-950flex h-full w-full flex-row rounded-xl border bg-white p-4 text-center shadow-lg sm:w-auto md:flex-col xl:p-6"
+                                                className="hover:inset-shadow-lg text-neutral-950flex h-full w-full flex-row rounded-xl border bg-white p-4 text-center shadow-lg sm:w-auto md:flex-col xl:p-6 dark:bg-neutral-900"
                                             >
                                                 <LucideChevronDown className="inline-block h-12 w-12 text-red-500" />
                                                 <span className="inline-block w-full text-xl font-bold">
@@ -134,7 +134,7 @@ export default function CounterView() {
                                             </Link>
                                             <Link
                                                 href={counterClose().url}
-                                                className="hover:inset-shadow-lg text-neutral-950flex h-full w-full flex-row rounded-xl border bg-white p-4 text-center shadow-lg sm:w-auto md:flex-col xl:p-6"
+                                                className="hover:inset-shadow-lg text-neutral-950flex h-full w-full flex-row rounded-xl border bg-white p-4 text-center shadow-lg sm:w-auto md:flex-col xl:p-6 dark:bg-neutral-900"
                                             >
                                                 <LucideX className="inline-block h-12 w-12 text-yellow-500" />
                                                 <span className="inline-block w-full text-xl font-bold">
@@ -182,7 +182,7 @@ const CounterViewTabs = ({ openCounter }: { openCounter: any }) => {
 
     return (
         <>
-            <div className="flex flex-row gap-2 divide-y-0 divide-gray-300 overflow-x-auto border-b">
+            <div className="flex flex-row gap-2 divide-y-0 divide-gray-300 overflow-x-auto border-b dark:divide-neutral-700">
                 {tabConfig.map((tab) => (
                     <button
                         key={tab.key}
@@ -191,7 +191,7 @@ const CounterViewTabs = ({ openCounter }: { openCounter: any }) => {
                             'px-3 py-2 text-sm font-medium whitespace-nowrap',
                             activeTab === tab.key
                                 ? `border-b-2 border-${tab.color}-500 text-${tab.color}-600`
-                                : 'text-gray-500 hover:text-gray-700',
+                                : 'text-gray-500 hover:text-gray-700 dark:text-neutral-400 dark:hover:text-neutral-200',
                         )}
                     >
                         {tab.label}
@@ -438,14 +438,14 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                 className={clsx(
                                                     'border-l-3 px-3 py-2.5 text-center text-gray-400',
                                                     isIncome &&
-                                                        'border-l-green-500',
+                                                        'border-l-green-500 dark:border-l-green-700',
                                                     isExpense &&
                                                         !isDiscount &&
-                                                        'border-l-red-500',
+                                                        'border-l-red-500 dark:border-l-red-700',
                                                     isVoucherPay &&
-                                                        'border-l-orange-500',
+                                                        'border-l-orange-500 dark:border-l-orange-700',
                                                     isDiscount &&
-                                                        'border-l-yellow-500',
+                                                        'border-l-yellow-500 dark:border-l-yellow-700',
                                                 )}
                                             >
                                                 {openCounter.transactions
@@ -458,7 +458,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                     {transaction.tr_number}
                                                 </span>
                                                 {isRefunded && (
-                                                    <span className="ml-1 rounded bg-red-100 px-1 text-[10px] font-semibold text-red-600">
+                                                    <span className="ml-1 rounded bg-red-100 px-1 text-[10px] font-semibold text-red-600 dark:bg-red-900/40 dark:text-red-400">
                                                         REFUNDED
                                                     </span>
                                                 )}
@@ -488,11 +488,11 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                     className={clsx(
                                                         'inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
                                                         isIncome &&
-                                                            'bg-green-100 text-green-700',
+                                                            'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
                                                         isExpense &&
-                                                            'bg-red-100 text-red-700',
+                                                            'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
                                                         isVoucherPay &&
-                                                            'bg-orange-100 text-orange-700',
+                                                            'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
                                                     )}
                                                 >
                                                     {isIncome && (
@@ -523,7 +523,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                     .ps_number
                                                             }
                                                             target="_blank"
-                                                            className="font-medium text-blue-600 hover:underline"
+                                                            className="font-medium text-blue-600 hover:underline dark:text-blue-400"
                                                         >
                                                             {
                                                                 transaction
@@ -573,7 +573,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                         key={
                                                                             idx
                                                                         }
-                                                                        className="text-[10px] text-gray-500"
+                                                                        className="text-[10px] text-gray-500 dark:text-neutral-400"
                                                                     >
                                                                         {
                                                                             el
@@ -612,7 +612,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                     className="flex flex-wrap items-center gap-1"
                                                                 >
                                                                     {el.service && (
-                                                                        <span className="rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] text-green-700">
+                                                                        <span className="rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] text-green-700 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300">
                                                                             {
                                                                                 el
                                                                                     .service
@@ -621,7 +621,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                         </span>
                                                                     )}
                                                                     {el.service_recestation && (
-                                                                        <span className="rounded border border-lime-200 bg-lime-50 px-1.5 py-0.5 text-[10px] text-lime-700">
+                                                                        <span className="rounded border border-lime-200 bg-lime-50 px-1.5 py-0.5 text-[10px] text-lime-700 dark:border-lime-900 dark:bg-lime-950/40 dark:text-lime-300">
                                                                             {
                                                                                 el
                                                                                     .service_recestation
@@ -638,7 +638,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                                     .so_number
                                                                             }
                                                                             target="_blank"
-                                                                            className="rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-600 hover:bg-indigo-100"
+                                                                            className="rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-600 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-900/40"
                                                                         >
                                                                             {
                                                                                 el
@@ -648,7 +648,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                         </Link>
                                                                     )}
                                                                     {el.doctor && (
-                                                                        <span className="rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 text-[10px] text-purple-700">
+                                                                        <span className="rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 text-[10px] text-purple-700 dark:border-purple-900 dark:bg-purple-950/40 dark:text-purple-300">
                                                                             Dr.{' '}
                                                                             {
                                                                                 el
@@ -670,7 +670,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                             </span>
                                                                         )}
                                                                     {el.receaveable_id && (
-                                                                        <span className="rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] text-green-700">
+                                                                        <span className="rounded border border-green-200 bg-green-50 px-1.5 py-0.5 text-[10px] text-green-700 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300">
                                                                             Receaveable
                                                                             ID:{' '}
                                                                             {
@@ -694,7 +694,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                     className="flex flex-wrap items-center gap-1"
                                                                 >
                                                                     {el.expense_category && (
-                                                                        <span className="rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] text-red-700">
+                                                                        <span className="rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
                                                                             {
                                                                                 el
                                                                                     .expense_category
@@ -703,7 +703,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                         </span>
                                                                     )}
                                                                     {el.exp_voucher && (
-                                                                        <span className="rounded border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-[10px] text-orange-700">
+                                                                        <span className="rounded border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-[10px] text-orange-700 dark:border-orange-900 dark:bg-orange-950/40 dark:text-orange-300">
                                                                             {
                                                                                 el
                                                                                     .exp_voucher
@@ -720,7 +720,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                                     .so_number
                                                                             }
                                                                             target="_blank"
-                                                                            className="rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-600 hover:bg-indigo-100"
+                                                                            className="rounded border border-indigo-200 bg-indigo-50 px-1.5 py-0.5 text-[10px] text-indigo-600 hover:bg-indigo-100 dark:border-indigo-900 dark:bg-indigo-950/40 dark:text-indigo-400 dark:hover:bg-indigo-900/40"
                                                                         >
                                                                             {
                                                                                 el
@@ -746,13 +746,13 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                         )}
                                                     {transaction.receaveable && (
                                                         <div className="flex flex-wrap items-center gap-1">
-                                                            <span className="rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 text-[10px] text-purple-600">
+                                                            <span className="rounded border border-purple-200 bg-purple-50 px-1.5 py-0.5 text-[10px] text-purple-600 dark:border-purple-900 dark:bg-purple-950/40 dark:text-purple-400">
                                                                 Receivable
                                                             </span>
                                                             {transaction
                                                                 .receaveable
                                                                 .panel && (
-                                                                <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-700">
+                                                                <span className="rounded border border-blue-200 bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300">
                                                                     {
                                                                         transaction
                                                                             .receaveable
@@ -764,7 +764,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                             {transaction
                                                                 .receaveable
                                                                 .patient && (
-                                                                <span className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-gray-600">
+                                                                <span className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] text-gray-600 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-300">
                                                                     {
                                                                         transaction
                                                                             .receaveable
@@ -780,8 +780,8 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                         .receaveable
                                                                         .status ===
                                                                         'PAID'
-                                                                        ? 'border border-green-200 bg-green-50 text-green-700'
-                                                                        : 'border border-amber-200 bg-amber-50 text-amber-700',
+                                                                        ? 'border border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300'
+                                                                        : 'border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300',
                                                                 )}
                                                             >
                                                                 {transaction
@@ -801,7 +801,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                     ).toLocaleDateString()}
                                                                 </span>
                                                             )}
-                                                            <span className="font-mono text-[10px] text-purple-600">
+                                                            <span className="font-mono text-[10px] text-purple-600 dark:text-purple-400">
                                                                 {Number(
                                                                     transaction
                                                                         .receaveable
@@ -847,19 +847,19 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                         typeNorm(
                                                             transaction.type,
                                                         ) === 'CASH' &&
-                                                            'bg-emerald-100 text-emerald-700',
+                                                            'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
                                                         typeNorm(
                                                             transaction.type,
                                                         ) === 'CARD' &&
-                                                            'bg-sky-100 text-sky-700',
+                                                            'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
                                                         typeNorm(
                                                             transaction.type,
                                                         ) === 'CHEQUE' &&
-                                                            'bg-amber-100 text-amber-700',
+                                                            'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
                                                         typeNorm(
                                                             transaction.type,
                                                         ) === 'BANK_TRANSFER' &&
-                                                            'bg-violet-100 text-violet-700',
+                                                            'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
                                                         ![
                                                             'CASH',
                                                             'CARD',
@@ -870,7 +870,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                                 transaction.type,
                                                             ),
                                                         ) &&
-                                                            'bg-gray-100 text-gray-600',
+                                                            'bg-gray-100 text-gray-600 dark:bg-neutral-800 dark:text-neutral-300',
                                                     )}
                                                 >
                                                     {typeNorm(
@@ -883,7 +883,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                             </td>
 
                                             {/* Date */}
-                                            <td className="px-3 py-2.5 text-gray-500">
+                                            <td className="px-3 py-2.5 text-gray-500 dark:text-neutral-400">
                                                 <span
                                                     title={new Date(
                                                         transaction.created_at,
@@ -970,7 +970,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                 }).map((_, index) => (
                                     <tr
                                         key={`empty-${index}`}
-                                        className="h-10 border-b border-dotted bg-gray-50/30 dark:border-gray-100"
+                                        className="h-10 border-b border-dotted bg-gray-50/30 dark:border-gray-100 dark:bg-neutral-800/50"
                                     >
                                         <td colSpan={9}></td>
                                     </tr>
@@ -979,7 +979,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                         )}
                     {openCounter?.transactions.length == 0 && (
                         <tbody>
-                            <tr className="border-b border-dotted bg-gray-50/50 dark:border-gray-600">
+                            <tr className="border-b border-dotted bg-gray-50/50 dark:border-gray-600 dark:bg-neutral-800/50">
                                 <td
                                     colSpan={9}
                                     className="px-4 py-6 text-center text-gray-400"
@@ -994,11 +994,11 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                             <tr className="border-t-2 bg-gray-50/80 dark:bg-gray-700">
                                 <td
                                     colSpan={5}
-                                    className="px-3 py-2 text-right font-medium text-gray-500"
+                                    className="px-3 py-2 text-right font-medium text-gray-500 dark:text-neutral-400"
                                 >
                                     Cash Income
                                 </td>
-                                <td className="px-3 py-2 text-right font-mono font-semibold text-green-700">
+                                <td className="px-3 py-2 text-right font-mono font-semibold text-green-700 dark:text-green-300">
                                     {incomeByType('CASH').toLocaleString()}{' '}
                                     <span className="font-normal text-gray-400">
                                         PKR
@@ -1009,11 +1009,11 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                             <tr className="bg-gray-50/80 dark:bg-gray-700">
                                 <td
                                     colSpan={5}
-                                    className="px-3 py-2 text-right font-medium text-gray-500"
+                                    className="px-3 py-2 text-right font-medium text-gray-500 dark:text-neutral-400"
                                 >
                                     Cheque Income
                                 </td>
-                                <td className="px-3 py-2 text-right font-mono font-semibold text-green-700">
+                                <td className="px-3 py-2 text-right font-mono font-semibold text-green-700 dark:text-green-300">
                                     {incomeByType('CHEQUE').toLocaleString()}{' '}
                                     <span className="font-normal text-gray-400">
                                         PKR
@@ -1024,11 +1024,11 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                             <tr className="bg-gray-50/80 dark:bg-gray-700">
                                 <td
                                     colSpan={5}
-                                    className="px-3 py-2 text-right font-medium text-gray-500"
+                                    className="px-3 py-2 text-right font-medium text-gray-500 dark:text-neutral-400"
                                 >
                                     Bank Transfer Income
                                 </td>
-                                <td className="px-3 py-2 text-right font-mono font-semibold text-green-700">
+                                <td className="px-3 py-2 text-right font-mono font-semibold text-green-700 dark:text-green-300">
                                     {incomeByType(
                                         'BANK_TRANSFER',
                                     ).toLocaleString()}{' '}
@@ -1041,11 +1041,11 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                             <tr className="bg-gray-50/80 dark:bg-gray-700">
                                 <td
                                     colSpan={5}
-                                    className="px-3 py-2 text-right font-medium text-gray-500"
+                                    className="px-3 py-2 text-right font-medium text-gray-500 dark:text-neutral-400"
                                 >
                                     Card Income
                                 </td>
-                                <td className="px-3 py-2 text-right font-mono font-semibold text-green-700">
+                                <td className="px-3 py-2 text-right font-mono font-semibold text-green-700 dark:text-green-300">
                                     {incomeByType('CARD').toLocaleString()}{' '}
                                     <span className="font-normal text-gray-400">
                                         PKR
@@ -1056,11 +1056,11 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                             <tr className="bg-red-50/50 dark:bg-gray-700">
                                 <td
                                     colSpan={5}
-                                    className="px-3 py-2 text-right font-medium text-gray-500"
+                                    className="px-3 py-2 text-right font-medium text-gray-500 dark:text-neutral-400"
                                 >
                                     Expense Paid
                                 </td>
-                                <td className="px-3 py-2 text-right font-mono font-semibold text-red-600">
+                                <td className="px-3 py-2 text-right font-mono font-semibold text-red-600 dark:text-red-400">
                                     {sumByFilter(
                                         (tr: any) =>
                                             tr.income_or_expense === 'EXPENSE',
@@ -1074,11 +1074,11 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                             <tr className="bg-orange-50/50 dark:bg-gray-700">
                                 <td
                                     colSpan={5}
-                                    className="px-3 py-2 text-right font-medium text-gray-500"
+                                    className="px-3 py-2 text-right font-medium text-gray-500 dark:text-neutral-400"
                                 >
                                     Voucher Payments
                                 </td>
-                                <td className="px-3 py-2 text-right font-mono font-semibold text-orange-600">
+                                <td className="px-3 py-2 text-right font-mono font-semibold text-orange-600 dark:text-orange-400">
                                     {sumByFilter(
                                         (tr: any) =>
                                             tr.income_or_expense ===
@@ -1090,7 +1090,7 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                 </td>
                                 <td colSpan={3}></td>
                             </tr>
-                            <tr className="border-t-2 border-gray-300 bg-white dark:bg-gray-800">
+                            <tr className="border-t-2 border-gray-300 bg-white dark:border-neutral-700 dark:bg-gray-800">
                                 <td
                                     colSpan={5}
                                     className="px-3 py-2.5 text-right font-bold text-gray-800 dark:text-white"
@@ -1119,14 +1119,14 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                             <tr className="bg-blue-50/50 dark:bg-gray-700">
                                 <td
                                     colSpan={5}
-                                    className="px-3 py-2 text-right font-medium text-gray-500"
+                                    className="px-3 py-2 text-right font-medium text-gray-500 dark:text-neutral-400"
                                 >
                                     Net Cash{' '}
                                     <span className="text-[10px] font-normal text-gray-400">
                                         (Cash Income − Expenses)
                                     </span>
                                 </td>
-                                <td className="px-3 py-2 text-right font-mono font-semibold text-blue-700">
+                                <td className="px-3 py-2 text-right font-mono font-semibold text-blue-700 dark:text-blue-300">
                                     {(
                                         incomeByType('CASH') -
                                         sumByFilter(
@@ -1144,11 +1144,11 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                             <tr className="bg-purple-50/50 dark:bg-gray-700">
                                 <td
                                     colSpan={5}
-                                    className="px-3 py-2 text-right font-medium text-gray-500"
+                                    className="px-3 py-2 text-right font-medium text-gray-500 dark:text-neutral-400"
                                 >
                                     Receivables
                                 </td>
-                                <td className="px-3 py-2 text-right font-mono font-semibold text-purple-600">
+                                <td className="px-3 py-2 text-right font-mono font-semibold text-purple-600 dark:text-purple-400">
                                     {openCounter?.transactions
                                         .filter((tr: any) => tr.receaveable)
                                         .reduce(

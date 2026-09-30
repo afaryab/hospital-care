@@ -383,8 +383,8 @@ const PatientMiniCardInner: React.FC<PatientMiniCardProps> = ({
                     <div
                         className={
                             onPhotoClick
-                                ? 'h-16 w-16 cursor-pointer overflow-hidden rounded-md bg-gray-50 ring-2 ring-transparent transition hover:ring-blue-400'
-                                : 'h-12 w-12 bg-gray-50'
+                                ? 'h-16 w-16 cursor-pointer overflow-hidden rounded-md bg-gray-50 ring-2 ring-transparent transition hover:ring-blue-400 dark:bg-neutral-800/50'
+                                : 'h-12 w-12 bg-gray-50 dark:bg-neutral-800/50'
                         }
                         role={onPhotoClick ? 'button' : undefined}
                         tabIndex={onPhotoClick ? 0 : undefined}
@@ -423,7 +423,7 @@ const PatientMiniCardInner: React.FC<PatientMiniCardProps> = ({
                                 className="h-full w-full object-cover"
                             />
                         ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-blue-100 text-blue-600">
+                            <div className="flex h-full w-full items-center justify-center bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
                                 <span className="text-xl font-semibold">
                                     {name.charAt(0).toUpperCase()}
                                 </span>

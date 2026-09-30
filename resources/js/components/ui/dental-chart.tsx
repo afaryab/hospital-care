@@ -70,8 +70,8 @@ export default function DentalChart({ value, onChange, disabled = false, classNa
                             className={clsx(
                                 'flex h-9 w-9 flex-col items-center justify-center rounded-lg border text-[11px] font-semibold transition-colors',
                                 treated
-                                    ? 'border-teal-400 bg-teal-100 text-teal-800'
-                                    : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50',
+                                    ? 'border-teal-400 bg-teal-100 dark:bg-teal-900/40 text-teal-800 dark:text-teal-300'
+                                    : 'border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-slate-600 dark:text-neutral-300 hover:border-slate-300 dark:hover:border-neutral-700 hover:bg-slate-50 dark:hover:bg-neutral-800/50',
                                 isActive && 'ring-2 ring-teal-400 ring-offset-1',
                                 disabled && 'cursor-not-allowed opacity-60',
                             )}
@@ -87,25 +87,25 @@ export default function DentalChart({ value, onChange, disabled = false, classNa
     return (
         <div className={clsx('space-y-3', className)}>
             <div className="flex items-center justify-between">
-                <p className="text-xs text-slate-500">
-                    Click a tooth to record a procedure. {treatedCount > 0 && <span className="font-medium text-teal-700">{treatedCount} tooth/teeth recorded.</span>}
+                <p className="text-xs text-slate-500 dark:text-neutral-400">
+                    Click a tooth to record a procedure. {treatedCount > 0 && <span className="font-medium text-teal-700 dark:text-teal-300">{treatedCount} tooth/teeth recorded.</span>}
                 </p>
             </div>
 
-            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+            <div className="space-y-3 rounded-xl border border-slate-200 dark:border-neutral-800 bg-slate-50/60 dark:bg-neutral-800/50 p-3">
                 {renderRow(UPPER_ROW, 'Upper Arch (18–28)')}
                 {renderRow(LOWER_ROW, 'Lower Arch (48–38)')}
             </div>
 
             {activeTooth && (
-                <div className="rounded-xl border border-teal-200 bg-teal-50/50 p-3">
+                <div className="rounded-xl border border-teal-200 dark:border-teal-900 bg-teal-50/50 dark:bg-teal-950/40 p-3">
                     <div className="mb-2 flex items-center justify-between">
-                        <span className="text-sm font-semibold text-slate-800">Tooth {activeTooth}</span>
+                        <span className="text-sm font-semibold text-slate-800 dark:text-neutral-100">Tooth {activeTooth}</span>
                         {value[activeTooth] && (
                             <button
                                 type="button"
                                 onClick={() => removeTooth(activeTooth)}
-                                className="text-xs font-medium text-red-600 hover:text-red-800"
+                                className="text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                             >
                                 Remove
                             </button>
@@ -116,7 +116,7 @@ export default function DentalChart({ value, onChange, disabled = false, classNa
                             disabled={disabled}
                             value={value[activeTooth]?.procedure ?? ''}
                             onChange={(e) => updateTooth(activeTooth, { procedure: e.target.value })}
-                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-800 focus:border-teal-400 focus:ring-1 focus:ring-teal-300 focus:outline-none"
+                            className="w-full rounded-lg border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-2 py-1.5 text-xs text-slate-800 dark:text-neutral-100 focus:border-teal-400 focus:ring-1 focus:ring-teal-300 dark:focus:ring-teal-800 focus:outline-none"
                         >
                             <option value="">Select procedure…</option>
                             {PROCEDURES.map((p) => (
@@ -130,7 +130,7 @@ export default function DentalChart({ value, onChange, disabled = false, classNa
                             value={value[activeTooth]?.notes ?? ''}
                             onChange={(e) => updateTooth(activeTooth, { notes: e.target.value })}
                             placeholder="Notes (material, surface, etc.)"
-                            className="w-full rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs text-slate-800 focus:border-teal-400 focus:ring-1 focus:ring-teal-300 focus:outline-none"
+                            className="w-full rounded-lg border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 px-2 py-1.5 text-xs text-slate-800 dark:text-neutral-100 focus:border-teal-400 focus:ring-1 focus:ring-teal-300 dark:focus:ring-teal-800 focus:outline-none"
                         />
                     </div>
                 </div>

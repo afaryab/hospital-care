@@ -259,7 +259,7 @@ const FindOrSelectPatient: React.FC<FindOrSelectPatientProps> = ({
                     {/* Right Side - Search Results */}
                     <div className="border-l pl-6">
                         {currentStep === 'search' ? (
-                            <div className="flex h-full items-center justify-center text-gray-500">
+                            <div className="flex h-full items-center justify-center text-gray-500 dark:text-neutral-400">
                                 <div className="text-center">
                                     <Search className="mx-auto mb-4 h-12 w-12 text-gray-300" />
                                     <p>
@@ -281,8 +281,8 @@ const FindOrSelectPatient: React.FC<FindOrSelectPatientProps> = ({
                                             key={index}
                                             className={`cursor-pointer transition-all hover:shadow-md ${
                                                 match.matchType === 'exact'
-                                                    ? 'border-teal-200 bg-teal-50'
-                                                    : 'border-orange-200 bg-orange-50'
+                                                    ? 'border-teal-200 bg-teal-50 dark:border-teal-900 dark:bg-teal-950/40'
+                                                    : 'border-orange-200 bg-orange-50 dark:border-orange-900 dark:bg-orange-950/40'
                                             }`}
                                             onClick={() =>
                                                 handleSelectPatient(
@@ -314,8 +314,8 @@ const FindOrSelectPatient: React.FC<FindOrSelectPatientProps> = ({
                                                             className={`mt-1 text-xs ${
                                                                 match.matchType ===
                                                                 'exact'
-                                                                    ? 'text-teal-700'
-                                                                    : 'text-orange-700'
+                                                                    ? 'text-teal-700 dark:text-teal-300'
+                                                                    : 'text-orange-700 dark:text-orange-300'
                                                             }`}
                                                         >
                                                             {match.message}
@@ -329,7 +329,7 @@ const FindOrSelectPatient: React.FC<FindOrSelectPatientProps> = ({
 
                                     {/* Add New Patient Option */}
                                     <Card
-                                        className="cursor-pointer border-blue-200 bg-blue-50 transition-all hover:shadow-md"
+                                        className="cursor-pointer border-blue-200 bg-blue-50 transition-all hover:shadow-md dark:border-blue-900 dark:bg-blue-950/40"
                                         onClick={handleAddNew}
                                     >
                                         <CardContent className="p-4">
@@ -338,7 +338,7 @@ const FindOrSelectPatient: React.FC<FindOrSelectPatientProps> = ({
                                                     2
                                                 </div>
                                                 <div className="flex-1">
-                                                    <div className="text-sm font-medium text-blue-700">
+                                                    <div className="text-sm font-medium text-blue-700 dark:text-blue-300">
                                                         Add New
                                                     </div>
                                                 </div>

@@ -240,7 +240,7 @@ export default function ReveaveablesList() {
                                             {payments.map((payment) => (
                                                 <div
                                                     key={payment.id}
-                                                    className="text-gray-500"
+                                                    className="text-gray-500 dark:text-neutral-400"
                                                 >
                                                     Payment: {payment.tr_number}{' '}
                                                     (
@@ -266,7 +266,7 @@ export default function ReveaveablesList() {
                                                             )}
                                                             {voucher.share_amount !==
                                                                 voucher.amount && (
-                                                                <span className="text-[10px] text-gray-500">
+                                                                <span className="text-[10px] text-gray-500 dark:text-neutral-400">
                                                                     {' '}
                                                                     (of{' '}
                                                                     {formatMoney(
@@ -365,13 +365,13 @@ export default function ReveaveablesList() {
                                                         href={makeHref(
                                                             current - 1,
                                                         )}
-                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
+                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900"
                                                         aria-label="Previous page"
                                                     >
                                                         ‹
                                                     </a>
                                                 ) : (
-                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400">
+                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400 dark:bg-neutral-800">
                                                         ‹
                                                     </span>
                                                 )}
@@ -381,7 +381,7 @@ export default function ReveaveablesList() {
                                                     p === '...' ? (
                                                         <span
                                                             key={`dots-${idx}`}
-                                                            className="px-3 py-1 text-gray-500"
+                                                            className="px-3 py-1 text-gray-500 dark:text-neutral-400"
                                                         >
                                                             …
                                                         </span>
@@ -397,7 +397,7 @@ export default function ReveaveablesList() {
                                                         <a
                                                             key={p}
                                                             href={makeHref(p)}
-                                                            className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
+                                                            className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900"
                                                         >
                                                             {p}
                                                         </a>
@@ -410,13 +410,13 @@ export default function ReveaveablesList() {
                                                         href={makeHref(
                                                             current + 1,
                                                         )}
-                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
+                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900"
                                                         aria-label="Next page"
                                                     >
                                                         ›
                                                     </a>
                                                 ) : (
-                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400">
+                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400 dark:bg-neutral-800">
                                                         ›
                                                     </span>
                                                 )}

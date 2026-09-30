@@ -15,7 +15,7 @@ export default function BulletsWrapper({ bullets = [], children }: any) {
                             'rounded-bl-xl': index === bullets.length - 1,
                             'border-[#06df72] hover:border-[#1c398e] hover:bg-[#1c398e] hover:text-[#06df72] dark:bg-[#0a0a0a]':
                                 !bullet?.active,
-                            'border-black bg-[#06df72] font-bold text-black dark:bg-[#262626]':
+                            'border-black bg-[#06df72] font-bold text-black dark:bg-[#262626] dark:text-white':
                                 bullet?.active,
                         })}
                     >

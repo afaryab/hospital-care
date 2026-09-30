@@ -48,7 +48,7 @@ interface TodayStats {
 interface Props {
     deptName: string;
     accentColor: string; // Tailwind bg color for header icon, e.g. 'bg-red-600'
-    accentClass: string; // Tailwind text color, e.g. 'text-red-600'
+    accentClass: string; // Tailwind text color, e.g. 'text-red-600 dark:text-red-400'
     hasAccess: boolean;
     orders: DeptOrder[];
     stats: TodayStats;
@@ -68,25 +68,25 @@ function statusBadge(status: string) {
     const s = status.toLowerCase();
     if (s === 'in-progress')
         return (
-            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-200">
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:ring-blue-800">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-500" />{' '}
                 In Progress
             </span>
         );
     if (s === 'open')
         return (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800">
                 <Clock className="h-3 w-3" /> Waiting
             </span>
         );
     if (s === 'treated' || s === 'closed')
         return (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800">
                 <UserCheck className="h-3 w-3" /> Treated
             </span>
         );
     return (
-        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:bg-neutral-800 dark:text-neutral-300">
             {status}
         </span>
     );
@@ -231,12 +231,14 @@ export default function DeptQueueDashboard({
     if (!hasAccess) {
         return (
             <div className="flex flex-1 items-center justify-center p-8">
-                <div className="max-w-sm rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center shadow-sm">
+                <div className="max-w-sm rounded-2xl border border-amber-200 bg-amber-50 p-8 text-center shadow-sm dark:border-amber-900 dark:bg-amber-950/40">
                     <AlertCircle className="mx-auto mb-3 h-10 w-10 text-amber-500" />
-                    <h2 className="mb-2 text-lg font-semibold text-slate-800">
+                    <h2 className="mb-2 text-lg font-semibold text-slate-800 dark:text-neutral-100">
                         {deptName} Portal
                     </h2>
-                    <p className="text-sm text-slate-500">{noAccessMessage}</p>
+                    <p className="text-sm text-slate-500 dark:text-neutral-400">
+                        {noAccessMessage}
+                    </p>
                 </div>
             </div>
         );
@@ -245,7 +247,7 @@ export default function DeptQueueDashboard({
     const displayOrders = searchResults ?? orders;
 
     return (
-        <div className="min-h-full bg-gradient-to-br from-slate-50 via-white to-slate-50 p-4 md:p-6">
+        <div className="min-h-full bg-gradient-to-br from-slate-50 via-white to-slate-50 p-4 md:p-6 dark:from-neutral-950 dark:via-neutral-950 dark:to-neutral-950">
             {/* Header */}
             <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -258,15 +260,17 @@ export default function DeptQueueDashboard({
                         {icon}
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-900 md:text-2xl">
+                        <h1 className="text-xl font-bold text-slate-900 md:text-2xl dark:text-neutral-100">
                             {deptName} Dashboard
                         </h1>
-                        <p className="text-sm text-slate-500">Live queue</p>
+                        <p className="text-sm text-slate-500 dark:text-neutral-400">
+                            Live queue
+                        </p>
                     </div>
                 </div>
-                <div className="hidden items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200 sm:flex">
+                <div className="hidden items-center gap-2 rounded-xl bg-white px-3 py-2 shadow-sm ring-1 ring-slate-200 sm:flex dark:bg-neutral-900 dark:ring-neutral-700">
                     <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-                    <span className="text-sm font-medium text-slate-700">
+                    <span className="text-sm font-medium text-slate-700 dark:text-neutral-200">
                         Live Queue
                     </span>
                 </div>
@@ -278,43 +282,45 @@ export default function DeptQueueDashboard({
                     {
                         label: 'Total',
                         value: stats.total,
-                        icon: <Users className="h-5 w-5 text-slate-500" />,
-                        bg: 'bg-white',
-                        text: 'text-slate-900',
+                        icon: (
+                            <Users className="h-5 w-5 text-slate-500 dark:text-neutral-400" />
+                        ),
+                        bg: 'bg-white dark:bg-neutral-900',
+                        text: 'text-slate-900 dark:text-neutral-100',
                     },
                     {
                         label: 'Waiting',
                         value: stats.open,
                         icon: <Clock className="h-5 w-5 text-amber-500" />,
-                        bg: 'bg-amber-50',
-                        text: 'text-amber-700',
+                        bg: 'bg-amber-50 dark:bg-amber-950/40',
+                        text: 'text-amber-700 dark:text-amber-300',
                     },
                     {
                         label: 'In Progress',
                         value: stats.in_progress,
                         icon: <Activity className="h-5 w-5 text-blue-500" />,
-                        bg: 'bg-blue-50',
-                        text: 'text-blue-700',
+                        bg: 'bg-blue-50 dark:bg-blue-950/40',
+                        text: 'text-blue-700 dark:text-blue-300',
                     },
                     {
                         label: 'Treated',
                         value: stats.treated,
                         icon: (
-                            <UserCheck className="h-5 w-5 text-emerald-600" />
+                            <UserCheck className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                         ),
-                        bg: 'bg-emerald-50',
-                        text: 'text-emerald-700',
+                        bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+                        text: 'text-emerald-700 dark:text-emerald-300',
                     },
                 ].map((s) => (
                     <div
                         key={s.label}
                         className={clsx(
-                            'rounded-2xl border border-slate-200 p-4 shadow-sm',
+                            'rounded-2xl border border-slate-200 p-4 shadow-sm dark:border-neutral-800',
                             s.bg,
                         )}
                     >
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium text-slate-500">
+                            <span className="text-xs font-medium text-slate-500 dark:text-neutral-400">
                                 {s.label}
                             </span>
                             {s.icon}
@@ -332,8 +338,8 @@ export default function DeptQueueDashboard({
             </div>
 
             {/* Search */}
-            <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
-                <label className="mb-2 block text-sm font-semibold text-slate-700">
+            <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5 dark:border-neutral-800 dark:bg-neutral-900">
+                <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-neutral-200">
                     Find Patient or Service Order
                 </label>
                 <div className="relative">
@@ -342,7 +348,7 @@ export default function DeptQueueDashboard({
                         value={searchQuery}
                         onChange={onSearchInput}
                         placeholder="Enter SO number or patient name / MR#…"
-                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pr-4 pl-10 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100 focus:outline-none"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pr-4 pl-10 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-100 focus:outline-none dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-100 dark:focus:bg-neutral-900 dark:focus:ring-neutral-700"
                     />
                     {searching && (
                         <span className="absolute top-1/2 right-3 -translate-y-1/2">
@@ -351,20 +357,22 @@ export default function DeptQueueDashboard({
                     )}
                 </div>
                 {flashError && (
-                    <p className="mt-2 text-sm text-red-600">{flashError}</p>
+                    <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                        {flashError}
+                    </p>
                 )}
                 {searchQuery &&
                     searchResults !== null &&
                     searchResults.length === 0 &&
                     !searching && (
-                        <p className="mt-2 text-sm text-slate-500">
+                        <p className="mt-2 text-sm text-slate-500 dark:text-neutral-400">
                             No results for "{searchQuery}"
                         </p>
                     )}
                 {searchQuery &&
                     searchResults !== null &&
                     searchResults.length > 0 && (
-                        <div className="mt-2 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                        <div className="mt-2 divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:divide-neutral-800 dark:border-neutral-800 dark:bg-neutral-900">
                             {searchResults.map((order) => (
                                 <button
                                     key={order.id}
@@ -372,13 +380,13 @@ export default function DeptQueueDashboard({
                                     onClick={() =>
                                         router.visit(patientUrl(order.id!))
                                     }
-                                    className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-slate-50"
+                                    className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-neutral-800/50"
                                 >
                                     <div>
-                                        <p className="text-sm font-semibold text-slate-900">
+                                        <p className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                                             {order.patient?.name}
                                         </p>
-                                        <p className="text-xs text-slate-500">
+                                        <p className="text-xs text-slate-500 dark:text-neutral-400">
                                             {order.so_number} &bull;{' '}
                                             {order.patient?.ps_number}
                                         </p>
@@ -410,9 +418,9 @@ export default function DeptQueueDashboard({
             </div>
 
             {/* Queue */}
-            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4 md:px-5">
-                    <h2 className="text-base font-semibold text-slate-900">
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4 md:px-5 dark:border-neutral-800">
+                    <h2 className="text-base font-semibold text-slate-900 dark:text-neutral-100">
                         {searchResults
                             ? `Search Results (${searchResults.length})`
                             : 'My Queue'}
@@ -424,7 +432,7 @@ export default function DeptQueueDashboard({
                             setSearchResults(null);
                             refreshQueue();
                         }}
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                     >
                         Refresh
                     </button>
@@ -433,14 +441,14 @@ export default function DeptQueueDashboard({
                 {displayOrders.length === 0 ? (
                     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
                         <Users className="h-10 w-10 text-slate-300" />
-                        <p className="text-sm text-slate-500">
+                        <p className="text-sm text-slate-500 dark:text-neutral-400">
                             {searchResults
                                 ? 'No matching orders found.'
                                 : 'No patients in your queue.'}
                         </p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-slate-100">
+                    <div className="divide-y divide-slate-100 dark:divide-neutral-800">
                         {displayOrders.map((order, idx) => {
                             const status = order.status?.toLowerCase();
                             const isInProgress = status === 'in-progress';
@@ -450,9 +458,9 @@ export default function DeptQueueDashboard({
                                 <div
                                     key={order.id}
                                     className={clsx(
-                                        'flex cursor-pointer items-center gap-4 px-4 py-3 transition-colors hover:bg-slate-50 md:px-5',
+                                        'flex cursor-pointer items-center gap-4 px-4 py-3 transition-colors hover:bg-slate-50 md:px-5 dark:hover:bg-neutral-800/50',
                                         isInProgress &&
-                                            'bg-blue-50/50 hover:bg-blue-50',
+                                            'bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-950/40 dark:hover:bg-blue-950/40',
                                     )}
                                     onClick={() =>
                                         router.visit(patientUrl(order.id!))
@@ -464,8 +472,8 @@ export default function DeptQueueDashboard({
                                             isInProgress
                                                 ? 'bg-blue-600 text-white'
                                                 : isTreated
-                                                  ? 'bg-emerald-100 text-emerald-700'
-                                                  : 'bg-slate-100 text-slate-600',
+                                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                  : 'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-300',
                                         )}
                                     >
                                         {isInProgress ? (
@@ -493,7 +501,7 @@ export default function DeptQueueDashboard({
                                                     )}
                                                 />
                                             )}
-                                            <span className="truncate text-sm font-semibold text-slate-900">
+                                            <span className="truncate text-sm font-semibold text-slate-900 dark:text-neutral-100">
                                                 {order.patient?.name}
                                             </span>
                                             {order.treatment_record?.triage && (
@@ -515,7 +523,7 @@ export default function DeptQueueDashboard({
                                             )}
                                             {statusBadge(order.status)}
                                         </div>
-                                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500">
+                                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-500 dark:text-neutral-400">
                                             <span>
                                                 {order.patient?.ps_number}
                                             </span>
@@ -587,7 +595,7 @@ export default function DeptQueueDashboard({
                                                     patientUrl(order.id!),
                                                 )
                                             }
-                                            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+                                            className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800/50"
                                         >
                                             Open{' '}
                                             <ChevronRight className="h-3.5 w-3.5" />

@@ -23,7 +23,7 @@ export default function LabDashboard() {
             <DeptQueueDashboard
                 deptName="Laboratory"
                 accentColor="bg-violet-600"
-                accentClass="text-violet-600"
+                accentClass="text-violet-600 dark:text-violet-400"
                 icon={<FlaskConical className="h-6 w-6" />}
                 hasAccess={hasAccess}
                 orders={recentOrders ?? []}

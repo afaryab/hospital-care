@@ -138,9 +138,9 @@ export default function TransactionView() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Counter ${openCounter?.ct_number} `} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
-                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800">
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800 dark:bg-neutral-900 dark:text-neutral-100">
                     <BulletsWrapper bullets={bullets}>
-                        <div className="flex h-full w-full flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2">
+                        <div className="flex h-full w-full flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 dark:bg-neutral-900">
                             <div className="grid h-full grid-cols-1 gap-4 divide-x divide-[#06df72]">
                                 <div className="flex hidden h-full flex-col gap-4 pr-4">
                                     {transaction.patient && (
@@ -148,8 +148,8 @@ export default function TransactionView() {
                                             patient={transaction.patient}
                                         />
                                     )}
-                                    <div className="inset-shadow-lg flex h-full w-full max-w-96 min-w-80 flex-shrink bg-gray-300">
-                                        <div className="mx-auto my-auto w-80 rounded bg-gray-50 px-6 pt-8 shadow-lg">
+                                    <div className="inset-shadow-lg flex h-full w-full max-w-96 min-w-80 flex-shrink bg-gray-300 dark:bg-neutral-600">
+                                        <div className="mx-auto my-auto w-80 rounded bg-gray-50 px-6 pt-8 shadow-lg dark:bg-neutral-800/50">
                                             <div className="flex flex-col gap-3 border-b py-6 text-xs">
                                                 <p className="flex justify-between">
                                                     <span className="text-gray-400">
@@ -240,7 +240,7 @@ export default function TransactionView() {
                                                                     </tr>
                                                                     <tr
                                                                         className={clsx(
-                                                                            'flex bg-gray-100',
+                                                                            'flex bg-gray-100 dark:bg-neutral-800',
                                                                             {
                                                                                 // Is not last add border
                                                                                 'border-b':

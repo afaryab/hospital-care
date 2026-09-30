@@ -40,7 +40,7 @@ const PatientTransactionsHistory: React.FC<{ transactions: Transaction[] }> = ({
                                         value={transaction.amount}
                                         currency="PKR"
                                         fromMinorUnit={false}
-                                        className={`font-semibold ${transaction.income_or_expense === 'INCOME' ? 'text-green-600' : 'text-red-600'}`}
+                                        className={`font-semibold ${transaction.income_or_expense === 'INCOME' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}
                                     />
                                 </div>
                             </div>

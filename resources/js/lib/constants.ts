@@ -55,11 +55,11 @@ export function formatPatientAge(patient: PatientAgeInput): string {
 }
 
 const TRIAGE_BADGE_CLASSES: Record<string, string> = {
-    red: 'bg-red-100 text-red-700 ring-red-200',
-    yellow: 'bg-yellow-100 text-yellow-700 ring-yellow-200',
-    blue: 'bg-blue-100 text-blue-700 ring-blue-200',
-    sky: 'bg-sky-100 text-sky-700 ring-sky-200',
-    green: 'bg-green-100 text-green-700 ring-green-200',
+    red: 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 ring-red-200 dark:ring-red-800',
+    yellow: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 ring-yellow-200 dark:ring-yellow-800',
+    blue: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 ring-blue-200 dark:ring-blue-800',
+    sky: 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300 ring-sky-200 dark:ring-sky-800',
+    green: 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 ring-green-200 dark:ring-green-800',
     black: 'bg-slate-800 text-white ring-slate-900',
 };
 
@@ -67,7 +67,7 @@ const TRIAGE_BADGE_CLASSES: Record<string, string> = {
 export function triageBadgeClass(color?: string | null): string {
     return (
         TRIAGE_BADGE_CLASSES[color ?? ''] ??
-        'bg-slate-100 text-slate-600 ring-slate-200'
+        'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300 ring-slate-200 dark:ring-neutral-700'
     );
 }
 
@@ -86,32 +86,35 @@ export function triageDotClass(color?: string | null): string {
 }
 
 const TRIAGE_ACCENT_CLASSES: Record<string, string> = {
-    red: 'text-red-600',
+    red: 'text-red-600 dark:text-red-400',
     yellow: 'text-yellow-500',
-    blue: 'text-blue-600',
+    blue: 'text-blue-600 dark:text-blue-400',
     sky: 'text-sky-500',
-    green: 'text-green-600',
-    black: 'text-slate-900',
+    green: 'text-green-600 dark:text-green-400',
+    black: 'text-slate-900 dark:text-neutral-100',
 };
 
 /** Tailwind text-color class controlling a native radio input's accent color, keyed by triage color name. */
 export function triageAccentClass(color?: string | null): string {
-    return TRIAGE_ACCENT_CLASSES[color ?? ''] ?? 'text-slate-500';
+    return (
+        TRIAGE_ACCENT_CLASSES[color ?? ''] ??
+        'text-slate-500 dark:text-neutral-400'
+    );
 }
 
 const TRIAGE_SELECTED_CLASSES: Record<string, string> = {
-    red: 'border-red-300 bg-red-50 ring-1 ring-red-200',
-    yellow: 'border-yellow-300 bg-yellow-50 ring-1 ring-yellow-200',
-    blue: 'border-blue-300 bg-blue-50 ring-1 ring-blue-200',
-    sky: 'border-sky-300 bg-sky-50 ring-1 ring-sky-200',
-    green: 'border-green-300 bg-green-50 ring-1 ring-green-200',
-    black: 'border-slate-500 bg-slate-100 ring-1 ring-slate-400',
+    red: 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 ring-1 ring-red-200 dark:ring-red-800',
+    yellow: 'border-yellow-300 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/40 ring-1 ring-yellow-200 dark:ring-yellow-800',
+    blue: 'border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 ring-1 ring-blue-200 dark:ring-blue-800',
+    sky: 'border-sky-300 dark:border-sky-800 bg-sky-50 dark:bg-sky-950/40 ring-1 ring-sky-200 dark:ring-sky-800',
+    green: 'border-green-300 dark:border-green-800 bg-green-50 dark:bg-green-950/40 ring-1 ring-green-200 dark:ring-green-800',
+    black: 'border-slate-500 bg-slate-100 dark:bg-neutral-800 ring-1 ring-slate-400',
 };
 
 /** Tailwind classes for a triage radio pill's selected state, keyed by triage color name. */
 export function triageSelectedClass(color?: string | null): string {
     return (
         TRIAGE_SELECTED_CLASSES[color ?? ''] ??
-        'border-slate-400 bg-slate-100 ring-1 ring-slate-300'
+        'border-slate-400 bg-slate-100 dark:bg-neutral-800 ring-1 ring-slate-300 dark:ring-neutral-700'
     );
 }

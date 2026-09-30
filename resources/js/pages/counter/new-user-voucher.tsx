@@ -104,9 +104,9 @@ export default function NewUserVoucher({
                 title={`Counter ${openCounter?.ct_number} - New Doctor Voucher`}
             />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
-                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800">
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800 dark:bg-neutral-900 dark:text-neutral-100">
                     <BulletsWrapper bullets={bullets}>
-                        <div className="flex h-full w-full flex-row gap-4 overflow-x-auto rounded-xl bg-white p-2">
+                        <div className="flex h-full w-full flex-row gap-4 overflow-x-auto rounded-xl bg-white p-2 dark:bg-neutral-900">
                             <NewVoucherTabs
                                 openCounter={openCounter}
                                 categories={categories}
@@ -139,7 +139,9 @@ function StepIndicator({
                     'flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold',
                     isActive && 'bg-blue-600 text-white',
                     isCompleted && 'bg-green-500 text-white',
-                    !isActive && !isCompleted && 'bg-gray-200 text-gray-500',
+                    !isActive &&
+                        !isCompleted &&
+                        'bg-gray-200 text-gray-500 dark:bg-neutral-700 dark:text-neutral-400',
                 )}
             >
                 {isCompleted ? '✓' : step}
@@ -148,9 +150,9 @@ function StepIndicator({
                 className={clsx(
                     'text-sm font-medium',
                     isActive
-                        ? 'text-blue-600'
+                        ? 'text-blue-600 dark:text-blue-400'
                         : isCompleted
-                          ? 'text-green-600'
+                          ? 'text-green-600 dark:text-green-400'
                           : 'text-gray-400',
                 )}
             >
@@ -199,9 +201,9 @@ function NewVoucherTabs({
                     currentStep={step}
                     label="Select Category"
                 />
-                <div className="h-px w-8 bg-gray-300" />
+                <div className="h-px w-8 bg-gray-300 dark:bg-neutral-600" />
                 <StepIndicator step={2} currentStep={step} label="Paid To" />
-                <div className="h-px w-8 bg-gray-300" />
+                <div className="h-px w-8 bg-gray-300 dark:bg-neutral-600" />
                 <StepIndicator
                     step={3}
                     currentStep={step}
@@ -217,7 +219,7 @@ function NewVoucherTabs({
                         'flex flex-col gap-4 rounded-lg border p-4 transition-all',
                         step === 1
                             ? 'w-full'
-                            : 'w-1/4 cursor-pointer hover:bg-gray-50',
+                            : 'w-1/4 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-800/50',
                     )}
                     onClick={() => step > 1 && setStep(1)}
                 >
@@ -234,8 +236,8 @@ function NewVoucherTabs({
                                     className={clsx(
                                         'flex items-center gap-2 rounded-md border p-3 text-left transition-colors',
                                         selectedCategoryId === cat.id.toString()
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'hover:bg-gray-100',
+                                            ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+                                            : 'hover:bg-gray-100 dark:hover:bg-neutral-800',
                                     )}
                                 >
                                     <div
@@ -244,7 +246,7 @@ function NewVoucherTabs({
                                             selectedCategoryId ===
                                                 cat.id.toString()
                                                 ? 'border-blue-500 bg-blue-500'
-                                                : 'border-gray-300',
+                                                : 'border-gray-300 dark:border-neutral-700',
                                         )}
                                     >
                                         {selectedCategoryId ===
@@ -257,7 +259,7 @@ function NewVoucherTabs({
                             ))}
                         </div>
                     ) : (
-                        <div className="rounded-md bg-green-50 p-2 text-sm text-green-700">
+                        <div className="rounded-md bg-green-50 p-2 text-sm text-green-700 dark:bg-green-950/40 dark:text-green-300">
                             {selectedCategory?.name ?? 'Selected'}
                         </div>
                     )}
@@ -270,7 +272,7 @@ function NewVoucherTabs({
                             'flex flex-col gap-4 rounded-lg border p-4 transition-all',
                             step === 2
                                 ? 'flex-1'
-                                : 'w-1/4 cursor-pointer hover:bg-gray-50',
+                                : 'w-1/4 cursor-pointer hover:bg-gray-50 dark:hover:bg-neutral-800/50',
                         )}
                         onClick={() => step > 2 && setStep(2)}
                     >
@@ -285,8 +287,8 @@ function NewVoucherTabs({
                                         className={clsx(
                                             'flex items-center gap-2 rounded-md border p-3 text-left transition-colors',
                                             selectedUserId === user.id
-                                                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                                : 'hover:bg-gray-100',
+                                                ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+                                                : 'hover:bg-gray-100 dark:hover:bg-neutral-800',
                                         )}
                                     >
                                         {user.name}
@@ -294,7 +296,7 @@ function NewVoucherTabs({
                                 ))}
                             </div>
                         ) : (
-                            <div className="rounded-md bg-green-50 p-2 text-sm text-green-700">
+                            <div className="rounded-md bg-green-50 p-2 text-sm text-green-700 dark:bg-green-950/40 dark:text-green-300">
                                 {selectedUser?.name ?? 'Selected'}
                             </div>
                         )}
@@ -431,7 +433,7 @@ function VoucherDetailsForm({
         <div className="flex flex-col gap-4">
             {/* Errors */}
             {errors?.service_order_ids && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">
+                <div className="rounded-md bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
                     {errors.service_order_ids}
                 </div>
             )}
@@ -477,7 +479,7 @@ function VoucherDetailsForm({
 
                     <div className="max-h-72 overflow-auto rounded-md border">
                         <table className="w-full text-sm">
-                            <thead className="sticky top-0 bg-gray-50">
+                            <thead className="sticky top-0 bg-gray-50 dark:bg-neutral-800/50">
                                 <tr className="border-b">
                                     <th className="p-2 text-left">
                                         <input
@@ -536,7 +538,8 @@ function VoucherDetailsForm({
                                                 'cursor-pointer border-b last:border-b-0 hover:bg-muted/40',
                                                 selectedServiceOrderIds.includes(
                                                     so.id,
-                                                ) && 'bg-blue-50',
+                                                ) &&
+                                                    'bg-blue-50 dark:bg-blue-950/40',
                                             )}
                                             onClick={() =>
                                                 toggleServiceOrder(so.id)
@@ -598,7 +601,9 @@ function VoucherDetailsForm({
                     onChange={(e) => setAmount(e.target.value)}
                 />
                 {errors?.amount && (
-                    <p className="text-sm text-red-600">{errors.amount}</p>
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                        {errors.amount}
+                    </p>
                 )}
             </div>
             <div className="space-y-2">
@@ -609,7 +614,9 @@ function VoucherDetailsForm({
                     onChange={(e) => setDescription(e.target.value)}
                 />
                 {errors?.description && (
-                    <p className="text-sm text-red-600">{errors.description}</p>
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                        {errors.description}
+                    </p>
                 )}
             </div>
             <Button

@@ -692,7 +692,7 @@ export default function CommandPaletteLayout({
                         {loading && (
                             <Loader2 className="h-4 w-4 shrink-0 animate-spin text-neutral-400" />
                         )}
-                        <kbd className="hidden rounded border border-neutral-200 px-1.5 py-0.5 text-[10px] text-neutral-500 sm:block dark:border-neutral-700">
+                        <kbd className="hidden rounded border border-neutral-200 px-1.5 py-0.5 text-[10px] text-neutral-500 sm:block dark:border-neutral-700 dark:text-neutral-400">
                             Esc
                         </kbd>
                     </div>
@@ -704,13 +704,13 @@ export default function CommandPaletteLayout({
                         className="max-h-[60vh] overflow-y-auto p-2"
                     >
                         {items.length === 0 && (
-                            <div className="px-3 py-10 text-center text-sm text-neutral-500">
+                            <div className="px-3 py-10 text-center text-sm text-neutral-500 dark:text-neutral-400">
                                 {loading ? 'Searching…' : 'No results found.'}
                             </div>
                         )}
                         {groups.map(([group, groupItems]) => (
                             <div key={group} className="mb-2">
-                                <div className="px-3 py-1.5 text-xs font-medium tracking-wide text-neutral-500 uppercase">
+                                <div className="px-3 py-1.5 text-xs font-medium tracking-wide text-neutral-500 uppercase dark:text-neutral-400">
                                     {group}
                                 </div>
                                 {groupItems.map((item) => {
@@ -748,7 +748,7 @@ export default function CommandPaletteLayout({
                                                             index ===
                                                                 activeIndex
                                                                 ? 'text-blue-100'
-                                                                : 'text-neutral-500',
+                                                                : 'text-neutral-500 dark:text-neutral-400',
                                                         )}
                                                     >
                                                         {item.subtitle}
@@ -765,7 +765,7 @@ export default function CommandPaletteLayout({
                         ))}
                     </div>
 
-                    <div className="flex items-center justify-between border-t border-neutral-200 px-4 py-2 text-xs text-neutral-500 dark:border-neutral-800">
+                    <div className="flex items-center justify-between border-t border-neutral-200 px-4 py-2 text-xs text-neutral-500 dark:border-neutral-800 dark:text-neutral-400">
                         <span>↑↓ to move · Enter to open · Esc to close</span>
                         <span>Ctrl/⌘ K toggles</span>
                     </div>

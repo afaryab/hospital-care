@@ -88,7 +88,7 @@ export default function MyPatients() {
                             <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                                 My Patients
                             </h1>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 dark:text-neutral-400">
                                 Service orders assigned to you ({stats.total}{' '}
                                 total).
                             </p>
@@ -143,7 +143,7 @@ export default function MyPatients() {
                                         e.key === 'Enter' && apply()
                                     }
                                     placeholder="SO#, name, MR#…"
-                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-9 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-9 text-sm focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:focus:bg-neutral-900 dark:focus:ring-indigo-800"
                                 />
                             </div>
                         </div>
@@ -212,7 +212,7 @@ export default function MyPatients() {
                         <button
                             type="button"
                             onClick={clearAll}
-                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-800"
+                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-800 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                         >
                             Clear
                         </button>
@@ -250,7 +250,7 @@ export default function MyPatients() {
                                     <tr>
                                         <td
                                             colSpan={6}
-                                            className="px-4 py-12 text-center text-sm text-slate-500"
+                                            className="px-4 py-12 text-center text-sm text-slate-500 dark:text-neutral-400"
                                         >
                                             No service orders match these
                                             filters.
@@ -262,7 +262,7 @@ export default function MyPatients() {
                                         key={o.id}
                                         className="border-t border-slate-100 hover:bg-slate-50 dark:border-gray-800 dark:hover:bg-gray-800"
                                     >
-                                        <td className="px-4 py-2 text-xs text-slate-500">
+                                        <td className="px-4 py-2 text-xs text-slate-500 dark:text-neutral-400">
                                             {new Date(
                                                 o.created_at,
                                             ).toLocaleDateString()}
@@ -274,11 +274,11 @@ export default function MyPatients() {
                                             <div className="font-medium text-slate-800 dark:text-slate-100">
                                                 {o.patient?.name ?? '—'}
                                             </div>
-                                            <div className="text-xs text-slate-500">
+                                            <div className="text-xs text-slate-500 dark:text-neutral-400">
                                                 {o.patient?.ps_number}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-2 text-xs text-slate-600">
+                                        <td className="px-4 py-2 text-xs text-slate-600 dark:text-neutral-300">
                                             {o.service?.name ?? '—'}
                                         </td>
                                         <td className="px-4 py-2">
@@ -304,7 +304,7 @@ export default function MyPatients() {
                     {/* Pagination */}
                     {orders.last_page > 1 && (
                         <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2 text-xs dark:border-gray-800">
-                            <p className="text-slate-500">
+                            <p className="text-slate-500 dark:text-neutral-400">
                                 Page {orders.current_page} of {orders.last_page}{' '}
                                 · {orders.total} total
                             </p>
@@ -320,7 +320,7 @@ export default function MyPatients() {
                                             l.active
                                                 ? 'bg-indigo-600 text-white'
                                                 : l.url
-                                                  ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-gray-800 dark:text-slate-200'
+                                                  ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-gray-800 dark:text-slate-200 dark:hover:bg-neutral-700'
                                                   : 'cursor-not-allowed text-slate-300',
                                         )}
                                         dangerouslySetInnerHTML={{
@@ -347,10 +347,13 @@ function StatTile({
     tone: 'positive' | 'negative' | 'warning' | 'info';
 }) {
     const tones: Record<string, string> = {
-        positive: 'bg-emerald-50 text-emerald-700',
-        negative: 'bg-rose-50 text-rose-700',
-        warning: 'bg-amber-50 text-amber-700',
-        info: 'bg-sky-50 text-sky-700',
+        positive:
+            'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300',
+        negative:
+            'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300',
+        warning:
+            'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300',
+        info: 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300',
     };
     return (
         <div
@@ -370,18 +373,22 @@ function StatTile({
 function StatusBadge({ status }: { status: string }) {
     const s = status?.toLowerCase();
     const map: Record<string, string> = {
-        open: 'bg-amber-100 text-amber-700',
-        'in-progress': 'bg-blue-100 text-blue-700',
-        treated: 'bg-sky-100 text-sky-700',
-        closed: 'bg-emerald-100 text-emerald-700',
-        refunded: 'bg-rose-100 text-rose-700',
-        cancelled: 'bg-slate-100 text-slate-600',
+        open: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
+        'in-progress':
+            'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300',
+        treated: 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300',
+        closed: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300',
+        refunded:
+            'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300',
+        cancelled:
+            'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300',
     };
     return (
         <span
             className={clsx(
                 'rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase',
-                map[s] ?? 'bg-slate-100 text-slate-600',
+                map[s] ??
+                    'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-300',
             )}
         >
             {s ?? '—'}

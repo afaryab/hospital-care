@@ -123,13 +123,18 @@ function wardTypeColor(type: string) {
     return (
         (
             {
-                icu: 'bg-red-50 border-red-200 text-red-800',
-                surgical: 'bg-orange-50 border-orange-200 text-orange-800',
-                maternity: 'bg-pink-50 border-pink-200 text-pink-800',
-                pediatric: 'bg-sky-50 border-sky-200 text-sky-800',
-                isolation: 'bg-slate-50 border-slate-200 text-slate-700',
+                icu: 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900 text-red-800 dark:text-red-300',
+                surgical:
+                    'bg-orange-50 dark:bg-orange-950/40 border-orange-200 dark:border-orange-900 text-orange-800 dark:text-orange-300',
+                maternity:
+                    'bg-pink-50 dark:bg-pink-950/40 border-pink-200 dark:border-pink-900 text-pink-800 dark:text-pink-300',
+                pediatric:
+                    'bg-sky-50 dark:bg-sky-950/40 border-sky-200 dark:border-sky-900 text-sky-800 dark:text-sky-300',
+                isolation:
+                    'bg-slate-50 dark:bg-neutral-800/50 border-slate-200 dark:border-neutral-800 text-slate-700 dark:text-neutral-200',
             } as Record<string, string>
-        )[type] ?? 'bg-teal-50 border-teal-200 text-teal-800'
+        )[type] ??
+        'bg-teal-50 dark:bg-teal-950/40 border-teal-200 dark:border-teal-900 text-teal-800 dark:text-teal-300'
     );
 }
 
@@ -143,7 +148,7 @@ function bedStatusDot(status: string) {
                 maintenance: 'bg-slate-400',
                 cleaning: 'bg-blue-400',
             } as Record<string, string>
-        )[status] ?? 'bg-slate-300'
+        )[status] ?? 'bg-slate-300 dark:bg-neutral-600'
     );
 }
 
@@ -316,18 +321,18 @@ export default function IndDashboard() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Indoor Department" />
 
-            <div className="flex h-full flex-col bg-slate-50">
+            <div className="flex h-full flex-col bg-slate-50 dark:bg-neutral-800/50">
                 {/* Header */}
-                <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:px-6">
+                <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 md:px-6 dark:border-neutral-800 dark:bg-neutral-900">
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-sm">
                             <BedDouble className="h-5 w-5 text-white" />
                         </div>
                         <div>
-                            <h1 className="text-base font-bold text-slate-900 md:text-lg">
+                            <h1 className="text-base font-bold text-slate-900 md:text-lg dark:text-neutral-100">
                                 Indoor Department
                             </h1>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 dark:text-neutral-400">
                                 Ward & Bed Management
                             </p>
                         </div>
@@ -336,7 +341,7 @@ export default function IndDashboard() {
                         type="button"
                         onClick={() => refreshSnapshot()}
                         disabled={refreshing}
-                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                     >
                         <RefreshCw
                             className={clsx(
@@ -353,10 +358,10 @@ export default function IndDashboard() {
                     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
                         <AlertCircle className="h-12 w-12 text-red-400" />
                         <div>
-                            <h2 className="text-lg font-semibold text-red-800">
+                            <h2 className="text-lg font-semibold text-red-800 dark:text-red-300">
                                 Access Restricted
                             </h2>
-                            <p className="mt-1 text-sm text-red-600">
+                            <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                                 You need an <strong>Indoor Doctor</strong>{' '}
                                 profile to access this dashboard.
                             </p>
@@ -367,37 +372,37 @@ export default function IndDashboard() {
                 {isIndDoctor && (
                     <div className="flex flex-1 overflow-hidden">
                         {/* ── LEFT: Ward/Bed Map ─────────────────────────────── */}
-                        <div className="flex w-full flex-col overflow-y-auto border-r border-slate-200 bg-white md:w-3/5 lg:w-2/3">
+                        <div className="flex w-full flex-col overflow-y-auto border-r border-slate-200 bg-white md:w-3/5 lg:w-2/3 dark:border-neutral-800 dark:bg-neutral-900">
                             {/* Bed stats */}
-                            <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100">
+                            <div className="grid grid-cols-3 divide-x divide-slate-100 border-b border-slate-100 dark:divide-neutral-800 dark:border-neutral-800">
                                 <div className="px-4 py-3 text-center">
-                                    <p className="text-2xl font-bold text-slate-900">
+                                    <p className="text-2xl font-bold text-slate-900 dark:text-neutral-100">
                                         {totalBeds}
                                     </p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-slate-500 dark:text-neutral-400">
                                         Total Beds
                                     </p>
                                 </div>
                                 <div className="px-4 py-3 text-center">
-                                    <p className="text-2xl font-bold text-red-600">
+                                    <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                                         {occupiedBeds}
                                     </p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-slate-500 dark:text-neutral-400">
                                         Occupied
                                     </p>
                                 </div>
                                 <div className="px-4 py-3 text-center">
-                                    <p className="text-2xl font-bold text-emerald-600">
+                                    <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                                         {availableBeds}
                                     </p>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-slate-500 dark:text-neutral-400">
                                         Available
                                     </p>
                                 </div>
                             </div>
 
                             {/* Legend */}
-                            <div className="flex items-center gap-4 border-b border-slate-100 bg-slate-50 px-4 py-2">
+                            <div className="flex items-center gap-4 border-b border-slate-100 bg-slate-50 px-4 py-2 dark:border-neutral-800 dark:bg-neutral-800/50">
                                 {[
                                     {
                                         label: 'Available',
@@ -412,7 +417,7 @@ export default function IndDashboard() {
                                 ].map(({ label, dot }) => (
                                     <div
                                         key={label}
-                                        className="flex items-center gap-1.5 text-xs text-slate-500"
+                                        className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-neutral-400"
                                     >
                                         <span
                                             className={clsx(
@@ -430,7 +435,7 @@ export default function IndDashboard() {
                                 {wards.length === 0 && (
                                     <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
                                         <Building2 className="h-10 w-10 text-slate-300" />
-                                        <p className="text-sm text-slate-500">
+                                        <p className="text-sm text-slate-500 dark:text-neutral-400">
                                             No wards configured. Add them in
                                             Admin → Indoor.
                                         </p>
@@ -451,8 +456,8 @@ export default function IndDashboard() {
                         {/* ── RIGHT: Queue + Search ──────────────────────────── */}
                         <div className="flex w-full flex-col overflow-y-auto md:w-2/5 lg:w-1/3">
                             {/* Search */}
-                            <div className="border-b border-slate-200 bg-white p-4">
-                                <label className="mb-2 block text-xs font-semibold text-slate-700">
+                            <div className="border-b border-slate-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
+                                <label className="mb-2 block text-xs font-semibold text-slate-700 dark:text-neutral-200">
                                     Find Service Order / Patient
                                 </label>
                                 <div className="relative">
@@ -461,7 +466,7 @@ export default function IndDashboard() {
                                         value={searchQuery}
                                         onChange={onSearchInput}
                                         placeholder="SO number or Patient MR#..."
-                                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pr-4 pl-9 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:outline-none"
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pr-4 pl-9 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-100 dark:focus:bg-neutral-900 dark:focus:ring-indigo-800"
                                     />
                                     {searching && (
                                         <span className="absolute top-1/2 right-3 -translate-y-1/2">
@@ -470,7 +475,7 @@ export default function IndDashboard() {
                                     )}
                                 </div>
                                 {searchQuery && allSearchResults.length > 0 && (
-                                    <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                                    <div className="mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
                                         {allSearchResults.map((order) => (
                                             <SearchResultRow
                                                 key={order.id}
@@ -495,7 +500,7 @@ export default function IndDashboard() {
                                 {searchQuery &&
                                     !searching &&
                                     allSearchResults.length === 0 && (
-                                        <p className="mt-2 text-xs text-slate-500">
+                                        <p className="mt-2 text-xs text-slate-500 dark:text-neutral-400">
                                             No results for "{searchQuery}"
                                         </p>
                                     )}
@@ -503,8 +508,8 @@ export default function IndDashboard() {
 
                             {/* Unassigned Queue */}
                             <div className="flex-1 overflow-y-auto">
-                                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2.5">
-                                    <h3 className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2.5 dark:border-neutral-800 dark:bg-neutral-800/50">
+                                    <h3 className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-neutral-200">
                                         <Clock className="h-3.5 w-3.5 text-amber-500" />
                                         Waiting for Bed ({queue.length})
                                     </h3>
@@ -519,7 +524,7 @@ export default function IndDashboard() {
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="divide-y divide-slate-100">
+                                    <div className="divide-y divide-slate-100 dark:divide-neutral-800">
                                         {queue.map((order) => (
                                             <QueueRow
                                                 key={order.id}
@@ -544,9 +549,9 @@ export default function IndDashboard() {
             {/* Bed Assignment Modal */}
             {assignModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                    <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl">
-                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                            <h3 className="text-sm font-semibold text-slate-900">
+                    <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl dark:bg-neutral-900">
+                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-neutral-800">
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                                 Assign Bed
                             </h3>
                             <button
@@ -555,22 +560,22 @@ export default function IndDashboard() {
                                     setAssignModal(null);
                                     setSelectedBedId('');
                                 }}
-                                className="text-slate-400 hover:text-slate-600"
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300"
                             >
                                 <X className="h-4 w-4" />
                             </button>
                         </div>
                         <div className="p-5">
-                            <div className="mb-3 rounded-xl bg-slate-50 px-4 py-3">
-                                <p className="text-sm font-semibold text-slate-900">
+                            <div className="mb-3 rounded-xl bg-slate-50 px-4 py-3 dark:bg-neutral-800/50">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                                     {assignModal.order.patient?.name}
                                 </p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-slate-500 dark:text-neutral-400">
                                     {assignModal.order.so_number} &bull;{' '}
                                     {assignModal.order.patient?.ps_number}
                                 </p>
                             </div>
-                            <label className="mb-1 block text-xs font-medium text-slate-600">
+                            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-neutral-300">
                                 Select Available Bed
                             </label>
                             <select
@@ -580,7 +585,7 @@ export default function IndDashboard() {
                                         Number(e.target.value) || '',
                                     )
                                 }
-                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-indigo-800"
                             >
                                 <option value="">— Choose a bed —</option>
                                 {availableBedOptions.map((b) => (
@@ -590,19 +595,19 @@ export default function IndDashboard() {
                                 ))}
                             </select>
                             {availableBedOptions.length === 0 && (
-                                <p className="mt-2 text-xs text-amber-600">
+                                <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
                                     No available beds. Check ward management.
                                 </p>
                             )}
                         </div>
-                        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+                        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3 dark:border-neutral-800">
                             <button
                                 type="button"
                                 onClick={() => {
                                     setAssignModal(null);
                                     setSelectedBedId('');
                                 }}
-                                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                             >
                                 Cancel
                             </button>
@@ -748,10 +753,10 @@ function BedBlock({
             className={clsx(
                 'max-w-[150px] min-w-[120px] flex-1 rounded-xl border p-2.5 transition-all',
                 isOccupied
-                    ? 'cursor-pointer border-red-200 bg-red-50 hover:bg-red-100'
+                    ? 'cursor-pointer border-red-200 bg-red-50 hover:bg-red-100 dark:border-red-900 dark:bg-red-950/40 dark:hover:bg-red-900/40'
                     : bed.status === 'available'
-                      ? 'border-emerald-100 bg-emerald-50/50'
-                      : 'border-slate-200 bg-slate-100',
+                      ? 'border-emerald-100 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/40'
+                      : 'border-slate-200 bg-slate-100 dark:border-neutral-800 dark:bg-neutral-800',
             )}
             onClick={() => {
                 if (isOccupied && assignment?.serviceOrder) {
@@ -771,16 +776,16 @@ function BedBlock({
                         bedStatusDot(bed.status),
                     )}
                 />
-                <span className="truncate text-xs font-bold text-slate-700">
+                <span className="truncate text-xs font-bold text-slate-700 dark:text-neutral-200">
                     Bed {bed.bed_number}
                 </span>
             </div>
             {isOccupied && assignment ? (
                 <>
-                    <p className="mt-1 truncate text-xs font-semibold text-slate-800">
+                    <p className="mt-1 truncate text-xs font-semibold text-slate-800 dark:text-neutral-100">
                         {assignment.patient?.name}
                     </p>
-                    <p className="truncate text-[10px] text-slate-500">
+                    <p className="truncate text-[10px] text-slate-500 dark:text-neutral-400">
                         {assignment.patient?.ps_number} &bull;{' '}
                         {ageDisplay(assignment.patient)} &bull;{' '}
                         {genderLabel(assignment.patient?.gender)}
@@ -816,15 +821,15 @@ function QueueRow({
     onAssign: () => void;
 }) {
     return (
-        <div className="flex items-start gap-3 bg-white px-4 py-3 transition-colors hover:bg-slate-50">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+        <div className="flex items-start gap-3 bg-white px-4 py-3 transition-colors hover:bg-slate-50 dark:bg-neutral-900 dark:hover:bg-neutral-800/50">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
                 <Clock className="h-3.5 w-3.5" />
             </div>
             <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-900">
+                <p className="truncate text-sm font-semibold text-slate-900 dark:text-neutral-100">
                     {order.patient?.name}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-neutral-400">
                     {order.patient?.ps_number} &bull; {ageDisplay}
                 </p>
                 <p className="text-xs text-slate-400">{order.so_number}</p>
@@ -840,7 +845,7 @@ function QueueRow({
                 <button
                     type="button"
                     onClick={onOpen}
-                    className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600"
+                    className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300"
                 >
                     Open file <ChevronRight className="h-3 w-3" />
                 </button>
@@ -863,12 +868,12 @@ function SearchResultRow({
     onAssign: () => void;
 }) {
     return (
-        <div className="flex items-center justify-between px-4 py-3 hover:bg-slate-50">
+        <div className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-neutral-800/50">
             <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-slate-900">
+                <p className="truncate text-sm font-semibold text-slate-900 dark:text-neutral-100">
                     {order.patient?.name}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-neutral-400">
                     {order.so_number} &bull; {ageDisplay}
                 </p>
             </div>
@@ -883,7 +888,7 @@ function SearchResultRow({
                 <button
                     type="button"
                     onClick={onOpen}
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                 >
                     File
                 </button>

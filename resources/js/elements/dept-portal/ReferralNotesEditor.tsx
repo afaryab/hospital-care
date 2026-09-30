@@ -156,7 +156,7 @@ export default function ReferralNotesEditor({
     disabled = false,
 }: ReferralNotesEditorProps) {
     return (
-        <div className="rounded-lg border border-slate-200 [&_.ck-editor__editable]:min-h-[140px] [&_.ck-editor__editable]:px-3 [&_.ck-editor__editable]:py-2">
+        <div className="rounded-lg border border-slate-200 dark:border-neutral-800 [&_.ck-editor__editable]:min-h-[140px] [&_.ck-editor__editable]:px-3 [&_.ck-editor__editable]:py-2">
             <CKEditor
                 editor={ClassicEditor}
                 disabled={disabled}

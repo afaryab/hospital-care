@@ -1,6 +1,6 @@
 <div class="space-y-4">
     @if($cheques->isEmpty())
-        <div class="text-center py-8 text-gray-500">No cheques recorded for this panel.</div>
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">No cheques recorded for this panel.</div>
     @else
         <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
             <table class="w-full text-sm text-left">
@@ -24,15 +24,15 @@
                             <td class="px-4 py-3">{{ $cheque->due_date ? $cheque->due_date->format('d M Y') : '—' }}</td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                    @if($cheque->status === 'received') bg-green-100 text-green-700
-                                    @elseif($cheque->status === 'bounced') bg-red-100 text-red-700
-                                    @else bg-yellow-100 text-yellow-700
+                                    @if($cheque->status === 'received') bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300
+                                    @elseif($cheque->status === 'bounced') bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300
+                                    @else bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300
                                     @endif">
                                     {{ ucfirst($cheque->status) }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-gray-500">{{ $cheque->received_at ? $cheque->received_at->format('d M Y H:i') : '—' }}</td>
-                            <td class="px-4 py-3 text-gray-500 max-w-xs truncate">{{ $cheque->notes ?? '—' }}</td>
+                            <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $cheque->received_at ? $cheque->received_at->format('d M Y H:i') : '—' }}</td>
+                            <td class="px-4 py-3 text-gray-500 dark:text-gray-400 max-w-xs truncate">{{ $cheque->notes ?? '—' }}</td>
                         </tr>
                     @endforeach
                 </tbody>

@@ -90,7 +90,7 @@ export default function MyPayments() {
                             <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">
                                 My Payments
                             </h1>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 dark:text-neutral-400">
                                 {isPatientTransactions
                                     ? `Transactions paid by patients you manage (${rows.total} total).`
                                     : `Expense vouchers issued to you (${rows.total} total).`}
@@ -144,7 +144,7 @@ export default function MyPayments() {
                                             ? 'Transaction #, patient name, PS #…'
                                             : 'Voucher #, notes…'
                                     }
-                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-9 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-100 focus:outline-none dark:border-gray-700 dark:bg-gray-800"
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pr-3 pl-9 text-sm focus:bg-white focus:ring-2 focus:ring-emerald-100 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:focus:bg-neutral-900 dark:focus:ring-emerald-800"
                                 />
                             </div>
                         </div>
@@ -192,7 +192,7 @@ export default function MyPayments() {
                         <button
                             type="button"
                             onClick={clearAll}
-                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-800"
+                            className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-gray-700 dark:bg-gray-800 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                         >
                             Clear
                         </button>
@@ -252,7 +252,7 @@ export default function MyPayments() {
                                             colSpan={
                                                 isPatientTransactions ? 5 : 6
                                             }
-                                            className="px-4 py-12 text-center text-sm text-slate-500"
+                                            className="px-4 py-12 text-center text-sm text-slate-500 dark:text-neutral-400"
                                         >
                                             {isPatientTransactions
                                                 ? 'No transactions yet for your managed patients.'
@@ -266,7 +266,7 @@ export default function MyPayments() {
                                               key={t.id}
                                               className="border-t border-slate-100 hover:bg-slate-50 dark:border-gray-800 dark:hover:bg-gray-800"
                                           >
-                                              <td className="px-4 py-2 text-xs text-slate-500">
+                                              <td className="px-4 py-2 text-xs text-slate-500 dark:text-neutral-400">
                                                   {new Date(
                                                       t.created_at,
                                                   ).toLocaleDateString()}
@@ -280,7 +280,7 @@ export default function MyPayments() {
                                                           <div>
                                                               {t.patient.name}
                                                           </div>
-                                                          <div className="font-mono text-slate-500">
+                                                          <div className="font-mono text-slate-500 dark:text-neutral-400">
                                                               {
                                                                   t.patient
                                                                       .ps_number
@@ -293,7 +293,7 @@ export default function MyPayments() {
                                                       </span>
                                                   )}
                                               </td>
-                                              <td className="px-4 py-2 text-xs text-slate-600">
+                                              <td className="px-4 py-2 text-xs text-slate-600 dark:text-neutral-300">
                                                   {t.type}
                                               </td>
                                               <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">
@@ -308,7 +308,7 @@ export default function MyPayments() {
                                               key={v.id}
                                               className="border-t border-slate-100 hover:bg-slate-50 dark:border-gray-800 dark:hover:bg-gray-800"
                                           >
-                                              <td className="px-4 py-2 text-xs text-slate-500">
+                                              <td className="px-4 py-2 text-xs text-slate-500 dark:text-neutral-400">
                                                   {new Date(
                                                       v.created_at,
                                                   ).toLocaleDateString()}
@@ -326,7 +326,7 @@ export default function MyPayments() {
                                                                       .so_number
                                                               }
                                                           </div>
-                                                          <div className="text-slate-500">
+                                                          <div className="text-slate-500 dark:text-neutral-400">
                                                               {
                                                                   v
                                                                       .service_order
@@ -341,7 +341,7 @@ export default function MyPayments() {
                                                       </span>
                                                   )}
                                               </td>
-                                              <td className="px-4 py-2 text-xs text-slate-600">
+                                              <td className="px-4 py-2 text-xs text-slate-600 dark:text-neutral-300">
                                                   {v.exp_category?.name ?? '—'}
                                               </td>
                                               <td className="px-4 py-2 text-right font-semibold text-slate-800 dark:text-slate-100">
@@ -354,8 +354,8 @@ export default function MyPayments() {
                                                       className={clsx(
                                                           'rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase',
                                                           v.status === 'payed'
-                                                              ? 'bg-emerald-100 text-emerald-700'
-                                                              : 'bg-amber-100 text-amber-700',
+                                                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                              : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
                                                       )}
                                                   >
                                                       {v.status === 'payed'
@@ -371,7 +371,7 @@ export default function MyPayments() {
 
                     {rows.last_page > 1 && (
                         <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2 text-xs dark:border-gray-800">
-                            <p className="text-slate-500">
+                            <p className="text-slate-500 dark:text-neutral-400">
                                 Page {rows.current_page} of {rows.last_page} ·{' '}
                                 {rows.total} total
                             </p>
@@ -387,7 +387,7 @@ export default function MyPayments() {
                                             l.active
                                                 ? 'bg-emerald-600 text-white'
                                                 : l.url
-                                                  ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-gray-800 dark:text-slate-200'
+                                                  ? 'bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-gray-800 dark:text-slate-200 dark:hover:bg-neutral-700'
                                                   : 'cursor-not-allowed text-slate-300',
                                         )}
                                         dangerouslySetInnerHTML={{
@@ -414,9 +414,12 @@ function TotalTile({
     tone: 'positive' | 'warning' | 'neutral';
 }) {
     const tones: Record<string, string> = {
-        positive: 'bg-emerald-50 text-emerald-700',
-        warning: 'bg-amber-50 text-amber-700',
-        neutral: 'bg-slate-50 text-slate-700',
+        positive:
+            'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300',
+        warning:
+            'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300',
+        neutral:
+            'bg-slate-50 dark:bg-neutral-800/50 text-slate-700 dark:text-neutral-200',
     };
     return (
         <div

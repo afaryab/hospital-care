@@ -139,12 +139,12 @@ function formatDate(value?: string): string {
 function statusBadgeClass(status: string) {
     const s = status.toLowerCase();
     if (s === 'in-progress')
-        return 'bg-blue-100 text-blue-700 ring-1 ring-blue-200';
+        return 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-800';
     if (s === 'open')
-        return 'bg-amber-100 text-amber-700 ring-1 ring-amber-200';
+        return 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-800';
     if (s === 'treated' || s === 'closed')
-        return 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200';
-    return 'bg-slate-100 text-slate-600';
+        return 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-800';
+    return 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300';
 }
 
 function Card({
@@ -155,8 +155,8 @@ function Card({
     children: React.ReactNode;
 }) {
     return (
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
-            <h3 className="mb-3 text-sm font-semibold text-slate-900">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5 dark:border-neutral-800 dark:bg-neutral-900">
+            <h3 className="mb-3 text-sm font-semibold text-slate-900 dark:text-neutral-100">
                 {title}
             </h3>
             {children}
@@ -168,8 +168,10 @@ function Field({ label, value }: { label: string; value?: string | null }) {
     if (!value) return null;
     return (
         <div className="mb-3 last:mb-0">
-            <p className="text-xs font-medium text-slate-500">{label}</p>
-            <p className="mt-0.5 text-sm whitespace-pre-line text-slate-800">
+            <p className="text-xs font-medium text-slate-500 dark:text-neutral-400">
+                {label}
+            </p>
+            <p className="mt-0.5 text-sm whitespace-pre-line text-slate-800 dark:text-neutral-100">
                 {value}
             </p>
         </div>
@@ -188,10 +190,10 @@ export default function ServiceOrderView({
     return (
         <div className={clsx('flex flex-col gap-4', className)}>
             {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
                 <div>
                     <div className="flex items-center gap-2">
-                        <h2 className="font-mono text-sm font-semibold text-slate-900">
+                        <h2 className="font-mono text-sm font-semibold text-slate-900 dark:text-neutral-100">
                             {serviceOrder.so_number}
                         </h2>
                         <span
@@ -203,7 +205,7 @@ export default function ServiceOrderView({
                             {serviceOrder.status}
                         </span>
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-slate-500 dark:text-neutral-400">
                         {serviceOrder.service?.name} &bull; Dr.{' '}
                         {serviceOrder.doctor?.name ?? '—'} &bull;{' '}
                         {formatDate(serviceOrder.created_at)}
@@ -213,7 +215,7 @@ export default function ServiceOrderView({
                     href={printServiceorder({ id: serviceOrder.id }).url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800/50"
                 >
                     <Printer className="h-3.5 w-3.5" /> Print
                 </a>
@@ -260,7 +262,7 @@ export default function ServiceOrderView({
                                 />
                                 {tr.triage && (
                                     <div className="mb-3">
-                                        <p className="text-xs font-medium text-slate-500">
+                                        <p className="text-xs font-medium text-slate-500 dark:text-neutral-400">
                                             Triage
                                         </p>
                                         <span
@@ -285,7 +287,7 @@ export default function ServiceOrderView({
                                                 key={h.id}
                                                 className="flex items-center justify-between text-xs"
                                             >
-                                                <span className="text-slate-600">
+                                                <span className="text-slate-600 dark:text-neutral-300">
                                                     {h.old_triage?.name ?? '—'}{' '}
                                                     &rarr;{' '}
                                                     <strong>
@@ -310,7 +312,7 @@ export default function ServiceOrderView({
                                     <div className="overflow-x-auto">
                                         <table className="w-full text-sm">
                                             <thead>
-                                                <tr className="text-left text-xs text-slate-500">
+                                                <tr className="text-left text-xs text-slate-500 dark:text-neutral-400">
                                                     <th className="pb-2">
                                                         Drug
                                                     </th>
@@ -331,29 +333,29 @@ export default function ServiceOrderView({
                                                     </th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-100">
+                                            <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">
                                                 {tr.prescriptions.map(
                                                     (rx, i) => (
                                                         <tr key={i}>
-                                                            <td className="py-1.5 font-medium text-slate-800">
+                                                            <td className="py-1.5 font-medium text-slate-800 dark:text-neutral-100">
                                                                 {rx.drug_name}
                                                             </td>
-                                                            <td className="py-1.5 text-slate-600">
+                                                            <td className="py-1.5 text-slate-600 dark:text-neutral-300">
                                                                 {rx.dose ?? '—'}
                                                             </td>
-                                                            <td className="py-1.5 text-slate-600">
+                                                            <td className="py-1.5 text-slate-600 dark:text-neutral-300">
                                                                 {rx.frequency ??
                                                                     '—'}
                                                             </td>
-                                                            <td className="py-1.5 text-slate-600">
+                                                            <td className="py-1.5 text-slate-600 dark:text-neutral-300">
                                                                 {rx.duration ??
                                                                     '—'}
                                                             </td>
-                                                            <td className="py-1.5 text-slate-600">
+                                                            <td className="py-1.5 text-slate-600 dark:text-neutral-300">
                                                                 {rx.route ??
                                                                     '—'}
                                                             </td>
-                                                            <td className="py-1.5 text-slate-600">
+                                                            <td className="py-1.5 text-slate-600 dark:text-neutral-300">
                                                                 {rx.instructions ??
                                                                     '—'}
                                                             </td>
@@ -401,10 +403,10 @@ export default function ServiceOrderView({
                                         ].map(([label, value, unit]) =>
                                             value ? (
                                                 <div key={label as string}>
-                                                    <p className="text-xs text-slate-500">
+                                                    <p className="text-xs text-slate-500 dark:text-neutral-400">
                                                         {label}
                                                     </p>
-                                                    <p className="text-sm font-semibold text-slate-800">
+                                                    <p className="text-sm font-semibold text-slate-800 dark:text-neutral-100">
                                                         {value}
                                                         {unit}
                                                     </p>
@@ -434,7 +436,7 @@ export default function ServiceOrderView({
                                                 href={a.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 p-2 text-center hover:bg-slate-50"
+                                                className="flex flex-col items-center gap-1.5 rounded-xl border border-slate-200 p-2 text-center hover:bg-slate-50 dark:border-neutral-800 dark:hover:bg-neutral-800/50"
                                             >
                                                 {a.file_type?.startsWith(
                                                     'image',
@@ -450,7 +452,7 @@ export default function ServiceOrderView({
                                                 ) : (
                                                     <FileText className="h-8 w-8 text-slate-400" />
                                                 )}
-                                                <span className="truncate text-[11px] text-slate-600">
+                                                <span className="truncate text-[11px] text-slate-600 dark:text-neutral-300">
                                                     {a.label ?? a.file_name}
                                                 </span>
                                             </a>
@@ -461,7 +463,7 @@ export default function ServiceOrderView({
                         </>
                     ) : (
                         <Card title="Clinical Summary">
-                            <p className="text-sm text-slate-500">
+                            <p className="text-sm text-slate-500 dark:text-neutral-400">
                                 No treatment record for this service order yet.
                             </p>
                         </Card>
@@ -471,25 +473,27 @@ export default function ServiceOrderView({
                 {/* Sidebar */}
                 <div className="flex flex-col gap-4">
                     <div className="grid grid-cols-3 gap-2">
-                        <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm">
-                            <p className="text-[11px] text-slate-500">Income</p>
-                            <p className="text-sm font-bold text-emerald-700">
+                        <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                            <p className="text-[11px] text-slate-500 dark:text-neutral-400">
+                                Income
+                            </p>
+                            <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
                                 {formatMoney(serviceOrder.income_total)}
                             </p>
                         </div>
-                        <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm">
-                            <p className="text-[11px] text-slate-500">
+                        <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                            <p className="text-[11px] text-slate-500 dark:text-neutral-400">
                                 Expense
                             </p>
-                            <p className="text-sm font-bold text-red-700">
+                            <p className="text-sm font-bold text-red-700 dark:text-red-300">
                                 {formatMoney(serviceOrder.expense_total)}
                             </p>
                         </div>
-                        <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm">
-                            <p className="text-[11px] text-slate-500">
+                        <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                            <p className="text-[11px] text-slate-500 dark:text-neutral-400">
                                 Vouchers
                             </p>
-                            <p className="text-sm font-bold text-slate-800">
+                            <p className="text-sm font-bold text-slate-800 dark:text-neutral-100">
                                 {formatMoney(
                                     serviceOrder.voucher_expense_total,
                                 )}
@@ -497,8 +501,8 @@ export default function ServiceOrderView({
                         </div>
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-                        <div className="flex border-b border-slate-100">
+                    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                        <div className="flex border-b border-slate-100 dark:border-neutral-800">
                             {(
                                 [
                                     ['transactions', 'Transactions'],
@@ -512,8 +516,8 @@ export default function ServiceOrderView({
                                     className={clsx(
                                         'flex-1 border-b-2 px-3 py-2.5 text-xs font-semibold transition-colors',
                                         tab === value
-                                            ? 'border-slate-800 text-slate-900'
-                                            : 'border-transparent text-slate-400 hover:text-slate-600',
+                                            ? 'border-slate-800 text-slate-900 dark:text-neutral-100'
+                                            : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300',
                                     )}
                                 >
                                     {label}
@@ -525,7 +529,7 @@ export default function ServiceOrderView({
                             {tab === 'transactions' && (
                                 <div className="space-y-4">
                                     <div>
-                                        <h4 className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                                        <h4 className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-neutral-400">
                                             Transaction Elements
                                         </h4>
                                         {!serviceOrder.transaction_elements
@@ -541,7 +545,7 @@ export default function ServiceOrderView({
                                                             key={el.id}
                                                             className="flex items-center justify-between text-xs"
                                                         >
-                                                            <span className="text-slate-600">
+                                                            <span className="text-slate-600 dark:text-neutral-300">
                                                                 {el.transaction
                                                                     ?.tr_number ??
                                                                     '—'}{' '}
@@ -556,8 +560,8 @@ export default function ServiceOrderView({
                                                                     'font-semibold',
                                                                     el.income_or_expense ===
                                                                         'INCOME'
-                                                                        ? 'text-emerald-700'
-                                                                        : 'text-red-700',
+                                                                        ? 'text-emerald-700 dark:text-emerald-300'
+                                                                        : 'text-red-700 dark:text-red-300',
                                                                 )}
                                                             >
                                                                 {formatMoney(
@@ -571,7 +575,7 @@ export default function ServiceOrderView({
                                         )}
                                     </div>
                                     <div>
-                                        <h4 className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                                        <h4 className="mb-2 text-xs font-semibold tracking-wide text-slate-500 uppercase dark:text-neutral-400">
                                             Receivables
                                         </h4>
                                         {!serviceOrder.receivables?.length ? (
@@ -586,14 +590,14 @@ export default function ServiceOrderView({
                                                             key={r.id}
                                                             className="flex items-center justify-between text-xs"
                                                         >
-                                                            <span className="text-slate-600">
+                                                            <span className="text-slate-600 dark:text-neutral-300">
                                                                 {r.panel
                                                                     ?.name ??
                                                                     'Patient'}{' '}
                                                                 &bull;{' '}
                                                                 {r.status}
                                                             </span>
-                                                            <span className="font-semibold text-slate-800">
+                                                            <span className="font-semibold text-slate-800 dark:text-neutral-100">
                                                                 {formatMoney(
                                                                     r.amount,
                                                                 )}
@@ -622,10 +626,10 @@ export default function ServiceOrderView({
                                                         className="text-xs"
                                                     >
                                                         <div className="flex items-center justify-between">
-                                                            <span className="font-mono text-slate-600">
+                                                            <span className="font-mono text-slate-600 dark:text-neutral-300">
                                                                 {v.vc_number}
                                                             </span>
-                                                            <span className="font-semibold text-slate-800">
+                                                            <span className="font-semibold text-slate-800 dark:text-neutral-100">
                                                                 {formatMoney(
                                                                     v.share_amount ??
                                                                         v.amount,

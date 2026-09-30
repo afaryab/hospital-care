@@ -8,11 +8,11 @@ export default function CreatePatientPolicy({
             <div className="mt-6 w-full p-6">
                 <div className="flex items-start gap-4">
                     <div>
-                        <h3 className="text-lg font-bold text-red-800">
+                        <h3 className="text-lg font-bold text-red-800 dark:text-red-300">
                             Regulatory Warning – Mandatory Compliance
                         </h3>
 
-                        <p className="mt-2 text-sm leading-relaxed text-red-900">
+                        <p className="mt-2 text-sm leading-relaxed text-red-900 dark:text-red-300">
                             Failure to comply with the Hospital Patient
                             Registration Policy and mandatory demographic data
                             requirements constitutes a violation of
@@ -21,13 +21,13 @@ export default function CreatePatientPolicy({
                             Commission regulatory framework.
                         </p>
 
-                        <p className="mt-3 text-sm leading-relaxed text-red-900">
+                        <p className="mt-3 text-sm leading-relaxed text-red-900 dark:text-red-300">
                             Incomplete, false, or deliberately omitted patient
                             demographic information (including Name, Contact
                             Number, Age, or Gender) may:
                         </p>
 
-                        <ul className="mt-3 space-y-2 text-sm text-red-900">
+                        <ul className="mt-3 space-y-2 text-sm text-red-900 dark:text-red-300">
                             <li className="flex gap-2">
                                 <span className="mt-1 h-2 w-2 rounded-full bg-red-700"></span>
                                 <span>
@@ -57,8 +57,8 @@ export default function CreatePatientPolicy({
                             </li>
                         </ul>
 
-                        <div className="mt-4 rounded-lg border border-red-200 bg-white p-3">
-                            <p className="text-xs font-semibold text-red-800">
+                        <div className="mt-4 rounded-lg border border-red-200 bg-white p-3 dark:border-red-900 dark:bg-neutral-900">
+                            <p className="text-xs font-semibold text-red-800 dark:text-red-300">
                                 All staff are legally and professionally
                                 obligated to ensure complete and accurate
                                 patient registration data at the point of entry.
@@ -68,7 +68,7 @@ export default function CreatePatientPolicy({
                             </p>
                         </div>
 
-                        <p className="mt-3 text-xs text-red-700">
+                        <p className="mt-3 text-xs text-red-700 dark:text-red-300">
                             This warning is issued in alignment with
                             institutional governance policies and regulatory
                             standards enforced under the Punjab Healthcare
@@ -81,33 +81,33 @@ export default function CreatePatientPolicy({
             <div className="w-full p-6">
                 <div className="flex items-start justify-between gap-4">
                     <div>
-                        <h2 className="text-xl font-semibold text-slate-900">
+                        <h2 className="text-xl font-semibold text-slate-900 dark:text-neutral-100">
                             Patient Registration – Mandatory Minimum Dataset
                             Policy
                         </h2>
-                        <p className="mt-1 text-sm text-slate-600">
+                        <p className="mt-1 text-sm text-slate-600 dark:text-neutral-300">
                             This policy defines the minimum patient registration
                             data to support safe care, traceability, continuity
                             of care, and regulatory inspection readiness under
                             Punjab Healthcare Commission (PHC) governance.
                         </p>
                     </div>
-                    <span className="inline-flex shrink-0 items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 ring-inset">
+                    <span className="inline-flex shrink-0 items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 ring-inset dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800">
                         Effective: Immediate
                     </span>
                 </div>
 
                 <div className="mt-6 grid gap-4">
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                        <h3 className="text-sm font-semibold text-slate-900">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                             1) Mandatory Fields (System-Enforced)
                         </h3>
-                        <p className="mt-2 text-sm text-slate-700">
+                        <p className="mt-2 text-sm text-slate-700 dark:text-neutral-200">
                             The Hospital Information System (HIS/EMR){' '}
                             <span className="font-semibold">must</span> capture
                             the following fields at first contact (OPD/IPD/ER):
                         </p>
-                        <ul className="mt-3 space-y-2 text-sm text-slate-800">
+                        <ul className="mt-3 space-y-2 text-sm text-slate-800 dark:text-neutral-100">
                             <li className="flex gap-2">
                                 <span className="mt-1 h-2 w-2 rounded-full bg-slate-900"></span>
                                 <span>
@@ -148,9 +148,9 @@ export default function CreatePatientPolicy({
                             </li>
                         </ul>
 
-                        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3">
-                            <p className="text-xs text-slate-600">
-                                <span className="font-semibold text-slate-800">
+                        <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+                            <p className="text-xs text-slate-600 dark:text-neutral-300">
+                                <span className="font-semibold text-slate-800 dark:text-neutral-100">
                                     System rule:
                                 </span>
                                 Registration cannot be completed unless all
@@ -159,11 +159,11 @@ export default function CreatePatientPolicy({
                         </div>
                     </div>
 
-                    <div className="rounded-xl border border-slate-200 p-4">
-                        <h3 className="text-sm font-semibold text-slate-900">
+                    <div className="rounded-xl border border-slate-200 p-4 dark:border-neutral-800">
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                             2) Optional Field (Collected When Available)
                         </h3>
-                        <p className="mt-2 text-sm text-slate-700">
+                        <p className="mt-2 text-sm text-slate-700 dark:text-neutral-200">
                             <span className="font-semibold">CNIC</span> is
                             marked{' '}
                             <span className="font-semibold">Optional</span> at
@@ -172,7 +172,7 @@ export default function CreatePatientPolicy({
                             medico-legal scenarios, insurance, or when the
                             patient can provide it).
                         </p>
-                        <ul className="mt-3 space-y-2 text-sm text-slate-800">
+                        <ul className="mt-3 space-y-2 text-sm text-slate-800 dark:text-neutral-100">
                             <li className="flex gap-2">
                                 <span className="mt-1 h-2 w-2 rounded-full bg-slate-900"></span>
                                 <span>
@@ -185,11 +185,11 @@ export default function CreatePatientPolicy({
                         </ul>
                     </div>
 
-                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                        <h3 className="text-sm font-semibold text-amber-900">
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/40">
+                        <h3 className="text-sm font-semibold text-amber-900 dark:text-amber-300">
                             3) Compliance Basis (Regulatory Rationale)
                         </h3>
-                        <p className="mt-2 text-sm text-amber-900/90">
+                        <p className="mt-2 text-sm text-amber-900/90 dark:text-amber-300">
                             The Punjab Healthcare Commission Act empowers PHC to
                             regulate healthcare establishments and enforce
                             minimum standards. PHC’s MSDS framework expects
@@ -201,107 +201,107 @@ export default function CreatePatientPolicy({
                         </p>
                     </div>
 
-                    <div className="rounded-xl border border-slate-200 p-4">
-                        <h3 className="text-sm font-semibold text-slate-900">
+                    <div className="rounded-xl border border-slate-200 p-4 dark:border-neutral-800">
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                             4) Important Official References (Links)
                         </h3>
                         <div className="mt-3 grid gap-2">
                             <a
-                                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:bg-slate-50"
+                                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800/50"
                                 href="https://os.phc.org.pk/downloads/PHC_Final_Act.pdf"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
                                 <div>
-                                    <div className="text-sm font-semibold text-slate-900">
+                                    <div className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                                         Punjab Healthcare Commission Act, 2010
                                         (Official PDF)
                                     </div>
-                                    <div className="text-xs text-slate-600">
+                                    <div className="text-xs text-slate-600 dark:text-neutral-300">
                                         Legal authority for PHC regulation &
                                         standards enforcement
                                     </div>
                                 </div>
-                                <span className="text-xs font-medium text-slate-700">
+                                <span className="text-xs font-medium text-slate-700 dark:text-neutral-200">
                                     Open →
                                 </span>
                             </a>
 
                             <a
-                                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:bg-slate-50"
+                                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800/50"
                                 href="https://os.phc.org.pk/downloads.aspx"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
                                 <div>
-                                    <div className="text-sm font-semibold text-slate-900">
+                                    <div className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                                         PHC Official Downloads
                                     </div>
-                                    <div className="text-xs text-slate-600">
+                                    <div className="text-xs text-slate-600 dark:text-neutral-300">
                                         Access MSDS requests, Patient Rights
                                         Charter, and other PHC documents
                                     </div>
                                 </div>
-                                <span className="text-xs font-medium text-slate-700">
+                                <span className="text-xs font-medium text-slate-700 dark:text-neutral-200">
                                     Open →
                                 </span>
                             </a>
 
                             <a
-                                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:bg-slate-50"
+                                className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:bg-neutral-800/50"
                                 href="https://os.phc.org.pk/catI_HCE.aspx"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
                                 <div>
-                                    <div className="text-sm font-semibold text-slate-900">
+                                    <div className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                                         PHC – Minimum Service Delivery Standards
                                         (MSDS) Overview
                                     </div>
-                                    <div className="text-xs text-slate-600">
+                                    <div className="text-xs text-slate-600 dark:text-neutral-300">
                                         MSDS as mandatory benchmarks for
                                         healthcare establishments
                                     </div>
                                 </div>
-                                <span className="text-xs font-medium text-slate-700">
+                                <span className="text-xs font-medium text-slate-700 dark:text-neutral-200">
                                     Open →
                                 </span>
                             </a>
                         </div>
 
-                        <p className="mt-3 text-xs text-slate-500">
+                        <p className="mt-3 text-xs text-slate-500 dark:text-neutral-400">
                             Note: Use these references in SOPs, audit reports,
                             and internal compliance documentation to justify
                             mandatory registration fields.
                         </p>
                     </div>
 
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                        <h3 className="text-sm font-semibold text-slate-900">
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-neutral-800 dark:bg-neutral-800/50">
+                        <h3 className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                             Approval & Control
                         </h3>
                         <div className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
-                            <div className="rounded-lg border border-slate-200 bg-white p-3">
-                                <div className="text-xs text-slate-500">
+                            <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+                                <div className="text-xs text-slate-500 dark:text-neutral-400">
                                     Owner
                                 </div>
-                                <div className="font-semibold text-slate-900">
+                                <div className="font-semibold text-slate-900 dark:text-neutral-100">
                                     Hospital Administration
                                 </div>
                             </div>
-                            <div className="rounded-lg border border-slate-200 bg-white p-3">
-                                <div className="text-xs text-slate-500">
+                            <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+                                <div className="text-xs text-slate-500 dark:text-neutral-400">
                                     Applicable Areas
                                 </div>
-                                <div className="font-semibold text-slate-900">
+                                <div className="font-semibold text-slate-900 dark:text-neutral-100">
                                     OPD / INP / EMR
                                 </div>
                             </div>
-                            <div className="rounded-lg border border-slate-200 bg-white p-3">
-                                <div className="text-xs text-slate-500">
+                            <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+                                <div className="text-xs text-slate-500 dark:text-neutral-400">
                                     Compliance Review
                                 </div>
-                                <div className="font-semibold text-slate-900">
+                                <div className="font-semibold text-slate-900 dark:text-neutral-100">
                                     Quarterly
                                 </div>
                             </div>
