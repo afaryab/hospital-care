@@ -1,3 +1,5 @@
+> **Update (fix-037, #105):** the legacy-row encryption described below has moved out of the migration into `php artisan versions:encrypt-snapshots`, because on large production databases it took hours. The migration now only widens the columns.
+
 # Fix #035: Record Edits Failed Because Encrypted Version Snapshots Were Rejected by MySQL
 
 **GitHub Issue:** [afaryab/hospital-care#103](https://github.com/afaryab/hospital-care/issues/103)
