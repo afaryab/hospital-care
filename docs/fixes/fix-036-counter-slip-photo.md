@@ -62,7 +62,7 @@ The counter step frame (`elements/bullets-wrapper.tsx`) and the dividers on the 
 ## For IT / DevOps
 
 - **Deploy:** `php artisan migrate` (a new `slip_photos` table; nothing existing changes), then `npm run build`.
-- **HTTPS is required for the webcam.** Browsers only allow camera access on HTTPS or `localhost`. Receptionist PCs that open the app over plain `http://<LAN-IP>` get no camera, and their slips are flagged NO PHOTO. Serve the app over HTTPS, for example with an internal CA or a self-signed certificate trusted on the counter PCs.
+- **HTTPS is required for the webcam.** Browsers only allow camera access on HTTPS or `localhost`. On PCs that open the app over plain `http://<LAN-IP>`, the camera panel is **hidden** (`display: none`) and slips are flagged NO PHOTO. The panel appears automatically once the app is served over HTTPS. Serve the app over HTTPS, for example with an internal CA or a self-signed certificate trusted on the counter PCs.
 - **First run:** each browser asks once for camera permission. It must be allowed for the app's address.
 - **Storage:** about 50–150 KB per slip on the private disk (`storage/app/private`). Include it in backups.
 - **Rollback:** `php artisan migrate:rollback --step=1` drops the table. Rolling back discards the captured photos, so back up first.

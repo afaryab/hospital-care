@@ -119,6 +119,9 @@ export function SlipCameraProvider({
         pendingSlipPhoto ?? null,
     );
     const [busy, setBusy] = useState(false);
+    // Starts false so server and first client render match; the panel stays
+    // hidden on origins where the browser blocks webcams (plain http).
+    const [supported, setSupported] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
 
     const pendingRef = useRef(pending);
@@ -204,6 +207,10 @@ export function SlipCameraProvider({
     );
 
     useEffect(() => {
+        if (!cameraSupported()) {
+            return;
+        }
+        setSupported(true);
         startCamera(readStoredDevice() || undefined);
         return stopCamera;
     }, [startCamera, stopCamera]);
@@ -316,7 +323,12 @@ export function SlipCameraProvider({
 
     return (
         <SlipCameraContext.Provider value={{ ensurePhoto }}>
-            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-neutral-800 dark:bg-neutral-900">
+            <div
+                className={clsx(
+                    'flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-2 dark:border-neutral-800 dark:bg-neutral-900',
+                    !supported && 'hidden',
+                )}
+            >
                 <div className="relative flex h-24 w-32 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-neutral-900">
                     <video
                         ref={videoRef}
