@@ -51,3 +51,4 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 34 | [#102](https://github.com/afaryab/hospital-care/issues/102) | Dark theme: React pages hardcoded the light palette; Filament theme skipped Admin views | Medium | ✅ Fixed |
 | 35 | [#103](https://github.com/afaryab/hospital-care/issues/103) | Record edits failed: encrypted version snapshots rejected by MySQL json columns | High | ✅ Fixed |
 | 36 | [#104](https://github.com/afaryab/hospital-care/issues/104) | Webcam photo of patient/guardian captured on every counter slip (CT-PS) | Feature | ✅ Done |
+| 37 | [#105](https://github.com/afaryab/hospital-care/issues/105) | Snapshot encryption migration took hours on large DBs and blocked later migrations | High | ✅ Fixed |
