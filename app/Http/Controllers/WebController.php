@@ -32,7 +32,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -829,6 +828,7 @@ class WebController extends Controller
 
                 } catch (\Exception $e) {
                     DB::rollBack();
+                    report($e);
 
                     return back()->withErrors(['message' => 'An error occurred while processing the transaction. Please try again.']);
                 }
@@ -971,9 +971,8 @@ class WebController extends Controller
                     }
 
                 } catch (\Exception $e) {
-                    // Log exception
-                    Log::error('Expense Record Failed '.$e->getMessage());
                     DB::rollBack();
+                    report($e);
 
                     return back()->withErrors(['message' => 'An error occurred while processing the transaction. Please try again.']);
                 }
@@ -1154,8 +1153,8 @@ class WebController extends Controller
                 }
 
             } catch (\Exception $e) {
-                Log::error($e->getMessage());
                 DB::rollBack();
+                report($e);
 
                 return back()->withErrors(['message' => 'An error occurred while processing the transaction. Please try again.']);
             }
