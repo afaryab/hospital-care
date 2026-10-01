@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\ServiceDepartments\ServiceDepartmentResource;
 use App\Models\Administrator;
 use App\Models\ServiceDepartment;
 use App\Models\User;
+use Filament\Actions\Testing\TestAction;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -46,13 +47,13 @@ test('admin can set a print template on an existing department without changing 
     $department = ServiceDepartment::factory()->create(['slug' => 'EMG', 'image' => '/img/emergency.png']);
 
     Livewire\Livewire::test(ManageServiceDepartments::class)
-        ->callTableAction('edit', $department, data: [
+        ->callAction(TestAction::make('edit')->table($department), data: [
             'name' => 'Emergency',
             'slug' => 'CHANGED',
             'have_composit_services' => 0,
             'service_order_template' => ServiceOrderTemplate::EmergencyTriageCompact->value,
         ])
-        ->assertHasNoTableActionErrors();
+        ->assertHasNoFormErrors();
 
     assertDatabaseHas(ServiceDepartment::class, [
         'id' => $department->id,
@@ -66,10 +67,10 @@ test('an image uploaded on edit resolves to a working public storage URL, not a 
     $department = ServiceDepartment::factory()->create(['image' => '/img/xray.png']);
 
     Livewire\Livewire::test(ManageServiceDepartments::class)
-        ->callTableAction('edit', $department, data: [
+        ->callAction(TestAction::make('edit')->table($department), data: [
             'image' => UploadedFile::fake()->image('xray.jpg'),
         ])
-        ->assertHasNoTableActionErrors();
+        ->assertHasNoFormErrors();
 
     $department->refresh();
 
