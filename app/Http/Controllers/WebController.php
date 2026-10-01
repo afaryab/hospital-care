@@ -34,6 +34,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class WebController extends Controller
@@ -1185,29 +1186,31 @@ class WebController extends Controller
             'payment_method' => 'required|in:CASH,CARD,PANEL,CHEQUE,BANK_TRANSFER',
             'panel_id' => 'required_if:payment_method,PANEL|exists:panels,id',
             'amount_to_collect' => 'required|numeric|gt:0',
-            'note' => 'nullable|string',
+            'receaveable_note' => 'nullable|string|max:1000',
         ]);
 
-        $receaveable = Receaveable::with('transaction')->findOrFail($validatedData['receaveable_id']);
-
-        $transaction = $receaveable->transaction;
-
-        if ($transaction->elements->count() !== 1) {
-            return redirect()->back()->withErrors(['error' => 'Invalid receaveable transaction elements.']);
-        }
+        $receaveable = Receaveable::query()->findOrFail($validatedData['receaveable_id']);
 
         // A receivable settlement is a cash/accounts-receivable movement, not new
         // service revenue: the full service amount was already recognised on the
-        // original transaction's element. ReceivableSettlementService records only
-        // the payment Transaction (Dr Cash / Cr A/R, see AbacusClosingService), so
-        // the shift cash totals stay correct without double-counting income.
-        $newTransaction = app(ReceivableSettlementService::class)->settle($receaveable, (float) $validatedData['amount_to_collect'], [
-            'closing_id' => $openCounter->id,
-            'created_by' => $request->user()->id,
-            'type' => $validatedData['payment_method'],
-            'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
-            'notes' => $validatedData['note'] ?? null,
-        ]);
+        // original transaction's elements (however many services it had).
+        // ReceivableSettlementService records only the payment Transaction
+        // (Dr Cash / Cr A/R, see AbacusClosingService), so the shift cash totals
+        // stay correct without double-counting income.
+        try {
+            $newTransaction = app(ReceivableSettlementService::class)->settle($receaveable, (float) $validatedData['amount_to_collect'], [
+                'closing_id' => $openCounter->id,
+                'created_by' => $request->user()->id,
+                'type' => $validatedData['payment_method'],
+                'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
+                'notes' => $validatedData['receaveable_note'] ?? null,
+            ]);
+        } catch (ValidationException $e) {
+            // Report settlement rejections against the field the form shows.
+            throw ValidationException::withMessages([
+                'amount_to_collect' => collect($e->errors())->flatten()->all(),
+            ]);
+        }
 
         return redirect()->route('transaction-view', [
             'tYear' => $newTransaction->year,

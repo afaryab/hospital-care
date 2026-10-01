@@ -223,6 +223,14 @@ export default function ReceaveAblesButton({
                                 <InputError message={errors.receaveable_note} />
                             </div>
 
+                            <InputError
+                                message={
+                                    errors.receaveable_id ??
+                                    (errors as Record<string, string>).error ??
+                                    (errors as Record<string, string>).message
+                                }
+                            />
+
                             <DialogFooter className="mt-4">
                                 <DialogClose asChild>
                                     <Button variant="secondary">Cancel</Button>

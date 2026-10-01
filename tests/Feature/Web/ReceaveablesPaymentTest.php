@@ -77,3 +77,116 @@ test('collecting a receivable in the same shift does not double count income or 
     expect($receaveable->status)->toBe('paid');
     expect((float) $receaveable->amount)->toBe(0.0);
 });
+
+/**
+ * @return array{0: User, 1: Closing, 2: Receaveable}
+ */
+function multiServiceReceivable(float $outstanding = 22000, string $status = 'unpaid'): array
+{
+    $user = User::factory()->create();
+    $closing = Closing::factory()->create(['status' => 'open', 'receptionist_id' => $user->id]);
+    $patient = Patient::factory()->create();
+
+    $originalTransaction = Transaction::factory()->create([
+        'closing_id' => $closing->id,
+        'patient_id' => $patient->id,
+        'income_or_expense' => 'INCOME',
+        'amount' => 8000,
+    ]);
+
+    foreach ([12000, 18000] as $amount) {
+        TransactionElement::factory()->create([
+            'closing_id' => $closing->id,
+            'transaction_id' => $originalTransaction->id,
+            'patient_id' => $patient->id,
+            'income_or_expense' => 'INCOME',
+            'amount' => $amount,
+        ]);
+    }
+
+    $receaveable = Receaveable::factory()->create([
+        'patient_id' => $patient->id,
+        'transaction_id' => $originalTransaction->id,
+        'amount' => $outstanding,
+        'orignal_amount' => $outstanding,
+        'status' => $status,
+    ]);
+
+    return [$user, $closing, $receaveable];
+}
+
+test('a receivable from a bill with several services can be collected', function () {
+    [$user, $closing, $receaveable] = multiServiceReceivable();
+
+    actingAs($user);
+
+    post(route('receaveables-payment'), [
+        'patient_id' => $receaveable->patient_id,
+        'receaveable_id' => $receaveable->id,
+        'amount_to_collect' => 22000,
+        'payment_method' => 'BANK_TRANSFER',
+        'receaveable_note' => '',
+    ])->assertSessionHasNoErrors()->assertRedirectContains('/TR/');
+
+    $settlement = Transaction::where('receaveable_id', $receaveable->id)->sole();
+    expect((float) $settlement->amount)->toBe(22000.0)
+        ->and($settlement->type)->toBe('BANK_TRANSFER')
+        ->and($settlement->closing_id)->toBe($closing->id);
+
+    $receaveable->refresh();
+    expect($receaveable->status)->toBe('paid')
+        ->and((float) $receaveable->amount)->toBe(0.0);
+});
+
+test('a partial collection keeps the rest outstanding and stores the note', function () {
+    [$user, , $receaveable] = multiServiceReceivable();
+
+    actingAs($user);
+
+    post(route('receaveables-payment'), [
+        'receaveable_id' => $receaveable->id,
+        'amount_to_collect' => 5000,
+        'payment_method' => 'CASH',
+        'receaveable_note' => 'Paid by brother, balance next visit',
+    ])->assertSessionHasNoErrors();
+
+    expect(Transaction::where('receaveable_id', $receaveable->id)->sole()->notes)->toBe('Paid by brother, balance next visit');
+
+    $receaveable->refresh();
+    expect($receaveable->status)->toBe('unpaid')
+        ->and((float) $receaveable->amount)->toBe(17000.0);
+});
+
+test('a rejected collection reports the reason against the amount field', function (float $amount, string $status, string $message) {
+    [$user, , $receaveable] = multiServiceReceivable(status: $status);
+
+    actingAs($user);
+
+    post(route('receaveables-payment'), [
+        'receaveable_id' => $receaveable->id,
+        'amount_to_collect' => $amount,
+        'payment_method' => 'CASH',
+    ])->assertSessionHasErrors('amount_to_collect');
+
+    expect(session('errors')->first('amount_to_collect'))->toContain($message);
+
+    expect(Transaction::where('receaveable_id', $receaveable->id)->exists())->toBeFalse();
+})->with([
+    'more than outstanding' => [25000, 'unpaid', 'only has 22,000.00 outstanding'],
+    'already paid' => [1000, 'paid', 'is paid and cannot take a payment'],
+]);
+
+test('collecting without an open counter explains why instead of silently redirecting', function () {
+    [$user, $closing, $receaveable] = multiServiceReceivable();
+    $closing->update(['status' => 'closed']);
+
+    actingAs($user);
+
+    post(route('receaveables-payment'), [
+        'receaveable_id' => $receaveable->id,
+        'amount_to_collect' => 1000,
+        'payment_method' => 'CASH',
+    ])->assertRedirect(route('counter-open'));
+
+    expect((float) $receaveable->fresh()->amount)->toBe(22000.0);
+});
