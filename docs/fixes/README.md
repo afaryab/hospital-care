@@ -52,3 +52,5 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 35 | [#103](https://github.com/afaryab/hospital-care/issues/103) | Record edits failed: encrypted version snapshots rejected by MySQL json columns | High | ✅ Fixed |
 | 36 | [#104](https://github.com/afaryab/hospital-care/issues/104) | Webcam photo of patient/guardian captured on every counter slip (CT-PS) | Feature | ✅ Done |
 | 37 | [#105](https://github.com/afaryab/hospital-care/issues/105) | Snapshot encryption migration took hours on large DBs and blocked later migrations | High | ✅ Fixed |
+| 38 | [#107](https://github.com/afaryab/hospital-care/issues/107) | Receivable payment silently failed (302) for multi-service bills; errors and notes lost | High | ✅ Fixed |
+| 39 | [#108](https://github.com/afaryab/hospital-care/issues/108) | Peds slips silently rejected at counters whose allowed departments predate PED | High | ✅ Fixed |

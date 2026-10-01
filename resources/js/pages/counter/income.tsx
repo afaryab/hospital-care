@@ -350,7 +350,13 @@ function CollectPayment({
                     setValidationErrors(errors);
 
                     // Show a general error message
-                    const errorMessages = Object.values(errors).flat();
+                    // Errors not tied to a bill field (e.g. this counter isn't
+                    // allowed to bill the department) would otherwise vanish.
+                    toast.error(
+                        errors.message ??
+                            errors.error ??
+                            'Please fix the highlighted fields and try again.',
+                    );
                     setProcessing(false);
                 },
                 onFinish: () => {},
@@ -992,6 +998,16 @@ function CollectPayment({
                                                 )}
                                                 Generate Bill
                                             </Button>
+                                            {(validationErrors.message ||
+                                                validationErrors.error) && (
+                                                <p
+                                                    role="alert"
+                                                    className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300"
+                                                >
+                                                    {validationErrors.message ??
+                                                        validationErrors.error}
+                                                </p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
