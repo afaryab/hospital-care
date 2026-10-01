@@ -100,7 +100,7 @@ export default function CounterView() {
                 <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800 dark:bg-neutral-950 dark:text-white">
                     <BulletsWrapper bullets={bullets}>
                         <div className="flex h-full w-full flex-col gap-4 rounded-xl">
-                            <div className="flex h-full flex-col divide-[#06df72] lg:divide-y">
+                            <div className="flex h-full flex-col divide-[#06df72] dark:divide-neutral-800 lg:divide-y">
                                 <div className="flex flex-row gap-4 pb-4 lg:pr-4">
                                     <div className="w-full flex-1 rounded-xl border bg-white p-4 shadow-lg sm:w-auto xl:p-6 dark:bg-neutral-900">
                                         <p className="text-3xl font-semibold text-gray-800 dark:text-neutral-100">

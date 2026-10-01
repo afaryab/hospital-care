@@ -615,7 +615,7 @@ export default function ServiceOrdersOverview() {
                         </button>
                     ))}
                 </div>
-                <div className="grid gap-4 rounded-xl bg-white p-4 text-[#1c398e] lg:grid-cols-3 dark:bg-neutral-950">
+                <div className="grid gap-4 rounded-xl bg-white p-4 text-[#1c398e] lg:grid-cols-3 dark:bg-neutral-950 dark:text-neutral-200">
                     <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="service-order-search">Search</Label>
                         <Input
@@ -656,7 +656,7 @@ export default function ServiceOrdersOverview() {
                     </div>
                 </div>
 
-                <div className="grid flex-1 gap-4 rounded-xl bg-white p-4 text-[#1c398e] xl:grid-cols-[2fr_1fr] dark:bg-neutral-950">
+                <div className="grid flex-1 gap-4 rounded-xl bg-white p-4 text-[#1c398e] xl:grid-cols-[2fr_1fr] dark:bg-neutral-950 dark:text-neutral-200">
                     <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-neutral-800">
                         <table className="w-full text-left text-sm">
                             <thead className="bg-gray-50 text-xs uppercase dark:bg-neutral-800/50">

@@ -1505,7 +1505,7 @@ function SelectPatient({ openCounter }: any) {
     };
 
     return (
-        <div className="grid h-full w-full grid-cols-2 divide-x divide-[#06df72]">
+        <div className="grid h-full w-full grid-cols-2 divide-x divide-[#06df72] dark:divide-neutral-800">
             {/* ── Left column: search / create form ── */}
             <div className="flex flex-col overflow-y-auto p-4 pr-8">
                 <div className="flex w-full flex-col space-y-4">

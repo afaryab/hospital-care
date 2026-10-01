@@ -160,7 +160,7 @@ export default function VouchersList() {
                         </Link>
                     </div>
                 </div>
-                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950">
+                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950 dark:text-neutral-200">
                     <table className="bg-gray-50 text-left text-xs text-gray-700 uppercase dark:bg-neutral-950 dark:text-gray-400">
                         <thead>
                             <tr>
@@ -331,7 +331,7 @@ export default function VouchersList() {
                                                         href={makeHref(
                                                             current - 1,
                                                         )}
-                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900"
+                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900 dark:text-neutral-200"
                                                         aria-label="Previous page"
                                                     >
                                                         ‹
@@ -358,7 +358,7 @@ export default function VouchersList() {
                                                             className={`rounded border px-3 py-1 ${
                                                                 p === current
                                                                     ? 'bg-[#1c398e] font-bold text-white'
-                                                                    : 'bg-white text-[#1c398e] hover:underline dark:bg-neutral-900'
+                                                                    : 'bg-white text-[#1c398e] hover:underline dark:bg-neutral-900 dark:text-neutral-200'
                                                             }`}
                                                         >
                                                             {p}
@@ -370,7 +370,7 @@ export default function VouchersList() {
                                                         href={makeHref(
                                                             current + 1,
                                                         )}
-                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900"
+                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900 dark:text-neutral-200"
                                                         aria-label="Next page"
                                                     >
                                                         ›

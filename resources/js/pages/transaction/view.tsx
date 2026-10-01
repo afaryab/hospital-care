@@ -141,7 +141,7 @@ export default function TransactionView() {
                 <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800 dark:bg-neutral-900 dark:text-neutral-100">
                     <BulletsWrapper bullets={bullets}>
                         <div className="flex h-full w-full flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 dark:bg-neutral-900">
-                            <div className="grid h-full grid-cols-1 gap-4 divide-x divide-[#06df72]">
+                            <div className="grid h-full grid-cols-1 gap-4 divide-x divide-[#06df72] dark:divide-neutral-800">
                                 <div className="flex hidden h-full flex-col gap-4 pr-4">
                                     {transaction.patient && (
                                         <PatientMiniCard

@@ -103,7 +103,7 @@ export default function ReveaveablesList() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Receaveables - Counter" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
-                <div className="grid gap-4 rounded-xl bg-white p-4 text-[#1c398e] lg:grid-cols-3 dark:bg-neutral-950">
+                <div className="grid gap-4 rounded-xl bg-white p-4 text-[#1c398e] lg:grid-cols-3 dark:bg-neutral-950 dark:text-neutral-200">
                     <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="receaveable-search">Search</Label>
                         <Input
@@ -139,7 +139,7 @@ export default function ReveaveablesList() {
                         </Button>
                     </div>
                 </div>
-                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950">
+                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950 dark:text-neutral-200">
                     <table className="bg-gray-50 text-left text-xs text-gray-700 uppercase dark:bg-neutral-950 dark:text-gray-400">
                         <thead>
                             <tr>
@@ -365,7 +365,7 @@ export default function ReveaveablesList() {
                                                         href={makeHref(
                                                             current - 1,
                                                         )}
-                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900"
+                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900 dark:text-neutral-200"
                                                         aria-label="Previous page"
                                                     >
                                                         ‹
@@ -397,7 +397,7 @@ export default function ReveaveablesList() {
                                                         <a
                                                             key={p}
                                                             href={makeHref(p)}
-                                                            className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900"
+                                                            className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900 dark:text-neutral-200"
                                                         >
                                                             {p}
                                                         </a>
@@ -410,7 +410,7 @@ export default function ReveaveablesList() {
                                                         href={makeHref(
                                                             current + 1,
                                                         )}
-                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900"
+                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900 dark:text-neutral-200"
                                                         aria-label="Next page"
                                                     >
                                                         ›

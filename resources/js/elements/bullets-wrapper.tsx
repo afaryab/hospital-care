@@ -10,12 +10,12 @@ export default function BulletsWrapper({ bullets = [], children }: any) {
                         key={index}
                         href={bullet.url}
                         className={clsx({
-                            'text-md cursor-pointer border-2 border-r-0 p-2 whitespace-nowrap text-[#1c398e] uppercase [writing-mode:vertical-lr]': true,
+                            'text-md cursor-pointer border-2 border-r-0 p-2 whitespace-nowrap text-[#1c398e] uppercase [writing-mode:vertical-lr] dark:text-neutral-300': true,
                             'rounded-tl-xl': index === 0,
                             'rounded-bl-xl': index === bullets.length - 1,
-                            'border-[#06df72] hover:border-[#1c398e] hover:bg-[#1c398e] hover:text-[#06df72] dark:bg-[#0a0a0a]':
+                            'border-[#06df72] hover:border-[#1c398e] hover:bg-[#1c398e] hover:text-[#06df72] dark:border-neutral-700 dark:bg-[#0a0a0a] dark:hover:border-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-white':
                                 !bullet?.active,
-                            'border-black bg-[#06df72] font-bold text-black dark:bg-[#262626] dark:text-white':
+                            'border-black bg-[#06df72] font-bold text-black dark:border-neutral-500 dark:bg-[#262626] dark:text-white':
                                 bullet?.active,
                         })}
                     >
@@ -23,7 +23,7 @@ export default function BulletsWrapper({ bullets = [], children }: any) {
                     </Link>
                 ))}
             </div>
-            <div className="flex h-full flex-1 flex-col items-center justify-center rounded-tr-xl rounded-br-xl border border-[#06df72] bg-white p-4 pl-8 dark:bg-neutral-800">
+            <div className="flex h-full flex-1 flex-col items-center justify-center rounded-tr-xl rounded-br-xl border border-[#06df72] bg-white p-4 pl-8 dark:border-neutral-700 dark:bg-neutral-800">
                 {children}
             </div>
         </div>

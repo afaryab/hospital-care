@@ -92,7 +92,7 @@ export default function PatientView() {
                         currentPhotoUrl={patientPhotoUrl}
                     />
                 )}
-                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950">
+                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950 dark:text-neutral-200">
                     <div className="flex h-full flex-row divide-x divide-gray-200 dark:divide-neutral-800">
                         <div className="divide-y divide-gray-200 dark:divide-neutral-800">
                             {serviceDepartments.map((dept: any) => (

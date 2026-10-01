@@ -31,7 +31,7 @@ export default function TablePagination({ currentPage, lastPage, makeHref }: Tab
             {currentPage > 1 ? (
                 <a
                     href={makeHref(currentPage - 1)}
-                    className="rounded border bg-white dark:bg-neutral-900 px-3 py-1 text-[#1c398e] hover:underline"
+                    className="rounded border bg-white dark:bg-neutral-900 px-3 py-1 text-[#1c398e] dark:text-neutral-200 hover:underline"
                     aria-label="Previous page"
                 >
                     ‹
@@ -55,7 +55,7 @@ export default function TablePagination({ currentPage, lastPage, makeHref }: Tab
                     <a
                         key={p}
                         href={makeHref(p)}
-                        className="rounded border bg-white dark:bg-neutral-900 px-3 py-1 text-[#1c398e] hover:underline"
+                        className="rounded border bg-white dark:bg-neutral-900 px-3 py-1 text-[#1c398e] dark:text-neutral-200 hover:underline"
                     >
                         {p}
                     </a>
@@ -65,7 +65,7 @@ export default function TablePagination({ currentPage, lastPage, makeHref }: Tab
             {currentPage < lastPage ? (
                 <a
                     href={makeHref(currentPage + 1)}
-                    className="rounded border bg-white dark:bg-neutral-900 px-3 py-1 text-[#1c398e] hover:underline"
+                    className="rounded border bg-white dark:bg-neutral-900 px-3 py-1 text-[#1c398e] dark:text-neutral-200 hover:underline"
                     aria-label="Next page"
                 >
                     ›
