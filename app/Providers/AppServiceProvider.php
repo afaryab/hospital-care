@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Helpers\UserTimezone;
 use App\Models\Appointment;
+use App\Models\AppointmentRequest;
 use App\Models\Asset;
 use App\Models\Closing;
 use App\Models\Consent;
@@ -15,6 +16,7 @@ use App\Models\Patient;
 use App\Models\PurchaseOrder;
 use App\Models\Receaveable;
 use App\Models\ServiceOrder;
+use App\Models\SlipPhoto;
 use App\Models\Task;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
@@ -30,6 +32,7 @@ use App\Observers\TaskObserver;
 use App\Observers\TransactionElementObserver;
 use App\Observers\TransactionObserver;
 use App\Observers\TreatmentRecordObserver;
+use App\Policies\AppointmentRequestPolicy;
 use App\Policies\ClosingPolicy;
 use App\Policies\ConsentPolicy;
 use App\Policies\DmsDocumentPolicy;
@@ -39,6 +42,7 @@ use App\Policies\IncidentPolicy;
 use App\Policies\PatientPolicy;
 use App\Policies\ReceaveablePolicy;
 use App\Policies\ServiceOrderPolicy;
+use App\Policies\SlipPhotoPolicy;
 use App\Policies\TransactionPolicy;
 use App\Policies\UserPolicy;
 use App\Services\BackupComplianceGuard;
@@ -102,8 +106,18 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(120)->by($request->user()?->id ?: $request->ip());
         });
 
+        // Public booking: a person books a handful of visits, never dozens.
+        RateLimiter::for('public-booking', function (Request $request) {
+            return [
+                Limit::perMinute(5)->by('minute:'.$request->ip()),
+                Limit::perDay(30)->by('day:'.$request->ip()),
+            ];
+        });
+
+        Gate::policy(AppointmentRequest::class, AppointmentRequestPolicy::class);
         Gate::policy(Closing::class, ClosingPolicy::class);
         Gate::policy(Transaction::class, TransactionPolicy::class);
+        Gate::policy(SlipPhoto::class, SlipPhotoPolicy::class);
         Gate::policy(Patient::class, PatientPolicy::class);
         Gate::policy(ServiceOrder::class, ServiceOrderPolicy::class);
         Gate::policy(ExpenseVoucher::class, ExpenseVoucherPolicy::class);

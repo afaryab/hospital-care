@@ -1,7 +1,7 @@
 @php $elements = $getState() ?? collect(); @endphp
 
 @if($elements->isEmpty())
-    <p class="text-sm text-gray-500 italic">No recestation charges found.</p>
+    <p class="text-sm text-gray-500 dark:text-gray-400 italic">No recestation charges found.</p>
 @else
 <div class="overflow-x-auto">
     <table class="w-full text-sm text-left">

@@ -154,6 +154,28 @@ class UserForm
                     ->collapsed()
                     ->columnSpanFull(),
 
+                Repeater::make('pedDoctorProfiles')
+                    ->label('Peds Doctor Profiles')
+                    ->relationship()
+                    ->schema([
+                        Select::make('authority')
+                            ->options([
+                                'assistant' => 'Assistant',
+                                'senior' => 'Senior Doctor',
+                                'consultant' => 'Consultant',
+                            ])
+                            ->default('assistant')
+                            ->required(),
+                        TextInput::make('pmdc_number')
+                            ->label('PMDC Number')
+                            ->required(),
+                    ])
+                    ->defaultItems(0)
+                    ->addActionLabel('Add Peds Doctor Profile')
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpanFull(),
+
                 Repeater::make('indDoctorProfiles')
                     ->label('Inpatient Doctor Profiles')
                     ->relationship()

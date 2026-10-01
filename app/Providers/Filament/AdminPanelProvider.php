@@ -4,7 +4,6 @@ namespace App\Providers\Filament;
 
 use Andreia\FilamentUiSwitcher\FilamentUiSwitcherPlugin;
 use App\Filament\Admin\Widgets\AdminStatsOverview;
-use App\Filament\Admin\Widgets\MigrationStatsOverview;
 use App\Filament\Pages\Dashboard;
 use App\Http\Middleware\EnsureTwoFactorAuthenticationIsEnabled;
 use App\Services\Filament\FilamentThemeService;
@@ -35,10 +34,6 @@ class AdminPanelProvider extends PanelProvider
             // AccountWidget::class,
             // FilamentInfoWidget::class,
         ];
-
-        if (env('ENABLE_OLD_SYNC', false) !== false) {
-            $widgets[] = MigrationStatsOverview::class;
-        }
 
         return $panel
             ->default()

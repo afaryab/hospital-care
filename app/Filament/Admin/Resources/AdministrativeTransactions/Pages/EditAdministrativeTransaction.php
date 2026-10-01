@@ -11,6 +11,24 @@ class EditAdministrativeTransaction extends EditRecord
 {
     protected static string $resource = AdministrativeTransactionResource::class;
 
+    protected float $originalAmount = 0;
+
+    protected function beforeSave(): void
+    {
+        $this->originalAmount = (float) $this->record->getOriginal('amount');
+    }
+
+    /**
+     * A panel receivable payment's amount is what was collected; editing it
+     * moves the linked receivable's outstanding balance by the difference.
+     */
+    protected function afterSave(): void
+    {
+        if ($this->record->receaveable_id) {
+            $this->record->applyCollectedAmountDelta((float) $this->record->amount - $this->originalAmount);
+        }
+    }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -41,6 +41,7 @@ class UserController extends Controller
             $query->where(function ($doctorQuery) {
                 $doctorQuery
                     ->whereHas('opdDoctorProfiles')
+                    ->orWhereHas('pedDoctorProfiles')
                     ->orWhereHas('indDoctorProfiles')
                     ->orWhereHas('emergencyDoctorProfiles')
                     ->orWhereHas('dentistProfiles')
@@ -58,6 +59,7 @@ class UserController extends Controller
             if (! empty($filters['doctor_only'])) {
                 $exact = $exact->filter(function (User $user) {
                     return $user->opdDoctorProfiles()->exists()
+                        || $user->pedDoctorProfiles()->exists()
                         || $user->indDoctorProfiles()->exists()
                         || $user->emergencyDoctorProfiles()->exists()
                         || $user->dentistProfiles()->exists()

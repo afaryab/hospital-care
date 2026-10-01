@@ -5,6 +5,7 @@ namespace App\Enum;
 enum TransactionElementType
 {
     case OPD;
+    case PED;
     case IND;
     case EMG;
     case LAB;

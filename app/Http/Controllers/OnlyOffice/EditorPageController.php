@@ -5,14 +5,23 @@ namespace App\Http\Controllers\OnlyOffice;
 use App\Http\Controllers\Controller;
 use App\Models\DmsDocument;
 use App\Services\OnlyOffice\OnlyOfficeConfigService;
+use App\Services\OnlyOffice\OnlyOfficeHealth;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 class EditorPageController extends Controller
 {
-    public function __invoke(Request $request, DmsDocument $document, OnlyOfficeConfigService $configs): View
+    public function __invoke(Request $request, DmsDocument $document, OnlyOfficeConfigService $configs, OnlyOfficeHealth $health): View|Response
     {
         $this->authorize('update', $document);
+
+        if (! $health->available()) {
+            return response()->view('onlyoffice.unavailable', [
+                'documentName' => $document->name,
+                'backUrl' => route('dms.index', $document->folder),
+            ], 503);
+        }
 
         $config = $configs->editorConfig($document, $request->user());
 

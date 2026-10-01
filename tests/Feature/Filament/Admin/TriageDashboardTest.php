@@ -2,6 +2,7 @@
 
 use App\Filament\Admin\Pages\TriageDashboard;
 use App\Filament\Admin\Widgets\Triage\TriageKPIStats;
+use App\Helpers\DateHelper;
 use App\Models\Administrator;
 use App\Models\ServiceOrder;
 use App\Models\TreatmentRecord;
@@ -35,4 +36,26 @@ test('triage KPI stats reflect triage assignments in the current period', functi
         ->assertSuccessful()
         ->assertSee('Custom Priority Level')
         ->assertSee('3');
+});
+
+test('applying a preset date range fills concrete start and end dates for widgets', function () {
+    $page = Livewire\Livewire::test(TriageDashboard::class)
+        ->callAction('filter', data: ['dateRange' => 'this_year'])
+        ->assertHasNoFormErrors();
+
+    $now = now(DateHelper::timezone());
+
+    expect($page->get('filters'))->toMatchArray([
+        'dateRange' => 'this_year',
+        'startDate' => $now->copy()->startOfYear()->toDateString(),
+        'endDate' => $now->copy()->endOfYear()->toDateString(),
+    ]);
+});
+
+test('applying a custom date range keeps the chosen dates', function () {
+    $page = Livewire\Livewire::test(TriageDashboard::class)
+        ->callAction('filter', data: ['dateRange' => 'custom', 'startDate' => '2026-01-10', 'endDate' => '2026-02-05'])
+        ->assertHasNoFormErrors();
+
+    expect($page->get('filters'))->toMatchArray(['startDate' => '2026-01-10', 'endDate' => '2026-02-05']);
 });

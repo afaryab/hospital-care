@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -118,6 +119,14 @@ class Transaction extends Model
     public function elements()
     {
         return $this->hasMany(TransactionElement::class);
+    }
+
+    /**
+     * The counter webcam photo (patient or guardian) taken for this slip.
+     */
+    public function slipPhoto(): HasOne
+    {
+        return $this->hasOne(SlipPhoto::class);
     }
 
     public function versions(): HasMany

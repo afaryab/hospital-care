@@ -5,7 +5,7 @@
 @endphp
 
 @if($elements->isEmpty())
-    <p class="text-sm text-gray-500 italic">No income transactions found.</p>
+    <p class="text-sm text-gray-500 dark:text-gray-400 italic">No income transactions found.</p>
 @else
 <div class="overflow-x-auto">
     <table class="w-full text-sm text-left">

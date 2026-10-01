@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import DrugPicker from '@/components/ui/drug-picker';
 import Icd10Picker from '@/components/ui/icd10-picker';
 import AppLayout from '@/layouts/app-layout';
-import { apiOpdSaveTreatment, opdDashboard, opdPatient } from '@/routes';
+import { type OutpatientDepartment, withId } from '@/lib/outpatient-department';
 import { type BreadcrumbItem } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { clsx } from 'clsx';
@@ -112,6 +112,7 @@ interface PreviousVisit {
 interface OpdPatientProps {
     serviceOrder: ServiceOrderData;
     previousVisits: PreviousVisit[];
+    department: OutpatientDepartment;
     [key: string]: unknown;
 }
 
@@ -157,12 +158,12 @@ function formatDate(dateStr?: string): string {
 function statusColor(status: string) {
     const s = status.toLowerCase();
     if (s === 'in-progress')
-        return 'bg-blue-100 text-blue-700 ring-1 ring-blue-200';
+        return 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-800';
     if (s === 'open')
-        return 'bg-amber-100 text-amber-700 ring-1 ring-amber-200';
+        return 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-800';
     if (s === 'treated' || s === 'closed')
-        return 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200';
-    return 'bg-slate-100 text-slate-600';
+        return 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-800';
+    return 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300';
 }
 
 function blankPrescription(): Prescription {
@@ -185,7 +186,8 @@ function getCsrfToken(): string {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function OpdPatient() {
-    const { serviceOrder, previousVisits } = usePage<OpdPatientProps>().props;
+    const { serviceOrder, previousVisits, department } =
+        usePage<OpdPatientProps>().props;
     const patient = serviceOrder.patient;
     const existingRecord = serviceOrder.treatment_record;
     const isFinalized = existingRecord?.is_finalized ?? false;
@@ -251,10 +253,10 @@ export default function OpdPatient() {
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Dashboard', href: '/' },
-        { title: 'OPD', href: opdDashboard().url },
+        { title: department.label, href: department.dashboardUrl },
         {
             title: patient?.name ?? 'Patient',
-            href: opdPatient({ id: serviceOrder.id }).url,
+            href: withId(department.patientUrlTemplate, serviceOrder.id),
         },
     ];
 
@@ -299,7 +301,10 @@ export default function OpdPatient() {
 
             try {
                 const res = await fetch(
-                    apiOpdSaveTreatment({ serviceOrder: serviceOrder.id }).url,
+                    withId(
+                        department.apiSaveTreatmentUrlTemplate,
+                        serviceOrder.id,
+                    ),
                     {
                         method: 'POST',
                         headers: {
@@ -351,17 +356,19 @@ export default function OpdPatient() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`OPD — ${patient?.name ?? 'Patient'}`} />
+            <Head
+                title={`${department.label} — ${patient?.name ?? 'Patient'}`}
+            />
 
-            <div className="min-h-full bg-gradient-to-br from-teal-50 via-white to-emerald-50">
+            <div className="min-h-full bg-gradient-to-br from-teal-50 via-white to-emerald-50 dark:from-teal-950/40 dark:via-neutral-950 dark:to-emerald-950/40">
                 {/* ── Patient Banner ──────────────────────────────────────── */}
-                <div className="sticky top-0 z-10 border-b border-teal-100 bg-white shadow-sm">
+                <div className="sticky top-0 z-10 border-b border-teal-100 bg-white shadow-sm dark:border-teal-900 dark:bg-neutral-900">
                     <div className="mx-auto max-w-5xl px-4 py-3 md:px-6">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
                                 <a
-                                    href={opdDashboard().url}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
+                                    href={department.dashboardUrl}
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                                 >
                                     <ArrowLeft className="h-4 w-4" />
                                 </a>
@@ -371,7 +378,7 @@ export default function OpdPatient() {
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <h1 className="text-base font-bold text-slate-900 md:text-lg">
+                                        <h1 className="text-base font-bold text-slate-900 md:text-lg dark:text-neutral-100">
                                             {patient?.name}
                                         </h1>
                                         <span
@@ -385,13 +392,13 @@ export default function OpdPatient() {
                                             {serviceOrder.status}
                                         </span>
                                         {isFinalized && (
-                                            <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                                            <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800">
                                                 <Lock className="h-3 w-3" />{' '}
                                                 Finalized
                                             </span>
                                         )}
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
+                                    <div className="flex flex-wrap items-center gap-x-2 text-xs text-slate-500 dark:text-neutral-400">
                                         <span>{patient?.ps_number}</span>
                                         <span>&bull;</span>
                                         <span>{ageDisplay(patient)}</span>
@@ -416,7 +423,7 @@ export default function OpdPatient() {
                                     onClick={() =>
                                         setShowPreviousVisits((v) => !v)
                                     }
-                                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50"
+                                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                                 >
                                     <History className="h-3.5 w-3.5" />
                                     History ({previousVisits.length})
@@ -455,9 +462,9 @@ export default function OpdPatient() {
                 {/* ── Finalized Banner ────────────────────────────────────── */}
                 {isFinalized && (
                     <div className="mx-auto max-w-5xl px-4 pt-4 md:px-6">
-                        <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                            <Lock className="h-5 w-5 text-emerald-600" />
-                            <p className="text-sm font-medium text-emerald-800">
+                        <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900 dark:bg-emerald-950/40">
+                            <Lock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
                                 This treatment record has been finalized and is
                                 read-only.
                             </p>
@@ -468,41 +475,41 @@ export default function OpdPatient() {
                 {/* ── Previous Visits Panel ────────────────────────────────── */}
                 {showPreviousVisits && (
                     <div className="mx-auto max-w-5xl px-4 pt-4 md:px-6">
-                        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-                            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                                    <History className="h-4 w-4 text-slate-500" />{' '}
-                                    Previous OPD Visits
+                        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-neutral-800">
+                                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-neutral-100">
+                                    <History className="h-4 w-4 text-slate-500 dark:text-neutral-400" />{' '}
+                                    Previous {department.label} Visits
                                 </h3>
                                 <button
                                     type="button"
                                     onClick={() => setShowPreviousVisits(false)}
-                                    className="text-slate-400 hover:text-slate-600"
+                                    className="text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
                             </div>
                             {previousVisits.length === 0 ? (
-                                <p className="px-4 py-6 text-center text-sm text-slate-500">
-                                    No previous OPD visits.
+                                <p className="px-4 py-6 text-center text-sm text-slate-500 dark:text-neutral-400">
+                                    No previous {department.label} visits.
                                 </p>
                             ) : (
-                                <div className="divide-y divide-slate-100">
+                                <div className="divide-y divide-slate-100 dark:divide-neutral-800">
                                     {previousVisits.map((v) => (
                                         <div
                                             key={v.id}
                                             className="flex items-start justify-between px-4 py-3"
                                         >
                                             <div>
-                                                <p className="text-xs font-semibold text-slate-800">
+                                                <p className="text-xs font-semibold text-slate-800 dark:text-neutral-100">
                                                     {v.so_number}
                                                 </p>
-                                                <p className="mt-0.5 text-xs text-slate-500">
+                                                <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
                                                     {formatDate(v.created_at)}
                                                 </p>
                                                 {v.treatment_record
                                                     ?.diagnosis_text && (
-                                                    <p className="mt-1 text-xs text-slate-600">
+                                                    <p className="mt-1 text-xs text-slate-600 dark:text-neutral-300">
                                                         {
                                                             v.treatment_record
                                                                 .diagnosis_text
@@ -538,7 +545,7 @@ export default function OpdPatient() {
 
                 {/* ── Service Order Info ──────────────────────────────────── */}
                 <div className="mx-auto max-w-5xl px-4 pt-4 md:px-6">
-                    <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-4 dark:border-neutral-800 dark:bg-neutral-900">
                         <InfoCell
                             label="SO Number"
                             value={serviceOrder.so_number}
@@ -581,7 +588,9 @@ export default function OpdPatient() {
 
                     {/* History of Present Illness */}
                     <FormSection
-                        icon={<FileText className="h-4 w-4 text-slate-500" />}
+                        icon={
+                            <FileText className="h-4 w-4 text-slate-500 dark:text-neutral-400" />
+                        }
                         title="History of Present Illness"
                     >
                         <textarea
@@ -694,7 +703,9 @@ export default function OpdPatient() {
 
                     {/* Examination Findings */}
                     <FormSection
-                        icon={<Stethoscope className="h-4 w-4 text-teal-600" />}
+                        icon={
+                            <Stethoscope className="h-4 w-4 text-teal-600 dark:text-teal-400" />
+                        }
                         title="Examination Findings"
                     >
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -708,7 +719,7 @@ export default function OpdPatient() {
                                 'Other',
                             ].map((sys) => (
                                 <div key={sys}>
-                                    <label className="mb-1 block text-xs font-medium text-slate-500">
+                                    <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                         {sys}
                                     </label>
                                     <input
@@ -735,7 +746,7 @@ export default function OpdPatient() {
                     >
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     ICD-10 Code
                                 </label>
                                 <Icd10Picker
@@ -750,7 +761,7 @@ export default function OpdPatient() {
                                 />
                             </div>
                             <div className="sm:col-span-2">
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     Diagnosis
                                 </label>
                                 <input
@@ -768,12 +779,14 @@ export default function OpdPatient() {
 
                     {/* Prescriptions */}
                     <FormSection
-                        icon={<FileText className="h-4 w-4 text-emerald-600" />}
+                        icon={
+                            <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        }
                         title="Prescription"
                     >
-                        <div className="overflow-x-auto rounded-xl border border-slate-200">
+                        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-neutral-800">
                             <table className="w-full min-w-[700px] text-sm">
-                                <thead className="bg-slate-50">
+                                <thead className="bg-slate-50 dark:bg-neutral-800/50">
                                     <tr>
                                         {[
                                             'Drug Name',
@@ -786,18 +799,18 @@ export default function OpdPatient() {
                                         ].map((h) => (
                                             <th
                                                 key={h}
-                                                className="px-3 py-2 text-left text-xs font-semibold text-slate-600"
+                                                className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-neutral-300"
                                             >
                                                 {h}
                                             </th>
                                         ))}
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">
                                     {prescriptions.map((row, idx) => (
                                         <tr
                                             key={idx}
-                                            className="bg-white hover:bg-slate-50"
+                                            className="bg-white hover:bg-slate-50 dark:bg-neutral-900 dark:hover:bg-neutral-800/50"
                                         >
                                             <td className="px-2 py-1.5">
                                                 {isFinalized ? (
@@ -963,7 +976,7 @@ export default function OpdPatient() {
                             <button
                                 type="button"
                                 onClick={addPrescription}
-                                className="mt-2 flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:border-teal-400 hover:text-teal-600"
+                                className="mt-2 flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:border-teal-400 hover:text-teal-600 dark:border-neutral-700 dark:text-neutral-400 dark:hover:text-teal-400"
                             >
                                 <Plus className="h-3.5 w-3.5" /> Add Drug
                             </button>
@@ -992,7 +1005,7 @@ export default function OpdPatient() {
                     >
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     Follow-up Date
                                 </label>
                                 <input
@@ -1006,7 +1019,7 @@ export default function OpdPatient() {
                                 />
                             </div>
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     Outcome
                                 </label>
                                 <select
@@ -1026,7 +1039,7 @@ export default function OpdPatient() {
                                 </select>
                             </div>
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     Referred To
                                 </label>
                                 <input
@@ -1044,7 +1057,7 @@ export default function OpdPatient() {
 
                     {/* Bottom Save Bar */}
                     {!isFinalized && (
-                        <div className="flex items-center justify-end gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                        <div className="flex items-center justify-end gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
                             <Button
                                 variant="outline"
                                 disabled={saving}
@@ -1083,7 +1096,7 @@ function FormSection({
 }) {
     const [collapsed, setCollapsed] = useState(false);
     return (
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
             <button
                 type="button"
                 onClick={() => setCollapsed((c) => !c)}
@@ -1091,7 +1104,7 @@ function FormSection({
             >
                 <div className="flex items-center gap-2">
                     {icon}
-                    <span className="text-sm font-semibold text-slate-900">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                         {title}
                     </span>
                 </div>
@@ -1103,7 +1116,7 @@ function FormSection({
             </button>
             {!collapsed && (
                 <>
-                    <div className="h-px bg-slate-100" />
+                    <div className="h-px bg-slate-100 dark:bg-neutral-800" />
                     <div className="p-4 md:p-5">{children}</div>
                 </>
             )}
@@ -1114,8 +1127,10 @@ function FormSection({
 function InfoCell({ label, value }: { label: string; value?: string }) {
     return (
         <div>
-            <p className="text-xs text-slate-500">{label}</p>
-            <p className="mt-0.5 text-sm font-semibold text-slate-800">
+            <p className="text-xs text-slate-500 dark:text-neutral-400">
+                {label}
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-neutral-100">
                 {value ?? '—'}
             </p>
         </div>
@@ -1139,7 +1154,7 @@ function VitalInput({
 }) {
     return (
         <div>
-            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-500">
+            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-neutral-400">
                 {icon} {label}
             </label>
             <input
@@ -1159,31 +1174,31 @@ function VitalInput({
 
 function textareaClass(disabled: boolean) {
     return clsx(
-        'w-full rounded-xl border px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400',
-        'focus:border-teal-400 focus:ring-2 focus:ring-teal-100 focus:outline-none',
+        'w-full rounded-xl border px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 dark:text-neutral-100',
+        'focus:border-teal-400 focus:ring-2 focus:ring-teal-100 focus:outline-none dark:focus:ring-teal-800',
         'resize-y',
         disabled
-            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600'
-            : 'border-slate-200 bg-white hover:border-slate-300',
+            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-300'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700',
     );
 }
 
 function inputClass(disabled: boolean) {
     return clsx(
-        'w-full rounded-xl border px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400',
-        'focus:border-teal-400 focus:ring-2 focus:ring-teal-100 focus:outline-none',
+        'w-full rounded-xl border px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 dark:text-neutral-100',
+        'focus:border-teal-400 focus:ring-2 focus:ring-teal-100 focus:outline-none dark:focus:ring-teal-800',
         disabled
-            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600'
-            : 'border-slate-200 bg-white hover:border-slate-300',
+            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-300'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700',
     );
 }
 
 function tableInputClass(disabled: boolean) {
     return clsx(
-        'w-full rounded-lg border px-2 py-1.5 text-xs text-slate-800 placeholder:text-slate-400',
-        'focus:border-teal-300 focus:ring-1 focus:ring-teal-200 focus:outline-none',
+        'w-full rounded-lg border px-2 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 dark:text-neutral-100',
+        'focus:border-teal-300 focus:ring-1 focus:ring-teal-200 focus:outline-none dark:focus:border-teal-800 dark:focus:ring-teal-800',
         disabled
-            ? 'cursor-not-allowed border-transparent bg-transparent text-slate-600'
-            : 'border-slate-200 bg-white hover:border-slate-300',
+            ? 'cursor-not-allowed border-transparent bg-transparent text-slate-600 dark:text-neutral-300'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700',
     );
 }

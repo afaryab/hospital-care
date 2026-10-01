@@ -74,13 +74,13 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
     const getStatusColor = (status?: string) => {
         switch (status) {
             case 'completed':
-                return 'bg-green-100 text-green-800 border-green-200';
+                return 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-200 dark:border-green-900';
             case 'ongoing':
-                return 'bg-blue-100 text-blue-800 border-blue-200';
+                return 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-900';
             case 'pending':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                return 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-900';
             default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
+                return 'bg-gray-100 dark:bg-neutral-800 text-gray-800 dark:text-neutral-100 border-gray-200 dark:border-neutral-800';
         }
     };
 
@@ -93,7 +93,7 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
                 id: 'emergency',
                 name: 'Emergency',
                 icon: <AlertTriangle className="h-4 w-4" />,
-                color: 'text-red-600',
+                color: 'text-red-600 dark:text-red-400',
                 treatments: [
                     {
                         id: 'uerco389rcnojw8qr4',
@@ -115,7 +115,7 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
                 id: 'inpatient',
                 name: 'In Patient',
                 icon: <Bed className="h-4 w-4" />,
-                color: 'text-blue-600',
+                color: 'text-blue-600 dark:text-blue-400',
                 treatments: [
                     {
                         id: 'ajsf9u48fc48nåua48',
@@ -137,7 +137,7 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
                 id: 'opd',
                 name: 'OPD',
                 icon: <Stethoscope className="h-4 w-4" />,
-                color: 'text-green-600',
+                color: 'text-green-600 dark:text-green-400',
                 treatments: [
                     {
                         id: 'aow4cjlo',
@@ -159,7 +159,7 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
                 id: 'dental',
                 name: 'Dental',
                 icon: <Activity className="h-4 w-4" />,
-                color: 'text-purple-600',
+                color: 'text-purple-600 dark:text-purple-400',
                 treatments: [
                     {
                         id: 'dental001',
@@ -174,7 +174,7 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
                 id: 'lab',
                 name: 'Lab',
                 icon: <FlaskConical className="h-4 w-4" />,
-                color: 'text-orange-600',
+                color: 'text-orange-600 dark:text-orange-400',
                 treatments: [
                     {
                         id: 'lab001',
@@ -194,7 +194,7 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
                 id: 'radiology',
                 name: 'Radiology',
                 icon: <Camera className="h-4 w-4" />,
-                color: 'text-indigo-600',
+                color: 'text-indigo-600 dark:text-indigo-400',
                 treatments: [
                     {
                         id: 'rad001',
@@ -209,7 +209,7 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
                 id: 'ultrasound',
                 name: 'Ultrasound',
                 icon: <Heart className="h-4 w-4" />,
-                color: 'text-pink-600',
+                color: 'text-pink-600 dark:text-pink-400',
                 treatments: [
                     {
                         id: 'ultra001',
@@ -232,9 +232,9 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
                     <User className="h-5 w-5" />
                     <span>Patient History</span>
                 </CardTitle>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 dark:text-neutral-300">
                     <div className="font-medium">{data.patientName}</div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-neutral-400">
                         {data.patientId}
                     </div>
                 </div>
@@ -249,21 +249,21 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
                         <div key={department.id} className="space-y-1">
                             {/* Department Folder */}
                             <div
-                                className="flex cursor-pointer items-center space-x-2 rounded-lg p-2 transition-colors select-none hover:bg-gray-50"
+                                className="flex cursor-pointer items-center space-x-2 rounded-lg p-2 transition-colors select-none hover:bg-gray-50 dark:hover:bg-neutral-800/50"
                                 onClick={() => toggleDepartment(department.id)}
                                 data-department-id={department.id}
                                 data-expanded={isExpanded}
                             >
                                 <div className="flex items-center space-x-1">
                                     {isExpanded ? (
-                                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                                        <ChevronDown className="h-4 w-4 text-gray-500 dark:text-neutral-400" />
                                     ) : (
-                                        <ChevronRight className="h-4 w-4 text-gray-500" />
+                                        <ChevronRight className="h-4 w-4 text-gray-500 dark:text-neutral-400" />
                                     )}
                                     {isExpanded ? (
                                         <FolderOpen className="h-4 w-4 text-yellow-500" />
                                     ) : (
-                                        <Folder className="h-4 w-4 text-yellow-600" />
+                                        <Folder className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                                     )}
                                 </div>
 
@@ -289,7 +289,7 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
                                     {department.treatments.map((treatment) => (
                                         <div
                                             key={treatment.id}
-                                            className="group flex cursor-pointer items-center space-x-2 rounded-md p-2 transition-colors hover:bg-gray-50"
+                                            className="group flex cursor-pointer items-center space-x-2 rounded-md p-2 transition-colors hover:bg-gray-50 dark:hover:bg-neutral-800/50"
                                             onClick={() =>
                                                 handleTreatmentClick(
                                                     department.id,
@@ -299,10 +299,10 @@ const PatientHistoryMiniTree: React.FC<PatientHistoryMiniTreeProps> = ({
                                         >
                                             <FileText className="h-3 w-3 text-gray-400" />
                                             <div className="min-w-0 flex-1">
-                                                <div className="truncate text-sm font-medium text-gray-700 group-hover:text-gray-900">
+                                                <div className="truncate text-sm font-medium text-gray-700 group-hover:text-gray-900 dark:text-neutral-200 dark:group-hover:text-neutral-100">
                                                     {treatment.name}
                                                 </div>
-                                                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                                <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-neutral-400">
                                                     <span className="flex items-center space-x-1">
                                                         <Calendar className="h-3 w-3" />
                                                         <span>

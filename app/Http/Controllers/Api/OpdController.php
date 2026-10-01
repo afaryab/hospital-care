@@ -19,6 +19,14 @@ use Illuminate\Validation\Rule;
 class OpdController extends Controller
 {
     /**
+     * OPD and Peds share this controller; Peds routes set the `department` default.
+     */
+    private function departmentType(Request $request): string
+    {
+        return strtoupper((string) ($request->route('department') ?? 'OPD')) === 'PED' ? 'PED' : 'OPD';
+    }
+
+    /**
      * Search for service orders by SO number or patient PS number.
      * Used by the dashboard search box via fetch.
      */
@@ -30,6 +38,7 @@ class OpdController extends Controller
         ]);
 
         $query = trim($filters['q']);
+        $type = $this->departmentType($request);
         $limit = $filters['limit'] ?? 20;
 
         $exact = collect();
@@ -38,7 +47,7 @@ class OpdController extends Controller
         // Exact SO number match
         $exactSo = ServiceOrder::query()
             ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name'])
-            ->where('type', 'OPD')
+            ->where('type', $type)
             ->where(function ($q) use ($query) {
                 $q->where('so_number', $query)
                     ->orWhere('so_short', $query);
@@ -55,7 +64,7 @@ class OpdController extends Controller
         if ($patient) {
             $patientOrders = ServiceOrder::query()
                 ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name'])
-                ->where('type', 'OPD')
+                ->where('type', $type)
                 ->where('patient_id', $patient->id)
                 ->whereIn('status', ['open', 'in-progress', 'OPEN', 'IN-PROGRESS'])
                 ->latest('created_at')
@@ -75,7 +84,7 @@ class OpdController extends Controller
         if ($exact->isEmpty() && $possible->isEmpty()) {
             $possible = ServiceOrder::query()
                 ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name'])
-                ->where('type', 'OPD')
+                ->where('type', $type)
                 ->where(fn ($q) => $q->where('so_number', 'like', "%{$query}%")
                     ->orWhere('so_short', 'like', "{$query}%"))
                 ->latest('created_at')
@@ -231,10 +240,11 @@ class OpdController extends Controller
     public function myQueue(Request $request): JsonResponse
     {
         $user = $request->user();
+        $type = $this->departmentType($request);
 
         $orders = ServiceOrder::query()
             ->with(['patient:id,name,ps_number,gender,age_days,age_dob', 'service:id,name', 'treatmentRecord:id,service_order_id,is_finalized,diagnosis_text'])
-            ->where('type', 'OPD')
+            ->where('type', $type)
             ->where('doctor_id', $user->id)
             ->whereBetween('created_at', DateHelper::todayRangeUtc())
             ->orderByRaw("CASE WHEN LOWER(status) = 'in-progress' THEN 0 WHEN LOWER(status) = 'open' THEN 1 WHEN LOWER(status) = 'treated' THEN 2 ELSE 3 END ASC")

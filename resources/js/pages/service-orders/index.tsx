@@ -175,23 +175,23 @@ function ServiceOrderDetailPanel({
         <>
             {/* Header */}
             <div className="space-y-1 border-b pb-3">
-                <h2 className="text-lg font-bold text-gray-900">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-neutral-100">
                     {so.so_number}
                 </h2>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-neutral-300">
                     {so.patient?.name ?? '-'} · {so.patient?.ps_number ?? '-'}
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-neutral-300">
                     Doctor: {so.doctor?.name ?? '-'}
                 </p>
-                <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700 uppercase">
+                <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700 uppercase dark:bg-neutral-800 dark:text-neutral-200">
                     {so.status}
                 </span>
             </div>
 
             {/* Change Status */}
             <div className="space-y-2 border-b pb-3">
-                <h3 className="text-sm font-semibold text-gray-900">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-neutral-100">
                     Change Status
                 </h3>
                 <Select
@@ -221,25 +221,25 @@ function ServiceOrderDetailPanel({
 
             {/* Financial Summary */}
             <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="rounded-md bg-green-50 p-2 text-green-800">
+                <div className="rounded-md bg-green-50 p-2 text-green-800 dark:bg-green-950/40 dark:text-green-300">
                     <span className="text-xs font-medium">Income</span>
                     <p className="font-semibold">
                         {formatMoney(so.income_total)}
                     </p>
                 </div>
-                <div className="rounded-md bg-red-50 p-2 text-red-800">
+                <div className="rounded-md bg-red-50 p-2 text-red-800 dark:bg-red-950/40 dark:text-red-300">
                     <span className="text-xs font-medium">Expense</span>
                     <p className="font-semibold">
                         {formatMoney(so.expense_total)}
                     </p>
                 </div>
-                <div className="rounded-md bg-blue-50 p-2 text-blue-800">
+                <div className="rounded-md bg-blue-50 p-2 text-blue-800 dark:bg-blue-950/40 dark:text-blue-300">
                     <span className="text-xs font-medium">Voucher Exp.</span>
                     <p className="font-semibold">
                         {formatMoney(so.voucher_expense_total)}
                     </p>
                 </div>
-                <div className="rounded-md bg-gray-100 p-2 text-gray-900">
+                <div className="rounded-md bg-gray-100 p-2 text-gray-900 dark:bg-neutral-800 dark:text-neutral-100">
                     <span className="text-xs font-medium">Net</span>
                     <p className="font-semibold">{formatMoney(selectedNet)}</p>
                 </div>
@@ -257,14 +257,14 @@ function ServiceOrderDetailPanel({
                         className="flex items-center justify-between rounded-md border p-2 text-sm"
                     >
                         <div>
-                            <p className="font-mono text-xs text-gray-600">
+                            <p className="font-mono text-xs text-gray-600 dark:text-neutral-300">
                                 {el.transaction?.tr_number ?? '-'}
                             </p>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-gray-500 dark:text-neutral-400">
                                 {el.type}
                             </span>
                         </div>
-                        <span className="font-mono font-medium text-green-700">
+                        <span className="font-mono font-medium text-green-700 dark:text-green-300">
                             {formatMoney(el.amount)}
                         </span>
                     </div>
@@ -283,14 +283,14 @@ function ServiceOrderDetailPanel({
                         className="flex items-center justify-between rounded-md border p-2 text-sm"
                     >
                         <div>
-                            <p className="font-mono text-xs text-gray-600">
+                            <p className="font-mono text-xs text-gray-600 dark:text-neutral-300">
                                 {el.transaction?.tr_number ?? '-'}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-neutral-400">
                                 {el.service_recestation?.name ?? 'Recestation'}
                             </p>
                         </div>
-                        <span className="font-mono font-medium text-indigo-700">
+                        <span className="font-mono font-medium text-indigo-700 dark:text-indigo-300">
                             {formatMoney(el.amount)}
                         </span>
                     </div>
@@ -309,10 +309,10 @@ function ServiceOrderDetailPanel({
                         className="flex items-center justify-between rounded-md border p-2 text-sm"
                     >
                         <div>
-                            <p className="font-mono text-xs text-gray-600">
+                            <p className="font-mono text-xs text-gray-600 dark:text-neutral-300">
                                 {el.transaction?.tr_number ?? '-'}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-neutral-400">
                                 {el.type}{' '}
                                 {el.expense_category?.name
                                     ? `· ${el.expense_category.name}`
@@ -322,7 +322,7 @@ function ServiceOrderDetailPanel({
                                     : ''}
                             </p>
                         </div>
-                        <span className="font-mono font-medium text-red-700">
+                        <span className="font-mono font-medium text-red-700 dark:text-red-300">
                             {formatMoney(el.amount)}
                         </span>
                     </div>
@@ -338,21 +338,21 @@ function ServiceOrderDetailPanel({
                 {(so.receivables ?? []).map((rec) => (
                     <div key={rec.id} className="rounded-md border p-2 text-sm">
                         <div className="flex items-center justify-between">
-                            <span className="font-mono text-xs text-gray-600">
+                            <span className="font-mono text-xs text-gray-600 dark:text-neutral-300">
                                 {rec.transaction?.tr_number ?? '-'}
                             </span>
                             <span
                                 className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                                     rec.status === 'paid' ||
                                     rec.status === 'payed'
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-orange-100 text-orange-800'
+                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+                                        : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300'
                                 }`}
                             >
                                 {(rec.status ?? 'pending').toUpperCase()}
                             </span>
                         </div>
-                        <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
+                        <div className="mt-1 flex items-center justify-between text-xs text-gray-500 dark:text-neutral-400">
                             <span>{rec.panel?.name ?? '-'}</span>
                             <span>
                                 {formatMoney(rec.amount)} /{' '}
@@ -378,7 +378,7 @@ function ServiceOrderDetailPanel({
                             <p className="font-mono text-xs font-medium">
                                 {voucher.vc_number}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-neutral-400">
                                 {voucher.exp_category?.name ?? '-'}
                             </p>
                             {voucher.status && (
@@ -386,15 +386,15 @@ function ServiceOrderDetailPanel({
                                     className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                                         voucher.status === 'paid' ||
                                         voucher.status === 'payed'
-                                            ? 'bg-green-100 text-green-800'
-                                            : 'bg-orange-100 text-orange-800'
+                                            ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+                                            : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300'
                                     }`}
                                 >
                                     {voucher.status.toUpperCase()}
                                 </span>
                             )}
                         </div>
-                        <span className="font-mono font-medium text-purple-700">
+                        <span className="font-mono font-medium text-purple-700 dark:text-purple-300">
                             {formatMoney(voucher.amount)}
                         </span>
                     </div>
@@ -403,7 +403,7 @@ function ServiceOrderDetailPanel({
 
             {/* Treatment */}
             <div className="space-y-2">
-                <h3 className="text-sm font-semibold text-gray-900">
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-neutral-100">
                     Treatment
                 </h3>
                 {so.treatment_record ? (
@@ -423,7 +423,7 @@ function ServiceOrderDetailPanel({
                         </p>
                     </div>
                 ) : (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-neutral-400">
                         No treatment record.
                     </p>
                 )}
@@ -444,19 +444,21 @@ function DetailSection({
     children: React.ReactNode;
 }) {
     const colorMap: Record<string, string> = {
-        green: 'bg-green-100 text-green-800',
-        red: 'bg-red-100 text-red-800',
-        indigo: 'bg-indigo-100 text-indigo-800',
-        orange: 'bg-orange-100 text-orange-800',
-        purple: 'bg-purple-100 text-purple-800',
+        green: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
+        red: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300',
+        indigo: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-800 dark:text-indigo-300',
+        orange: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300',
+        purple: 'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300',
     };
 
     return (
         <div className="space-y-2">
             <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+                <h3 className="text-sm font-semibold text-gray-900 dark:text-neutral-100">
+                    {title}
+                </h3>
                 <span
-                    className={`rounded-full px-1.5 py-0.5 text-xs font-medium ${colorMap[color] ?? 'bg-gray-100 text-gray-800'}`}
+                    className={`rounded-full px-1.5 py-0.5 text-xs font-medium ${colorMap[color] ?? 'bg-gray-100 text-gray-800 dark:bg-neutral-800 dark:text-neutral-100'}`}
                 >
                     {count}
                 </span>
@@ -464,7 +466,9 @@ function DetailSection({
             {count > 0 ? (
                 <div className="space-y-2">{children}</div>
             ) : (
-                <p className="text-sm text-gray-500">None.</p>
+                <p className="text-sm text-gray-500 dark:text-neutral-400">
+                    None.
+                </p>
             )}
         </div>
     );
@@ -590,6 +594,7 @@ export default function ServiceOrdersOverview() {
                     {[
                         { label: 'General', value: '' },
                         { label: 'OPD', value: 'OPD' },
+                        { label: 'Peds', value: 'PED' },
                         { label: 'Indoor', value: 'IND' },
                         { label: 'Emergency', value: 'EMG' },
                         { label: 'Dental', value: 'DNT' },
@@ -610,7 +615,7 @@ export default function ServiceOrdersOverview() {
                         </button>
                     ))}
                 </div>
-                <div className="grid gap-4 rounded-xl bg-white p-4 text-[#1c398e] lg:grid-cols-3 dark:bg-neutral-950">
+                <div className="grid gap-4 rounded-xl bg-white p-4 text-[#1c398e] lg:grid-cols-3 dark:bg-neutral-950 dark:text-neutral-200">
                     <div className="space-y-2 lg:col-span-2">
                         <Label htmlFor="service-order-search">Search</Label>
                         <Input
@@ -651,10 +656,10 @@ export default function ServiceOrdersOverview() {
                     </div>
                 </div>
 
-                <div className="grid flex-1 gap-4 rounded-xl bg-white p-4 text-[#1c398e] xl:grid-cols-[2fr_1fr] dark:bg-neutral-950">
-                    <div className="overflow-hidden rounded-lg border border-gray-200">
+                <div className="grid flex-1 gap-4 rounded-xl bg-white p-4 text-[#1c398e] xl:grid-cols-[2fr_1fr] dark:bg-neutral-950 dark:text-neutral-200">
+                    <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-neutral-800">
                         <table className="w-full text-left text-sm">
-                            <thead className="bg-gray-50 text-xs uppercase">
+                            <thead className="bg-gray-50 text-xs uppercase dark:bg-neutral-800/50">
                                 <tr>
                                     <th className="px-4 py-3">Service Order</th>
                                     <th className="px-4 py-3">Patient</th>
@@ -668,7 +673,7 @@ export default function ServiceOrdersOverview() {
                                     <tr>
                                         <td
                                             colSpan={5}
-                                            className="px-4 py-10 text-center text-gray-500"
+                                            className="px-4 py-10 text-center text-gray-500 dark:text-neutral-400"
                                         >
                                             No service orders found.
                                         </td>
@@ -688,7 +693,7 @@ export default function ServiceOrdersOverview() {
                                     return (
                                         <tr
                                             key={serviceOrder.id}
-                                            className="cursor-pointer border-t hover:bg-gray-50"
+                                            className="cursor-pointer border-t hover:bg-gray-50 dark:hover:bg-neutral-800/50"
                                             onClick={() =>
                                                 openServiceOrder(
                                                     serviceOrder.id,
@@ -709,15 +714,15 @@ export default function ServiceOrdersOverview() {
                                                             className="mt-0.5 h-5 w-5"
                                                         />
                                                     ) : (
-                                                        <span className="mt-0.5 h-5 w-5 rounded-full bg-gray-200" />
+                                                        <span className="mt-0.5 h-5 w-5 rounded-full bg-gray-200 dark:bg-neutral-700" />
                                                     )}
                                                     <div>
-                                                        <p className="font-semibold text-gray-900">
+                                                        <p className="font-semibold text-gray-900 dark:text-neutral-100">
                                                             {
                                                                 serviceOrder.so_number
                                                             }
                                                         </p>
-                                                        <p className="text-xs text-gray-500">
+                                                        <p className="text-xs text-gray-500 dark:text-neutral-400">
                                                             {serviceOrder
                                                                 .service
                                                                 ?.name ??
@@ -727,7 +732,7 @@ export default function ServiceOrdersOverview() {
                                                                 serviceOrder.status
                                                             }
                                                         </p>
-                                                        <p className="text-xs text-gray-500">
+                                                        <p className="text-xs text-gray-500 dark:text-neutral-400">
                                                             {formatDate(
                                                                 serviceOrder.created_at,
                                                             )}
@@ -736,30 +741,30 @@ export default function ServiceOrdersOverview() {
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3 align-top">
-                                                <p className="font-medium text-gray-900">
+                                                <p className="font-medium text-gray-900 dark:text-neutral-100">
                                                     {serviceOrder.patient
                                                         ?.name ?? '-'}
                                                 </p>
-                                                <p className="text-xs text-gray-500">
+                                                <p className="text-xs text-gray-500 dark:text-neutral-400">
                                                     {serviceOrder.patient
                                                         ?.ps_number ?? '-'}
                                                 </p>
-                                                <p className="text-xs text-gray-500">
+                                                <p className="text-xs text-gray-500 dark:text-neutral-400">
                                                     {serviceOrder.doctor
                                                         ?.name ?? '-'}
                                                 </p>
                                             </td>
-                                            <td className="px-4 py-3 align-top text-green-700">
+                                            <td className="px-4 py-3 align-top text-green-700 dark:text-green-300">
                                                 {formatMoney(income)}
                                             </td>
-                                            <td className="px-4 py-3 align-top text-red-700">
+                                            <td className="px-4 py-3 align-top text-red-700 dark:text-red-300">
                                                 {formatMoney(expense)}
                                             </td>
                                             <td
                                                 className={`px-4 py-3 align-top font-semibold ${
                                                     net >= 0
-                                                        ? 'text-emerald-700'
-                                                        : 'text-rose-700'
+                                                        ? 'text-emerald-700 dark:text-emerald-300'
+                                                        : 'text-rose-700 dark:text-rose-300'
                                                 }`}
                                             >
                                                 {formatMoney(net)}
@@ -772,11 +777,11 @@ export default function ServiceOrdersOverview() {
                     </div>
 
                     <aside
-                        className="space-y-4 overflow-y-auto rounded-lg border border-gray-200 p-4"
+                        className="space-y-4 overflow-y-auto rounded-lg border border-gray-200 p-4 dark:border-neutral-800"
                         style={{ maxHeight: '80vh' }}
                     >
                         {!selectedServiceOrder && (
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-500 dark:text-neutral-400">
                                 Click a service order row to view profile,
                                 treatment, and expense details.
                             </p>

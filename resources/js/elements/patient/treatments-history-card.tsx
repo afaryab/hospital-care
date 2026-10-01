@@ -21,9 +21,11 @@ const PatientTreatmentsHistoryCard: React.FC<
         ),
     );
     return (
-        <div className={clsx('bg-white', className)}>
+        <div className={clsx('bg-white dark:bg-neutral-900', className)}>
             {patient.treatments.length === 0 ? (
-                <p className="text-gray-500">No treatments found</p>
+                <p className="text-gray-500 dark:text-neutral-400">
+                    No treatments found
+                </p>
             ) : (
                 <div className="space-y-3">
                     {patient.treatments

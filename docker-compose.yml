@@ -23,10 +23,12 @@ services:
       - REDIS_PORT=6379
       - ONLYOFFICE_INTERNAL_URL=http://onlyoffice-documentserver
       - ONLYOFFICE_JWT_SECRET=${ONLYOFFICE_JWT_SECRET:-change-me-onlyoffice-jwt-secret}
+    # onlyoffice-documentserver is intentionally not a dependency: the app
+    # must keep running when the document editor is down (only editing is
+    # disabled — see App\Services\OnlyOffice\OnlyOfficeHealth).
     depends_on:
       - db
       - redis
-      - onlyoffice-documentserver
 
   cli:
     build:

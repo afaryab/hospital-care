@@ -23,7 +23,7 @@ export default function UltDashboard() {
             <DeptQueueDashboard
                 deptName="Ultrasound"
                 accentColor="bg-teal-600"
-                accentClass="text-teal-600"
+                accentClass="text-teal-600 dark:text-teal-400"
                 icon={<ScanLine className="h-6 w-6" />}
                 hasAccess={isUltDoctor}
                 orders={recentOrders ?? []}

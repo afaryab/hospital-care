@@ -75,7 +75,7 @@ const initialFilters: ServiceOrderFilters = {
     created_to: '',
 };
 
-const serviceOrderTypeOptions = ['OPD', 'IND', 'EMG', 'DNT', 'ULT'];
+const serviceOrderTypeOptions = ['OPD', 'PED', 'IND', 'EMG', 'DNT', 'ULT'];
 
 const hasSearchResults = (result: SearchResult | null) => {
     if (!result) {

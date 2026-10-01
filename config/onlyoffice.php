@@ -17,6 +17,15 @@ return [
 
     'internal_url' => env('ONLYOFFICE_INTERNAL_URL', 'http://onlyoffice-documentserver'),
 
+    /*
+    | Set ONLYOFFICE_ENABLED=false to run without a document server at all.
+    | When enabled, reachability is probed (GET {internal_url}/healthcheck)
+    | and cached, and editing is disabled while the server is down.
+    */
+    'enabled' => (bool) env('ONLYOFFICE_ENABLED', true),
+
+    'health_cache_seconds' => (int) env('ONLYOFFICE_HEALTH_CACHE_SECONDS', 30),
+
     'public_path' => env('ONLYOFFICE_PUBLIC_PATH', '/onlyoffice'),
 
     /*

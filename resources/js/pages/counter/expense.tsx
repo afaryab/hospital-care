@@ -274,9 +274,9 @@ export default function CounterExpense() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Counter ${openCounter?.ct_number} Expense`} />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
-                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800">
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800 dark:bg-neutral-900 dark:text-neutral-100">
                     <BulletsWrapper bullets={bullets}>
-                        <div className="flex h-full w-full flex-row gap-4 overflow-x-auto rounded-xl bg-white p-2">
+                        <div className="flex h-full w-full flex-row gap-4 overflow-x-auto rounded-xl bg-white p-2 dark:bg-neutral-900">
                             {/* Voucher Payment - Left Side */}
                             <div className="flex flex-1 flex-col gap-4 rounded-lg border p-4">
                                 <h2 className="text-center text-xl font-semibold">
@@ -384,7 +384,7 @@ export default function CounterExpense() {
                                                     e.target.value,
                                                 )
                                             }
-                                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-700"
                                             placeholder="Enter amount"
                                         />
                                         {pettyCashErrors.length > 0 &&
@@ -397,7 +397,7 @@ export default function CounterExpense() {
                                                 .map((error, index) => (
                                                     <div
                                                         key={index}
-                                                        className="text-sm text-red-600"
+                                                        className="text-sm text-red-600 dark:text-red-400"
                                                     >
                                                         {error}
                                                     </div>
@@ -423,7 +423,7 @@ export default function CounterExpense() {
                                                 .map((error, index) => (
                                                     <div
                                                         key={index}
-                                                        className="text-sm text-red-600"
+                                                        className="text-sm text-red-600 dark:text-red-400"
                                                     >
                                                         {error}
                                                     </div>
@@ -465,7 +465,7 @@ export default function CounterExpense() {
                                                     .map((error, index) => (
                                                         <div
                                                             key={index}
-                                                            className="text-sm text-red-600"
+                                                            className="text-sm text-red-600 dark:text-red-400"
                                                         >
                                                             {error}
                                                         </div>
@@ -507,7 +507,7 @@ export default function CounterExpense() {
                                                 .map((error, index) => (
                                                     <div
                                                         key={index}
-                                                        className="text-sm text-red-600"
+                                                        className="text-sm text-red-600 dark:text-red-400"
                                                     >
                                                         {error}
                                                     </div>
@@ -527,7 +527,7 @@ export default function CounterExpense() {
                                                         e.target.value,
                                                     )
                                                 }
-                                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-700"
                                                 placeholder="Enter other person name"
                                             />
                                             {pettyCashErrors.length > 0 &&
@@ -542,7 +542,7 @@ export default function CounterExpense() {
                                                     .map((error, index) => (
                                                         <div
                                                             key={index}
-                                                            className="text-sm text-red-600"
+                                                            className="text-sm text-red-600 dark:text-red-400"
                                                         >
                                                             {error}
                                                         </div>
@@ -573,7 +573,7 @@ export default function CounterExpense() {
                                                     .map((error, index) => (
                                                         <div
                                                             key={index}
-                                                            className="text-sm text-red-600"
+                                                            className="text-sm text-red-600 dark:text-red-400"
                                                         >
                                                             {error}
                                                         </div>
@@ -587,7 +587,7 @@ export default function CounterExpense() {
                                         <textarea
                                             id="description"
                                             rows={4}
-                                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none dark:border-neutral-700"
                                             placeholder="Enter description"
                                             value={pettyCashDescription}
                                             onChange={(e) =>
@@ -608,7 +608,7 @@ export default function CounterExpense() {
                                                 .map((error, index) => (
                                                     <div
                                                         key={index}
-                                                        className="text-sm text-red-600"
+                                                        className="text-sm text-red-600 dark:text-red-400"
                                                     >
                                                         {error}
                                                     </div>

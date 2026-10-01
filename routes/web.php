@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AppointmentRequestController;
 use App\Http\Controllers\DentistController;
 use App\Http\Controllers\Dms\DmsBrowserController;
 use App\Http\Controllers\Dms\DmsDocumentController;
@@ -13,32 +14,36 @@ use App\Http\Controllers\Dms\PublicShareDownloadController;
 use App\Http\Controllers\EmergencyDoctorController;
 use App\Http\Controllers\IndDoctorController;
 use App\Http\Controllers\LabController;
-use App\Http\Controllers\Migration\ImportController;
 use App\Http\Controllers\OnlyOffice\CallbackController;
 use App\Http\Controllers\OnlyOffice\DocumentContentController;
 use App\Http\Controllers\OnlyOffice\EditorPageController;
 use App\Http\Controllers\OpdDoctorController;
+use App\Http\Controllers\PatientPhotoController;
 use App\Http\Controllers\Prints\ClosingStatementPdfPrintController;
 use App\Http\Controllers\Prints\ServiceOrderPdfPrintController;
 use App\Http\Controllers\Prints\TransactionPdfPrintController;
+use App\Http\Controllers\PublicAppointmentController;
 use App\Http\Controllers\PublicCertificateController;
 use App\Http\Controllers\Reports\BankPaymentReportController;
 use App\Http\Controllers\Reports\GenericReportPdfController;
 use App\Http\Controllers\Reports\IncomeCashFlowReportController;
 use App\Http\Controllers\Reports\PanelPaymentReportController;
+use App\Http\Controllers\SlipPhotoController;
 use App\Http\Controllers\UltrasoundController;
 use App\Http\Controllers\WebController;
 use App\Http\Controllers\XrayController;
+use App\Http\Middleware\EnsureDocumentsAvailable;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 
+// Public appointment booking — no login. Submissions are rate limited per IP
+// and only create a request that reception confirms (see AppointmentRequestService).
+Route::get('book-appointment', [PublicAppointmentController::class, 'create'])->name('public-appointments.create');
+Route::post('book-appointment', [PublicAppointmentController::class, 'store'])->middleware('throttle:public-booking')->name('public-appointments.store');
+Route::get('book-appointment/{reference}', [PublicAppointmentController::class, 'submitted'])->whereUuid('reference')->name('public-appointments.submitted');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/', [WebController::class, 'index'])->name('home');
-
-    // One-time legacy data migration tool — admin-only (see ImportController::index()).
-    // Was previously registered above the auth group entirely, requiring no
-    // login at all.
-    Route::get('/import-old', [ImportController::class, 'index'])->name('import-old');
 
     /**
      * Doctor: own service orders & expense vouchers
@@ -53,6 +58,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('PS/{year}', [WebController::class, 'register'])->name('patients-register-year');
     Route::get('PS/{year}/{month}', [WebController::class, 'register'])->name('patients-register-year-month');
     Route::get('PS/{year}/{month}/{number}', [WebController::class, 'patient'])->name('patients-register-ps-number');
+    Route::get('PS/{year}/{month}/{number}/photo', [PatientPhotoController::class, 'show'])->name('patient-photo-show');
+    Route::post('PS/{year}/{month}/{number}/photo', [PatientPhotoController::class, 'store'])->name('patient-photo-store');
+    Route::post('CT-PS/slip-photo', [SlipPhotoController::class, 'store'])->name('slip-photo-store-unassigned');
+    Route::post('CT-PS/{year}/{month}/{number}/slip-photo', [SlipPhotoController::class, 'store'])->name('slip-photo-store');
+    Route::patch('SLIP-PHOTO/{slipPhoto}', [SlipPhotoController::class, 'update'])->name('slip-photo-update');
+    Route::get('SLIP-PHOTO/{slipPhoto}', [SlipPhotoController::class, 'show'])->name('slip-photo-show');
     Route::get('PS/{year}/{month}/{number}/{departmentKey}', [WebController::class, 'patient'])->name('patients-register-ps-number-department');
     Route::get('PS/{year}/{month}/{number}/{departmentKey}/{serviceNumber}', [WebController::class, 'patient'])->name('patients-register-ps-number-department-service');
 
@@ -102,6 +113,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('APT-CREATE', [WebController::class, 'appointmentStore'])->name('appointment-store');
     Route::post('APT-CANCEL/{appointment}', [WebController::class, 'appointmentCancel'])->name('appointment-cancel');
     Route::get('appointments', [WebController::class, 'appointmentsCalendar'])->name('appointments-calendar');
+    Route::get('appointments/requests', [AppointmentRequestController::class, 'index'])->name('appointment-requests');
+    Route::post('appointments/requests/{appointmentRequest}/confirm', [AppointmentRequestController::class, 'confirm'])->name('appointment-requests.confirm');
+    Route::post('appointments/requests/{appointmentRequest}/reject', [AppointmentRequestController::class, 'reject'])->name('appointment-requests.reject');
     Route::get('expenses', [WebController::class, 'counter'])->name('expenses');
 
     /**
@@ -110,6 +124,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('OPD', [OpdDoctorController::class, 'index'])->name('opd-dashboard');
     Route::get('OPD/search', [OpdDoctorController::class, 'search'])->name('opd-search');
     Route::get('OPD/{id}', [OpdDoctorController::class, 'show'])->name('opd-patient');
+
+    // Peds doctor workspace — same outpatient controller, PED department
+    Route::get('PED', [OpdDoctorController::class, 'index'])->defaults('department', 'PED')->name('ped-dashboard');
+    Route::get('PED/search', [OpdDoctorController::class, 'search'])->defaults('department', 'PED')->name('ped-search');
+    Route::get('PED/{id}', [OpdDoctorController::class, 'show'])->defaults('department', 'PED')->name('ped-patient');
 
     /**
      * IND Doctor routes
@@ -156,6 +175,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * Hospital Routes
      */
     Route::get('/que/opd', [WebController::class, 'opdQueue'])->name('hospital-opd-queue');
+    Route::get('/que/peds', [WebController::class, 'pedQueue'])->name('hospital-ped-queue');
     Route::get('/que/indoor', [WebController::class, 'indoorQueue'])->name('hospital-indoor-queue');
     Route::get('/que/emergency', [WebController::class, 'emergencyQueue'])->name('hospital-emergency-queue');
     Route::get('/que/dental', [WebController::class, 'dentalQueue'])->name('hospital-dental-queue');
@@ -223,7 +243,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * access for when that gate is loosened later — see DmsFolderPolicy /
      * DmsDocumentPolicy.
      */
-    Route::middleware(EnsureUserIsAdmin::class)->prefix('dms')->name('dms.')->group(function () {
+    Route::middleware([EnsureUserIsAdmin::class, EnsureDocumentsAvailable::class])->prefix('dms')->name('dms.')->group(function () {
         Route::get('/{folder:uuid?}', [DmsBrowserController::class, 'index'])->name('index');
 
         Route::post('folders', [DmsFolderController::class, 'store'])->name('folders.store');
@@ -250,8 +270,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
      * editor tab).
      */
     Route::get('dms/documents/{document:uuid}/download', DocumentDownloadController::class)
+        ->middleware(EnsureDocumentsAvailable::class)
         ->name('dms.documents.download');
     Route::get('dms/folders/{folder:uuid}/zip', FolderZipController::class)
+        ->middleware(EnsureDocumentsAvailable::class)
         ->name('dms.folders.zip');
     Route::get('onlyoffice/editor/{document:uuid}', EditorPageController::class)
         ->name('onlyoffice.editor');

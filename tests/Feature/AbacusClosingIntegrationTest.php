@@ -14,18 +14,6 @@ beforeEach(function () {
     (new ChartOfAccountsSeeder)->run();
 });
 
-test('abacus sync command requires ENABLE_OLD_SYNC env variable', function () {
-    $closing = Closing::factory()->create();
-    Transaction::factory()->count(3)->create([
-        'closing_id' => $closing->id,
-        'income_or_expense' => 'INCOME',
-        'amount' => 1000,
-    ]);
-
-    $this->artisan('app:sync-old-hims', ['--entity' => 'abacus-closings'])
-        ->assertExitCode(1);
-});
-
 test('abacus incoming links to closing via morph relation', function () {
     $closing = Closing::factory()->create();
 

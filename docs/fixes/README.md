@@ -37,3 +37,17 @@ Each fix is documented from four perspectives so every stakeholder has the infor
 | 20 | [#76](https://github.com/afaryab/hospital-care/issues/76) | Transaction had no version history and hard-deleted; DeathCertificate/ReferralCertificate had no finalization lock | Medium | ✅ Fixed |
 | 21 | [#78](https://github.com/afaryab/hospital-care/issues/78) | GET route writes to DB, duplicate route, dead code, inconsistent API envelope, swallowed route:cache failures | Low/Medium | ✅ Fixed |
 | 22 | [#88](https://github.com/afaryab/hospital-care/issues/88) | Number generators ignored soft-deleted rows — duplicate TR/CT/PS/VC/SO/TSK/AST numbers after any delete | Critical | ✅ Fixed |
+| 23 | [#90](https://github.com/afaryab/hospital-care/issues/90) | Service departments could be created/deleted in admin (seeder-managed); seeded departments could not be edited | Medium | ✅ Fixed |
+| 24 | [#91](https://github.com/afaryab/hospital-care/issues/91) | Dashboard filter drawer slow; preset date ranges silently showed this month | Medium | ✅ Fixed |
+| 25 | [#92](https://github.com/afaryab/hospital-care/issues/92) | Patient register listed every patient; now defaults to current month, stable newest-first | Low | ✅ Fixed |
+| 26 | [#93](https://github.com/afaryab/hospital-care/issues/93) | Patient photo capture via webcam or upload (private, audit-logged) | Feature | ✅ Done |
+| 27 | [#94](https://github.com/afaryab/hospital-care/issues/94) | Command palette: outside-click close, Ctrl/⌘K toggle, policy-filtered global search | Medium | ✅ Fixed |
+| 28 | [#95](https://github.com/afaryab/hospital-care/issues/95) | Administrative transactions: panel receivable income (manual per-receivable allocation) | Feature | ✅ Done |
+| 29 | [#96](https://github.com/afaryab/hospital-care/issues/96) | Compliance status page with live PHC/HIPAA checks and attestations | Feature | ✅ Done |
+| 30 | [#97](https://github.com/afaryab/hospital-care/issues/97) | Public appointment requests (page + /api/v1/public) confirmed by reception | Feature | ✅ Done |
+| 31 | [#98](https://github.com/afaryab/hospital-care/issues/98) | New Peds (pediatrics) department with doctor profile, dashboard, API and queue | Feature | ✅ Done |
+| 32 | [#99](https://github.com/afaryab/hospital-care/issues/99) | Whole app went down when the OnlyOffice document server was unavailable | High | ✅ Fixed |
+| 33 | [#100](https://github.com/afaryab/hospital-care/issues/100) | Emergency triage note print rework; BP never saved in any department; GCS/BSL/past history not captured | High | ✅ Fixed |
+| 34 | [#102](https://github.com/afaryab/hospital-care/issues/102) | Dark theme: React pages hardcoded the light palette; Filament theme skipped Admin views | Medium | ✅ Fixed |
+| 35 | [#103](https://github.com/afaryab/hospital-care/issues/103) | Record edits failed: encrypted version snapshots rejected by MySQL json columns | High | ✅ Fixed |
+| 36 | [#104](https://github.com/afaryab/hospital-care/issues/104) | Webcam photo of patient/guardian captured on every counter slip (CT-PS) | Feature | ✅ Done |

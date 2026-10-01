@@ -181,7 +181,7 @@ function ReceptionistCard({ data }: { data: ReceptionistDashboard }) {
         <div className="flex h-full flex-col rounded-2xl border border-sidebar-border/70 bg-white p-5 shadow-sm dark:border-sidebar-border dark:bg-gray-900">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4 text-teal-600" />
+                    <Wallet className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                         Counter
                     </h3>
@@ -190,8 +190,8 @@ function ReceptionistCard({ data }: { data: ReceptionistDashboard }) {
                     className={clsx(
                         'rounded-full px-2 py-0.5 text-xs font-semibold',
                         has_open_counter
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-slate-100 text-slate-600',
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                            : 'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-300',
                     )}
                 >
                     {has_open_counter ? 'OPEN' : counter ? 'LAST' : 'NONE'}
@@ -200,7 +200,7 @@ function ReceptionistCard({ data }: { data: ReceptionistDashboard }) {
 
             {counter ? (
                 <>
-                    <p className="mt-3 text-xs text-slate-500">
+                    <p className="mt-3 text-xs text-slate-500 dark:text-neutral-400">
                         {counter.reception_name ?? 'Reception'}
                     </p>
                     <p className="font-mono text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -220,7 +220,7 @@ function ReceptionistCard({ data }: { data: ReceptionistDashboard }) {
                         />
                     </div>
                     <div className="mt-2 rounded-lg bg-slate-50 px-3 py-2 dark:bg-gray-800">
-                        <p className="text-[10px] tracking-wide text-slate-500 uppercase">
+                        <p className="text-[10px] tracking-wide text-slate-500 uppercase dark:text-neutral-400">
                             {has_open_counter ? 'Running Balance' : 'Net Cash'}
                         </p>
                         <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -235,7 +235,7 @@ function ReceptionistCard({ data }: { data: ReceptionistDashboard }) {
                     </div>
                 </>
             ) : (
-                <p className="mt-4 text-sm text-slate-500">
+                <p className="mt-4 text-sm text-slate-500 dark:text-neutral-400">
                     No counter found. Open one to start receiving transactions.
                 </p>
             )}
@@ -257,7 +257,7 @@ function ReceptionistCard({ data }: { data: ReceptionistDashboard }) {
                         </Link>
                         <Link
                             href={counterClose().url}
-                            className="flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100"
+                            className="flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-900 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/40"
                         >
                             <DoorClosed className="h-3.5 w-3.5" />
                             Close
@@ -274,7 +274,7 @@ function ReceptionistCard({ data }: { data: ReceptionistDashboard }) {
                         </Link>
                         <Link
                             href={counterRoute().url}
-                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800/50"
                         >
                             History
                         </Link>
@@ -292,12 +292,12 @@ function DoctorCard({ data }: { data: DoctorDashboard }) {
         <div className="flex h-full flex-col rounded-2xl border border-sidebar-border/70 bg-white p-5 shadow-sm dark:border-sidebar-border dark:bg-gray-900">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Stethoscope className="h-4 w-4 text-indigo-600" />
+                    <Stethoscope className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                     <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200">
                         My Service Orders
                     </h3>
                 </div>
-                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700">
+                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300">
                     Today: {c.today}
                 </span>
             </div>
@@ -316,7 +316,7 @@ function DoctorCard({ data }: { data: DoctorDashboard }) {
                 <Stat label="Refunded" value={c.refunded} tone="negative" />
             </div>
 
-            <p className="mt-4 text-xs text-slate-500">
+            <p className="mt-4 text-xs text-slate-500 dark:text-neutral-400">
                 Pending: {c.open + c.in_progress} · Treated: {c.treated} ·
                 Cancelled: {c.cancelled}
             </p>
@@ -328,7 +328,7 @@ function IdleCard() {
     return (
         <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-sidebar-border/70 bg-white p-5 text-center shadow-sm dark:border-sidebar-border dark:bg-gray-900">
             <AlertCircle className="h-6 w-6 text-slate-400" />
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-slate-500 dark:text-neutral-400">
                 No role-specific widget. Ask an admin to assign you a profile.
             </p>
         </div>
@@ -363,7 +363,7 @@ function QuickLinksCard({ roles }: { roles: DashboardProps['roles'] }) {
                 Quick Links
             </h3>
             {links.length === 0 ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-neutral-400">
                     No quick actions for your profile.
                 </p>
             ) : (
@@ -372,7 +372,7 @@ function QuickLinksCard({ roles }: { roles: DashboardProps['roles'] }) {
                         <Link
                             key={l.label}
                             href={l.href}
-                            className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-gray-800 dark:bg-gray-800 dark:text-slate-200"
+                            className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:border-gray-800 dark:bg-gray-800 dark:text-slate-200 dark:hover:bg-neutral-800"
                         >
                             <span className="flex items-center gap-2">
                                 <l.icon className="h-3.5 w-3.5" />
@@ -395,7 +395,7 @@ function DoctorRecentCard({ data }: { data: DoctorDashboard }) {
                 Orders
             </h3>
             {data.recent.length === 0 ? (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-neutral-400">
                     No service orders yet. They'll appear here as patients book.
                 </p>
             ) : (
@@ -409,7 +409,7 @@ function DoctorRecentCard({ data }: { data: DoctorDashboard }) {
                                 <p className="truncate font-semibold text-slate-800 dark:text-slate-100">
                                     {so.patient_name ?? '—'}
                                 </p>
-                                <p className="truncate font-mono text-[10px] text-slate-500">
+                                <p className="truncate font-mono text-[10px] text-slate-500 dark:text-neutral-400">
                                     {so.so_number}
                                 </p>
                             </div>
@@ -470,14 +470,14 @@ function Stat({
     tone?: 'neutral' | 'positive' | 'negative' | 'warning';
 }) {
     const tones: Record<string, string> = {
-        neutral: 'text-slate-700',
-        positive: 'text-emerald-700',
-        negative: 'text-rose-700',
-        warning: 'text-amber-700',
+        neutral: 'text-slate-700 dark:text-neutral-200',
+        positive: 'text-emerald-700 dark:text-emerald-300',
+        negative: 'text-rose-700 dark:text-rose-300',
+        warning: 'text-amber-700 dark:text-amber-300',
     };
     return (
         <div className="rounded-lg bg-slate-50 px-3 py-2 dark:bg-gray-800">
-            <p className="text-[10px] tracking-wide text-slate-500 uppercase">
+            <p className="text-[10px] tracking-wide text-slate-500 uppercase dark:text-neutral-400">
                 {label}
             </p>
             <p className={clsx('text-sm font-bold', tones[tone])}>{value}</p>
@@ -488,18 +488,22 @@ function Stat({
 function StatusBadge({ status }: { status: string }) {
     const s = status?.toLowerCase();
     const map: Record<string, string> = {
-        open: 'bg-amber-100 text-amber-700',
-        'in-progress': 'bg-blue-100 text-blue-700',
-        treated: 'bg-sky-100 text-sky-700',
-        closed: 'bg-emerald-100 text-emerald-700',
-        refunded: 'bg-rose-100 text-rose-700',
-        cancelled: 'bg-slate-100 text-slate-600',
+        open: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300',
+        'in-progress':
+            'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300',
+        treated: 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300',
+        closed: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300',
+        refunded:
+            'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300',
+        cancelled:
+            'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300',
     };
     return (
         <span
             className={clsx(
                 'rounded-full px-1.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase',
-                map[s] ?? 'bg-slate-100 text-slate-600',
+                map[s] ??
+                    'bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-300',
             )}
         >
             {s ?? '—'}

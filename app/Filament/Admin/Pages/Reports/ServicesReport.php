@@ -80,7 +80,7 @@ class ServicesReport extends Page implements Tables\Contracts\HasTable
                     ->placeholder('All Services'),
                 Select::make('doctor_id')
                     ->label('Provider')
-                    ->options(fn () => User::whereHas('opdDoctorProfiles')->pluck('name', 'id'))
+                    ->options(fn () => User::whereHas('opdDoctorProfiles')->orWhereHas('pedDoctorProfiles')->pluck('name', 'id'))
                     ->searchable()
                     ->placeholder('All Providers'),
             ])

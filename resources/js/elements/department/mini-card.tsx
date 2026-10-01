@@ -19,7 +19,7 @@ export default function DepartmentMiniCard({
         <div
             key={department.id}
             className={clsx(
-                'items-left flex flex-col justify-start border border-gray-200 bg-white dark:bg-neutral-950 dark:text-white',
+                'items-left flex flex-col justify-start border border-gray-200 bg-white dark:border-neutral-800 dark:bg-neutral-950 dark:text-white',
                 className,
             )}
         >
@@ -43,7 +43,7 @@ export default function DepartmentMiniCard({
                 <span className="mt-2 max-w-28 text-center text-sm">
                     {department.name}&nbsp;
                     {recestitation && (
-                        <span className="mt-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-800">
+                        <span className="mt-1 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-800 dark:bg-red-900/40 dark:text-red-300">
                             Recesitation
                         </span>
                     )}

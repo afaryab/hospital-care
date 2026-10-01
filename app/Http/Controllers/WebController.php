@@ -21,11 +21,13 @@ use App\Models\Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceOrder;
 use App\Models\ServiceRecestation;
+use App\Models\SlipPhoto;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
 use App\Models\User;
 use App\Services\AppointmentService;
 use App\Services\BreachDetectionService;
+use App\Services\ReceivableSettlementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -328,6 +330,12 @@ class WebController extends Controller
 
     public function register(Request $request, $year = false, $month = false)
     {
+        if (! $year && ! $month && ! $request->boolean('all') && ! $request->filled('search') && ! $request->filled('contact')) {
+            $now = now(DateHelper::timezone());
+
+            return to_route('patients-register-year-month', ['year' => $now->format('Y'), 'month' => $now->format('m')]);
+        }
+
         $user = $request->user();
         $query = Patient::query();
 
@@ -367,13 +375,13 @@ class WebController extends Controller
             }
         }
 
-        $data = $query->orderBy('created_at', 'DESC')->paginate(8)->withQueryString();
+        $data = $query->orderByDesc('created_at')->orderByDesc('id')->paginate(8)->withQueryString();
 
         $serviceDepartments = ServiceDepartment::cachedAll();
 
         return Inertia::render('register', [
-            'yearSelected' => $year,
-            'monthSelected' => $month,
+            'yearSelected' => $year ? (string) $year : '0',
+            'monthSelected' => $month ? str_pad((string) $month, 2, '0', STR_PAD_LEFT) : '0',
             'patientsPaginated' => $data,
             'serviceDepartments' => $serviceDepartments,
             'filters' => [
@@ -462,9 +470,13 @@ class WebController extends Controller
             ->withProperties(['service_order_id' => $serviceOrder?->id])
             ->log('Patient record viewed');
 
+        $photo = $patientData->currentPhoto();
+
         return Inertia::render('patient', [
             'departmentKey' => $departmentKey,
             'patientData' => $patientData,
+            'patientPhotoUrl' => $photo ? route('patient-photo-show', ['year' => $year, 'month' => $month, 'number' => $number, 'v' => $photo->id], false) : null,
+            'canUpdatePatient' => $request->user()->can('update', $patientData),
             'serviceDepartments' => $serviceDepartments,
             'serviceOrder' => $serviceOrder,
         ]);
@@ -627,6 +639,11 @@ class WebController extends Controller
 
         return Inertia::render('counter/view', [
             'openCounter' => $openCounter,
+            'slipPhotos' => SlipPhoto::query()
+                ->whereIn('transaction_id', $openCounter->transactions->pluck('id'))
+                ->with('capturedBy')
+                ->get()
+                ->mapWithKeys(fn (SlipPhoto $slipPhoto): array => [$slipPhoto->transaction_id => $slipPhoto->toSummary()]),
         ]);
     }
 
@@ -648,6 +665,23 @@ class WebController extends Controller
             $patientData = Patient::with('treatments', 'transactions', 'transactions.elements', 'transactions.elements.service', 'transactions.elements.serviceOrder', 'receaveables')->where('ps_number', $psNumber)->firstOrFail();
 
             $pageData['selectedPatient'] = $patientData;
+
+            SlipPhoto::claimForPatient($openCounter->id, $patientData, request()->user());
+
+            $pageData['pendingSlipPhoto'] = SlipPhoto::query()
+                ->pending($openCounter->id, $patientData->id)
+                ->with('capturedBy')
+                ->latest('id')
+                ->first()
+                ?->toSummary();
+        } else {
+            $pageData['pendingSlipPhoto'] = SlipPhoto::query()
+                ->unassigned($openCounter->id)
+                ->where('captured_at', '>=', now()->subMinutes(SlipPhoto::CLAIM_WINDOW_MINUTES))
+                ->with('capturedBy')
+                ->latest('id')
+                ->first()
+                ?->toSummary();
         }
         $pageData['departmentKey'] = $departmentKey;
 
@@ -1057,6 +1091,22 @@ class WebController extends Controller
                 $transaction->orignal_amount = $orinalTotal;
                 $transaction->save();
 
+                $slipPhoto = SlipPhoto::query()
+                    ->pending($openCounter->id, (int) $validatedData['patient_id'])
+                    ->latest('id')
+                    ->first();
+
+                if ($slipPhoto) {
+                    $slipPhoto->update(['transaction_id' => $transaction->id]);
+
+                    activity()
+                        ->causedBy($request->user())
+                        ->performedOn($transaction)
+                        ->event('slip_photo_attached')
+                        ->withProperties(['slip_photo_id' => $slipPhoto->id, 'subject' => $slipPhoto->subject->value])
+                        ->log('Slip photo attached');
+                }
+
                 $appointmentDraftReceaveable = $appointment && $appointment->receaveable && $appointment->receaveable->status === 'draft'
                     ? $appointment->receaveable
                     : null;
@@ -1146,43 +1196,18 @@ class WebController extends Controller
             return redirect()->back()->withErrors(['error' => 'Invalid receaveable transaction elements.']);
         }
 
-        DB::beginTransaction();
-
-        try {
-
-            // A receivable settlement is a cash/accounts-receivable movement, not new
-            // service revenue: the full service amount was already recognised on the
-            // original transaction's element. Recording only the payment Transaction
-            // (Dr Cash / Cr A/R, see AbacusClosingService) keeps the shift cash totals
-            // correct while avoiding a duplicate INCOME TransactionElement that would
-            // double-count the income report and the service order's totals when the
-            // receivable is collected within the same shift.
-            $newTransaction = Transaction::create([
-                'closing_id' => $openCounter->id,
-                'created_by' => $request->user()->id,
-                'patient_id' => $receaveable->patient_id,
-                'type' => $validatedData['payment_method'],
-                'income_or_expense' => 'INCOME',
-                'amount' => $validatedData['amount_to_collect'],
-                'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
-                'receaveable_id' => $receaveable->id,
-                'notes' => $validatedData['note'] ?? null,
-            ]);
-
-            $receaveable->amount -= $validatedData['amount_to_collect'];
-            if ($receaveable->amount <= 0) {
-                $receaveable->status = 'paid';
-                $receaveable->amount = 0;
-            }
-            $receaveable->save();
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-
-            return redirect()->back()->withErrors(['error' => 'An error occurred while processing the payment: '.$e->getMessage()]);
-        }
-
-        DB::commit();
+        // A receivable settlement is a cash/accounts-receivable movement, not new
+        // service revenue: the full service amount was already recognised on the
+        // original transaction's element. ReceivableSettlementService records only
+        // the payment Transaction (Dr Cash / Cr A/R, see AbacusClosingService), so
+        // the shift cash totals stay correct without double-counting income.
+        $newTransaction = app(ReceivableSettlementService::class)->settle($receaveable, (float) $validatedData['amount_to_collect'], [
+            'closing_id' => $openCounter->id,
+            'created_by' => $request->user()->id,
+            'type' => $validatedData['payment_method'],
+            'panel_id' => $validatedData['payment_method'] === 'PANEL' ? $validatedData['panel_id'] : null,
+            'notes' => $validatedData['note'] ?? null,
+        ]);
 
         return redirect()->route('transaction-view', [
             'tYear' => $newTransaction->year,
@@ -1249,6 +1274,7 @@ class WebController extends Controller
 
         return Inertia::render('transaction/view', [
             'transaction' => $transaction,
+            'slipPhoto' => $transaction->slipPhoto()->with('capturedBy')->first()?->toSummary(),
         ]);
     }
 
@@ -1503,7 +1529,7 @@ class WebController extends Controller
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:255'],
             'status' => ['nullable', 'string', 'max:50'],
-            'type' => ['nullable', 'string', 'in:OPD,IND,EMG,DNT,LAB,ULT,RAD'],
+            'type' => ['nullable', 'string', 'in:OPD,PED,IND,EMG,DNT,LAB,ULT,RAD'],
             'service_order_id' => ['nullable', 'integer', 'exists:service_orders,id'],
             'page' => ['nullable', 'integer', 'min:1'],
         ]);
@@ -1623,12 +1649,21 @@ class WebController extends Controller
 
     public function opdQueue(Request $request)
     {
+        return $this->outpatientQueue($request, 'OPD', 'OPD');
+    }
+
+    public function pedQueue(Request $request)
+    {
+        return $this->outpatientQueue($request, 'PED', 'Peds');
+    }
+
+    private function outpatientQueue(Request $request, string $type, string $label)
+    {
         $user = $request->user();
-        if ($user->isLcdOperator() && ! $user->hasLcdAccessTo('OPD')) {
+        if ($user->isLcdOperator() && ! $user->hasLcdAccessTo($type)) {
             abort(403, 'This department display is not assigned to your account.');
         }
 
-        $type = 'OPD';
         // Optimized: top 50 per service using window function via derived table (MySQL 8+ disallows HAVING on window alias)
         $base = ServiceOrder::query()
             ->select(['id', 'service_id', 'patient_id', 'created_at', 'status', 'type', 'so_number', 'priority'])
@@ -1667,6 +1702,7 @@ class WebController extends Controller
         return Inertia::render('hospital/opd-queue', [
             'serviceOrdersByService' => $serviceOrdersByService,
             'services' => $services,
+            'departmentLabel' => $label,
         ]);
     }
 
@@ -1999,6 +2035,7 @@ class WebController extends Controller
 
         $users = User::where(function ($query) {
             $query->whereHas('opdDoctorProfiles')
+                ->orWhereHas('pedDoctorProfiles')
                 ->orWhereHas('indDoctorProfiles')
                 ->orWhereHas('emergencyDoctorProfiles')
                 ->orWhereHas('dentistProfiles')
@@ -2022,6 +2059,7 @@ class WebController extends Controller
 
         $users = User::where(function ($query) {
             $query->whereHas('opdDoctorProfiles')
+                ->orWhereHas('pedDoctorProfiles')
                 ->orWhereHas('indDoctorProfiles')
                 ->orWhereHas('emergencyDoctorProfiles')
                 ->orWhereHas('dentistProfiles')
@@ -2045,6 +2083,7 @@ class WebController extends Controller
 
         $users = User::where(function ($query) {
             $query->whereHas('opdDoctorProfiles')
+                ->orWhereHas('pedDoctorProfiles')
                 ->orWhereHas('indDoctorProfiles')
                 ->orWhereHas('emergencyDoctorProfiles')
                 ->orWhereHas('dentistProfiles')

@@ -120,7 +120,7 @@
                                 type="radio" 
                                 wire:model.live="group_by" 
                                 value="none"
-                                class="rounded-full border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded-full border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">No Grouping</span>
                         </label>
@@ -129,7 +129,7 @@
                                 type="radio" 
                                 wire:model.live="group_by" 
                                 value="counter"
-                                class="rounded-full border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded-full border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Group by Counter</span>
                         </label>
@@ -138,7 +138,7 @@
                                 type="radio" 
                                 wire:model.live="group_by" 
                                 value="service"
-                                class="rounded-full border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded-full border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Group by Service</span>
                         </label>
@@ -147,7 +147,7 @@
                                 type="radio" 
                                 wire:model.live="group_by" 
                                 value="doctor"
-                                class="rounded-full border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded-full border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Group by Provider</span>
                         </label>
@@ -156,7 +156,7 @@
                                 type="radio" 
                                 wire:model.live="group_by" 
                                 value="date"
-                                class="rounded-full border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded-full border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Group by Date</span>
                         </label>
@@ -177,7 +177,7 @@
                             <input 
                                 type="checkbox" 
                                 wire:model.live="show_date"
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Date</span>
                         </label>
@@ -185,7 +185,7 @@
                             <input 
                                 type="checkbox" 
                                 wire:model.live="show_transaction_number"
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Transaction #</span>
                         </label>
@@ -193,7 +193,7 @@
                             <input 
                                 type="checkbox" 
                                 wire:model.live="show_patient_name"
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Patient Name</span>
                         </label>
@@ -201,7 +201,7 @@
                             <input 
                                 type="checkbox" 
                                 wire:model.live="show_service_name"
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Service Name</span>
                         </label>
@@ -209,7 +209,7 @@
                             <input 
                                 type="checkbox" 
                                 wire:model.live="show_service_order"
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Service Order #</span>
                         </label>
@@ -217,7 +217,7 @@
                             <input 
                                 type="checkbox" 
                                 wire:model.live="show_provider_name"
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Provider Name</span>
                         </label>
@@ -225,7 +225,7 @@
                             <input 
                                 type="checkbox" 
                                 wire:model.live="show_original_amount"
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Original Amount</span>
                         </label>
@@ -233,7 +233,7 @@
                             <input 
                                 type="checkbox" 
                                 wire:model.live="show_edited_amount"
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Edited Amount</span>
                         </label>
@@ -241,7 +241,7 @@
                             <input 
                                 type="checkbox" 
                                 wire:model.live="show_customer_payed"
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Customer Paid</span>
                         </label>
@@ -249,7 +249,7 @@
                             <input 
                                 type="checkbox" 
                                 wire:model.live="show_change"
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Change</span>
                         </label>
@@ -257,7 +257,7 @@
                             <input 
                                 type="checkbox" 
                                 wire:model.live="show_balance"
-                                class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                                class="rounded border-gray-300 dark:border-gray-700 text-primary-600 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                             />
                             <span class="text-sm text-gray-700 dark:text-gray-300">Balance</span>
                         </label>
@@ -299,7 +299,7 @@
                             <x-heroicon-o-document-text class="w-5 h-5 text-primary-500" />
                             <span>Report Preview</span>
                         </div>
-                        <span class="text-xs text-gray-500">Live Preview</span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Live Preview</span>
                     </div>
                 </x-slot>
                 

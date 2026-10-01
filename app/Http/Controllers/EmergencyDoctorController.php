@@ -59,7 +59,7 @@ class EmergencyDoctorController extends Controller
     {
         $serviceOrder = ServiceOrder::query()
             ->with([
-                'patient:id,name,ps_number,gender,age_days,age_dob,contact',
+                'patient:id,name,ps_number,gender,age_days,age_dob,contact,history_htn,history_dm,history_asthma,history_ihd,allergies',
                 'service:id,name,treatment_form_config',
                 'doctor:id,name',
                 'treatmentRecord.vitalSigns',

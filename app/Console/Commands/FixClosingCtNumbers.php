@@ -12,65 +12,16 @@ class FixClosingCtNumbers extends Command
 {
     protected $signature = 'app:fix-closing-ct-numbers
         {--dry-run : Preview what would change without writing to DB}
-        {--chunk=500 : Number of rows per update batch}
-        {--skip-sync : Skip the closing sync phase and only reassign CT numbers}';
+        {--chunk=500 : Number of rows per update batch}';
 
-    protected $description = 'Sync last month\'s closings from old HIMS, then reassign all CT numbers';
+    protected $description = 'Reassign all CT numbers in closing-date order';
 
     public function handle(): int
     {
         $dryRun = (bool) $this->option('dry-run');
         $chunk = (int) $this->option('chunk');
-        $skipSync = (bool) $this->option('skip-sync');
-
-        // ── Phase 1: Sync last month's closings from old HIMS ────────────────
-        if (! $skipSync) {
-            $this->syncLatestClosings($dryRun);
-        }
-
-        // ── Phase 2: Reassign CT numbers for every closing ───────────────────
-        $this->newLine();
-        $this->info('═══ Phase 2: Reassigning CT numbers ═══');
 
         return $this->reassignCtNumbers($dryRun, $chunk);
-    }
-
-    protected function syncLatestClosings(bool $dryRun): void
-    {
-        $this->info('═══ Phase 1: Syncing last month\'s closings from old HIMS ═══');
-
-        if (env('ENABLE_OLD_SYNC') !== 'hims') {
-            $this->warn('ENABLE_OLD_SYNC is not set to "hims" — skipping sync.');
-            $this->warn('Add ENABLE_OLD_SYNC=hims to .env to enable closing sync.');
-
-            return;
-        }
-
-        try {
-            DB::connection('secondary')->getPdo();
-        } catch (\Exception $e) {
-            $this->warn('Secondary DB not reachable — skipping sync: '.$e->getMessage());
-
-            return;
-        }
-
-        $base = ['--batch-size' => 500];
-        if ($dryRun) {
-            $base['--dry-run'] = true;
-        }
-
-        // Step A — brand-new closings (IDs beyond the by-closings cursor).
-        $this->call('app:sync-old-hims', array_merge($base, ['--entity' => 'by-closings']));
-
-        // Step B — new transactions added to already-migrated closings
-        // (open counters that kept accumulating transactions since the last sync).
-        $this->newLine();
-        $this->info('─── Syncing new transactions on existing closings ───');
-        $result = $this->call('app:sync-old-hims', array_merge($base, ['--entity' => 'recent-transactions']));
-
-        if ($result !== 0) {
-            $this->warn('Sync finished with warnings (see output above). Proceeding to CT number phase.');
-        }
     }
 
     protected function reassignCtNumbers(bool $dryRun, int $chunk): int

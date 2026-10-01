@@ -13,7 +13,16 @@ use App\Http\Controllers\Api\PateintController;
 use App\Http\Controllers\Api\ServiceOrderController;
 use App\Http\Controllers\Api\TransactionController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\V1\PublicAppointmentRequestController;
 use Illuminate\Support\Facades\Route;
+
+// Public, unauthenticated booking API (versioned). Returns only the
+// request's own reference and status — never patient data.
+Route::prefix('v1/public')->name('api-v1-public.')->group(function () {
+    Route::get('services', [PublicAppointmentRequestController::class, 'services'])->name('services');
+    Route::post('appointment-requests', [PublicAppointmentRequestController::class, 'store'])->middleware('throttle:public-booking')->name('appointment-requests.store');
+    Route::get('appointment-requests/{reference}', [PublicAppointmentRequestController::class, 'show'])->whereUuid('reference')->name('appointment-requests.show');
+});
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/lookup', [LookUpController::class, 'index'])->name('lookup');
@@ -49,6 +58,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/opd/my-queue', [OpdController::class, 'myQueue'])->name('api-opd-my-queue');
     Route::post('/opd/service-orders/{serviceOrder}/treatment-record', [OpdController::class, 'saveTreatmentRecord'])->name('api-opd-save-treatment');
     Route::patch('/opd/service-orders/{serviceOrder}/status', [OpdController::class, 'updateStatus'])->name('api-opd-update-status');
+
+    // Peds doctor API — same outpatient controller, PED department
+    Route::post('/ped/search', [OpdController::class, 'search'])->defaults('department', 'PED')->name('api-ped-search');
+    Route::get('/ped/my-queue', [OpdController::class, 'myQueue'])->defaults('department', 'PED')->name('api-ped-my-queue');
+    Route::post('/ped/service-orders/{serviceOrder}/treatment-record', [OpdController::class, 'saveTreatmentRecord'])->name('api-ped-save-treatment');
+    Route::patch('/ped/service-orders/{serviceOrder}/status', [OpdController::class, 'updateStatus'])->name('api-ped-update-status');
 
     // Shared treatment-record API for EMG, DNT, LAB, ULT, XRAY
     Route::get('/emg/my-queue', [DepartmentController::class, 'myQueue'])->name('api-emg-my-queue');

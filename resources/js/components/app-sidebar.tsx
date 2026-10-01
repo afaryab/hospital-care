@@ -23,6 +23,7 @@ import {
     hospitalIndoorQueue,
     hospitalLaboratoryQueue,
     hospitalOpdQueue,
+    hospitalPedQueue,
     hospitalRadiologyQueue,
     hospitalUltrasoundQueue,
     indDashboard,
@@ -32,6 +33,7 @@ import {
     myPayments,
     opdDashboard,
     patientsRegister,
+    pedDashboard,
     receaveables,
     transactionEditSearch,
     transactionSearch,
@@ -42,6 +44,7 @@ import dms from '@/routes/dms';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import {
+    Baby,
     BookAIcon,
     BriefcaseMedical,
     CalendarDays,
@@ -85,6 +88,8 @@ export function AppSidebar() {
         user?.profiles?.emergency_doctor.length > 0;
     const haveOPDDoctorProfile =
         user?.profiles?.opd_doctor && user?.profiles?.opd_doctor.length > 0;
+    const havePedDoctorProfile =
+        user?.profiles?.ped_doctor && user?.profiles?.ped_doctor.length > 0;
     const haveIndoorDoctorProfile =
         user?.profiles?.ind_doctor && user?.profiles?.ind_doctor.length > 0;
     const haveDentistProfile =
@@ -120,6 +125,7 @@ export function AppSidebar() {
 
     const haveAnyDoctorWorkProfile =
         haveOPDDoctorProfile ||
+        havePedDoctorProfile ||
         haveIndoorDoctorProfile ||
         haveEmergencyDoctorProfile ||
         haveDentistProfile ||
@@ -160,11 +166,13 @@ export function AppSidebar() {
             icon: Cog,
         });
 
-        adminMenuItems.push({
-            title: 'Documents',
-            href: dms.index().url,
-            icon: FolderOpen,
-        });
+        if (props.features?.documents) {
+            adminMenuItems.push({
+                title: 'Documents',
+                href: dms.index().url,
+                icon: FolderOpen,
+            });
+        }
     }
 
     const isEditingTransaction =
@@ -199,6 +207,7 @@ export function AppSidebar() {
                         haveNursingProfile ||
                         haveEmergencyDoctorProfile ||
                         haveOPDDoctorProfile ||
+                        havePedDoctorProfile ||
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
@@ -221,6 +230,7 @@ export function AppSidebar() {
                         haveNursingProfile ||
                         haveEmergencyDoctorProfile ||
                         haveOPDDoctorProfile ||
+                        havePedDoctorProfile ||
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
@@ -252,6 +262,20 @@ export function AppSidebar() {
                                 <Link href={opdDashboard().url} prefetch>
                                     <Stethoscope />
                                     <span>OPD</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
+                    {(havePedDoctorProfile || haveNursingProfile) && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url.startsWith('/PED')}
+                                tooltip={{ children: 'Peds Dashboard' }}
+                            >
+                                <Link href={pedDashboard().url} prefetch>
+                                    <Baby />
+                                    <span>Peds</span>
                                 </Link>
                             </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -532,6 +556,7 @@ export function AppSidebar() {
                         haveNursingProfile ||
                         haveEmergencyDoctorProfile ||
                         haveOPDDoctorProfile ||
+                        havePedDoctorProfile ||
                         haveLcdOpdProfile) && (
                         <SidebarMenuItem>
                             <SidebarMenuButton
@@ -550,8 +575,27 @@ export function AppSidebar() {
                         haveAdminProfile ||
                         haveAccountantProfile ||
                         haveNursingProfile ||
+                        havePedDoctorProfile) && (
+                        <SidebarMenuItem>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={page.url == hospitalPedQueue().url}
+                                tooltip={{ children: 'Peds queue' }}
+                            >
+                                <Link href={hospitalPedQueue().url} prefetch>
+                                    <img src="/img/ped.png" className="h-4" />
+                                    <span>Peds</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )}
+                    {(haveReceptionistProfile ||
+                        haveAdminProfile ||
+                        haveAccountantProfile ||
+                        haveNursingProfile ||
                         haveEmergencyDoctorProfile ||
                         haveOPDDoctorProfile ||
+                        havePedDoctorProfile ||
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
@@ -576,6 +620,7 @@ export function AppSidebar() {
                         haveNursingProfile ||
                         haveEmergencyDoctorProfile ||
                         haveOPDDoctorProfile ||
+                        havePedDoctorProfile ||
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
@@ -608,6 +653,7 @@ export function AppSidebar() {
                         haveNursingProfile ||
                         haveEmergencyDoctorProfile ||
                         haveOPDDoctorProfile ||
+                        havePedDoctorProfile ||
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
@@ -635,6 +681,7 @@ export function AppSidebar() {
                         haveNursingProfile ||
                         haveEmergencyDoctorProfile ||
                         haveOPDDoctorProfile ||
+                        havePedDoctorProfile ||
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
@@ -667,6 +714,7 @@ export function AppSidebar() {
                         haveNursingProfile ||
                         haveEmergencyDoctorProfile ||
                         haveOPDDoctorProfile ||
+                        havePedDoctorProfile ||
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||
@@ -699,6 +747,7 @@ export function AppSidebar() {
                         haveNursingProfile ||
                         haveEmergencyDoctorProfile ||
                         haveOPDDoctorProfile ||
+                        havePedDoctorProfile ||
                         haveIndoorDoctorProfile ||
                         haveDentistProfile ||
                         haveUltrasoundDoctorProfile ||

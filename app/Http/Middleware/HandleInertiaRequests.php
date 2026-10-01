@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Helpers\UserTimezone;
 use App\Models\HospitalSetting;
+use App\Services\OnlyOffice\OnlyOfficeHealth;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -38,19 +39,26 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
-
         return [
             ...parent::share($request),
             'name' => config('app.name'),
-            'quote' => ['message' => trim($message), 'author' => trim($author)],
-            'routeName' => $request->route()?->getName(),
-            'auth' => [
+            'quote' => function (): array {
+                [$message, $author] = str(Inspiring::quotes()->random())->explode('-');
+
+                return ['message' => trim($message), 'author' => trim($author)];
+            },
+            'routeName' => fn () => $request->route()?->getName(),
+            'auth' => fn (): array => [
                 'user' => $request->user(),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
-            'timezone' => UserTimezone::current(),
-            'hospital' => [
+            'timezone' => fn () => UserTimezone::current(),
+            // Documents (DMS) is admin-only and is hidden while the OnlyOffice
+            // Document Server is down (see EnsureDocumentsAvailable).
+            'features' => fn (): array => [
+                'documents' => (bool) $request->user()?->isAdmin() && app(OnlyOfficeHealth::class)->available(),
+            ],
+            'hospital' => fn (): array => [
                 'name' => HospitalSetting::name(),
                 'logoUrl' => HospitalSetting::logoUrl(),
             ],

@@ -17,6 +17,8 @@ class TriageKPIStats extends StatsOverviewWidget
 
     protected static ?int $sort = 1;
 
+    protected ?string $pollingInterval = '15s';
+
     protected function getStats(): array
     {
         $start = Carbon::parse($this->pageFilters['startDate'] ?? now()->startOfMonth());

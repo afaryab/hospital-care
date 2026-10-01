@@ -23,7 +23,7 @@ export default function DntDashboard() {
             <DeptQueueDashboard
                 deptName="Dental"
                 accentColor="bg-sky-600"
-                accentClass="text-sky-600"
+                accentClass="text-sky-600 dark:text-sky-400"
                 icon={<BriefcaseMedical className="h-6 w-6" />}
                 hasAccess={isDentist}
                 orders={recentOrders ?? []}

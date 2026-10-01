@@ -34,11 +34,9 @@
         display: table-cell;
         text-align: right;
     }
-    #letterhead-footer .letterhead-page-num:after {
-        content: counter(page) " / " counter(pages);
-    }
 </style>
 <div id="letterhead-footer">
     <div class="letterhead-footer-left">{{ $letterheadFooterName }}</div>
-    <div class="letterhead-footer-right">Page <span class="letterhead-page-num"></span></div>
+    {{-- "Page x of y" is drawn here after rendering; see App\Helpers\PdfPageNumbers. --}}
+    <div class="letterhead-footer-right"></div>
 </div>

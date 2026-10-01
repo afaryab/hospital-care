@@ -22,6 +22,10 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { AdvancedTagSelect } from '@/components/ui/tag-select';
 import BulletsWrapper from '@/elements/bullets-wrapper';
+import {
+    SlipCameraProvider,
+    useSlipCamera,
+} from '@/elements/counter/slip-camera';
 import DepartmentMiniCard from '@/elements/department/mini-card';
 import PatientMiniCard from '@/elements/patient/mini-card';
 import PatientHistorySideBar from '@/elements/patient/transactions-history-card';
@@ -66,6 +70,7 @@ export default function CounterIncome() {
         existingServiceOrders,
         panelCompanies,
         todaysAppointments,
+        pendingSlipPhoto,
     } = usePage().props;
 
     const step = !selectedPatient ? 1 : !departmentKey ? 2 : 3;
@@ -178,32 +183,42 @@ export default function CounterIncome() {
             <Head title="Counter" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
                 <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800 dark:bg-neutral-950 dark:text-white">
-                    <BulletsWrapper bullets={bullets}>
-                        {step === 1 && (
-                            <SelectPatient openCounter={openCounter} />
-                        )}
-                        {step === 2 && (
-                            <SelectDepartment
-                                openCounter={openCounter}
-                                patient={selectedPatient}
-                                departments={departments}
-                            />
-                        )}
-                        {step === 3 && (
-                            <CollectPayment
-                                recesitation={recesitation}
-                                existingServiceOrders={existingServiceOrders}
-                                openCounter={openCounter}
-                                patient={selectedPatient}
-                                departments={departments}
-                                departmentKey={departmentKey}
-                                services={services}
-                                providers={providers}
-                                panelCompanies={panelCompanies ?? []}
-                                todaysAppointments={todaysAppointments ?? []}
-                            />
-                        )}
-                    </BulletsWrapper>
+                    <SlipCameraProvider
+                        key={selectedPatient?.ps_number ?? 'no-patient'}
+                        patient={selectedPatient}
+                        pendingSlipPhoto={pendingSlipPhoto}
+                    >
+                        <BulletsWrapper bullets={bullets}>
+                            {step === 1 && (
+                                <SelectPatient openCounter={openCounter} />
+                            )}
+                            {step === 2 && (
+                                <SelectDepartment
+                                    openCounter={openCounter}
+                                    patient={selectedPatient}
+                                    departments={departments}
+                                />
+                            )}
+                            {step === 3 && (
+                                <CollectPayment
+                                    recesitation={recesitation}
+                                    existingServiceOrders={
+                                        existingServiceOrders
+                                    }
+                                    openCounter={openCounter}
+                                    patient={selectedPatient}
+                                    departments={departments}
+                                    departmentKey={departmentKey}
+                                    services={services}
+                                    providers={providers}
+                                    panelCompanies={panelCompanies ?? []}
+                                    todaysAppointments={
+                                        todaysAppointments ?? []
+                                    }
+                                />
+                            )}
+                        </BulletsWrapper>
+                    </SlipCameraProvider>
                 </div>
             </div>
         </AppLayout>
@@ -231,6 +246,7 @@ function CollectPayment({
     const [serviceProviders, setServiceProviders] = useState<any>({});
     const [selectedServiceOrder, setSelectedServiceOrder] = useState<string>();
     const [processing, setProcessing] = useState<boolean>(false);
+    const { ensurePhoto: ensureSlipPhoto } = useSlipCamera();
     const [checkInAppointmentId, setCheckInAppointmentId] = useState<
         string | null
     >(null);
@@ -270,6 +286,8 @@ function CollectPayment({
         // Clear previous validation errors
         setValidationErrors({});
         setProcessing(true);
+
+        await ensureSlipPhoto();
 
         if (recesitation && selectedServiceOrder === '') {
             toast.error('Please enter MRI number for recesitation services.');
@@ -548,7 +566,7 @@ function CollectPayment({
                                     <DialogTrigger asChild>
                                         <button
                                             type="button"
-                                            className="flex h-5 w-5 items-center justify-center rounded-full text-blue-500 hover:text-blue-700"
+                                            className="flex h-5 w-5 items-center justify-center rounded-full text-blue-500 hover:text-blue-700 dark:hover:text-blue-300"
                                             title="Triage Color Guidelines"
                                         >
                                             <Info className="h-4 w-4" />
@@ -596,7 +614,7 @@ function CollectPayment({
                                             ].map((t) => (
                                                 <div
                                                     key={t.color}
-                                                    className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5"
+                                                    className="flex items-center gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2.5 dark:border-neutral-800 dark:bg-neutral-900"
                                                 >
                                                     <div
                                                         className={clsx(
@@ -605,10 +623,10 @@ function CollectPayment({
                                                         )}
                                                     />
                                                     <div className="min-w-0 flex-1">
-                                                        <p className="text-sm font-bold text-slate-900">
+                                                        <p className="text-sm font-bold text-slate-900 dark:text-neutral-100">
                                                             {t.label}
                                                         </p>
-                                                        <p className="text-xs text-slate-500">
+                                                        <p className="text-xs text-slate-500 dark:text-neutral-400">
                                                             {t.desc}
                                                         </p>
                                                     </div>
@@ -657,13 +675,13 @@ function CollectPayment({
                                                               triageBg(
                                                                   service.color,
                                                               ),
-                                                              'border-transparent ring-2 ring-offset-1',
+                                                              'border-transparent ring-2 ring-offset-1 dark:ring-offset-neutral-900',
                                                               triageRing(
                                                                   service.color,
                                                               ),
                                                           )
                                                         : isSelected
-                                                          ? 'border-green-500 bg-green-50'
+                                                          ? 'border-green-500 bg-green-50 dark:border-green-700 dark:bg-green-950/40'
                                                           : hasColor
                                                             ? clsx(
                                                                   triageBgLight(
@@ -674,7 +692,7 @@ function CollectPayment({
                                                                   ),
                                                                   'hover:opacity-90',
                                                               )
-                                                            : 'border-gray-200 hover:border-gray-300',
+                                                            : 'border-gray-200 hover:border-gray-300 dark:border-neutral-800 dark:hover:border-neutral-700',
                                                 )}
                                             >
                                                 <div
@@ -703,7 +721,7 @@ function CollectPayment({
                                                                       service.color,
                                                                   ) +
                                                                       ' opacity-75'
-                                                                : 'text-gray-500',
+                                                                : 'text-gray-500 dark:text-neutral-400',
                                                         )}
                                                     >
                                                         Rs. {service.charges}
@@ -944,7 +962,7 @@ function CollectPayment({
                                                 id="change_amount"
                                                 type="text"
                                                 name="change_amount"
-                                                className="cursor-not-allowed bg-green-50 text-right font-semibold"
+                                                className="cursor-not-allowed bg-green-50 text-right font-semibold dark:bg-green-950/40"
                                                 value={`${changeAmount.toFixed(2)}/- only`}
                                                 readOnly
                                             />
@@ -1007,7 +1025,7 @@ function AppointmentCheckInBanner({
                                 'flex cursor-pointer items-center justify-between rounded-lg border p-2 text-sm',
                                 isSelected
                                     ? 'border-amber-500 bg-amber-100 dark:bg-amber-900'
-                                    : 'border-amber-200 bg-white dark:bg-neutral-900',
+                                    : 'border-amber-200 bg-white dark:border-amber-900 dark:bg-neutral-900',
                             )}
                         >
                             <span>
@@ -1505,7 +1523,7 @@ function SelectPatient({ openCounter }: any) {
     };
 
     return (
-        <div className="grid h-full w-full grid-cols-2 divide-x divide-[#06df72]">
+        <div className="grid h-full w-full grid-cols-2 divide-x divide-[#06df72] dark:divide-neutral-800">
             {/* ── Left column: search / create form ── */}
             <div className="flex flex-col overflow-y-auto p-4 pr-8">
                 <div className="flex w-full flex-col space-y-4">
@@ -1702,7 +1720,7 @@ function SelectPatient({ openCounter }: any) {
                             </div>
                         }
                     >
-                        <CreatePatientPolicy className="text-xs text-gray-500" />
+                        <CreatePatientPolicy className="text-xs text-gray-500 dark:text-neutral-400" />
                     </Suspense>
                 </div>
             </div>
@@ -1712,7 +1730,7 @@ function SelectPatient({ openCounter }: any) {
                 {/* Loading bar — fixed height slot so layout never shifts */}
                 <div className="mb-3 flex h-6 items-center">
                     {isLoading ? (
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-neutral-400">
                             <Spinner className="size-4" />
                             <span>Searching patients…</span>
                         </div>
@@ -1722,7 +1740,7 @@ function SelectPatient({ openCounter }: any) {
                 <div className="flex w-full flex-col space-y-4">
                     {!isLoading && exactMatch.length > 0 && (
                         <>
-                            <h3 className="text-sm font-semibold text-teal-700">
+                            <h3 className="text-sm font-semibold text-teal-700 dark:text-teal-300">
                                 Exact Match ({exactMatch.length})
                             </h3>
                             {exactMatch.map((p: any) => (
@@ -1733,7 +1751,7 @@ function SelectPatient({ openCounter }: any) {
                                     tempGender={formData.gender}
                                     tempContact={formData.contact}
                                     tempCnic={formData.cnic}
-                                    className="w-full border-l-4 border-teal-500"
+                                    className="w-full border-l-4 border-teal-500 dark:border-teal-700"
                                     link={
                                         counterSelectDepartment({
                                             pYear: p.year,
@@ -1748,7 +1766,7 @@ function SelectPatient({ openCounter }: any) {
 
                     {!isLoading && patients.length > 0 && (
                         <>
-                            <h3 className="text-sm font-semibold text-orange-600">
+                            <h3 className="text-sm font-semibold text-orange-600 dark:text-orange-400">
                                 Possible Matches ({patients.length})
                             </h3>
                             {patients.map((p: any) => (
@@ -1852,55 +1870,55 @@ function triageBg(color?: string) {
         case 'green':
             return 'bg-green-600';
         default:
-            return 'bg-gray-100';
+            return 'bg-gray-100 dark:bg-neutral-800';
     }
 }
 function triageBgLight(color?: string) {
     switch (color) {
         case 'red':
-            return 'bg-red-50';
+            return 'bg-red-50 dark:bg-red-950/40';
         case 'yellow':
-            return 'bg-yellow-50';
+            return 'bg-yellow-50 dark:bg-yellow-950/40';
         case 'blue':
-            return 'bg-blue-50';
+            return 'bg-blue-50 dark:bg-blue-950/40';
         case 'sky':
-            return 'bg-sky-50';
+            return 'bg-sky-50 dark:bg-sky-950/40';
         case 'green':
-            return 'bg-green-50';
+            return 'bg-green-50 dark:bg-green-950/40';
         default:
-            return 'bg-gray-50';
+            return 'bg-gray-50 dark:bg-neutral-800/50';
     }
 }
 function triageText(color?: string) {
     switch (color) {
         case 'red':
-            return 'text-red-700';
+            return 'text-red-700 dark:text-red-300';
         case 'yellow':
-            return 'text-yellow-800';
+            return 'text-yellow-800 dark:text-yellow-300';
         case 'blue':
-            return 'text-blue-700';
+            return 'text-blue-700 dark:text-blue-300';
         case 'sky':
-            return 'text-sky-700';
+            return 'text-sky-700 dark:text-sky-300';
         case 'green':
-            return 'text-green-700';
+            return 'text-green-700 dark:text-green-300';
         default:
-            return 'text-gray-700';
+            return 'text-gray-700 dark:text-neutral-200';
     }
 }
 function triageBorder(color?: string) {
     switch (color) {
         case 'red':
-            return 'border-red-300';
+            return 'border-red-300 dark:border-red-800';
         case 'yellow':
-            return 'border-yellow-300';
+            return 'border-yellow-300 dark:border-yellow-800';
         case 'blue':
-            return 'border-blue-300';
+            return 'border-blue-300 dark:border-blue-800';
         case 'sky':
-            return 'border-sky-300';
+            return 'border-sky-300 dark:border-sky-800';
         case 'green':
-            return 'border-green-300';
+            return 'border-green-300 dark:border-green-800';
         default:
-            return 'border-gray-200';
+            return 'border-gray-200 dark:border-neutral-800';
     }
 }
 function triageRing(color?: string) {
@@ -1916,7 +1934,7 @@ function triageRing(color?: string) {
         case 'green':
             return 'ring-green-500';
         default:
-            return 'ring-gray-300';
+            return 'ring-gray-300 dark:ring-neutral-700';
     }
 }
 
@@ -1942,7 +1960,7 @@ function ProviderCombobox({
         <div className="relative">
             <input
                 type="text"
-                className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-800 selection:bg-green-600 selection:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-green-400 focus:outline-none"
+                className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm text-slate-800 selection:bg-green-600 selection:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-green-400 focus:outline-none dark:bg-neutral-900 dark:text-neutral-100"
                 placeholder={selected ? selected.name : 'Search provider…'}
                 value={open ? search : (selected?.name ?? '')}
                 onFocus={() => {
@@ -1953,7 +1971,7 @@ function ProviderCombobox({
                 onBlur={() => setTimeout(() => setOpen(false), 150)}
             />
             {open && (
-                <div className="absolute z-50 mt-1 max-h-52 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                <div className="absolute z-50 mt-1 max-h-52 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg dark:border-neutral-800 dark:bg-neutral-900">
                     {filtered.length === 0 ? (
                         <div className="px-3 py-2 text-sm text-slate-400">
                             No provider found.
@@ -1966,8 +1984,8 @@ function ProviderCombobox({
                                 className={clsx(
                                     'flex w-full items-center px-3 py-2 text-left text-sm transition-colors',
                                     value === p.id.toString()
-                                        ? 'bg-green-50 font-semibold text-green-700'
-                                        : 'text-slate-700 hover:bg-slate-50',
+                                        ? 'bg-green-50 font-semibold text-green-700 dark:bg-green-950/40 dark:text-green-300'
+                                        : 'text-slate-700 hover:bg-slate-50 dark:text-neutral-200 dark:hover:bg-neutral-800/50',
                                 )}
                                 onMouseDown={() => {
                                     onChange(p.id.toString());

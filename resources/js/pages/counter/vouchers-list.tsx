@@ -85,7 +85,7 @@ export default function VouchersList() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Doctor Vouchers" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
-                <div className="flex flex-0 flex-row items-end gap-4 rounded-xl bg-white p-2 dark:bg-[#0a0a0a]">
+                <div className="flex flex-0 flex-row items-end gap-4 rounded-xl bg-white p-2 dark:bg-[#0a0a0a] dark:bg-neutral-900">
                     <div className="flex flex-1 gap-2">
                         <div className="grid gap-2">
                             <Label htmlFor="year">Year</Label>
@@ -160,7 +160,7 @@ export default function VouchersList() {
                         </Link>
                     </div>
                 </div>
-                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950">
+                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950 dark:text-neutral-200">
                     <table className="bg-gray-50 text-left text-xs text-gray-700 uppercase dark:bg-neutral-950 dark:text-gray-400">
                         <thead>
                             <tr>
@@ -212,8 +212,8 @@ export default function VouchersList() {
                                         <span
                                             className={`inline-block rounded px-2 py-1 text-xs font-semibold ${
                                                 v.status === 'payed'
-                                                    ? 'bg-green-100 text-green-800'
-                                                    : 'bg-yellow-100 text-yellow-800'
+                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300'
+                                                    : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300'
                                             }`}
                                         >
                                             {v.status === 'payed'
@@ -258,7 +258,7 @@ export default function VouchersList() {
                                 <tr>
                                     <td
                                         colSpan={8}
-                                        className="px-6 py-3 text-center text-gray-500"
+                                        className="px-6 py-3 text-center text-gray-500 dark:text-neutral-400"
                                     >
                                         No vouchers found.
                                     </td>
@@ -331,13 +331,13 @@ export default function VouchersList() {
                                                         href={makeHref(
                                                             current - 1,
                                                         )}
-                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
+                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900 dark:text-neutral-200"
                                                         aria-label="Previous page"
                                                     >
                                                         ‹
                                                     </a>
                                                 ) : (
-                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400">
+                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400 dark:bg-neutral-800">
                                                         ‹
                                                     </span>
                                                 )}
@@ -358,7 +358,7 @@ export default function VouchersList() {
                                                             className={`rounded border px-3 py-1 ${
                                                                 p === current
                                                                     ? 'bg-[#1c398e] font-bold text-white'
-                                                                    : 'bg-white text-[#1c398e] hover:underline'
+                                                                    : 'bg-white text-[#1c398e] hover:underline dark:bg-neutral-900 dark:text-neutral-200'
                                                             }`}
                                                         >
                                                             {p}
@@ -370,13 +370,13 @@ export default function VouchersList() {
                                                         href={makeHref(
                                                             current + 1,
                                                         )}
-                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline"
+                                                        className="rounded border bg-white px-3 py-1 text-[#1c398e] hover:underline dark:bg-neutral-900 dark:text-neutral-200"
                                                         aria-label="Next page"
                                                     >
                                                         ›
                                                     </a>
                                                 ) : (
-                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400">
+                                                    <span className="rounded border bg-gray-100 px-3 py-1 text-gray-400 dark:bg-neutral-800">
                                                         ›
                                                     </span>
                                                 )}

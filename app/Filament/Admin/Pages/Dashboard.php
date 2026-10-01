@@ -10,7 +10,6 @@ use App\Filament\Admin\Widgets\Executive\PatientRegistrationTrend;
 use App\Filament\Admin\Widgets\Executive\PaymentMethodBreakdown;
 use App\Filament\Admin\Widgets\Executive\RevenueVsExpenseChart;
 use App\Filament\Admin\Widgets\Executive\TopServicesRevenue;
-use App\Filament\Admin\Widgets\MigrationStatsOverview;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Support\Icons\Heroicon;
 
@@ -37,10 +36,6 @@ class Dashboard extends BaseDashboard
             PaymentMethodBreakdown::class,
             DepartmentIncomeChart::class,
         ];
-
-        if (env('ENABLE_OLD_SYNC', false) !== false) {
-            $widgets[] = MigrationStatsOverview::class;
-        }
 
         return $widgets;
     }

@@ -18,7 +18,7 @@ function nowLocal(): string {
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-type Disposition = 'discharged' | 'referred';
+export type Disposition = 'discharged' | 'referred' | 'admitted' | 'lama';
 
 interface DischargeDialogProps {
     open: boolean;
@@ -28,6 +28,7 @@ interface DischargeDialogProps {
         outcome: Disposition;
         outcome_at: string;
         referral_to?: string;
+        admitted_to?: string;
         outcome_notes?: string;
     }) => void;
 }
@@ -41,6 +42,7 @@ export function DischargeDialog({
     const [disposition, setDisposition] = useState<Disposition>('discharged');
     const [outcomeAt, setOutcomeAt] = useState(nowLocal);
     const [referralTo, setReferralTo] = useState('');
+    const [admittedTo, setAdmittedTo] = useState('');
     const [notes, setNotes] = useState('');
 
     const canConfirm =
@@ -62,6 +64,8 @@ export function DischargeDialog({
                             [
                                 ['discharged', 'Discharged Home'],
                                 ['referred', 'Referred to Other Hospital'],
+                                ['admitted', 'Admitted'],
+                                ['lama', 'Left Against Medical Advice'],
                             ] as const
                         ).map(([value, label]) => (
                             <button
@@ -72,7 +76,7 @@ export function DischargeDialog({
                                     'rounded-xl border px-3 py-2.5 text-sm font-semibold transition-colors',
                                     disposition === value
                                         ? 'border-slate-800 bg-slate-800 text-white'
-                                        : 'border-slate-200 text-slate-600 hover:bg-slate-50',
+                                        : 'border-slate-200 text-slate-600 hover:bg-slate-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/50',
                                 )}
                             >
                                 {label}
@@ -89,10 +93,23 @@ export function DischargeDialog({
                             type="datetime-local"
                             value={outcomeAt}
                             onChange={(e) => setOutcomeAt(e.target.value)}
-                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
                             required
                         />
                     </div>
+
+                    {disposition === 'admitted' && (
+                        <div>
+                            <Label htmlFor="admitted-to">Admitted To</Label>
+                            <input
+                                id="admitted-to"
+                                value={admittedTo}
+                                onChange={(e) => setAdmittedTo(e.target.value)}
+                                placeholder="Ward / unit"
+                                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
+                            />
+                        </div>
+                    )}
 
                     {disposition === 'referred' && (
                         <div>
@@ -104,7 +121,7 @@ export function DischargeDialog({
                                 value={referralTo}
                                 onChange={(e) => setReferralTo(e.target.value)}
                                 placeholder="Hospital / facility name"
-                                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
                             />
                         </div>
                     )}
@@ -118,7 +135,7 @@ export function DischargeDialog({
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             rows={2}
-                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
                         />
                     </div>
                 </div>
@@ -136,6 +153,10 @@ export function DischargeDialog({
                                 referral_to:
                                     disposition === 'referred'
                                         ? referralTo
+                                        : undefined,
+                                admitted_to:
+                                    disposition === 'admitted'
+                                        ? admittedTo || undefined
                                         : undefined,
                                 outcome_notes: notes || undefined,
                             })
@@ -192,7 +213,7 @@ export function DeathConfirmDialog({
                             type="datetime-local"
                             value={timeOfDeath}
                             onChange={(e) => setTimeOfDeath(e.target.value)}
-                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
                             required
                         />
                     </div>
@@ -205,7 +226,7 @@ export function DeathConfirmDialog({
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             rows={2}
-                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none"
+                            className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-slate-400 focus:outline-none dark:border-neutral-800"
                         />
                     </div>
                 </div>

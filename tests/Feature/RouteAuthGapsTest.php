@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Receptionist;
 use App\Models\User;
 
 use function Pest\Laravel\actingAs;
@@ -8,16 +7,10 @@ use function Pest\Laravel\get;
 
 // ─── /import-old ────────────────────────────────────────────────────────────
 
-test('guests cannot reach the legacy import route', function () {
-    get(route('import-old'))->assertRedirect(route('login'));
-});
+test('the legacy import route has been removed', function () {
+    actingAs(User::factory()->create());
 
-test('a non-admin authenticated user cannot trigger the legacy import route', function () {
-    $receptionist = User::factory()->create();
-    Receptionist::factory()->create(['user_id' => $receptionist->id]);
-    actingAs($receptionist);
-
-    get(route('import-old'))->assertForbidden();
+    get('/import-old')->assertNotFound();
 });
 
 // ─── routes/settings.php — verified middleware ─────────────────────────────

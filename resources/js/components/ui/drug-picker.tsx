@@ -92,11 +92,11 @@ export default function DrugPicker({
                 disabled={disabled}
                 placeholder={placeholder}
                 className={clsx(
-                    'w-full rounded-lg border px-2 py-1.5 text-xs text-slate-800 placeholder:text-slate-400',
-                    'focus:outline-none focus:ring-1 focus:ring-teal-300 focus:border-teal-400',
+                    'w-full rounded-lg border px-2 py-1.5 text-xs text-slate-800 dark:text-neutral-100 placeholder:text-slate-400',
+                    'focus:outline-none focus:ring-1 focus:ring-teal-300 dark:focus:ring-teal-800 focus:border-teal-400',
                     disabled
-                        ? 'border-transparent bg-transparent text-slate-600 cursor-not-allowed'
-                        : 'border-slate-200 bg-white hover:border-slate-300',
+                        ? 'border-transparent bg-transparent text-slate-600 dark:text-neutral-300 cursor-not-allowed'
+                        : 'border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-slate-300 dark:hover:border-neutral-700',
                     className,
                 )}
                 autoComplete="off"
@@ -107,28 +107,28 @@ export default function DrugPicker({
                 </span>
             )}
             {open && results.length > 0 && (
-                <div className="absolute left-0 top-full z-50 mt-0.5 w-72 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl">
+                <div className="absolute left-0 top-full z-50 mt-0.5 w-72 overflow-hidden rounded-xl border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-xl">
                     {results.map((drug) => (
                         <button
                             key={drug.id}
                             type="button"
                             onMouseDown={() => pick(drug)}
-                            className="flex w-full flex-col gap-0.5 px-3 py-2 text-left transition-colors hover:bg-teal-50"
+                            className="flex w-full flex-col gap-0.5 px-3 py-2 text-left transition-colors hover:bg-teal-50 dark:hover:bg-teal-950/40"
                         >
                             <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-slate-900">{drug.name}</span>
+                                <span className="text-xs font-semibold text-slate-900 dark:text-neutral-100">{drug.name}</span>
                                 {drug.type && (
-                                    <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500">{drug.type}</span>
+                                    <span className="rounded-full bg-slate-100 dark:bg-neutral-800 px-1.5 py-0.5 text-[10px] text-slate-500 dark:text-neutral-400">{drug.type}</span>
                                 )}
                                 {drug.strength && (
-                                    <span className="rounded-full bg-teal-50 px-1.5 py-0.5 text-[10px] text-teal-700">{drug.strength}</span>
+                                    <span className="rounded-full bg-teal-50 dark:bg-teal-950/40 px-1.5 py-0.5 text-[10px] text-teal-700 dark:text-teal-300">{drug.strength}</span>
                                 )}
                             </div>
                             {drug.generic_name && (
                                 <span className="text-[10px] text-slate-400 italic">{drug.generic_name}</span>
                             )}
                             {(drug.default_dose || drug.default_frequency) && (
-                                <span className="text-[10px] text-slate-500">
+                                <span className="text-[10px] text-slate-500 dark:text-neutral-400">
                                     {[drug.default_dose, drug.default_frequency, drug.default_duration, drug.default_route]
                                         .filter(Boolean).join(' · ')}
                                 </span>

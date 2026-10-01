@@ -84,11 +84,11 @@ export default function Icd10Picker({
                 <span className="absolute top-1/2 right-2 -translate-y-1/2 text-xs text-slate-400">…</span>
             )}
             {open && results.length > 0 && (
-                <ul className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-slate-200 bg-white shadow-lg text-sm">
+                <ul className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border border-slate-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-lg text-sm">
                     {results.map((r) => (
                         <li
                             key={r.id}
-                            className="flex cursor-pointer flex-col gap-0.5 px-3 py-2 hover:bg-indigo-50"
+                            className="flex cursor-pointer flex-col gap-0.5 px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
                             onMouseDown={(e) => {
                                 e.preventDefault();
                                 setQuery(r.code);
@@ -96,8 +96,8 @@ export default function Icd10Picker({
                                 onSelect(r.code, r.description);
                             }}
                         >
-                            <span className="font-mono font-semibold text-indigo-700">{r.code}</span>
-                            <span className="text-slate-600 text-xs">{r.description}</span>
+                            <span className="font-mono font-semibold text-indigo-700 dark:text-indigo-300">{r.code}</span>
+                            <span className="text-slate-600 dark:text-neutral-300 text-xs">{r.description}</span>
                             {r.category && (
                                 <span className="text-slate-400 text-xs">{r.category}</span>
                             )}

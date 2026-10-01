@@ -10,6 +10,7 @@ import TreatmentAttachments, {
 import {
     DeathConfirmDialog,
     DischargeDialog,
+    type Disposition,
 } from '@/elements/dept-portal/DischargeDialog';
 import {
     formatPatientAge,
@@ -29,6 +30,7 @@ import {
     CheckCircle,
     ChevronDown,
     ChevronUp,
+    ClipboardList,
     Clock,
     FileText,
     Heart,
@@ -64,6 +66,11 @@ interface Patient {
     age_days?: number;
     age_dob?: string;
     contact?: string;
+    history_htn?: boolean | null;
+    history_dm?: boolean | null;
+    history_asthma?: boolean | null;
+    history_ihd?: boolean | null;
+    allergies?: string | null;
 }
 
 interface VitalSign {
@@ -73,6 +80,8 @@ interface VitalSign {
     pulse_rate?: number | string;
     respiratory_rate?: number | string;
     oxygen_saturation?: number | string;
+    gcs?: number | string;
+    blood_glucose?: number | string;
     weight?: number | string;
     height?: number | string;
 }
@@ -85,6 +94,8 @@ interface Prescription {
     route?: string;
     instructions?: string;
     given_at?: string;
+    given_in_er?: boolean;
+    form?: string;
 }
 
 export interface Triage {
@@ -125,6 +136,7 @@ interface TreatmentRecord {
     triage_histories?: TriageHistoryEntry[];
     dental_chart?: DentalChartValue | null;
     attachments?: TreatmentAttachmentData[];
+    department_specific_data?: Record<string, unknown> | null;
 }
 
 interface PreviousVisit {
@@ -172,6 +184,7 @@ export interface DeptPatientFormProps {
     showCallButton?: boolean; // departments like EMG don't call patients by turn (default true)
     canDischarge?: boolean; // nursing staff can chart but not discharge (default true)
     requireDischargeDetails?: boolean; // EMG: Finalize becomes Discharge with a required outcome dialog
+    showEmergencyDetails?: boolean; // EMG: GCS/BSL, past history, investigations advised, advice, ER-given flag on medicines
     treatmentPlanLabel?: string; // e.g. "Imaging Report" for ULT/XRAY
     treatmentPlanPlaceholder?: string; // pre-filled template text
     chiefComplaintLabel?: string;
@@ -201,12 +214,16 @@ function formatDate(d?: string) {
 function statusColor(status: string) {
     const s = status.toLowerCase();
     if (s === 'in-progress')
-        return 'bg-blue-100 text-blue-700 ring-1 ring-blue-200';
+        return 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-800';
     if (s === 'open')
-        return 'bg-amber-100 text-amber-700 ring-1 ring-amber-200';
+        return 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-800';
     if (s === 'treated' || s === 'closed')
-        return 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200';
-    return 'bg-slate-100 text-slate-600';
+        return 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-800';
+    return 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300';
+}
+
+function fromTriState(value: string): boolean | null {
+    return value === 'yes' ? true : value === 'no' ? false : null;
 }
 
 function blankRx(): Prescription {
@@ -243,7 +260,7 @@ function FormSection({
 }) {
     const [collapsed, setCollapsed] = useState(false);
     return (
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
             <button
                 type="button"
                 onClick={() => setCollapsed((c) => !c)}
@@ -251,7 +268,7 @@ function FormSection({
             >
                 <div className="flex items-center gap-2">
                     {icon}
-                    <span className="text-sm font-semibold text-slate-900">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                         {title}
                     </span>
                 </div>
@@ -263,7 +280,7 @@ function FormSection({
             </button>
             {!collapsed && (
                 <>
-                    <div className="h-px bg-slate-100" />
+                    <div className="h-px bg-slate-100 dark:bg-neutral-800" />
                     <div className="p-4 md:p-5">{children}</div>
                 </>
             )}
@@ -274,8 +291,10 @@ function FormSection({
 function InfoCell({ label, value }: { label: string; value?: string }) {
     return (
         <div>
-            <p className="text-xs text-slate-500">{label}</p>
-            <p className="mt-0.5 text-sm font-semibold text-slate-800">
+            <p className="text-xs text-slate-500 dark:text-neutral-400">
+                {label}
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-neutral-100">
                 {value ?? '—'}
             </p>
         </div>
@@ -284,28 +303,28 @@ function InfoCell({ label, value }: { label: string; value?: string }) {
 
 function textareaClass(disabled: boolean) {
     return clsx(
-        'w-full resize-y rounded-xl border px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-100 focus:outline-none',
+        'w-full resize-y rounded-xl border px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-100 focus:outline-none dark:text-neutral-100 dark:focus:ring-neutral-700',
         disabled
-            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600'
-            : 'border-slate-200 bg-white hover:border-slate-300',
+            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-300'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700',
     );
 }
 
 function inputClass(disabled: boolean) {
     return clsx(
-        'w-full rounded-xl border px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-100 focus:outline-none',
+        'w-full rounded-xl border px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:ring-2 focus:ring-slate-100 focus:outline-none dark:text-neutral-100 dark:focus:ring-neutral-700',
         disabled
-            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600'
-            : 'border-slate-200 bg-white hover:border-slate-300',
+            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-300'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700',
     );
 }
 
 function tableInputClass(disabled: boolean) {
     return clsx(
-        'w-full rounded-lg border px-2 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-slate-300 focus:ring-1 focus:ring-slate-200 focus:outline-none',
+        'w-full rounded-lg border px-2 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-slate-300 focus:ring-1 focus:ring-slate-200 focus:outline-none dark:text-neutral-100 dark:focus:border-neutral-700 dark:focus:ring-neutral-700',
         disabled
-            ? 'cursor-not-allowed border-transparent bg-transparent text-slate-600'
-            : 'border-slate-200 bg-white hover:border-slate-300',
+            ? 'cursor-not-allowed border-transparent bg-transparent text-slate-600 dark:text-neutral-300'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700',
     );
 }
 
@@ -330,6 +349,7 @@ export default function DeptPatientForm({
     showCallButton = true,
     canDischarge = true,
     requireDischargeDetails = false,
+    showEmergencyDetails = false,
     treatmentPlanLabel = 'Treatment Plan / Notes',
     treatmentPlanPlaceholder = 'Management plan, investigations, advice…',
     chiefComplaintLabel = 'Chief Complaint',
@@ -401,8 +421,30 @@ export default function DeptPatientForm({
         pulse_rate: lastVital.pulse_rate ?? '',
         respiratory_rate: lastVital.respiratory_rate ?? '',
         oxygen_saturation: lastVital.oxygen_saturation ?? '',
+        gcs: lastVital.gcs ?? '',
+        blood_glucose: lastVital.blood_glucose ?? '',
         weight: lastVital.weight ?? '',
         height: lastVital.height ?? '',
+    });
+    const existingExtras = (existing?.department_specific_data ?? {}) as Record<
+        string,
+        unknown
+    >;
+    const [emergencyExtras, setEmergencyExtras] = useState({
+        investigations_advised: String(
+            existingExtras.investigations_advised ?? '',
+        ),
+        advice: String(existingExtras.advice ?? ''),
+        admitted_to: String(existingExtras.admitted_to ?? ''),
+    });
+    const toTriState = (v?: boolean | null) =>
+        v === true ? 'yes' : v === false ? 'no' : '';
+    const [pastHistory, setPastHistory] = useState({
+        htn: toTriState(patient?.history_htn),
+        dm: toTriState(patient?.history_dm),
+        asthma: toTriState(patient?.history_asthma),
+        ihd: toTriState(patient?.history_ihd),
+        allergies: patient?.allergies ?? '',
     });
     const [prescriptions, setPrescriptions] = useState<Prescription[]>(
         existing?.prescriptions?.length ? existing.prescriptions : [blankRx()],
@@ -458,6 +500,24 @@ export default function DeptPatientForm({
                     ? vitals
                     : null,
             dental_chart: showDentalChart ? dentalChart : undefined,
+            department_specific_data: showEmergencyDetails
+                ? {
+                      ...existingExtras,
+                      investigations_advised:
+                          emergencyExtras.investigations_advised || null,
+                      advice: emergencyExtras.advice || null,
+                      admitted_to: emergencyExtras.admitted_to || null,
+                  }
+                : undefined,
+            past_history: showEmergencyDetails
+                ? {
+                      htn: fromTriState(pastHistory.htn),
+                      dm: fromTriState(pastHistory.dm),
+                      asthma: fromTriState(pastHistory.asthma),
+                      ihd: fromTriState(pastHistory.ihd),
+                      allergies: pastHistory.allergies || null,
+                  }
+                : undefined,
             // Omitted entirely (not just null) for departments that don't use triage/treatment-time,
             // so the backend's "did triage_id change" check and its default treated_at timestamping
             // are left untouched for those departments.
@@ -497,6 +557,10 @@ export default function DeptPatientForm({
             showTriage,
             requireTreatmentTime,
             requireDischargeDetails,
+            showEmergencyDetails,
+            emergencyExtras,
+            pastHistory,
+            existingExtras,
         ],
     );
 
@@ -533,11 +597,17 @@ export default function DeptPatientForm({
     );
 
     const confirmDischarge = (payload: {
-        outcome: 'discharged' | 'referred';
+        outcome: Disposition;
         outcome_at: string;
         referral_to?: string;
+        admitted_to?: string;
         outcome_notes?: string;
     }) => {
+        const extras = {
+            ...emergencyExtras,
+            admitted_to: payload.admitted_to ?? '',
+        };
+        setEmergencyExtras(extras);
         setOutcome(payload.outcome);
         setOutcomeAt(payload.outcome_at);
         setReferralTo(payload.referral_to ?? '');
@@ -548,6 +618,17 @@ export default function DeptPatientForm({
             outcome_at: new Date(payload.outcome_at).toISOString(),
             referral_to: payload.referral_to || null,
             outcome_notes: payload.outcome_notes || null,
+            ...(showEmergencyDetails
+                ? {
+                      department_specific_data: {
+                          ...existingExtras,
+                          investigations_advised:
+                              extras.investigations_advised || null,
+                          advice: extras.advice || null,
+                          admitted_to: extras.admitted_to || null,
+                      },
+                  }
+                : {}),
         });
     };
 
@@ -619,15 +700,15 @@ export default function DeptPatientForm({
     };
 
     return (
-        <div className="min-h-full bg-gradient-to-br from-slate-50 via-white to-slate-50">
+        <div className="min-h-full bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-neutral-950 dark:via-neutral-950 dark:to-neutral-950">
             {/* ── Sticky Patient Banner ───────────────────────────────── */}
-            <div className="sticky top-0 z-10 border-b border-slate-100 bg-white shadow-sm">
+            <div className="sticky top-0 z-10 border-b border-slate-100 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
                 <div className="mx-auto max-w-5xl px-4 py-3 md:px-6">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                             <button
                                 onClick={() => router.visit(dashboardUrl)}
-                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                             >
                                 <ArrowLeft className="h-4 w-4" />
                             </button>
@@ -641,7 +722,7 @@ export default function DeptPatientForm({
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <h1 className="text-base font-bold text-slate-900 md:text-lg">
+                                    <h1 className="text-base font-bold text-slate-900 md:text-lg dark:text-neutral-100">
                                         {patient?.name}
                                     </h1>
                                     <span
@@ -653,13 +734,13 @@ export default function DeptPatientForm({
                                         {serviceOrder.status}
                                     </span>
                                     {isFinalized && (
-                                        <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                                        <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800">
                                             <Lock className="h-3 w-3" />{' '}
                                             Finalized
                                         </span>
                                     )}
                                 </div>
-                                <div className="flex flex-wrap items-center gap-x-2 text-xs text-slate-500">
+                                <div className="flex flex-wrap items-center gap-x-2 text-xs text-slate-500 dark:text-neutral-400">
                                     <span>{patient?.ps_number}</span>
                                     {patient && (
                                         <>
@@ -691,7 +772,7 @@ export default function DeptPatientForm({
                             <button
                                 type="button"
                                 onClick={() => setShowHistory((v) => !v)}
-                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                             >
                                 <History className="h-3.5 w-3.5" /> History (
                                 {previousVisits.length})
@@ -723,7 +804,7 @@ export default function DeptPatientForm({
                                 }
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800/50"
                             >
                                 <Printer className="h-3.5 w-3.5" /> Print
                             </a>
@@ -734,7 +815,7 @@ export default function DeptPatientForm({
                                         type="button"
                                         disabled={saving}
                                         onClick={() => save(false)}
-                                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                        className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800/50"
                                     >
                                         <Save className="h-3.5 w-3.5" />{' '}
                                         {saving ? 'Saving…' : 'Save Draft'}
@@ -766,9 +847,9 @@ export default function DeptPatientForm({
             <div className="mx-auto max-w-5xl px-4 pt-4 pb-10 md:px-6">
                 {/* Finalized banner */}
                 {isFinalized && (
-                    <div className="mb-4 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                        <Lock className="h-5 w-5 text-emerald-600" />
-                        <p className="text-sm font-medium text-emerald-800">
+                    <div className="mb-4 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900 dark:bg-emerald-950/40">
+                        <Lock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                        <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
                             This treatment record has been finalized and is
                             read-only.
                         </p>
@@ -777,26 +858,26 @@ export default function DeptPatientForm({
 
                 {/* Previous Visits panel */}
                 {showHistory && (
-                    <div className="mb-4 rounded-2xl border border-slate-200 bg-white shadow-sm">
-                        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                                <History className="h-4 w-4 text-slate-500" />{' '}
+                    <div className="mb-4 rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-neutral-800">
+                            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-neutral-100">
+                                <History className="h-4 w-4 text-slate-500 dark:text-neutral-400" />{' '}
                                 Previous {deptName} Visits
                             </h3>
                             <button
                                 type="button"
                                 onClick={() => setShowHistory(false)}
-                                className="text-slate-400 hover:text-slate-600"
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300"
                             >
                                 <X className="h-4 w-4" />
                             </button>
                         </div>
                         {previousVisits.length === 0 ? (
-                            <p className="px-4 py-6 text-center text-sm text-slate-500">
+                            <p className="px-4 py-6 text-center text-sm text-slate-500 dark:text-neutral-400">
                                 No previous visits.
                             </p>
                         ) : (
-                            <div className="divide-y divide-slate-100">
+                            <div className="divide-y divide-slate-100 dark:divide-neutral-800">
                                 {previousVisits.map((v) => (
                                     <div
                                         key={v.id}
@@ -804,7 +885,7 @@ export default function DeptPatientForm({
                                     >
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <p className="text-xs font-semibold text-slate-800">
+                                                <p className="text-xs font-semibold text-slate-800 dark:text-neutral-100">
                                                     {v.so_number}
                                                 </p>
                                                 {v.treatment_record?.triage && (
@@ -831,7 +912,7 @@ export default function DeptPatientForm({
                                                         v.treatment_record
                                                             .dental_chart,
                                                     ).length > 0 && (
-                                                        <span className="rounded-full bg-teal-50 px-1.5 py-0.5 text-[10px] font-medium text-teal-700">
+                                                        <span className="rounded-full bg-teal-50 px-1.5 py-0.5 text-[10px] font-medium text-teal-700 dark:bg-teal-950/40 dark:text-teal-300">
                                                             {
                                                                 Object.keys(
                                                                     v
@@ -843,12 +924,12 @@ export default function DeptPatientForm({
                                                         </span>
                                                     )}
                                             </div>
-                                            <p className="mt-0.5 text-xs text-slate-500">
+                                            <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
                                                 {formatDate(v.created_at)}
                                             </p>
                                             {v.treatment_record
                                                 ?.diagnosis_text && (
-                                                <p className="mt-1 text-xs text-slate-600">
+                                                <p className="mt-1 text-xs text-slate-600 dark:text-neutral-300">
                                                     {
                                                         v.treatment_record
                                                             .diagnosis_text
@@ -882,7 +963,7 @@ export default function DeptPatientForm({
                 )}
 
                 {/* SO info row */}
-                <div className="mb-4 grid grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-4">
+                <div className="mb-4 grid grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-4 dark:border-neutral-800 dark:bg-neutral-900">
                     <InfoCell
                         label="SO Number"
                         value={serviceOrder.so_number}
@@ -923,13 +1004,15 @@ export default function DeptPatientForm({
 
                     {(showTriage || requireTreatmentTime) && (
                         <FormSection
-                            icon={<Siren className="h-4 w-4 text-red-600" />}
+                            icon={
+                                <Siren className="h-4 w-4 text-red-600 dark:text-red-400" />
+                            }
                             title="Triage & Treatment Time"
                         >
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 {showTriage && (
                                     <div className="sm:col-span-2">
-                                        <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                                        <label className="mb-1.5 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                             Triage Level{' '}
                                             <span className="text-red-500">
                                                 *
@@ -950,12 +1033,12 @@ export default function DeptPatientForm({
                                                             'flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
                                                             isFinalized
                                                                 ? 'cursor-not-allowed opacity-50'
-                                                                : 'cursor-pointer hover:bg-slate-50',
+                                                                : 'cursor-pointer hover:bg-slate-50 dark:hover:bg-neutral-800/50',
                                                             selected
                                                                 ? triageSelectedClass(
                                                                       t.color,
                                                                   )
-                                                                : 'border-slate-200 bg-white',
+                                                                : 'border-slate-200 bg-white dark:border-neutral-800 dark:bg-neutral-900',
                                                         )}
                                                     >
                                                         <RadioInput
@@ -1002,7 +1085,7 @@ export default function DeptPatientForm({
                                 )}
                                 {requireTreatmentTime && (
                                     <div>
-                                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                                        <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                             Time of Treatment{' '}
                                             <span className="text-red-500">
                                                 *
@@ -1025,8 +1108,8 @@ export default function DeptPatientForm({
                             {showTriage &&
                                 (existing?.triage_histories?.length ?? 0) >
                                     0 && (
-                                    <div className="mt-4 border-t border-slate-100 pt-3">
-                                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                                    <div className="mt-4 border-t border-slate-100 pt-3 dark:border-neutral-800">
+                                        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-neutral-300">
                                             <Clock className="h-3.5 w-3.5" />{' '}
                                             Triage Change History
                                         </p>
@@ -1035,7 +1118,7 @@ export default function DeptPatientForm({
                                                 (h) => (
                                                     <li
                                                         key={h.id}
-                                                        className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500"
+                                                        className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 dark:text-neutral-400"
                                                     >
                                                         <span>
                                                             {formatDate(
@@ -1097,7 +1180,9 @@ export default function DeptPatientForm({
                     )}
 
                     <FormSection
-                        icon={<FileText className="h-4 w-4 text-slate-500" />}
+                        icon={
+                            <FileText className="h-4 w-4 text-slate-500 dark:text-neutral-400" />
+                        }
                         title="History of Present Illness"
                     >
                         <textarea
@@ -1160,6 +1245,22 @@ export default function DeptPatientForm({
                                         ),
                                     },
                                     {
+                                        key: 'gcs',
+                                        label: 'GCS (3–15)',
+                                        placeholder: '15',
+                                        icon: (
+                                            <Activity className="h-3.5 w-3.5" />
+                                        ),
+                                    },
+                                    {
+                                        key: 'blood_glucose',
+                                        label: 'BSL (mg/dL)',
+                                        placeholder: '110',
+                                        icon: (
+                                            <Activity className="h-3.5 w-3.5" />
+                                        ),
+                                    },
+                                    {
                                         key: 'weight',
                                         label: 'Weight (kg)',
                                         placeholder: '70',
@@ -1171,40 +1272,151 @@ export default function DeptPatientForm({
                                         placeholder: '170',
                                         icon: <User className="h-3.5 w-3.5" />,
                                     },
-                                ].map(
-                                    ({
-                                        key,
-                                        label,
-                                        placeholder,
-                                        icon: vIcon,
-                                    }) => (
-                                        <div key={key}>
-                                            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-500">
-                                                {vIcon} {label}
-                                            </label>
-                                            <input
-                                                disabled={isFinalized}
-                                                type="number"
-                                                step="any"
-                                                value={String(
-                                                    vitals[
-                                                        key as keyof typeof vitals
-                                                    ],
-                                                )}
-                                                onChange={(e) =>
-                                                    setVitals((s) => ({
-                                                        ...s,
-                                                        [key]: e.target.value,
-                                                    }))
-                                                }
-                                                placeholder={placeholder}
-                                                className={inputClass(
-                                                    isFinalized,
-                                                )}
-                                            />
-                                        </div>
-                                    ),
-                                )}
+                                ]
+                                    .filter(
+                                        ({ key }) =>
+                                            showEmergencyDetails ||
+                                            (key !== 'gcs' &&
+                                                key !== 'blood_glucose'),
+                                    )
+                                    .map(
+                                        ({
+                                            key,
+                                            label,
+                                            placeholder,
+                                            icon: vIcon,
+                                        }) => (
+                                            <div key={key}>
+                                                <label className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-neutral-400">
+                                                    {vIcon} {label}
+                                                </label>
+                                                <input
+                                                    disabled={isFinalized}
+                                                    type="number"
+                                                    step="any"
+                                                    value={String(
+                                                        vitals[
+                                                            key as keyof typeof vitals
+                                                        ],
+                                                    )}
+                                                    onChange={(e) =>
+                                                        setVitals((s) => ({
+                                                            ...s,
+                                                            [key]: e.target
+                                                                .value,
+                                                        }))
+                                                    }
+                                                    placeholder={placeholder}
+                                                    className={inputClass(
+                                                        isFinalized,
+                                                    )}
+                                                />
+                                            </div>
+                                        ),
+                                    )}
+                            </div>
+                        </FormSection>
+                    )}
+
+                    {showEmergencyDetails && (
+                        <FormSection
+                            icon={
+                                <ClipboardList className="h-4 w-4 text-red-600 dark:text-red-400" />
+                            }
+                            title="Past History, Investigations & Advice"
+                        >
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                {(
+                                    [
+                                        ['htn', 'HTN'],
+                                        ['dm', 'DM'],
+                                        ['asthma', 'Asthma'],
+                                        ['ihd', 'IHD'],
+                                    ] as const
+                                ).map(([key, label]) => (
+                                    <div key={key}>
+                                        <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
+                                            {label}
+                                        </label>
+                                        <select
+                                            disabled={isFinalized}
+                                            value={pastHistory[key]}
+                                            onChange={(e) =>
+                                                setPastHistory((h) => ({
+                                                    ...h,
+                                                    [key]: e.target.value,
+                                                }))
+                                            }
+                                            className={inputClass(isFinalized)}
+                                        >
+                                            <option value="">—</option>
+                                            <option value="yes">Yes</option>
+                                            <option value="no">No</option>
+                                        </select>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-3">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
+                                    Allergies
+                                </label>
+                                <input
+                                    disabled={isFinalized}
+                                    value={pastHistory.allergies}
+                                    onChange={(e) =>
+                                        setPastHistory((h) => ({
+                                            ...h,
+                                            allergies: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="e.g. Penicillin — rash (leave empty if none known)"
+                                    className={inputClass(isFinalized)}
+                                />
+                                <p className="mt-1 text-xs text-slate-400">
+                                    Past history and allergies are saved to the
+                                    patient and carry over to future visits.
+                                </p>
+                            </div>
+                            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
+                                        Investigations Advised
+                                    </label>
+                                    <textarea
+                                        disabled={isFinalized}
+                                        rows={3}
+                                        value={
+                                            emergencyExtras.investigations_advised
+                                        }
+                                        onChange={(e) =>
+                                            setEmergencyExtras((x) => ({
+                                                ...x,
+                                                investigations_advised:
+                                                    e.target.value,
+                                            }))
+                                        }
+                                        placeholder="CBC, LFTs, X-ray chest…"
+                                        className={inputClass(isFinalized)}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
+                                        Advice / Follow-up
+                                    </label>
+                                    <textarea
+                                        disabled={isFinalized}
+                                        rows={3}
+                                        value={emergencyExtras.advice}
+                                        onChange={(e) =>
+                                            setEmergencyExtras((x) => ({
+                                                ...x,
+                                                advice: e.target.value,
+                                            }))
+                                        }
+                                        placeholder="Plenty of fluids, review in OPD after 3 days…"
+                                        className={inputClass(isFinalized)}
+                                    />
+                                </div>
                             </div>
                         </FormSection>
                     )}
@@ -1212,14 +1424,14 @@ export default function DeptPatientForm({
                     {showExamFindings && (
                         <FormSection
                             icon={
-                                <Stethoscope className="h-4 w-4 text-teal-600" />
+                                <Stethoscope className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                             }
                             title="Examination Findings"
                         >
                             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                 {examSystems.map((sys) => (
                                     <div key={sys}>
-                                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                                        <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                             {sys}
                                         </label>
                                         <input
@@ -1243,7 +1455,7 @@ export default function DeptPatientForm({
                     {showDentalChart && (
                         <FormSection
                             icon={
-                                <Stethoscope className="h-4 w-4 text-teal-600" />
+                                <Stethoscope className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                             }
                             title="Dental Chart"
                         >
@@ -1261,7 +1473,7 @@ export default function DeptPatientForm({
                     >
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     ICD-10 Code
                                 </label>
                                 <Icd10Picker
@@ -1276,7 +1488,7 @@ export default function DeptPatientForm({
                                 />
                             </div>
                             <div className="sm:col-span-2">
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     Diagnosis
                                 </label>
                                 <input
@@ -1335,13 +1547,13 @@ export default function DeptPatientForm({
                     {showPrescriptions && (
                         <FormSection
                             icon={
-                                <FileText className="h-4 w-4 text-emerald-600" />
+                                <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                             }
                             title="Prescription"
                         >
-                            <div className="overflow-x-auto rounded-xl border border-slate-200">
+                            <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-neutral-800">
                                 <table className="w-full min-w-[700px] text-sm">
-                                    <thead className="bg-slate-50">
+                                    <thead className="bg-slate-50 dark:bg-neutral-800/50">
                                         <tr>
                                             {[
                                                 'Drug Name',
@@ -1351,22 +1563,25 @@ export default function DeptPatientForm({
                                                 'Route',
                                                 'Instructions',
                                                 'Given At',
+                                                ...(showEmergencyDetails
+                                                    ? ['Given in ER']
+                                                    : []),
                                                 '',
                                             ].map((h) => (
                                                 <th
                                                     key={h}
-                                                    className="px-3 py-2 text-left text-xs font-semibold text-slate-600"
+                                                    className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-neutral-300"
                                                 >
                                                     {h}
                                                 </th>
                                             ))}
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">
                                         {prescriptions.map((row, idx) => (
                                             <tr
                                                 key={idx}
-                                                className="bg-white hover:bg-slate-50"
+                                                className="bg-white hover:bg-slate-50 dark:bg-neutral-900 dark:hover:bg-neutral-800/50"
                                             >
                                                 <td className="px-2 py-1.5">
                                                     {isFinalized ? (
@@ -1408,6 +1623,9 @@ export default function DeptPatientForm({
                                                                                           ...r,
                                                                                           drug_name:
                                                                                               drug.name,
+                                                                                          form:
+                                                                                              drug.type ??
+                                                                                              r.form,
                                                                                           dose:
                                                                                               drug.default_dose ??
                                                                                               r.dose,
@@ -1544,6 +1762,43 @@ export default function DeptPatientForm({
                                                         )}
                                                     />
                                                 </td>
+                                                {showEmergencyDetails && (
+                                                    <td className="px-2 py-1.5 text-center">
+                                                        <input
+                                                            type="checkbox"
+                                                            aria-label="Given in ER"
+                                                            disabled={
+                                                                isFinalized
+                                                            }
+                                                            checked={
+                                                                row.given_in_er ??
+                                                                !!row.given_at
+                                                            }
+                                                            onChange={(e) =>
+                                                                setPrescriptions(
+                                                                    (p) =>
+                                                                        p.map(
+                                                                            (
+                                                                                r,
+                                                                                i,
+                                                                            ) =>
+                                                                                i ===
+                                                                                idx
+                                                                                    ? {
+                                                                                          ...r,
+                                                                                          given_in_er:
+                                                                                              e
+                                                                                                  .target
+                                                                                                  .checked,
+                                                                                      }
+                                                                                    : r,
+                                                                        ),
+                                                                )
+                                                            }
+                                                            className="h-4 w-4"
+                                                        />
+                                                    </td>
+                                                )}
                                                 <td className="px-2 py-1.5">
                                                     {!isFinalized &&
                                                         prescriptions.length >
@@ -1583,7 +1838,7 @@ export default function DeptPatientForm({
                                             blankRx(),
                                         ])
                                     }
-                                    className="mt-2 flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-700"
+                                    className="mt-2 flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-500 transition-colors hover:border-slate-400 hover:text-slate-700 dark:border-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
                                 >
                                     <Plus className="h-3.5 w-3.5" /> Add Drug
                                 </button>
@@ -1606,7 +1861,7 @@ export default function DeptPatientForm({
                                 )}
                             >
                                 <div>
-                                    <label className="mb-1 block text-xs font-medium text-slate-500">
+                                    <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                         Follow-up Date
                                     </label>
                                     <input
@@ -1623,7 +1878,7 @@ export default function DeptPatientForm({
                                 {!requireDischargeDetails && (
                                     <>
                                         <div>
-                                            <label className="mb-1 block text-xs font-medium text-slate-500">
+                                            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                                 Outcome
                                             </label>
                                             <select
@@ -1657,7 +1912,7 @@ export default function DeptPatientForm({
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="mb-1 block text-xs font-medium text-slate-500">
+                                            <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                                 Referred To
                                             </label>
                                             <input
@@ -1680,12 +1935,12 @@ export default function DeptPatientForm({
                             {!requireDischargeDetails &&
                                 outcome === 'referred' && (
                                     <div className="mt-3">
-                                        <label className="mb-1 block text-xs font-medium text-slate-500">
+                                        <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                             Referral Letter Notes
                                         </label>
                                         <Suspense
                                             fallback={
-                                                <div className="flex h-[180px] items-center justify-center rounded-lg border border-slate-200 text-xs text-slate-400">
+                                                <div className="flex h-[180px] items-center justify-center rounded-lg border border-slate-200 text-xs text-slate-400 dark:border-neutral-800">
                                                     Loading editor…
                                                 </div>
                                             }
@@ -1712,7 +1967,7 @@ export default function DeptPatientForm({
                                     </div>
                                 )}
                             {requireDischargeDetails && outcome && (
-                                <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                                <div className="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-300">
                                     Disposition recorded via Discharge:{' '}
                                     <span className="font-semibold capitalize">
                                         {outcome}
@@ -1728,12 +1983,12 @@ export default function DeptPatientForm({
 
                     {/* Bottom Save Bar */}
                     {!isFinalized && (
-                        <div className="flex items-center justify-end gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                        <div className="flex items-center justify-end gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
                             <button
                                 type="button"
                                 disabled={saving}
                                 onClick={() => save(false)}
-                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800/50"
                             >
                                 <Save className="h-4 w-4" />{' '}
                                 {saving ? 'Saving…' : 'Save Draft'}

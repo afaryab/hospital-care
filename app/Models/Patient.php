@@ -11,10 +11,31 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Patient extends Model
+class Patient extends Model implements HasMedia
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use HasFactory, InteractsWithMedia, LogsActivity, SoftDeletes;
+
+    public const PHOTOS_COLLECTION = 'photos';
+
+    /**
+     * Patient photos are PHI, so they live on the private disk. Every capture
+     * is kept (the latest is current) so earlier photos stay auditable.
+     */
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection(self::PHOTOS_COLLECTION)
+            ->useDisk('local')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
+    }
+
+    public function currentPhoto(): ?Media
+    {
+        return $this->getMedia(self::PHOTOS_COLLECTION)->sortByDesc('id')->first();
+    }
 
     public function getActivitylogOptions(): LogOptions
     {
@@ -39,6 +60,11 @@ class Patient extends Model
         'contact_hash',
         'cnic',
         'cnic_hash',
+        'history_htn',
+        'history_dm',
+        'history_asthma',
+        'history_ihd',
+        'allergies',
         'created_at',
         'updated_at',
     ];
@@ -49,6 +75,11 @@ class Patient extends Model
             'cnic' => SafeEncrypted::class,
             'contact' => SafeEncrypted::class,
             'address' => SafeEncrypted::class,
+            'allergies' => SafeEncrypted::class,
+            'history_htn' => 'boolean',
+            'history_dm' => 'boolean',
+            'history_asthma' => 'boolean',
+            'history_ihd' => 'boolean',
         ];
     }
 

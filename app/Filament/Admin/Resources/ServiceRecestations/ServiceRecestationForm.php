@@ -6,6 +6,7 @@ use App\Models\Dentist;
 use App\Models\EmergencyDoctor;
 use App\Models\IndDoctor;
 use App\Models\OpdDoctor;
+use App\Models\PedDoctor;
 use App\Models\UltrasoundDoctor;
 use App\Models\XrayTechnician;
 use Filament\Forms\Components\Select;
@@ -62,6 +63,7 @@ class ServiceRecestationForm
                     ->multiple()
                     ->options([
                         OpdDoctor::class => 'OPD Doctor',
+                        PedDoctor::class => 'Peds Doctor',
                         EmergencyDoctor::class => 'Emergency Doctor',
                         IndDoctor::class => 'Ind Doctor',
                         Dentist::class => 'Dentist',

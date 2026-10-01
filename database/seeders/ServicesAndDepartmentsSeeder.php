@@ -99,6 +99,15 @@ class ServicesAndDepartmentsSeeder extends Seeder
             'have_composit_services' => false,
         ]);
 
+        $pedDepartment = ServiceDepartment::firstOrCreate([
+            'slug' => 'PED',
+        ], [
+            'name' => 'Peds',
+            'slug' => 'PED',
+            'image' => '/img/ped.png',
+            'have_composit_services' => false,
+        ]);
+
         $services = collect([
             [
                 'slug' => 'M.O_MOR',
@@ -297,7 +306,7 @@ class ServicesAndDepartmentsSeeder extends Seeder
             [
                 'slug' => '',
                 'name' => 'Paeds M.O Morning',
-                'service_department_id' => $opdDepartment->id,
+                'service_department_id' => $pedDepartment->id,
                 'charges' => '500',
                 'have_service_provider' => '0',
                 'service_provider_types' => [],
@@ -308,7 +317,7 @@ class ServicesAndDepartmentsSeeder extends Seeder
             [
                 'slug' => '',
                 'name' => 'Paeds M.O Evening ',
-                'service_department_id' => $opdDepartment->id,
+                'service_department_id' => $pedDepartment->id,
                 'charges' => '500',
                 'have_service_provider' => '0',
                 'service_provider_types' => [],
@@ -319,7 +328,7 @@ class ServicesAndDepartmentsSeeder extends Seeder
             [
                 'slug' => '',
                 'name' => 'Paeds M.O Night',
-                'service_department_id' => $opdDepartment->id,
+                'service_department_id' => $pedDepartment->id,
                 'charges' => '500',
                 'have_service_provider' => '0',
                 'service_provider_types' => [],

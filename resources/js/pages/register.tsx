@@ -19,7 +19,7 @@ import {
     patientsRegisterYear,
     patientsRegisterYearMonth,
 } from '@/routes';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type ServiceDepartment } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -42,6 +42,7 @@ interface PageProps {
         search?: string;
         contact?: string;
     };
+    serviceDepartments: ServiceDepartment[];
     [key: string]: any;
 }
 
@@ -57,10 +58,15 @@ export default function Register() {
         },
     ];
 
-    const { yearSelected, monthSelected, patientsPaginated, filters } =
-        usePage<PageProps>().props;
+    const {
+        yearSelected,
+        monthSelected,
+        patientsPaginated,
+        filters,
+        serviceDepartments,
+    } = usePage<PageProps>().props;
 
-    if (yearSelected) {
+    if (yearSelected !== '0') {
         breadcrumbs.push({
             title: yearSelected,
             href: patientsRegisterYear({
@@ -69,7 +75,7 @@ export default function Register() {
         });
     }
 
-    if (monthSelected) {
+    if (yearSelected !== '0' && monthSelected !== '0') {
         breadcrumbs.push({
             title: getMonthAgainstNumer(monthSelected),
             href: patientsRegisterYearMonth({
@@ -79,19 +85,19 @@ export default function Register() {
         });
     }
 
-    const [year, setYear] = useState<string>(yearSelected as string);
-    const [month, setMonth] = useState<string>(monthSelected as string);
+    const [year, setYear] = useState<string>(yearSelected);
+    const [month, setMonth] = useState<string>(monthSelected);
     const [search, setSearch] = useState<string>(filters?.search ?? '');
     const [contact, setContact] = useState<string>(filters?.contact ?? '');
 
     const registerUrlForPeriod = (y: string, m: string) => {
-        if (y != '0' && m != '0') {
+        if (y !== '0' && m !== '0') {
             return patientsRegisterYearMonth({ year: y, month: m }).url;
         }
-        if (y != '0') {
+        if (y !== '0') {
             return patientsRegisterYear({ year: y }).url;
         }
-        return patientsRegister().url;
+        return patientsRegister({ query: { all: 1 } }).url;
     };
 
     const applyFilters = () => {
@@ -225,7 +231,7 @@ export default function Register() {
                         </Button>
                     </div>
                 </div>
-                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950">
+                <div className="flex flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-0 text-[#1c398e] dark:bg-neutral-950 dark:text-neutral-200">
                     <table className="bg-gray-50 text-left text-xs text-gray-700 uppercase dark:bg-neutral-950 dark:text-gray-400">
                         <thead>
                             <tr>
@@ -291,16 +297,11 @@ export default function Register() {
                                             <span>{p.cnic}</span>
                                         </td>
                                         <td className="flex flex-row px-6 py-4">
-                                            {[
-                                                'OPD',
-                                                'IND',
-                                                'EMR',
-                                                'PTH',
-                                                'XRY',
-                                                'RAD',
-                                            ].map((itm) => {
+                                            {serviceDepartments.map((dept) => {
+                                                const itm = dept.slug;
                                                 return (
                                                     <Link
+                                                        key={itm}
                                                         href={
                                                             patientsRegisterPsNumberDepartment(
                                                                 {
@@ -340,7 +341,7 @@ export default function Register() {
                                         }
                                         lastPage={patientsPaginated.last_page}
                                         makeHref={(page) =>
-                                            `?page=${page}&year=${year}&month=${month}&search=${encodeURIComponent(search)}&contact=${encodeURIComponent(contact)}`
+                                            `?page=${page}${yearSelected === '0' ? '&all=1' : ''}&search=${encodeURIComponent(search)}&contact=${encodeURIComponent(contact)}`
                                         }
                                     />
                                 </td>

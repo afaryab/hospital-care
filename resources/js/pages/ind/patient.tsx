@@ -206,12 +206,12 @@ function formatDateTime(d?: string): string {
 function statusColor(status: string) {
     const s = status.toLowerCase();
     if (s === 'in-progress')
-        return 'bg-blue-100 text-blue-700 ring-1 ring-blue-200';
+        return 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 ring-1 ring-blue-200 dark:ring-blue-800';
     if (s === 'open')
-        return 'bg-amber-100 text-amber-700 ring-1 ring-amber-200';
+        return 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 ring-1 ring-amber-200 dark:ring-amber-800';
     if (s === 'treated' || s === 'closed')
-        return 'bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200';
-    return 'bg-slate-100 text-slate-600';
+        return 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-200 dark:ring-emerald-800';
+    return 'bg-slate-100 dark:bg-neutral-800 text-slate-600 dark:text-neutral-300';
 }
 
 function blankPrescription(): Prescription {
@@ -485,15 +485,15 @@ export default function IndPatient() {
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Indoor — ${patient?.name ?? 'Patient'}`} />
 
-            <div className="min-h-full bg-gradient-to-br from-indigo-50 via-white to-blue-50">
+            <div className="min-h-full bg-gradient-to-br from-indigo-50 via-white to-blue-50 dark:from-indigo-950/40 dark:via-neutral-950 dark:to-blue-950/40">
                 {/* ── Sticky Header ─────────────────────────────────────── */}
-                <div className="sticky top-0 z-10 border-b border-indigo-100 bg-white shadow-sm">
+                <div className="sticky top-0 z-10 border-b border-indigo-100 bg-white shadow-sm dark:border-indigo-900 dark:bg-neutral-900">
                     <div className="mx-auto max-w-5xl px-4 py-3 md:px-6">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
                                 <a
                                     href={indDashboard().url}
-                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                    className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                                 >
                                     <ArrowLeft className="h-4 w-4" />
                                 </a>
@@ -503,7 +503,7 @@ export default function IndPatient() {
                                 </div>
                                 <div>
                                     <div className="flex flex-wrap items-center gap-2">
-                                        <h1 className="text-base font-bold text-slate-900 md:text-lg">
+                                        <h1 className="text-base font-bold text-slate-900 md:text-lg dark:text-neutral-100">
                                             {patient?.name}
                                         </h1>
                                         <span
@@ -517,13 +517,13 @@ export default function IndPatient() {
                                             {serviceOrder.status}
                                         </span>
                                         {isFinalized && (
-                                            <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                                            <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800">
                                                 <Lock className="h-3 w-3" />{' '}
                                                 Finalized
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-xs text-slate-500">
+                                    <p className="text-xs text-slate-500 dark:text-neutral-400">
                                         {patient?.ps_number} &bull;{' '}
                                         {ageDisplay(patient)} &bull;{' '}
                                         {genderLabel(patient?.gender)}
@@ -536,7 +536,7 @@ export default function IndPatient() {
                                 <button
                                     type="button"
                                     onClick={() => setShowHistory((v) => !v)}
-                                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                                    className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                                 >
                                     <History className="h-3.5 w-3.5" />
                                     History ({previousVisits.length})
@@ -574,9 +574,9 @@ export default function IndPatient() {
                 <div className="mx-auto max-w-5xl space-y-4 px-4 py-4 pb-10 md:px-6">
                     {/* Finalized Banner */}
                     {isFinalized && (
-                        <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-                            <Lock className="h-5 w-5 text-emerald-600" />
-                            <p className="text-sm font-medium text-emerald-800">
+                        <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 dark:border-emerald-900 dark:bg-emerald-950/40">
+                            <Lock className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                            <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
                                 This record has been finalized and is read-only.
                             </p>
                         </div>
@@ -584,41 +584,41 @@ export default function IndPatient() {
 
                     {/* History Panel */}
                     {showHistory && (
-                        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-                            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
-                                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                                    <History className="h-4 w-4 text-slate-500" />{' '}
+                        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+                            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 dark:border-neutral-800">
+                                <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-neutral-100">
+                                    <History className="h-4 w-4 text-slate-500 dark:text-neutral-400" />{' '}
                                     Previous Indoor Admissions
                                 </h3>
                                 <button
                                     type="button"
                                     onClick={() => setShowHistory(false)}
-                                    className="text-slate-400 hover:text-slate-600"
+                                    className="text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300"
                                 >
                                     <X className="h-4 w-4" />
                                 </button>
                             </div>
                             {previousVisits.length === 0 ? (
-                                <p className="px-4 py-6 text-center text-sm text-slate-500">
+                                <p className="px-4 py-6 text-center text-sm text-slate-500 dark:text-neutral-400">
                                     No previous IND admissions.
                                 </p>
                             ) : (
-                                <div className="divide-y divide-slate-100">
+                                <div className="divide-y divide-slate-100 dark:divide-neutral-800">
                                     {previousVisits.map((v) => (
                                         <div
                                             key={v.id}
                                             className="flex items-start justify-between px-4 py-3"
                                         >
                                             <div>
-                                                <p className="text-xs font-semibold text-slate-800">
+                                                <p className="text-xs font-semibold text-slate-800 dark:text-neutral-100">
                                                     {v.so_number}
                                                 </p>
-                                                <p className="mt-0.5 text-xs text-slate-500">
+                                                <p className="mt-0.5 text-xs text-slate-500 dark:text-neutral-400">
                                                     {formatDate(v.created_at)}
                                                 </p>
                                                 {v.treatment_record
                                                     ?.diagnosis_text && (
-                                                    <p className="mt-1 text-xs text-slate-600">
+                                                    <p className="mt-1 text-xs text-slate-600 dark:text-neutral-300">
                                                         {
                                                             v.treatment_record
                                                                 .diagnosis_text
@@ -652,7 +652,7 @@ export default function IndPatient() {
                     )}
 
                     {/* ── SO + Bed Info Strip ─────────────────────────────── */}
-                    <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-4 md:grid-cols-6">
+                    <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-4 md:grid-cols-6 dark:border-neutral-800 dark:bg-neutral-900">
                         <InfoCell
                             label="SO Number"
                             value={serviceOrder.so_number}
@@ -678,12 +678,12 @@ export default function IndPatient() {
                             }
                         />
                         <div className="col-span-2">
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 dark:text-neutral-400">
                                 Bed Assignment
                             </p>
                             {currentAssignment ? (
                                 <div className="flex items-center gap-2">
-                                    <span className="mt-0.5 inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-800 ring-1 ring-indigo-200">
+                                    <span className="mt-0.5 inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-800 ring-1 ring-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:ring-indigo-800">
                                         <BedDouble className="h-3 w-3" />
                                         {currentAssignment.ward?.name} /{' '}
                                         {currentAssignment.room?.name} / Bed{' '}
@@ -694,7 +694,7 @@ export default function IndPatient() {
                                             type="button"
                                             disabled={discharging}
                                             onClick={discharge}
-                                            className="text-xs text-red-500 underline hover:text-red-700 disabled:opacity-50"
+                                            className="text-xs text-red-500 underline hover:text-red-700 disabled:opacity-50 dark:hover:text-red-300"
                                         >
                                             {discharging
                                                 ? 'Discharging…'
@@ -704,7 +704,7 @@ export default function IndPatient() {
                                 </div>
                             ) : (
                                 <div className="mt-0.5 flex items-center gap-2">
-                                    <span className="rounded-lg bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200">
+                                    <span className="rounded-lg bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800">
                                         Not Assigned
                                     </span>
                                     {!isFinalized && (
@@ -713,7 +713,7 @@ export default function IndPatient() {
                                             onClick={() =>
                                                 setShowBedModal(true)
                                             }
-                                            className="text-xs text-indigo-600 underline hover:text-indigo-800"
+                                            className="text-xs text-indigo-600 underline hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
                                         >
                                             Assign Bed
                                         </button>
@@ -733,7 +733,7 @@ export default function IndPatient() {
                         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                             {IND_SPECIFIC_FIELDS.map((field) => (
                                 <div key={field}>
-                                    <label className="mb-1 block text-xs font-medium text-slate-500">
+                                    <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                         {field}
                                     </label>
                                     <input
@@ -770,7 +770,9 @@ export default function IndPatient() {
 
                     {/* HPI */}
                     <FormSection
-                        icon={<FileText className="h-4 w-4 text-slate-500" />}
+                        icon={
+                            <FileText className="h-4 w-4 text-slate-500 dark:text-neutral-400" />
+                        }
                         title="History of Present Illness"
                     >
                         <textarea
@@ -884,14 +886,14 @@ export default function IndPatient() {
                     {/* Examination Findings */}
                     <FormSection
                         icon={
-                            <Stethoscope className="h-4 w-4 text-indigo-600" />
+                            <Stethoscope className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
                         }
                         title="Examination Findings"
                     >
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                             {EXAM_SYSTEMS.map((sys) => (
                                 <div key={sys}>
-                                    <label className="mb-1 block text-xs font-medium text-slate-500">
+                                    <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                         {sys}
                                     </label>
                                     <input
@@ -918,7 +920,7 @@ export default function IndPatient() {
                     >
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     ICD-10 Code
                                 </label>
                                 <Icd10Picker
@@ -933,7 +935,7 @@ export default function IndPatient() {
                                 />
                             </div>
                             <div className="sm:col-span-3">
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     Diagnosis
                                 </label>
                                 <input
@@ -951,12 +953,14 @@ export default function IndPatient() {
 
                     {/* Prescription */}
                     <FormSection
-                        icon={<FileText className="h-4 w-4 text-emerald-600" />}
+                        icon={
+                            <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        }
                         title="Medication Orders / Prescription"
                     >
-                        <div className="overflow-x-auto rounded-xl border border-slate-200">
+                        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-neutral-800">
                             <table className="w-full min-w-[700px] text-sm">
-                                <thead className="bg-slate-50">
+                                <thead className="bg-slate-50 dark:bg-neutral-800/50">
                                     <tr>
                                         {[
                                             'Drug Name',
@@ -969,18 +973,18 @@ export default function IndPatient() {
                                         ].map((h) => (
                                             <th
                                                 key={h}
-                                                className="px-3 py-2 text-left text-xs font-semibold text-slate-600"
+                                                className="px-3 py-2 text-left text-xs font-semibold text-slate-600 dark:text-neutral-300"
                                             >
                                                 {h}
                                             </th>
                                         ))}
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-slate-100 dark:divide-neutral-800">
                                     {prescriptions.map((row, idx) => (
                                         <tr
                                             key={idx}
-                                            className="bg-white hover:bg-slate-50"
+                                            className="bg-white hover:bg-slate-50 dark:bg-neutral-900 dark:hover:bg-neutral-800/50"
                                         >
                                             <td className="px-2 py-1.5">
                                                 {isFinalized ? (
@@ -1146,7 +1150,7 @@ export default function IndPatient() {
                             <button
                                 type="button"
                                 onClick={addPrescription}
-                                className="mt-2 flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-500 hover:border-indigo-400 hover:text-indigo-600"
+                                className="mt-2 flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-2 text-xs font-medium text-slate-500 hover:border-indigo-400 hover:text-indigo-600 dark:border-neutral-700 dark:text-neutral-400 dark:hover:text-indigo-400"
                             >
                                 <Plus className="h-3.5 w-3.5" /> Add Drug
                             </button>
@@ -1177,7 +1181,7 @@ export default function IndPatient() {
                     >
                         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     Follow-up Date
                                 </label>
                                 <input
@@ -1191,7 +1195,7 @@ export default function IndPatient() {
                                 />
                             </div>
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     Outcome
                                 </label>
                                 <select
@@ -1211,7 +1215,7 @@ export default function IndPatient() {
                                 </select>
                             </div>
                             <div>
-                                <label className="mb-1 block text-xs font-medium text-slate-500">
+                                <label className="mb-1 block text-xs font-medium text-slate-500 dark:text-neutral-400">
                                     Referred To
                                 </label>
                                 <input
@@ -1229,7 +1233,7 @@ export default function IndPatient() {
 
                     {/* Bottom Save Bar */}
                     {!isFinalized && (
-                        <div className="flex items-center justify-end gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                        <div className="flex items-center justify-end gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
                             <Button
                                 variant="outline"
                                 disabled={saving}
@@ -1257,9 +1261,9 @@ export default function IndPatient() {
             {/* Bed Assignment Modal */}
             {showBedModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                    <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl">
-                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                            <h3 className="text-sm font-semibold text-slate-900">
+                    <div className="w-full max-w-sm rounded-2xl bg-white shadow-2xl dark:bg-neutral-900">
+                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-neutral-800">
+                            <h3 className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                                 Assign Bed
                             </h3>
                             <button
@@ -1268,21 +1272,21 @@ export default function IndPatient() {
                                     setShowBedModal(false);
                                     setSelectedBedId('');
                                 }}
-                                className="text-slate-400 hover:text-slate-600"
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-neutral-300"
                             >
                                 <X className="h-4 w-4" />
                             </button>
                         </div>
                         <div className="p-5">
-                            <div className="mb-3 rounded-xl bg-slate-50 px-4 py-3">
-                                <p className="text-sm font-semibold text-slate-900">
+                            <div className="mb-3 rounded-xl bg-slate-50 px-4 py-3 dark:bg-neutral-800/50">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                                     {patient?.name}
                                 </p>
-                                <p className="text-xs text-slate-500">
+                                <p className="text-xs text-slate-500 dark:text-neutral-400">
                                     {serviceOrder.so_number}
                                 </p>
                             </div>
-                            <label className="mb-1 block text-xs font-medium text-slate-600">
+                            <label className="mb-1 block text-xs font-medium text-slate-600 dark:text-neutral-300">
                                 Select Available Bed
                             </label>
                             <select
@@ -1292,7 +1296,7 @@ export default function IndPatient() {
                                         Number(e.target.value) || '',
                                     )
                                 }
-                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-100 dark:focus:ring-indigo-800"
                             >
                                 <option value="">— Choose a bed —</option>
                                 {availableBedOptions.map((b) => (
@@ -1302,19 +1306,19 @@ export default function IndPatient() {
                                 ))}
                             </select>
                             {availableBedOptions.length === 0 && (
-                                <p className="mt-2 text-xs text-amber-600">
+                                <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
                                     No available beds right now.
                                 </p>
                             )}
                         </div>
-                        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+                        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3 dark:border-neutral-800">
                             <button
                                 type="button"
                                 onClick={() => {
                                     setShowBedModal(false);
                                     setSelectedBedId('');
                                 }}
-                                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+                                className="rounded-lg border border-slate-200 px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-800/50"
                             >
                                 Cancel
                             </button>
@@ -1347,7 +1351,7 @@ function FormSection({
 }) {
     const [collapsed, setCollapsed] = useState(false);
     return (
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
             <button
                 type="button"
                 onClick={() => setCollapsed((c) => !c)}
@@ -1355,7 +1359,7 @@ function FormSection({
             >
                 <div className="flex items-center gap-2">
                     {icon}
-                    <span className="text-sm font-semibold text-slate-900">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-neutral-100">
                         {title}
                     </span>
                 </div>
@@ -1367,7 +1371,7 @@ function FormSection({
             </button>
             {!collapsed && (
                 <>
-                    <div className="h-px bg-slate-100" />
+                    <div className="h-px bg-slate-100 dark:bg-neutral-800" />
                     <div className="p-4 md:p-5">{children}</div>
                 </>
             )}
@@ -1378,8 +1382,10 @@ function FormSection({
 function InfoCell({ label, value }: { label: string; value?: string }) {
     return (
         <div>
-            <p className="text-xs text-slate-500">{label}</p>
-            <p className="mt-0.5 text-sm font-semibold text-slate-800">
+            <p className="text-xs text-slate-500 dark:text-neutral-400">
+                {label}
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-slate-800 dark:text-neutral-100">
                 {value ?? '—'}
             </p>
         </div>
@@ -1403,7 +1409,7 @@ function VitalInput({
 }) {
     return (
         <div>
-            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-500">
+            <label className="mb-1 flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-neutral-400">
                 {icon} {label}
             </label>
             <input
@@ -1423,27 +1429,27 @@ function VitalInput({
 
 function textareaClass(disabled: boolean) {
     return clsx(
-        'w-full resize-y rounded-xl border px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none',
+        'w-full resize-y rounded-xl border px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:text-neutral-100 dark:focus:ring-indigo-800',
         disabled
-            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600'
-            : 'border-slate-200 bg-white hover:border-slate-300',
+            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-300'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700',
     );
 }
 
 function inputClass(disabled: boolean) {
     return clsx(
-        'w-full rounded-xl border px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none',
+        'w-full rounded-xl border px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 focus:outline-none dark:text-neutral-100 dark:focus:ring-indigo-800',
         disabled
-            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600'
-            : 'border-slate-200 bg-white hover:border-slate-300',
+            ? 'cursor-not-allowed border-slate-100 bg-slate-50 text-slate-600 dark:border-neutral-800 dark:bg-neutral-800/50 dark:text-neutral-300'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700',
     );
 }
 
 function tableInputClass(disabled: boolean) {
     return clsx(
-        'w-full rounded-lg border px-2 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200 focus:outline-none',
+        'w-full rounded-lg border px-2 py-1.5 text-xs text-slate-800 placeholder:text-slate-400 focus:border-indigo-300 focus:ring-1 focus:ring-indigo-200 focus:outline-none dark:text-neutral-100 dark:focus:border-indigo-800 dark:focus:ring-indigo-800',
         disabled
-            ? 'cursor-not-allowed border-transparent bg-transparent text-slate-600'
-            : 'border-slate-200 bg-white hover:border-slate-300',
+            ? 'cursor-not-allowed border-transparent bg-transparent text-slate-600 dark:text-neutral-300'
+            : 'border-slate-200 bg-white hover:border-slate-300 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-700',
     );
 }

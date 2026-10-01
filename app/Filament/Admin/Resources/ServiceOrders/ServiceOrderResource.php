@@ -96,7 +96,7 @@ class ServiceOrderResource extends Resource
                     ->label('Department')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'OPD' => 'info',
+                        'OPD', 'PED' => 'info',
                         'IND' => 'purple',
                         'EMG' => 'danger',
                         'DNT' => 'warning',

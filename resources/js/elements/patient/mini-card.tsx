@@ -17,6 +17,8 @@ interface PatientMiniCardProps {
     tempContact?: string;
     tempCnic?: string;
     link?: string;
+    photoUrl?: string | null;
+    onPhotoClick?: () => void;
 }
 
 const PatientEditPopup: React.FC<{
@@ -293,6 +295,8 @@ const PatientMiniCard: React.FC<PatientMiniCardProps> = ({
     tempGender = undefined,
     tempContact = undefined,
     tempCnic = undefined,
+    photoUrl = null,
+    onPhotoClick = undefined,
 }) => {
     const [showPopup, setShowPopup] = React.useState(false);
 
@@ -313,7 +317,11 @@ const PatientMiniCard: React.FC<PatientMiniCardProps> = ({
                     'space-y-2 rounded-md border-1 p-2' + ' ' + className
                 }
             >
-                <PatientMiniCardInner patient={patient} />
+                <PatientMiniCardInner
+                    patient={patient}
+                    photoUrl={photoUrl}
+                    onPhotoClick={onPhotoClick}
+                />
                 <div className="items-right justify-end">
                     <Button onClick={() => updatePatient()}>
                         <span>Set missing Information and continue</span>
@@ -335,7 +343,14 @@ const PatientMiniCard: React.FC<PatientMiniCardProps> = ({
     }
 
     if (!link) {
-        return <PatientMiniCardInner patient={patient} className={className} />;
+        return (
+            <PatientMiniCardInner
+                patient={patient}
+                className={className}
+                photoUrl={photoUrl}
+                onPhotoClick={onPhotoClick}
+            />
+        );
     }
     return (
         <Link href={link} className="flex flex-row">
@@ -347,6 +362,8 @@ const PatientMiniCard: React.FC<PatientMiniCardProps> = ({
 const PatientMiniCardInner: React.FC<PatientMiniCardProps> = ({
     patient,
     className = '',
+    photoUrl = null,
+    onPhotoClick = undefined,
 }) => {
     const { ps_number, name, gender, contact, cnic, age } = patient;
 
@@ -363,8 +380,35 @@ const PatientMiniCardInner: React.FC<PatientMiniCardProps> = ({
         >
             <div className="flex items-center space-x-4">
                 <div className="shrink-0">
-                    <div className="h-12 w-12 bg-gray-50">
-                        {gender ? (
+                    <div
+                        className={
+                            onPhotoClick
+                                ? 'h-16 w-16 cursor-pointer overflow-hidden rounded-md bg-gray-50 ring-2 ring-transparent transition hover:ring-blue-400 dark:bg-neutral-800/50'
+                                : 'h-12 w-12 bg-gray-50 dark:bg-neutral-800/50'
+                        }
+                        role={onPhotoClick ? 'button' : undefined}
+                        tabIndex={onPhotoClick ? 0 : undefined}
+                        title={
+                            onPhotoClick ? 'Change patient photo' : undefined
+                        }
+                        onClick={onPhotoClick}
+                        onKeyDown={(e) => {
+                            if (
+                                onPhotoClick &&
+                                (e.key === 'Enter' || e.key === ' ')
+                            ) {
+                                e.preventDefault();
+                                onPhotoClick();
+                            }
+                        }}
+                    >
+                        {photoUrl ? (
+                            <img
+                                src={photoUrl}
+                                alt={name}
+                                className="h-full w-full object-cover"
+                            />
+                        ) : gender ? (
                             <img
                                 src={
                                     gender == 'm'
@@ -379,7 +423,7 @@ const PatientMiniCardInner: React.FC<PatientMiniCardProps> = ({
                                 className="h-full w-full object-cover"
                             />
                         ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-blue-100 text-blue-600">
+                            <div className="flex h-full w-full items-center justify-center bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
                                 <span className="text-xl font-semibold">
                                     {name.charAt(0).toUpperCase()}
                                 </span>
