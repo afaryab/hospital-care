@@ -15,6 +15,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import BulletsWrapper from '@/elements/bullets-wrapper';
+import { type SlipPhotoSummary } from '@/elements/counter/slip-camera';
+import SlipPhotoThumb from '@/elements/counter/slip-photo-thumb';
 import AppLayout from '@/layouts/app-layout';
 import {
     counterClose,
@@ -100,7 +102,7 @@ export default function CounterView() {
                 <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800 dark:bg-neutral-950 dark:text-white">
                     <BulletsWrapper bullets={bullets}>
                         <div className="flex h-full w-full flex-col gap-4 rounded-xl">
-                            <div className="flex h-full flex-col divide-[#06df72] dark:divide-neutral-800 lg:divide-y">
+                            <div className="flex h-full flex-col divide-[#06df72] lg:divide-y dark:divide-neutral-800">
                                 <div className="flex flex-row gap-4 pb-4 lg:pr-4">
                                     <div className="w-full flex-1 rounded-xl border bg-white p-4 shadow-lg sm:w-auto xl:p-6 dark:bg-neutral-900">
                                         <p className="text-3xl font-semibold text-gray-800 dark:text-neutral-100">
@@ -289,8 +291,9 @@ const CounterReportIframe = ({
 };
 
 const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
-    const { auth } = usePage().props as unknown as {
+    const { auth, slipPhotos } = usePage().props as unknown as {
         auth?: { user?: { profiles?: { admin?: unknown[] } } };
+        slipPhotos?: Record<number, SlipPhotoSummary>;
     };
     const isAdminUser = (auth?.user?.profiles?.admin?.length ?? 0) > 0;
     const [refundingIds, setRefundingIds] = useState<number[]>([]);
@@ -468,6 +471,22 @@ const CounterTransactionsOverview = ({ openCounter }: { openCounter: any }) => {
                                                         DISCOUNTED
                                                     </span>
                                                 )}
+                                                {isIncome &&
+                                                    transaction.patient_id && (
+                                                        <div className="mt-1">
+                                                            <SlipPhotoThumb
+                                                                photo={
+                                                                    slipPhotos?.[
+                                                                        transaction
+                                                                            .id
+                                                                    ]
+                                                                }
+                                                                trNumber={
+                                                                    transaction.tr_number
+                                                                }
+                                                            />
+                                                        </div>
+                                                    )}
                                                 {linkedTrNumber && (
                                                     <div className="mt-0.5">
                                                         <span className="text-[10px] text-gray-400">

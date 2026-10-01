@@ -28,6 +28,7 @@ use App\Http\Controllers\Reports\BankPaymentReportController;
 use App\Http\Controllers\Reports\GenericReportPdfController;
 use App\Http\Controllers\Reports\IncomeCashFlowReportController;
 use App\Http\Controllers\Reports\PanelPaymentReportController;
+use App\Http\Controllers\SlipPhotoController;
 use App\Http\Controllers\UltrasoundController;
 use App\Http\Controllers\WebController;
 use App\Http\Controllers\XrayController;
@@ -59,6 +60,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('PS/{year}/{month}/{number}', [WebController::class, 'patient'])->name('patients-register-ps-number');
     Route::get('PS/{year}/{month}/{number}/photo', [PatientPhotoController::class, 'show'])->name('patient-photo-show');
     Route::post('PS/{year}/{month}/{number}/photo', [PatientPhotoController::class, 'store'])->name('patient-photo-store');
+    Route::post('CT-PS/slip-photo', [SlipPhotoController::class, 'store'])->name('slip-photo-store-unassigned');
+    Route::post('CT-PS/{year}/{month}/{number}/slip-photo', [SlipPhotoController::class, 'store'])->name('slip-photo-store');
+    Route::patch('SLIP-PHOTO/{slipPhoto}', [SlipPhotoController::class, 'update'])->name('slip-photo-update');
+    Route::get('SLIP-PHOTO/{slipPhoto}', [SlipPhotoController::class, 'show'])->name('slip-photo-show');
     Route::get('PS/{year}/{month}/{number}/{departmentKey}', [WebController::class, 'patient'])->name('patients-register-ps-number-department');
     Route::get('PS/{year}/{month}/{number}/{departmentKey}/{serviceNumber}', [WebController::class, 'patient'])->name('patients-register-ps-number-department-service');
 

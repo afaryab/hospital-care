@@ -22,6 +22,10 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { AdvancedTagSelect } from '@/components/ui/tag-select';
 import BulletsWrapper from '@/elements/bullets-wrapper';
+import {
+    SlipCameraProvider,
+    useSlipCamera,
+} from '@/elements/counter/slip-camera';
 import DepartmentMiniCard from '@/elements/department/mini-card';
 import PatientMiniCard from '@/elements/patient/mini-card';
 import PatientHistorySideBar from '@/elements/patient/transactions-history-card';
@@ -66,6 +70,7 @@ export default function CounterIncome() {
         existingServiceOrders,
         panelCompanies,
         todaysAppointments,
+        pendingSlipPhoto,
     } = usePage().props;
 
     const step = !selectedPatient ? 1 : !departmentKey ? 2 : 3;
@@ -178,32 +183,42 @@ export default function CounterIncome() {
             <Head title="Counter" />
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-[#06df72] p-1 dark:bg-[#262626]">
                 <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl bg-white p-2 text-gray-800 dark:bg-neutral-950 dark:text-white">
-                    <BulletsWrapper bullets={bullets}>
-                        {step === 1 && (
-                            <SelectPatient openCounter={openCounter} />
-                        )}
-                        {step === 2 && (
-                            <SelectDepartment
-                                openCounter={openCounter}
-                                patient={selectedPatient}
-                                departments={departments}
-                            />
-                        )}
-                        {step === 3 && (
-                            <CollectPayment
-                                recesitation={recesitation}
-                                existingServiceOrders={existingServiceOrders}
-                                openCounter={openCounter}
-                                patient={selectedPatient}
-                                departments={departments}
-                                departmentKey={departmentKey}
-                                services={services}
-                                providers={providers}
-                                panelCompanies={panelCompanies ?? []}
-                                todaysAppointments={todaysAppointments ?? []}
-                            />
-                        )}
-                    </BulletsWrapper>
+                    <SlipCameraProvider
+                        key={selectedPatient?.ps_number ?? 'no-patient'}
+                        patient={selectedPatient}
+                        pendingSlipPhoto={pendingSlipPhoto}
+                    >
+                        <BulletsWrapper bullets={bullets}>
+                            {step === 1 && (
+                                <SelectPatient openCounter={openCounter} />
+                            )}
+                            {step === 2 && (
+                                <SelectDepartment
+                                    openCounter={openCounter}
+                                    patient={selectedPatient}
+                                    departments={departments}
+                                />
+                            )}
+                            {step === 3 && (
+                                <CollectPayment
+                                    recesitation={recesitation}
+                                    existingServiceOrders={
+                                        existingServiceOrders
+                                    }
+                                    openCounter={openCounter}
+                                    patient={selectedPatient}
+                                    departments={departments}
+                                    departmentKey={departmentKey}
+                                    services={services}
+                                    providers={providers}
+                                    panelCompanies={panelCompanies ?? []}
+                                    todaysAppointments={
+                                        todaysAppointments ?? []
+                                    }
+                                />
+                            )}
+                        </BulletsWrapper>
+                    </SlipCameraProvider>
                 </div>
             </div>
         </AppLayout>
@@ -231,6 +246,7 @@ function CollectPayment({
     const [serviceProviders, setServiceProviders] = useState<any>({});
     const [selectedServiceOrder, setSelectedServiceOrder] = useState<string>();
     const [processing, setProcessing] = useState<boolean>(false);
+    const { ensurePhoto: ensureSlipPhoto } = useSlipCamera();
     const [checkInAppointmentId, setCheckInAppointmentId] = useState<
         string | null
     >(null);
@@ -270,6 +286,8 @@ function CollectPayment({
         // Clear previous validation errors
         setValidationErrors({});
         setProcessing(true);
+
+        await ensureSlipPhoto();
 
         if (recesitation && selectedServiceOrder === '') {
             toast.error('Please enter MRI number for recesitation services.');

@@ -19,6 +19,8 @@ import {
     printTransaction,
 } from '@/routes';
 
+import { type SlipPhotoSummary } from '@/elements/counter/slip-camera';
+import SlipPhotoThumb from '@/elements/counter/slip-photo-thumb';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/react';
 import clsx from 'clsx';
@@ -26,9 +28,10 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function TransactionView() {
-    const { transaction, auth } = usePage().props as {
+    const { transaction, auth, slipPhoto } = usePage().props as {
         transaction: any;
         auth?: { user?: { profiles?: { admin?: unknown[] } } };
+        slipPhoto?: SlipPhotoSummary | null;
     };
 
     const isAdminUser = (auth?.user?.profiles?.admin?.length ?? 0) > 0;
@@ -328,6 +331,22 @@ export default function TransactionView() {
                                                             ? 'Refunding...'
                                                             : 'Refund Transaction'}
                                                     </Button>
+                                                </div>
+                                            )}
+                                        {transaction?.income_or_expense ===
+                                            'INCOME' &&
+                                            transaction?.patient_id && (
+                                                <div className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 dark:border-neutral-800">
+                                                    <span className="text-sm font-medium text-slate-700 dark:text-neutral-200">
+                                                        Slip photo
+                                                    </span>
+                                                    <SlipPhotoThumb
+                                                        photo={slipPhoto}
+                                                        trNumber={
+                                                            transaction.tr_number
+                                                        }
+                                                        size="lg"
+                                                    />
                                                 </div>
                                             )}
                                         <div className="flex w-full flex-row">

@@ -21,6 +21,7 @@ use App\Models\Service;
 use App\Models\ServiceDepartment;
 use App\Models\ServiceOrder;
 use App\Models\ServiceRecestation;
+use App\Models\SlipPhoto;
 use App\Models\Transaction;
 use App\Models\TransactionElement;
 use App\Models\User;
@@ -638,6 +639,11 @@ class WebController extends Controller
 
         return Inertia::render('counter/view', [
             'openCounter' => $openCounter,
+            'slipPhotos' => SlipPhoto::query()
+                ->whereIn('transaction_id', $openCounter->transactions->pluck('id'))
+                ->with('capturedBy')
+                ->get()
+                ->mapWithKeys(fn (SlipPhoto $slipPhoto): array => [$slipPhoto->transaction_id => $slipPhoto->toSummary()]),
         ]);
     }
 
@@ -659,6 +665,23 @@ class WebController extends Controller
             $patientData = Patient::with('treatments', 'transactions', 'transactions.elements', 'transactions.elements.service', 'transactions.elements.serviceOrder', 'receaveables')->where('ps_number', $psNumber)->firstOrFail();
 
             $pageData['selectedPatient'] = $patientData;
+
+            SlipPhoto::claimForPatient($openCounter->id, $patientData, request()->user());
+
+            $pageData['pendingSlipPhoto'] = SlipPhoto::query()
+                ->pending($openCounter->id, $patientData->id)
+                ->with('capturedBy')
+                ->latest('id')
+                ->first()
+                ?->toSummary();
+        } else {
+            $pageData['pendingSlipPhoto'] = SlipPhoto::query()
+                ->unassigned($openCounter->id)
+                ->where('captured_at', '>=', now()->subMinutes(SlipPhoto::CLAIM_WINDOW_MINUTES))
+                ->with('capturedBy')
+                ->latest('id')
+                ->first()
+                ?->toSummary();
         }
         $pageData['departmentKey'] = $departmentKey;
 
@@ -1068,6 +1091,22 @@ class WebController extends Controller
                 $transaction->orignal_amount = $orinalTotal;
                 $transaction->save();
 
+                $slipPhoto = SlipPhoto::query()
+                    ->pending($openCounter->id, (int) $validatedData['patient_id'])
+                    ->latest('id')
+                    ->first();
+
+                if ($slipPhoto) {
+                    $slipPhoto->update(['transaction_id' => $transaction->id]);
+
+                    activity()
+                        ->causedBy($request->user())
+                        ->performedOn($transaction)
+                        ->event('slip_photo_attached')
+                        ->withProperties(['slip_photo_id' => $slipPhoto->id, 'subject' => $slipPhoto->subject->value])
+                        ->log('Slip photo attached');
+                }
+
                 $appointmentDraftReceaveable = $appointment && $appointment->receaveable && $appointment->receaveable->status === 'draft'
                     ? $appointment->receaveable
                     : null;
@@ -1235,6 +1274,7 @@ class WebController extends Controller
 
         return Inertia::render('transaction/view', [
             'transaction' => $transaction,
+            'slipPhoto' => $transaction->slipPhoto()->with('capturedBy')->first()?->toSummary(),
         ]);
     }
 
